@@ -1,71 +1,76 @@
-﻿<template>
-  <div class="space-y-8">
+<template>
+  <div class="admin-page">
     <!-- KPI Cards -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-5">
-      <div v-for="kpi in kpis" :key="kpi.label" class="card p-6">
-        <div class="flex items-start justify-between">
-          <div>
-            <p class="text-sm text-gray-500 mb-1">{{ kpi.label }}</p>
-            <p class="text-2xl font-bold text-gray-900">{{ kpi.value }}</p>
-          </div>
-          <div class="size-10 rounded-xl flex items-center justify-center" :class="kpi.bg">
-            <component :is="kpi.icon" class="size-5" :class="kpi.color" />
+    <div class="kpi-grid">
+      <div v-for="kpi in kpis" :key="kpi.label" class="kpi-card card">
+        <div class="kpi-card__head">
+          <span class="kpi-card__label">{{ kpi.label }}</span>
+          <div class="kpi-card__icon" :style="{ background: kpi.bg, color: kpi.color }">
+            <component :is="kpi.icon" class="w-5 h-5" />
           </div>
         </div>
+        <p class="kpi-card__value">{{ kpi.value }}</p>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Commandes rÃ©centes -->
-      <div class="lg:col-span-2 card p-6">
-        <div class="flex items-center justify-between mb-5">
-          <h2 class="font-semibold text-gray-800">Commandes rÃ©centes</h2>
-          <RouterLink to="/admin/orders" class="text-primary-500 text-sm hover:underline">Voir tout â†’</RouterLink>
+    <div class="dash-grid">
+      <!-- Commandes récentes -->
+      <section class="card dash-orders">
+        <header class="dash-orders__head">
+          <div>
+            <span class="eyebrow">Activité</span>
+            <h2 class="dash-orders__title">Commandes récentes</h2>
+          </div>
+          <RouterLink to="/admin/orders" class="dash-link">
+            Voir tout
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </RouterLink>
+        </header>
+        <div v-if="loading" class="dash-orders__skel">
+          <div v-for="i in 5" :key="i" class="skel"></div>
         </div>
-        <div v-if="loading" class="space-y-3">
-          <div v-for="i in 5" :key="i" class="h-12 rounded-xl bg-gray-100 animate-pulse" />
-        </div>
-        <table v-else class="w-full text-sm">
+        <table v-else class="dash-table">
           <thead>
-            <tr class="text-left text-xs text-gray-500 border-b border-gray-100">
-              <th class="pb-3 font-medium">NÂ°</th>
-              <th class="pb-3 font-medium">Client</th>
-              <th class="pb-3 font-medium">Total</th>
-              <th class="pb-3 font-medium">Statut</th>
+            <tr>
+              <th>N°</th>
+              <th>Cliente</th>
+              <th>Total</th>
+              <th>Statut</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50">
+          <tbody>
             <tr v-for="order in recentOrders" :key="order.id"
-              class="hover:bg-gray-50 cursor-pointer"
               @click="router.push(`/admin/orders/${order.id}`)">
-              <td class="py-3 font-mono text-xs text-gray-600">{{ order.number }}</td>
-              <td class="py-3 text-gray-800">{{ order.user?.name ?? 'InvitÃ©' }}</td>
-              <td class="py-3 font-semibold text-primary-500">{{ formatPrice(order.total) }}</td>
-              <td class="py-3">
-                <span :class="statusBadge(order.status)">{{ order.status }}</span>
-              </td>
+              <td class="dash-table__num">{{ order.number }}</td>
+              <td>{{ order.user?.name ?? 'Invité' }}</td>
+              <td class="dash-table__total">{{ formatPrice(order.total) }}</td>
+              <td><span :class="statusBadge(order.status)">{{ order.status }}</span></td>
             </tr>
           </tbody>
         </table>
-      </div>
+      </section>
 
       <!-- Stock faible -->
-      <div class="card p-6">
-        <h2 class="font-semibold text-gray-800 mb-5">âš ï¸ Stock faible</h2>
-        <div v-if="loading" class="space-y-3">
-          <div v-for="i in 4" :key="i" class="h-10 rounded-xl bg-gray-100 animate-pulse" />
+      <section class="card dash-stock">
+        <header>
+          <span class="eyebrow">Alerte</span>
+          <h2 class="dash-stock__title">Stock faible</h2>
+        </header>
+        <div v-if="loading" class="dash-stock__skel">
+          <div v-for="i in 4" :key="i" class="skel"></div>
         </div>
-        <div v-else-if="!lowStock.length" class="text-center py-8 text-gray-400 text-sm">
+        <div v-else-if="!lowStock.length" class="dash-stock__empty">
           Aucun produit en rupture
         </div>
-        <div v-else class="space-y-3">
-          <div v-for="p in lowStock" :key="p.id"
-            class="flex items-center justify-between p-3 rounded-xl bg-amber-50">
-            <span class="text-sm text-gray-700 line-clamp-1">{{ p.name }}</span>
-            <span class="badge-warning shrink-0">{{ p.stock }}</span>
-          </div>
-        </div>
-      </div>
+        <ul v-else class="dash-stock__list">
+          <li v-for="p in lowStock" :key="p.id">
+            <span class="dash-stock__name">{{ p.name }}</span>
+            <span class="badge badge-warning">{{ p.stock }}</span>
+          </li>
+        </ul>
+      </section>
     </div>
   </div>
 </template>
@@ -83,10 +88,10 @@ const lowStock    = ref([]);
 const loading     = ref(true);
 
 const kpis = computed(() => [
-  { label: 'Chiffre d\'affaires', value: formatPrice(stats.value.revenue ?? 0), icon: BanknotesIcon, bg: 'bg-green-50',   color: 'text-green-500'  },
-  { label: 'Commandes',          value: stats.value.orders ?? 0,                icon: ShoppingBagIcon, bg: 'bg-primary-50', color: 'text-primary-500' },
-  { label: 'Clients',            value: stats.value.customers ?? 0,             icon: UserGroupIcon,   bg: 'bg-blue-50',   color: 'text-blue-500'   },
-  { label: 'Produits actifs',    value: stats.value.products ?? 0,              icon: CubeIcon,        bg: 'bg-purple-50', color: 'text-purple-500' },
+  { label: 'Chiffre d\'affaires', value: formatPrice(stats.value.revenue ?? 0), icon: BanknotesIcon, bg: '#dcfce7',     color: '#15803d' },
+  { label: 'Commandes',          value: stats.value.orders ?? 0,                icon: ShoppingBagIcon, bg: 'var(--rose-100)', color: 'var(--rose-600)' },
+  { label: 'Clientes',           value: stats.value.customers ?? 0,             icon: UserGroupIcon,   bg: '#dbeafe',     color: '#1d4ed8' },
+  { label: 'Produits actifs',    value: stats.value.products ?? 0,              icon: CubeIcon,        bg: 'var(--gold-200)', color: 'var(--gold-600)' },
 ]);
 
 function formatPrice(price) {
@@ -95,15 +100,15 @@ function formatPrice(price) {
 
 function statusBadge(status) {
   const map = {
-    pending:    'badge-warning',
-    confirmed:  'badge-primary',
-    processing: 'badge-primary',
-    shipped:    'badge-success',
-    delivered:  'badge-success',
-    cancelled:  'badge-danger',
-    refunded:   'badge-gray',
+    pending:    'badge badge-warning',
+    confirmed:  'badge badge-primary',
+    processing: 'badge badge-primary',
+    shipped:    'badge badge-success',
+    delivered:  'badge badge-success',
+    cancelled:  'badge badge-danger',
+    refunded:   'badge badge-gray',
   };
-  return map[status] ?? 'badge-gray';
+  return map[status] ?? 'badge badge-gray';
 }
 
 onMounted(async () => {
@@ -115,3 +120,162 @@ onMounted(async () => {
 });
 </script>
 
+<style scoped>
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* ── KPI ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+.kpi-card {
+  padding: var(--space-5);
+}
+.kpi-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.kpi-card__label {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+.kpi-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpi-card__value {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  letter-spacing: -0.01em;
+}
+
+/* ── Dash grid ── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-5);
+}
+
+.dash-orders, .dash-stock { padding: var(--space-6); }
+
+.dash-orders__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+.dash-orders__title, .dash-stock__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-top: 4px;
+}
+
+.dash-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--rose-500);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: gap var(--transition-fast);
+}
+.dash-link:hover { gap: var(--space-2); }
+
+.dash-orders__skel, .dash-stock__skel { display: flex; flex-direction: column; gap: var(--space-2); }
+.skel {
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--cream-100);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: 0.5 } }
+
+.dash-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.dash-table thead th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--cream-200);
+}
+.dash-table tbody tr {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.dash-table tbody tr:hover { background: var(--rose-50); }
+.dash-table tbody td {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--cream-100);
+  color: var(--gray-600);
+}
+.dash-table__num {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+.dash-table__total {
+  font-weight: 600;
+  color: var(--rose-600);
+}
+
+.dash-stock__empty {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--gray-400);
+  font-size: 0.875rem;
+}
+
+.dash-stock__list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.dash-stock__list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--gold-100);
+}
+.dash-stock__name {
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: var(--space-2);
+}
+
+@media (max-width: 1024px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+</style>

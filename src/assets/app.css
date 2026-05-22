@@ -1,71 +1,418 @@
 @import 'tailwindcss';
 
-@theme {
-  --color-primary-50:  #fdf2f6;
-  --color-primary-100: #fce7f0;
-  --color-primary-200: #fad0e3;
-  --color-primary-300: #f6a9cb;
-  --color-primary-400: #f072a4;
-  --color-primary-500: #e8336d;
-  --color-primary-600: #d41f58;
-  --color-primary-700: #b21648;
-  --color-primary-800: #94163e;
-  --color-primary-900: #7c1737;
+/* ═══════════════════════════════════════════════
+   Rosa Beauty - Tailwind theme bridge
+   Pont entre Tailwind v4 et le design-system rosa.
+   Garde la compat des classes existantes
+   (.btn-primary, .card, .input, .label, .badge-*)
+   mais en les habillant en rose hibiscus + crème.
+   ═══════════════════════════════════════════════ */
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+@theme {
+  --color-primary-50:  #fff0f5;
+  --color-primary-100: #ffd6e7;
+  --color-primary-200: #ffadd0;
+  --color-primary-300: #ff80b5;
+  --color-primary-400: #f9518a;
+  --color-primary-500: #e8336d;
+  --color-primary-600: #c9185a;
+  --color-primary-700: #a3104a;
+  --color-primary-800: #7d0c38;
+  --color-primary-900: #570826;
+
+  --font-sans:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
 }
 
 @layer base {
   body {
-    @apply bg-white text-gray-800 antialiased;
-    font-family: var(--font-sans);
+    @apply antialiased;
+    font-family: var(--font-body, var(--font-sans));
+    color: var(--color-text);
+    background: var(--color-bg);
   }
-  h1, h2, h3 { @apply font-semibold tracking-tight; }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
 }
 
 @layer components {
+  /* ── Boutons ── */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-5 py-2.5
-           text-sm font-semibold text-white shadow-sm
-           hover:bg-primary-600 active:scale-95
-           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    background: var(--rose-500);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    border: 1.5px solid var(--rose-500);
+    box-shadow: var(--shadow-rose);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    white-space: nowrap;
   }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--rose-600);
+    border-color: var(--rose-600);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 36px rgba(232, 51, 109, 0.32);
+  }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-primary-300 px-5 py-2.5
-           text-sm font-semibold text-primary-600 bg-white
-           hover:bg-primary-50 active:scale-95 transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2;
+    padding: 12px 24px;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--rose-600);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1.5px solid var(--rose-300);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+    white-space: nowrap;
   }
+  .btn-outline:hover:not(:disabled) {
+    background: var(--rose-50);
+    border-color: var(--rose-500);
+    transform: translateY(-1px);
+  }
+  .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2
-           text-sm font-medium text-gray-600
-           hover:bg-gray-100 active:scale-95 transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2;
+    padding: 8px 16px;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--gray-600);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 1.5px solid transparent;
+    transition: all var(--transition-fast);
+    cursor: pointer;
   }
-  .input {
-    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm
-           placeholder:text-gray-400
-           focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none
-           transition-all duration-150;
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--cream-200);
+    color: var(--rose-600);
   }
-  .label { @apply block text-sm font-medium text-gray-700 mb-1.5; }
-  .card       { @apply rounded-2xl bg-white border border-gray-100 shadow-sm; }
-  .card-hover { @apply rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer; }
-  .badge         { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
-  .badge-primary { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-700; }
-  .badge-success { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-700; }
-  .badge-warning { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-100 text-amber-700; }
-  .badge-danger  { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700; }
-  .badge-gray    { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600; }
-  .nav-link        { @apply flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition-all duration-150; }
-  .nav-link-active { @apply bg-primary-50 text-primary-600 font-semibold; }
+
+  .label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    transition: box-shadow var(--transition-normal);
+  }
+  .card-hover {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border-light);
+    transition: all var(--transition-normal);
+    cursor: pointer;
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+    border-color: var(--rose-200);
+  }
+
+  /* ── Badges (compat anciens noms + variantes rosa) ──
+     Toutes les variantes répètent les propriétés de base
+     (Tailwind v4 n'autorise pas @apply sur une classe définie
+      dans le même layer). */
+  .badge,
+  .badge-primary,
+  .badge-success,
+  .badge-warning,
+  .badge-danger,
+  .badge-gray,
+  .badge-rose,
+  .badge-gold,
+  .badge-dark,
+  .badge-cream {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .badge-primary { background: var(--rose-100); color: var(--rose-700); }
+  .badge-success { background: #dcfce7;          color: #15803d;        }
+  .badge-warning { background: var(--gold-200);  color: var(--gold-600);}
+  .badge-danger  { background: #fee2e2;          color: #b91c1c;        }
+  .badge-gray    { background: var(--cream-200); color: var(--gray-600);}
+  .badge-rose    { background: var(--rose-100);  color: var(--rose-700);}
+  .badge-gold    { background: var(--gold-200);  color: var(--gold-600);}
+  .badge-dark    { background: var(--gray-800);  color: #fff;           }
+  .badge-cream   { background: var(--cream-200); color: var(--gray-600);}
+
+  /* ── Nav links (admin sidebar) ── */
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-500);
+    transition: all var(--transition-fast);
+    text-decoration: none;
+  }
+  .nav-link:hover {
+    background: var(--rose-50);
+    color: var(--rose-600);
+  }
+  .nav-link-active {
+    background: var(--rose-50);
+    color: var(--rose-600);
+    font-weight: 600;
+  }
+  .nav-link-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    width: 3px;
+    height: 18px;
+    background: var(--rose-500);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
 }
 
-/* ── Page transitions ── */
+  /* ── Spinner global ──
+     Usage : <span class="spinner"></span>
+     Plus besoin de redéfinir @keyframes spin dans chaque vue. */
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  .spinner--rose {
+    border-color: var(--rose-100);
+    border-top-color: var(--rose-500);
+  }
+  .spinner--sm { width: 14px; height: 14px; }
+  .spinner--lg { width: 28px; height: 28px; }
+
+  /* ── Loader centré (pages) ── */
+  .loader-wrap {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-12) 0;
+  }
+  .loader {
+    width: 28px; height: 28px;
+    border: 2px solid var(--rose-100);
+    border-top-color: var(--rose-500);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: var(--space-12) var(--space-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--gray-400);
+  }
+  .empty-state__icon { font-size: 2.5rem; opacity: 0.5; }
+  .empty-state p { font-size: 0.9375rem; }
+
+  /* ── Icon buttons (tables admin) ── */
+  .icon-btn {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+  }
+  .icon-btn--edit  { color: var(--rose-500); }
+  .icon-btn--edit:hover  { background: var(--rose-50); }
+  .icon-btn--delete { color: #ef4444; }
+  .icon-btn--delete:hover { background: #fee2e2; }
+
+  /* ── Toggle switch ── */
+  .toggle {
+    width: 44px; height: 24px;
+    border-radius: var(--radius-full);
+    background: var(--cream-300);
+    position: relative;
+    transition: background var(--transition-fast);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .toggle--on { background: var(--rose-500); }
+  .toggle__dot {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform var(--transition-fast);
+  }
+  .toggle--on .toggle__dot { transform: translateX(20px); }
+
+  /* ── Admin table ── */
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  .admin-table thead {
+    background: var(--cream-100);
+    border-bottom: 1px solid var(--cream-200);
+  }
+  .admin-table thead th {
+    text-align: left;
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-500);
+  }
+  .admin-table tbody tr { transition: background var(--transition-fast); }
+  .admin-table tbody tr:hover { background: var(--rose-50); }
+  .admin-table tbody td {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--cream-100);
+    color: var(--gray-600);
+  }
+  .admin-table__bold  { font-weight: 500; color: var(--gray-800); }
+  .admin-table__mono  { font-family: ui-monospace, monospace; font-size: 0.8125rem; color: var(--gray-400); }
+  .admin-table__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+
+  /* ── Admin page header ── */
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .page-header__title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: var(--gray-800);
+    margin-top: 4px;
+  }
+
+  /* ── Form error ── */
+  .form-error {
+    color: #b91c1c;
+    font-size: 0.8125rem;
+    margin-top: var(--space-1);
+  }
+
+/* ── Transitions globales ── */
 .page-enter-active, .page-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .page-enter-from { opacity: 0; transform: translateY(6px); }
 .page-leave-to   { opacity: 0; transform: translateY(-4px); }
 
-/* ── Drawer transitions ── */
 .overlay-enter-active, .overlay-leave-active { transition: opacity 0.25s ease; }
 .overlay-enter-from, .overlay-leave-to       { opacity: 0; }
 .drawer-enter-active, .drawer-leave-active   { transition: transform 0.3s cubic-bezier(.4,0,.2,1); }
 .drawer-enter-from, .drawer-leave-to         { transform: translateX(100%); }
+
+/* ══════════════════════════════════════════════════════════════
+   Inputs — défini HORS de @layer pour battre le reset * { padding:0 }
+   Pill form · taille medium (≈ 40 px) · crème → blanc au focus
+   ══════════════════════════════════════════════════════════════ */
+.input,
+input.input,
+textarea.input,
+select.input {
+  width: 100%;
+  padding: 10px 18px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: var(--cream-50);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--gray-800);
+  outline: none;
+  line-height: 1.5;
+  transition:
+    border-color var(--transition-fast),
+    background   var(--transition-fast),
+    box-shadow   var(--transition-fast);
+}
+.input::placeholder {
+  color: var(--gray-400);
+  font-style: italic;
+  opacity: 1;
+}
+.input:hover:not(:disabled):not(:focus) {
+  border-color: var(--rose-200);
+  background: #fff;
+}
+.input:focus {
+  background: #fff;
+  border-color: var(--rose-400);
+  box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.10);
+}
+.input:disabled {
+  background: var(--cream-100);
+  color: var(--gray-400);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Select — flèche rose, padding-right pour éviter l'overlap */
+select.input {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23e8336d' stroke-width='2.5' stroke-linecap='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 42px;
+  cursor: pointer;
+}
+
+/* Textarea — radius modéré, pill sur plusieurs lignes est inconfortable */
+textarea.input {
+  border-radius: var(--radius-md);
+  padding: 11px 18px;
+  line-height: 1.65;
+  resize: vertical;
+}

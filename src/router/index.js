@@ -16,8 +16,9 @@ const routes = [
       { path: 'products/:slug', name: 'product',  component: () => import('@/views/shop/ProductView.vue') },
       { path: 'cart',           name: 'cart',     component: () => import('@/views/shop/CartView.vue') },
       { path: 'checkout',       name: 'checkout', component: () => import('@/views/shop/CheckoutView.vue'), meta: { requiresAuth: true } },
-      { path: 'orders',         name: 'orders',   component: () => import('@/views/shop/OrdersView.vue'),  meta: { requiresAuth: true } },
-      { path: 'orders/:number', name: 'order',    component: () => import('@/views/shop/OrderView.vue'),   meta: { requiresAuth: true } },
+      { path: 'orders',         name: 'orders',   component: () => import('@/views/shop/OrdersView.vue'),    meta: { requiresAuth: true } },
+      { path: 'orders/:number', name: 'order',    component: () => import('@/views/shop/OrderView.vue'),    meta: { requiresAuth: true } },
+      { path: 'wishlist',       name: 'wishlist', component: () => import('@/views/shop/WishlistView.vue'), meta: { requiresAuth: true } },
     ],
   },
 

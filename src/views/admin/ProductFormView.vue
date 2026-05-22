@@ -2,14 +2,19 @@
   <div class="max-w-3xl mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="flex items-center gap-4">
-      <RouterLink :to="{ name: 'admin.products' }" class="text-gray-400 hover:text-primary-500 transition-colors text-xl">
-        &#8592;
+    <header class="form-page-header">
+      <RouterLink :to="{ name: 'admin.products' }" class="form-page-header__back" aria-label="Retour">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
       </RouterLink>
-      <h1 class="text-2xl font-bold text-gray-900">
-        {{ isEdit ? 'Modifier le produit' : 'Nouveau produit' }}
-      </h1>
-    </div>
+      <div>
+        <span class="eyebrow">Catalogue</span>
+        <h1 class="form-page-header__title">
+          {{ isEdit ? 'Modifier le produit' : 'Nouveau produit' }}
+        </h1>
+      </div>
+    </header>
 
     <!-- Loading -->
     <div v-if="loading" class="flex justify-center py-16">
@@ -431,3 +436,34 @@ onMounted(async () => {
   if (isEdit.value) await fetchProduct()
 })
 </script>
+
+<style scoped>
+.form-page-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.form-page-header__back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid var(--cream-300);
+  color: var(--gray-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.form-page-header__back:hover {
+  border-color: var(--rose-300);
+  color: var(--rose-500);
+}
+.form-page-header__title {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-top: 4px;
+}
+</style>

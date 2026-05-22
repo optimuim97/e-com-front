@@ -1,84 +1,80 @@
-﻿<template>
-  <div class="space-y-6">
+<template>
+  <div class="admin-page">
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold text-gray-900">Clients</h1>
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Communauté</span>
+        <h1 class="page-header__title">Clientes & clients</h1>
+      </div>
       <span class="badge badge-gray">{{ pagination.total ?? 0 }} client(s)</span>
-    </div>
+    </header>
 
     <!-- Search bar -->
-    <div class="card p-4">
+    <div class="card filters-bar">
       <input
         v-model="search"
         @input="debouncedFetch"
         type="text"
         class="input"
-        placeholder="Rechercher par nom ou emailâ€¦"
+        placeholder="Rechercher par nom ou email…"
       />
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <div class="w-7 h-7 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+    <div v-if="loading" class="loader-wrap">
+      <div class="loader"></div>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="users.length === 0" class="card p-12 text-center text-gray-400">
-      Aucun client trouvÃ©.
+    <div v-else-if="users.length === 0" class="card empty-state">
+      <div class="empty-state__icon">🌸</div>
+      <p>Aucun client trouvé.</p>
     </div>
 
     <!-- Table -->
-    <div v-else class="card overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100">
+    <div v-else class="card">
+      <div class="table-scroll">
+        <table class="admin-table">
+          <thead>
             <tr>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">Client</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">Email</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">RÃ´le</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">Commandes</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">Total dÃ©pensÃ©</th>
-              <th class="text-left px-4 py-3 font-semibold text-gray-600">Inscrit le</th>
+              <th>Client</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Commandes</th>
+              <th>Total dépensé</th>
+              <th>Inscrit le</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50">
-            <tr v-for="user in users" :key="user.id" class="hover:bg-gray-50 transition-colors">
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                    {{ initials(user.name) }}
-                  </div>
-                  <span class="font-medium text-gray-800">{{ user.name }}</span>
+          <tbody>
+            <tr v-for="user in users" :key="user.id">
+              <td>
+                <div class="user-cell">
+                  <div class="user-cell__avatar">{{ initials(user.name) }}</div>
+                  <span class="admin-table__client">{{ user.name }}</span>
                 </div>
               </td>
-              <td class="px-4 py-3 text-gray-500">{{ user.email }}</td>
-              <td class="px-4 py-3">
+              <td>{{ user.email }}</td>
+              <td>
                 <span :class="user.role === 'admin' ? 'badge badge-primary' : 'badge badge-gray'">
                   {{ user.role === 'admin' ? 'Admin' : 'Client' }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-gray-600 text-center">{{ user.orders_count ?? 0 }}</td>
-              <td class="px-4 py-3 font-medium text-gray-800">{{ formatPrice(user.orders_sum_total ?? 0) }}</td>
-              <td class="px-4 py-3 text-gray-400">{{ formatDate(user.created_at) }}</td>
+              <td class="user-cell__count">{{ user.orders_count ?? 0 }}</td>
+              <td class="admin-table__total">{{ formatPrice(user.orders_sum_total ?? 0) }}</td>
+              <td class="user-cell__date">{{ formatDate(user.created_at) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       <!-- Pagination -->
-      <div v-if="pagination.last_page > 1" class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-        <p class="text-sm text-gray-400">Page {{ pagination.current_page }} / {{ pagination.last_page }}</p>
-        <div class="flex gap-2">
-          <button
-            @click="changePage(pagination.current_page - 1)"
-            :disabled="pagination.current_page <= 1"
-            class="btn-outline py-1.5 px-3 text-sm disabled:opacity-40"
-          >â†</button>
-          <button
-            @click="changePage(pagination.current_page + 1)"
-            :disabled="pagination.current_page >= pagination.last_page"
-            class="btn-outline py-1.5 px-3 text-sm disabled:opacity-40"
-          >â†’</button>
+      <div v-if="pagination.last_page > 1" class="pagination">
+        <p>Page {{ pagination.current_page }} / {{ pagination.last_page }}</p>
+        <div class="pagination__actions">
+          <button @click="changePage(pagination.current_page - 1)"
+            :disabled="pagination.current_page <= 1" class="btn btn-outline btn-sm">←</button>
+          <button @click="changePage(pagination.current_page + 1)"
+            :disabled="pagination.current_page >= pagination.last_page" class="btn btn-outline btn-sm">→</button>
         </div>
       </div>
     </div>
@@ -86,7 +82,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import api from '@/api'
 
 const users = ref([])
@@ -129,7 +125,7 @@ function initials(name) {
 }
 
 function formatDate(val) {
-  if (!val) return 'â€”'
+  if (!val) return '—'
   return new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
@@ -140,3 +136,48 @@ function formatPrice(val) {
 onMounted(fetchUsers)
 </script>
 
+<style scoped>
+.admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.filters-bar { padding: var(--space-4); }
+
+.table-scroll { overflow-x: auto; }
+
+/* ── Table modifiers ── */
+.admin-table__client { font-weight: 500; color: var(--gray-800); }
+.admin-table__total { font-weight: 600; color: var(--rose-600) !important; }
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.user-cell__avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose-200), var(--rose-400));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+}
+.user-cell__count { text-align: center; }
+.user-cell__date {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.pagination {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--cream-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pagination p { font-size: 0.8125rem; color: var(--gray-400); }
+.pagination__actions { display: flex; gap: var(--space-2); }
+.pagination__actions .btn { padding: 6px 12px; }
+</style>

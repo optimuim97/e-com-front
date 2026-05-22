@@ -1,26 +1,24 @@
 <template>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center">
-
-      <!-- Icon -->
-      <div class="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-5">
-        <svg class="w-8 h-8 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+  <div class="pin-modal__overlay">
+    <div class="pin-modal__card">
+      <div class="pin-modal__icon">
+        <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round"
             d="M16.5 10.5V7.5a4.5 4.5 0 10-9 0v3M4.5 10.5h15A1.5 1.5 0 0121 12v7.5A1.5 1.5 0 0119.5 21h-15A1.5 1.5 0 013 19.5V12a1.5 1.5 0 011.5-1.5z" />
         </svg>
       </div>
 
-      <h2 class="text-lg font-bold text-gray-900 mb-1">
+      <span class="eyebrow">Sécurité</span>
+      <h2 class="pin-modal__title">
         {{ hasPin ? 'Entrez votre code PIN' : 'Définir un code PIN' }}
       </h2>
-      <p class="text-sm text-gray-400 mb-7">
+      <p class="pin-modal__desc">
         {{ hasPin
           ? 'Ce code protège l\'accès à vos commandes.'
           : 'Créez un code PIN à 4 chiffres pour sécuriser vos commandes.' }}
       </p>
 
-      <!-- 4-digit inputs -->
-      <div class="flex justify-center gap-3 mb-6">
+      <div class="pin-modal__digits">
         <input
           v-for="i in 4"
           :key="i"
@@ -29,34 +27,23 @@
           type="password"
           inputmode="numeric"
           maxlength="1"
-          class="w-14 h-14 text-center text-xl font-bold rounded-xl border-2 transition-colors outline-none
-                 focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
-          :class="error ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'"
+          class="pin-modal__input"
+          :class="{ 'pin-modal__input--error': error }"
           @input="onInput(i - 1, $event)"
           @keydown.backspace="onBackspace(i - 1)"
           @paste.prevent="onPaste"
         />
       </div>
 
-      <p v-if="error" class="text-red-500 text-sm mb-4">{{ error }}</p>
+      <p v-if="error" class="pin-modal__error">{{ error }}</p>
 
-      <button
-        @click="submit"
-        :disabled="pin.length < 4 || loading"
-        class="btn-primary w-full py-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <span v-if="loading" class="flex items-center justify-center gap-2">
-          <span class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          Vérification…
-        </span>
+      <button @click="submit" :disabled="pin.length < 4 || loading"
+        class="btn btn-primary btn-lg pin-modal__submit">
+        <span v-if="loading" class="pin-modal__spinner"></span>
         <span v-else>{{ hasPin ? 'Confirmer' : 'Créer le PIN' }}</span>
       </button>
 
-      <button
-        v-if="hasPin"
-        @click="$emit('change-pin')"
-        class="mt-4 text-xs text-gray-400 hover:text-primary-500 transition-colors"
-      >
+      <button v-if="hasPin" @click="$emit('change-pin')" class="pin-modal__change">
         Modifier mon code PIN
       </button>
     </div>
@@ -117,7 +104,6 @@ async function submit() {
       await pinStore.verify(pin.value)
     } else {
       await pinStore.setPin(pin.value)
-      // Refresh user so has_pin becomes true
       await authStore.fetchUser()
       pinStore.verified = true
       sessionStorage.setItem('pin_verified', '1')
@@ -132,3 +118,118 @@ async function submit() {
   }
 }
 </script>
+
+<style scoped>
+.pin-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: rgba(20, 18, 19, 0.5);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: fadeIn 0.2s ease;
+}
+
+.pin-modal__card {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 400px;
+  padding: var(--space-8);
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pin-modal__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--rose-50);
+  color: var(--rose-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-2);
+}
+
+.pin-modal__title {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.pin-modal__desc {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-bottom: var(--space-3);
+}
+
+.pin-modal__digits {
+  display: flex;
+  gap: var(--space-3);
+  margin: var(--space-2) 0 var(--space-3);
+}
+
+.pin-modal__input {
+  width: 56px;
+  height: 56px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--cream-300);
+  background: var(--cream-50);
+  color: var(--gray-800);
+  outline: none;
+  transition: all var(--transition-fast);
+}
+.pin-modal__input:focus {
+  border-color: var(--rose-500);
+  box-shadow: 0 0 0 4px var(--rose-100);
+}
+.pin-modal__input--error {
+  border-color: #fca5a5;
+  background: #fee2e2;
+}
+
+.pin-modal__error {
+  color: #ef4444;
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-2);
+}
+
+.pin-modal__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+.pin-modal__spinner {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+.pin-modal__change {
+  margin-top: var(--space-3);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  transition: color var(--transition-fast);
+}
+.pin-modal__change:hover { color: var(--rose-500); }
+</style>

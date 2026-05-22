@@ -1,8 +1,11 @@
 <template>
   <div class="space-y-6">
     <!-- Back -->
-    <RouterLink :to="{ name: 'admin.orders' }" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-primary-500 transition-colors">
-      ← Retour aux commandes
+    <RouterLink :to="{ name: 'admin.orders' }" class="admin-back-link">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Retour aux commandes
     </RouterLink>
 
     <!-- Loading -->
@@ -17,12 +20,13 @@
       <div class="xl:col-span-2 space-y-6">
 
         <!-- Header -->
-        <div class="card p-6 flex flex-wrap items-start justify-between gap-4">
+        <div class="card admin-order-header">
           <div>
-            <h1 class="text-xl font-bold text-gray-900">{{ order.number }}</h1>
-            <p class="text-sm text-gray-400 mt-1">Passée le {{ formatDate(order.created_at) }}</p>
+            <span class="eyebrow">Commande</span>
+            <h1 class="admin-order-header__title">{{ order.number }}</h1>
+            <p class="admin-order-header__date">Passée le {{ formatDate(order.created_at) }}</p>
           </div>
-          <span :class="statusBadge(order.status)" class="text-sm">{{ statusLabel(order.status) }}</span>
+          <span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span>
         </div>
 
         <!-- Items -->
@@ -260,3 +264,37 @@ function paymentLabel(method) {
 
 onMounted(fetchOrder)
 </script>
+
+<style scoped>
+.admin-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  transition: color var(--transition-fast);
+}
+.admin-back-link:hover { color: var(--rose-500); }
+
+.admin-order-header {
+  padding: var(--space-6);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+.admin-order-header__title {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-top: 4px;
+  letter-spacing: 0.02em;
+}
+.admin-order-header__date {
+  font-size: 0.8125rem;
+  color: var(--gray-400);
+  margin-top: 4px;
+}
+</style>

@@ -1,88 +1,113 @@
 <template>
-  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-12">
-    <h1 class="text-2xl font-bold text-gray-900 mb-8">Mon panier</h1>
+  <main class="cart-page">
+    <!-- En-tête -->
+    <section class="cart-hero">
+      <div class="container">
+        <span class="eyebrow">Mon panier</span>
+        <h1 class="display-lg cart-hero__title">
+          Votre <em>sélection</em>
+        </h1>
+        <p v-if="cartStore.cart.items?.length" class="cart-hero__count">
+          {{ cartStore.cart.items.length }} article{{ cartStore.cart.items.length > 1 ? 's' : '' }} dans votre panier
+        </p>
+      </div>
+    </section>
 
-    <div v-if="!cartStore.cart.items?.length" class="text-center py-20">
-      <p class="text-5xl mb-4">🛒</p>
-      <p class="text-gray-500 mb-6">Votre panier est vide</p>
-      <RouterLink to="/products" class="btn-primary">Découvrir nos produits</RouterLink>
-    </div>
+    <div class="container cart-content">
+      <!-- Empty -->
+      <div v-if="!cartStore.cart.items?.length" class="cart-empty card">
+        <div class="cart-empty__icon">🌸</div>
+        <h2 class="display-md">Votre panier est encore vide</h2>
+        <p>Découvrez nos soins à l'eau de rose pour révéler votre beauté naturelle.</p>
+        <RouterLink to="/products" class="btn btn-primary btn-lg">
+          Découvrir nos produits
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </RouterLink>
+      </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Items -->
-      <div class="lg:col-span-2 space-y-4">
-        <div v-for="item in cartStore.cart.items" :key="item.id" class="card p-4 flex gap-4">
-          <div class="size-20 rounded-xl overflow-hidden bg-gray-50 shrink-0">
-            <img v-if="item.product?.images?.[0]?.url" :src="item.product.images[0].url"
-              :alt="item.product.name" class="w-full h-full object-cover" />
-            <div v-else class="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
-          </div>
+      <div v-else class="cart-grid">
+        <!-- Items -->
+        <div class="cart-items">
+          <div v-for="item in cartStore.cart.items" :key="item.id" class="cart-item card">
+            <div class="cart-item__img-wrap">
+              <img v-if="item.product?.images?.[0]?.url" :src="item.product.images[0].url"
+                :alt="item.product.name" class="cart-item__img" />
+              <div v-else class="cart-item__img-fallback">🌹</div>
+            </div>
 
-          <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-gray-800 text-sm line-clamp-2">{{ item.product?.name }}</h3>
-            <p v-if="item.variant" class="text-xs text-gray-400 mt-0.5">{{ item.variant.label }}</p>
-            <p class="text-primary-500 font-bold mt-1">{{ formatPrice(item.unit_price) }}</p>
-          </div>
+            <div class="cart-item__info">
+              <span class="cart-item__cat">{{ item.product?.category?.name }}</span>
+              <h3 class="cart-item__name">{{ item.product?.name }}</h3>
+              <p v-if="item.variant" class="cart-item__variant">{{ item.variant.label }}</p>
+              <p class="cart-item__price">{{ formatPrice(item.unit_price) }}</p>
+            </div>
 
-          <div class="flex flex-col items-end justify-between shrink-0">
-            <button @click="cartStore.remove(item.id)" class="text-gray-300 hover:text-red-400 transition-colors">
-              <XMarkIcon class="size-5" />
-            </button>
-            <div class="flex items-center gap-2">
-              <button @click="changeQty(item, -1)" :disabled="loadingItemId === item.id"
-                class="size-8 rounded-lg border-2 border-gray-300 flex items-center justify-center text-gray-600 hover:border-primary-400 hover:text-primary-600 hover:bg-primary-50 active:scale-90 active:bg-primary-100 transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed">
-                <span v-if="loadingItemId === item.id" class="size-3.5 border border-current border-t-transparent rounded-full animate-spin" />
-                <MinusIcon v-else class="size-3.5" />
+            <div class="cart-item__actions">
+              <button @click="cartStore.remove(item.id)" class="cart-item__remove" aria-label="Retirer">
+                <XMarkIcon class="w-4 h-4" />
               </button>
-              <span class="text-sm font-bold w-7 text-center text-gray-800">{{ item.quantity }}</span>
-              <button @click="changeQty(item, 1)" :disabled="loadingItemId === item.id"
-                class="size-8 rounded-lg bg-primary-500 border-2 border-primary-500 flex items-center justify-center text-white hover:bg-primary-600 hover:border-primary-600 active:scale-90 active:bg-primary-700 transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed">
-                <PlusIcon class="size-3.5" />
-              </button>
+              <div class="cart-item__qty">
+                <button @click="changeQty(item, -1)" :disabled="loadingItemId === item.id"
+                  class="cart-item__qty-btn" aria-label="Diminuer">
+                  <span v-if="loadingItemId === item.id" class="cart-item__spinner"></span>
+                  <MinusIcon v-else class="w-3 h-3" />
+                </button>
+                <span class="cart-item__qty-value">{{ item.quantity }}</span>
+                <button @click="changeQty(item, 1)" :disabled="loadingItemId === item.id"
+                  class="cart-item__qty-btn cart-item__qty-btn--primary" aria-label="Augmenter">
+                  <PlusIcon class="w-3 h-3" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Récap -->
-      <div class="card p-6 h-fit sticky top-24 space-y-4">
-        <h2 class="font-semibold text-gray-800">Récapitulatif</h2>
+        <!-- Récap -->
+        <aside class="cart-summary card">
+          <h2 class="cart-summary__title">Récapitulatif</h2>
 
-        <!-- Coupon -->
-        <div>
-          <div v-if="!cartStore.cart.coupon" class="flex gap-2">
-            <input v-model="couponCode" class="input !py-2 text-sm" placeholder="Code promo" />
-            <button @click="applyCoupon" class="btn-outline !py-2 !px-3 text-sm shrink-0">Appliquer</button>
+          <!-- Coupon -->
+          <div class="cart-summary__coupon">
+            <div v-if="!cartStore.cart.coupon" class="cart-summary__coupon-form">
+              <input v-model="couponCode" class="input" placeholder="Code promo" />
+              <button @click="applyCoupon" class="btn btn-outline btn-sm">Appliquer</button>
+            </div>
+            <div v-else class="cart-summary__coupon-applied">
+              <span>{{ cartStore.cart.coupon.code }}</span>
+              <button @click="cartStore.removeCoupon()" aria-label="Retirer le code">
+                <XMarkIcon class="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div v-else class="flex items-center justify-between bg-primary-50 rounded-xl px-3 py-2">
-            <span class="text-sm text-primary-600 font-medium">{{ cartStore.cart.coupon.code }}</span>
-            <button @click="cartStore.removeCoupon()" class="text-primary-400 hover:text-primary-600">
-              <XMarkIcon class="size-4" />
-            </button>
-          </div>
-        </div>
 
-        <div class="space-y-2 text-sm">
-          <div class="flex justify-between text-gray-600">
-            <span>Sous-total</span>
-            <span>{{ formatPrice(cartStore.cart.subtotal) }}</span>
-          </div>
-          <div v-if="cartStore.cart.discount > 0" class="flex justify-between text-green-600">
-            <span>Réduction</span>
-            <span>-{{ formatPrice(cartStore.cart.discount) }}</span>
-          </div>
-          <div class="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
-            <span>Total</span>
-            <span class="text-primary-500">{{ formatPrice(cartStore.cart.total) }}</span>
-          </div>
-        </div>
+          <ul class="cart-summary__lines">
+            <li>
+              <span>Sous-total</span>
+              <span>{{ formatPrice(cartStore.cart.subtotal) }}</span>
+            </li>
+            <li v-if="cartStore.cart.discount > 0" class="cart-summary__line--discount">
+              <span>Réduction</span>
+              <span>-{{ formatPrice(cartStore.cart.discount) }}</span>
+            </li>
+            <li class="cart-summary__line--total">
+              <span>Total</span>
+              <span>{{ formatPrice(cartStore.cart.total) }}</span>
+            </li>
+          </ul>
 
-        <RouterLink to="/checkout" class="btn-primary w-full">
-          Passer la commande
-        </RouterLink>
+          <RouterLink to="/checkout" class="btn btn-primary btn-lg cart-summary__cta">
+            Passer la commande
+          </RouterLink>
+
+          <p class="cart-summary__guarantee">
+            🔒 Paiement sécurisé · Livraison 48h
+          </p>
+        </aside>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script setup>
@@ -117,3 +142,268 @@ async function applyCoupon() {
   couponCode.value = '';
 }
 </script>
+
+<style scoped>
+.cart-page {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+/* ── Hero ── */
+.cart-hero {
+  background: linear-gradient(160deg, var(--rose-50) 0%, var(--cream-100) 100%);
+  padding: var(--space-12) 0 var(--space-10);
+  border-bottom: 1px solid var(--cream-200);
+}
+.cart-hero__title {
+  color: var(--gray-800);
+  margin-top: var(--space-2);
+}
+.cart-hero__title em { font-style: italic; color: var(--color-primary); }
+.cart-hero__count {
+  margin-top: var(--space-2);
+  color: var(--gray-500);
+  font-size: 0.9375rem;
+}
+
+.cart-content { padding: var(--space-10) var(--space-6) var(--space-16); }
+
+/* ── Empty ── */
+.cart-empty {
+  text-align: center;
+  padding: var(--space-16) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+.cart-empty__icon { font-size: 4rem; opacity: 0.6; }
+.cart-empty p { color: var(--gray-500); max-width: 360px; }
+
+/* ── Grid ── */
+.cart-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+/* ── Items ── */
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cart-item {
+  display: grid;
+  grid-template-columns: 96px 1fr auto;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  align-items: center;
+}
+
+.cart-item__img-wrap {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: linear-gradient(145deg, var(--rose-50), var(--cream-100));
+}
+.cart-item__img {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.cart-item__img-fallback {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+}
+
+.cart-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.cart-item__cat {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--rose-400);
+}
+.cart-item__name {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  line-height: 1.3;
+}
+.cart-item__variant { font-size: 0.75rem; color: var(--gray-400); }
+.cart-item__price {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--rose-600);
+  margin-top: var(--space-1);
+}
+
+.cart-item__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 100%;
+  gap: var(--space-3);
+}
+.cart-item__remove {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  color: var(--gray-300);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.cart-item__remove:hover { background: #fee2e2; color: #ef4444; }
+
+.cart-item__qty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.cart-item__qty-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  color: var(--gray-600);
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.cart-item__qty-btn:hover:not(:disabled) {
+  border-color: var(--rose-400);
+  color: var(--rose-500);
+  background: var(--rose-50);
+}
+.cart-item__qty-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.cart-item__qty-btn--primary {
+  background: var(--rose-500);
+  border-color: var(--rose-500);
+  color: #fff;
+}
+.cart-item__qty-btn--primary:hover:not(:disabled) {
+  background: var(--rose-600);
+  border-color: var(--rose-600);
+  color: #fff;
+}
+.cart-item__qty-value {
+  font-weight: 600;
+  color: var(--gray-800);
+  min-width: 20px;
+  text-align: center;
+}
+.cart-item__spinner {
+  width: 12px; height: 12px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Récap ── */
+.cart-summary {
+  padding: var(--space-6);
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cart-summary__title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--cream-200);
+}
+
+.cart-summary__coupon-form {
+  display: flex;
+  gap: var(--space-2);
+}
+.cart-summary__coupon-form .input { flex: 1; }
+
+.cart-summary__coupon-applied {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--rose-50);
+  border: 1px solid var(--rose-200);
+  border-radius: var(--radius-full);
+  color: var(--rose-700);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.cart-summary__coupon-applied button {
+  color: var(--rose-400);
+  transition: color var(--transition-fast);
+}
+.cart-summary__coupon-applied button:hover { color: var(--rose-700); }
+
+.cart-summary__lines {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--cream-200);
+  border-bottom: 1px solid var(--cream-200);
+}
+.cart-summary__lines li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9375rem;
+  color: var(--gray-600);
+}
+.cart-summary__line--discount { color: #15803d; }
+.cart-summary__line--total {
+  font-family: var(--font-display);
+  font-size: 1.375rem !important;
+  font-weight: 600;
+  color: var(--gray-800) !important;
+  padding-top: var(--space-2);
+}
+.cart-summary__line--total span:last-child { color: var(--rose-600); }
+
+.cart-summary__cta {
+  width: 100%;
+  justify-content: center;
+}
+
+.cart-summary__guarantee {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .cart-grid { grid-template-columns: 1fr; }
+  .cart-summary { position: static; }
+}
+
+@media (max-width: 540px) {
+  .cart-item { grid-template-columns: 72px 1fr; }
+  .cart-item__img-wrap { width: 72px; height: 72px; }
+  .cart-item__actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+</style>

@@ -1,20 +1,21 @@
 <template>
-  <div class="space-y-6">
+  <div class="admin-page">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <header class="page-header">
       <div>
-        <h1 class="text-xl font-bold text-gray-900">Produits</h1>
-        <p class="text-sm text-gray-500">{{ meta.total ?? 0 }} produit(s) au total</p>
+        <span class="eyebrow">Boutique</span>
+        <h1 class="page-header__title">Produits</h1>
+        <p class="page-header__sub">{{ meta.total ?? 0 }} produit(s) au total</p>
       </div>
-      <RouterLink to="/admin/products/create" class="btn-primary">
-        <PlusIcon class="size-4" /> Nouveau produit
+      <RouterLink to="/admin/products/create" class="btn btn-primary">
+        <PlusIcon class="w-4 h-4" /> Nouveau produit
       </RouterLink>
-    </div>
+    </header>
 
     <!-- Filtres -->
-    <div class="card p-4 flex flex-wrap gap-3">
-      <input v-model="search" class="input !py-2 max-w-xs text-sm" placeholder="Rechercher…" />
-      <select v-model="statusFilter" class="input !py-2 !w-auto text-sm">
+    <div class="card filters-bar">
+      <input v-model="search" class="input" placeholder="Rechercher…" />
+      <select v-model="statusFilter" class="input filters-bar__select">
         <option value="">Tous les statuts</option>
         <option value="1">Actifs</option>
         <option value="0">Inactifs</option>
@@ -22,66 +23,71 @@
     </div>
 
     <!-- Table -->
-    <div class="card overflow-hidden">
-      <div v-if="loading" class="p-6 space-y-3">
-        <div v-for="i in 6" :key="i" class="h-14 rounded-xl bg-gray-100 animate-pulse" />
+    <div class="card">
+      <div v-if="loading" class="loader-wrap">
+        <div class="loader"></div>
       </div>
-      <table v-else class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
-          <tr class="text-left text-xs text-gray-500">
-            <th class="px-5 py-3 font-medium">Produit</th>
-            <th class="px-5 py-3 font-medium">Catégorie</th>
-            <th class="px-5 py-3 font-medium">Prix</th>
-            <th class="px-5 py-3 font-medium">Stock</th>
-            <th class="px-5 py-3 font-medium">Statut</th>
-            <th class="px-5 py-3 font-medium w-20"></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr v-for="p in products" :key="p.id" class="hover:bg-gray-50">
-            <td class="px-5 py-4">
-              <div class="flex items-center gap-3">
-                <div class="size-10 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                  <img v-if="p.images?.[0]?.url" :src="p.images[0].url" :alt="p.name" class="w-full h-full object-cover" />
-                  <div v-else class="w-full h-full flex items-center justify-center text-gray-300">
-                    <PhotoIcon class="size-5" />
+      <div v-else-if="!products.length" class="empty-state">
+        <div class="empty-state__icon">🌸</div>
+        <p>Aucun produit pour le moment.</p>
+      </div>
+      <div v-else class="table-scroll">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Catégorie</th>
+              <th>Prix</th>
+              <th>Stock</th>
+              <th>Statut</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="p in products" :key="p.id">
+              <td>
+                <div class="admin-table__product">
+                  <div class="admin-table__thumb">
+                    <img v-if="p.images?.[0]?.url" :src="p.images[0].url" :alt="p.name" />
+                    <PhotoIcon v-else class="w-5 h-5" />
                   </div>
+                  <span class="admin-table__client">{{ p.name }}</span>
                 </div>
-                <span class="font-medium text-gray-800 line-clamp-1">{{ p.name }}</span>
-              </div>
-            </td>
-            <td class="px-5 py-4 text-gray-500">{{ p.category?.name ?? '—' }}</td>
-            <td class="px-5 py-4 font-semibold text-primary-500">{{ formatPrice(p.price) }}</td>
-            <td class="px-5 py-4">
-              <span :class="p.stock <= 5 ? 'badge-danger' : 'badge-success'">{{ p.stock }}</span>
-            </td>
-            <td class="px-5 py-4">
-              <span :class="p.is_active ? 'badge-success' : 'badge-gray'">
-                {{ p.is_active ? 'Actif' : 'Inactif' }}
-              </span>
-            </td>
-            <td class="px-5 py-4">
-              <div class="flex items-center gap-1">
-                <RouterLink :to="`/admin/products/${p.id}/edit`" class="btn-ghost !p-1.5 !rounded-lg">
-                  <PencilIcon class="size-4" />
+              </td>
+              <td>{{ p.category?.name ?? '—' }}</td>
+              <td class="admin-table__total">{{ formatPrice(p.price) }}</td>
+              <td>
+                <span :class="p.stock <= 5 ? 'badge badge-danger' : 'badge badge-success'">{{ p.stock }}</span>
+              </td>
+              <td>
+                <span :class="p.is_active ? 'badge badge-success' : 'badge badge-gray'">
+                  {{ p.is_active ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td class="admin-table__action-cell">
+                <RouterLink :to="`/admin/products/${p.id}/edit`" class="icon-btn icon-btn--edit" aria-label="Modifier">
+                  <PencilIcon class="w-4 h-4" />
                 </RouterLink>
-                <button @click="deleteProduct(p)" class="btn-ghost !p-1.5 !rounded-lg text-red-400 hover:text-red-600">
-                  <TrashIcon class="size-4" />
+                <button @click="deleteProduct(p)" class="icon-btn icon-btn--delete" aria-label="Supprimer">
+                  <TrashIcon class="w-4 h-4" />
                 </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
       <!-- Pagination -->
-      <div v-if="meta.last_page > 1" class="px-5 py-4 border-t border-gray-100 flex justify-end gap-2">
-        <button v-for="page in meta.last_page" :key="page"
-          @click="currentPage = page"
-          class="size-8 rounded-lg text-sm font-medium transition-colors"
-          :class="page === currentPage ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
-          {{ page }}
-        </button>
+      <div v-if="meta.last_page > 1" class="pagination">
+        <p>Page {{ currentPage }} / {{ meta.last_page }}</p>
+        <div class="pagination__actions">
+          <button v-for="page in meta.last_page" :key="page"
+            @click="currentPage = page"
+            class="page-btn"
+            :class="{ 'page-btn--active': page === currentPage }">
+            {{ page }}
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -113,7 +119,7 @@ async function load() {
     products.value = data.data
     meta.value     = data.meta ?? {}
   } catch {
-    // Keep existing data on error
+    // garder l'existant en cas d'erreur
   } finally {
     loading.value = false
   }
@@ -133,3 +139,77 @@ watch([search, statusFilter], () => { currentPage.value = 1; load() })
 watch(currentPage, load)
 onMounted(load)
 </script>
+
+<style scoped>
+.admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.page-header__sub {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  margin-top: 4px;
+}
+
+.filters-bar {
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.filters-bar .input { flex: 1; max-width: 320px; }
+.filters-bar__select { max-width: 200px; }
+
+.table-scroll { overflow-x: auto; }
+
+/* ── Table modifiers ── */
+.admin-table__product {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.admin-table__thumb {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--cream-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-300);
+  flex-shrink: 0;
+}
+.admin-table__thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.admin-table__client { font-weight: 500; color: var(--gray-800); }
+.admin-table__total { font-weight: 600; color: var(--rose-600) !important; }
+
+.admin-table__action-cell {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--cream-200);
+}
+.pagination p { font-size: 0.8125rem; color: var(--gray-400); }
+.pagination__actions { display: flex; gap: var(--space-1); }
+.page-btn {
+  width: 32px; height: 32px;
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  background: var(--cream-100);
+  color: var(--gray-600);
+  transition: all var(--transition-fast);
+}
+.page-btn:hover { background: var(--rose-50); color: var(--rose-500); }
+.page-btn--active {
+  background: var(--rose-500);
+  color: #fff;
+  box-shadow: var(--shadow-rose);
+}
+</style>

@@ -1,52 +1,67 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="admin-shell">
     <!-- Sidebar -->
-    <aside class="w-64 shrink-0 flex flex-col bg-white border-r border-gray-100 min-h-screen">
+    <aside class="admin-sidebar">
       <!-- Logo -->
-      <div class="h-16 flex items-center px-6 border-b border-gray-100">
-        <div class="flex items-center gap-2">
-          <span class="text-xl">🌹</span>
-          <div class="leading-tight">
-            <span class="block font-bold text-sm text-primary-600 tracking-wide">Rosa Beauty</span>
-            <span class="block text-[9px] text-gray-400 uppercase tracking-widest -mt-0.5">Admin</span>
-          </div>
+      <div class="admin-sidebar__logo">
+        <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
+          <circle cx="20" cy="20" r="19" fill="#fff0f5" stroke="#e8336d" stroke-width="1.5"/>
+          <path d="M20 10 C20 10 14 14 14 20 C14 26 20 30 20 30 C20 30 26 26 26 20 C26 14 20 10 20 10Z"
+                fill="#e8336d" opacity="0.9"/>
+          <circle cx="20" cy="20" r="3" fill="#fff" opacity="0.9"/>
+        </svg>
+        <div class="admin-sidebar__logo-text">
+          <span class="admin-sidebar__logo-name">Rosa Beauty</span>
+          <span class="admin-sidebar__logo-sub">Administration</span>
         </div>
       </div>
 
       <!-- Nav -->
-      <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        <RouterLink v-for="item in nav" :key="item.to" :to="item.to"
-          class="nav-link" :class="{ 'nav-link-active': isActive(item.to) }">
-          <component :is="item.icon" class="size-5 shrink-0" />
-          {{ item.label }}
+      <nav class="admin-sidebar__nav">
+        <RouterLink
+          v-for="item in nav"
+          :key="item.to"
+          :to="item.to"
+          class="admin-nav-link"
+          :class="{ 'admin-nav-link--active': isActive(item.to) }"
+        >
+          <component :is="item.icon" class="admin-nav-link__icon" />
+          <span>{{ item.label }}</span>
         </RouterLink>
       </nav>
 
       <!-- User -->
-      <div class="p-4 border-t border-gray-100">
-        <div class="flex items-center gap-3">
-          <div class="size-9 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold text-sm">
-            {{ auth.user?.name?.[0]?.toUpperCase() }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-800 truncate">{{ auth.user?.name }}</p>
-            <p class="text-xs text-gray-400 truncate">{{ auth.user?.email }}</p>
-          </div>
-          <button @click="handleLogout" class="btn-ghost !p-1.5 !rounded-lg text-gray-400 hover:text-red-500">
-            <ArrowLeftOnRectangleIcon class="size-5" />
-          </button>
+      <div class="admin-sidebar__user">
+        <div class="admin-sidebar__avatar">
+          {{ auth.user?.name?.[0]?.toUpperCase() }}
         </div>
+        <div class="admin-sidebar__user-info">
+          <p>{{ auth.user?.name }}</p>
+          <span>{{ auth.user?.email }}</span>
+        </div>
+        <button @click="handleLogout" class="admin-sidebar__logout" aria-label="Se déconnecter">
+          <ArrowLeftOnRectangleIcon class="w-4 h-4" />
+        </button>
       </div>
     </aside>
 
     <!-- Content -->
-    <div class="flex-1 flex flex-col min-w-0">
+    <div class="admin-main">
       <!-- Topbar -->
-      <header class="h-16 bg-white border-b border-gray-100 flex items-center px-6">
-        <h1 class="text-lg font-semibold text-gray-800">{{ currentTitle }}</h1>
+      <header class="admin-topbar">
+        <div>
+          <span class="eyebrow">Espace admin</span>
+          <h1 class="admin-topbar__title">{{ currentTitle }}</h1>
+        </div>
+        <RouterLink to="/" class="admin-topbar__shop-link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M19 12H5M12 5l-7 7 7 7" transform="rotate(180 12 12)"/>
+          </svg>
+          Voir la boutique
+        </RouterLink>
       </header>
 
-      <main class="flex-1 p-6 overflow-auto">
+      <main class="admin-content">
         <RouterView />
       </main>
     </div>
@@ -77,13 +92,16 @@ const nav = [
 ];
 
 const titles = {
-  'admin.dashboard':  'Dashboard',
+  'admin.dashboard':  'Vue d\'ensemble',
   'admin.products':   'Produits',
   'admin.categories': 'Catégories',
   'admin.orders':     'Commandes',
-  'admin.coupons':    'Coupons',
-  'admin.users':      'Clients',
-  'admin.settings':   'Paramètres',
+  'admin.order':      'Détail commande',
+  'admin.coupons':    'Coupons & promotions',
+  'admin.users':      'Clientes & clients',
+  'admin.settings':   'Paramètres boutique',
+  'admin.product-create': 'Nouveau produit',
+  'admin.product-edit':   'Modifier le produit',
 };
 
 const currentTitle = computed(() => titles[route.name] ?? 'Admin');
@@ -94,3 +112,217 @@ async function handleLogout() {
   router.push('/login');
 }
 </script>
+
+<style scoped>
+.admin-shell {
+  min-height: 100vh;
+  display: flex;
+  background: var(--cream-50);
+}
+
+/* ── Sidebar ── */
+.admin-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid var(--cream-200);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.admin-sidebar__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-5);
+  border-bottom: 1px solid var(--cream-200);
+}
+.admin-sidebar__logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.admin-sidebar__logo-name {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+.admin-sidebar__logo-sub {
+  font-size: 0.625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.admin-sidebar__nav {
+  flex: 1;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+.admin-nav-link__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.admin-nav-link:hover {
+  background: var(--rose-50);
+  color: var(--rose-600);
+}
+.admin-nav-link--active {
+  background: var(--rose-50);
+  color: var(--rose-600);
+  font-weight: 600;
+}
+.admin-nav-link--active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 22px;
+  background: var(--rose-500);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.admin-sidebar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--cream-200);
+}
+.admin-sidebar__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose-400), var(--rose-600));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  flex-shrink: 0;
+}
+.admin-sidebar__user-info {
+  flex: 1;
+  min-width: 0;
+}
+.admin-sidebar__user-info p {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.admin-sidebar__user-info span {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.admin-sidebar__logout {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.admin-sidebar__logout:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+/* ── Main ── */
+.admin-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-topbar {
+  height: 80px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--cream-200);
+  padding: 0 var(--space-8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.admin-topbar__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  letter-spacing: -0.01em;
+}
+.admin-topbar__shop-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all var(--transition-fast);
+}
+.admin-topbar__shop-link:hover {
+  border-color: var(--rose-300);
+  color: var(--rose-500);
+}
+
+.admin-content {
+  flex: 1;
+  padding: var(--space-8);
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .admin-sidebar { width: 80px; }
+  .admin-sidebar__logo-text,
+  .admin-sidebar__user-info,
+  .admin-nav-link span { display: none; }
+  .admin-nav-link { justify-content: center; padding: 12px; }
+  .admin-sidebar__logo { justify-content: center; padding: var(--space-4); }
+  .admin-sidebar__user { justify-content: center; }
+  .admin-topbar { padding: 0 var(--space-4); }
+  .admin-content { padding: var(--space-4); }
+}
+</style>

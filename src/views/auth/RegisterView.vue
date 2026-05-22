@@ -1,55 +1,49 @@
 <template>
-  <div class="min-h-screen bg-primary-50 flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-8">
-        <RouterLink to="/" class="text-3xl font-bold text-primary-500">🌺 Commerce</RouterLink>
-        <p class="text-gray-500 mt-2 text-sm">Créez votre compte en quelques secondes.</p>
+  <AuthShell
+    eyebrow="Création de compte"
+    title="Rejoignez <em>la fleur</em>"
+    desc="Créez votre compte en quelques secondes & profitez d'offres exclusives."
+    footer-text="Déjà un compte ?"
+    footer-link="/login"
+    footer-link-text="Se connecter"
+  >
+    <form @submit.prevent="handleSubmit" class="auth-form">
+      <div>
+        <label class="label">Nom complet</label>
+        <input v-model="form.name" type="text" class="input" placeholder="Fatou Konaté" required />
+      </div>
+      <div>
+        <label class="label">Email</label>
+        <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" required />
+      </div>
+      <div>
+        <label class="label">Téléphone</label>
+        <input v-model="form.phone" type="tel" class="input" placeholder="+225 07 00 00 00" />
+      </div>
+      <div>
+        <label class="label">Mot de passe</label>
+        <input v-model="form.password" type="password" class="input" placeholder="8 caractères minimum" required />
+      </div>
+      <div>
+        <label class="label">Confirmer le mot de passe</label>
+        <input v-model="form.password_confirmation" type="password" class="input" placeholder="••••••••" required />
       </div>
 
-      <div class="card p-8">
-        <form @submit.prevent="handleSubmit" class="space-y-5">
-          <div>
-            <label class="label">Nom complet</label>
-            <input v-model="form.name" type="text" class="input" placeholder="Jean Dupont" required />
-          </div>
-          <div>
-            <label class="label">Email</label>
-            <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" required />
-          </div>
-          <div>
-            <label class="label">Téléphone</label>
-            <input v-model="form.phone" type="tel" class="input" placeholder="+221 00 000 00 00" />
-          </div>
-          <div>
-            <label class="label">Mot de passe</label>
-            <input v-model="form.password" type="password" class="input" placeholder="8 caractères minimum" required />
-          </div>
-          <div>
-            <label class="label">Confirmer le mot de passe</label>
-            <input v-model="form.password_confirmation" type="password" class="input" placeholder="••••••••" required />
-          </div>
+      <p v-if="error" class="auth-error">{{ error }}</p>
 
-          <p v-if="error" class="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{{ error }}</p>
-
-          <button type="submit" class="btn-primary w-full" :disabled="loading">
-            <span v-if="loading">Création…</span>
-            <span v-else>Créer mon compte</span>
-          </button>
-        </form>
-
-        <p class="text-center text-sm text-gray-500 mt-6">
-          Déjà un compte ?
-          <RouterLink to="/login" class="text-primary-500 font-medium hover:underline">Se connecter</RouterLink>
-        </p>
-      </div>
-    </div>
-  </div>
+      <button type="submit" class="btn btn-primary btn-lg auth-submit" :disabled="loading">
+        <span v-if="loading" class="spinner spinner--sm"></span>
+        <span v-else>Créer mon compte</span>
+      </button>
+    </form>
+  </AuthShell>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
+import AuthShell from '@/components/auth/AuthShell.vue';
 
 const auth   = useAuthStore();
 const router = useRouter();
@@ -72,3 +66,26 @@ async function handleSubmit() {
   }
 }
 </script>
+
+<style scoped>
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.auth-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+}
+
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+</style>

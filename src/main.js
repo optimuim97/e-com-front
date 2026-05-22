@@ -4,7 +4,8 @@ import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import router from './router';
 import App from './App.vue';
-import './assets/app.css';
+import './assets/css/design-system.css'
+import './assets/app.css'
 
 const app = createApp(App);
 

@@ -1,66 +1,69 @@
-﻿<template>
-  <div class="space-y-6">
+<template>
+  <div class="admin-page">
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold text-gray-900">CatÃ©gories</h1>
-      <button @click="openCreate" class="btn-primary flex items-center gap-2">
+    <header class="page-header">
+      <div>
+        <span class="eyebrow">Boutique</span>
+        <h1 class="page-header__title">Catégories</h1>
+      </div>
+      <button @click="openCreate" class="btn btn-primary">
         <PlusIcon class="w-4 h-4" />
-        Nouvelle catÃ©gorie
+        Nouvelle catégorie
       </button>
-    </div>
+    </header>
 
     <!-- Form inline create/edit -->
-    <div v-if="showForm" class="card p-5 border-2 border-primary-500/30">
-      <h2 class="font-semibold text-gray-800 mb-4">
-        {{ editingId ? 'Modifier la catÃ©gorie' : 'Nouvelle catÃ©gorie' }}
+    <div v-if="showForm" class="card form-inline">
+      <h2 class="form-inline__title">
+        {{ editingId ? 'Modifier la catégorie' : 'Nouvelle catégorie' }}
       </h2>
-      <form @submit.prevent="saveCategory" class="flex flex-col sm:flex-row gap-3">
-        <input v-model="formName" type="text" class="input flex-1" required placeholder="Nom de la catÃ©gorie" />
-        <input v-model="formSlug" type="text" class="input flex-1" placeholder="slug-auto (optionnel)" />
-        <div class="flex gap-2">
-          <button type="submit" :disabled="saving" class="btn-primary px-5 disabled:opacity-50">
-            {{ saving ? 'â€¦' : (editingId ? 'Mettre Ã  jour' : 'CrÃ©er') }}
+      <form @submit.prevent="saveCategory" class="form-inline__row">
+        <input v-model="formName" type="text" class="input" required placeholder="Nom de la catégorie" />
+        <input v-model="formSlug" type="text" class="input" placeholder="slug-auto (optionnel)" />
+        <div class="form-inline__actions">
+          <button type="submit" :disabled="saving" class="btn btn-primary">
+            {{ saving ? '…' : (editingId ? 'Mettre à jour' : 'Créer') }}
           </button>
-          <button type="button" @click="cancelForm" class="btn-ghost px-4">Annuler</button>
+          <button type="button" @click="cancelForm" class="btn btn-ghost">Annuler</button>
         </div>
       </form>
-      <p v-if="formError" class="text-red-500 text-sm mt-2">{{ formError }}</p>
+      <p v-if="formError" class="form-error">{{ formError }}</p>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="flex justify-center py-16">
-      <div class="w-7 h-7 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+    <div v-if="loading" class="loader-wrap">
+      <div class="loader"></div>
     </div>
 
-    <!-- List -->
-    <div v-else-if="categories.length === 0" class="card p-12 text-center text-gray-400">
-      Aucune catÃ©gorie. Commencez par en crÃ©er une.
+    <!-- Empty -->
+    <div v-else-if="categories.length === 0" class="card empty-state">
+      <div class="empty-state__icon">🌸</div>
+      <p>Aucune catégorie. Commencez par en créer une.</p>
     </div>
 
-    <div v-else class="card overflow-hidden">
-      <table class="w-full text-sm">
-        <thead class="bg-gray-50 border-b border-gray-100">
+    <!-- Table -->
+    <div v-else class="card">
+      <table class="admin-table">
+        <thead>
           <tr>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Nom</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Slug</th>
-            <th class="text-left px-4 py-3 font-semibold text-gray-600">Produits</th>
-            <th class="px-4 py-3"></th>
+            <th>Nom</th>
+            <th>Slug</th>
+            <th>Produits</th>
+            <th></th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr v-for="cat in categories" :key="cat.id" class="hover:bg-gray-50 transition-colors">
-            <td class="px-4 py-3 font-medium text-gray-800">{{ cat.name }}</td>
-            <td class="px-4 py-3 text-gray-400 font-mono text-xs">{{ cat.slug }}</td>
-            <td class="px-4 py-3 text-gray-500">{{ cat.products_count ?? 0 }}</td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-2 justify-end">
-                <button @click="openEdit(cat)" class="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors">
-                  <PencilIcon class="w-4 h-4" />
-                </button>
-                <button @click="deleteCategory(cat)" class="p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-colors">
-                  <TrashIcon class="w-4 h-4" />
-                </button>
-              </div>
+        <tbody>
+          <tr v-for="cat in categories" :key="cat.id">
+            <td class="admin-table__client">{{ cat.name }}</td>
+            <td class="admin-table__mono">{{ cat.slug }}</td>
+            <td>{{ cat.products_count ?? 0 }}</td>
+            <td class="admin-table__action-cell">
+              <button @click="openEdit(cat)" class="icon-btn icon-btn--edit" aria-label="Modifier">
+                <PencilIcon class="w-4 h-4" />
+              </button>
+              <button @click="deleteCategory(cat)" class="icon-btn icon-btn--delete" aria-label="Supprimer">
+                <TrashIcon class="w-4 h-4" />
+              </button>
             </td>
           </tr>
         </tbody>
@@ -83,7 +86,6 @@ const formSlug = ref('')
 const formError = ref('')
 const saving = ref(false)
 
-// auto-slug
 watch(formName, (val) => {
   if (!editingId.value) {
     formSlug.value = val.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
@@ -142,15 +144,43 @@ async function saveCategory() {
 }
 
 async function deleteCategory(cat) {
-  if (!confirm(`Supprimer la catÃ©gorie "${cat.name}" ?`)) return
+  if (!confirm(`Supprimer la catégorie "${cat.name}" ?`)) return
   try {
     await api.delete(`/admin/categories/${cat.id}`)
     await fetchCategories()
   } catch (e) {
-    alert(e.response?.data?.message ?? 'Impossible de supprimer cette catÃ©gorie.')
+    alert(e.response?.data?.message ?? 'Impossible de supprimer cette catégorie.')
   }
 }
 
 onMounted(fetchCategories)
 </script>
 
+<style scoped>
+.admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* ── Form inline create/edit ── */
+.form-inline {
+  padding: var(--space-5);
+  border: 2px solid var(--rose-200);
+  background: linear-gradient(160deg, var(--rose-50) 0%, #fff 100%);
+}
+.form-inline__title {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  margin-bottom: var(--space-4);
+}
+.form-inline__row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.form-inline__row .input { flex: 1; min-width: 200px; }
+.form-inline__actions { display: flex; gap: var(--space-2); }
+
+/* ── Table modifiers ── */
+.admin-table__client { font-weight: 500; color: var(--gray-800); }
+.admin-table__action-cell { display: flex; gap: var(--space-2); justify-content: flex-end; }
+</style>
