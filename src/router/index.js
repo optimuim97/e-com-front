@@ -19,6 +19,9 @@ const routes = [
       { path: 'orders',         name: 'orders',   component: () => import('@/views/shop/OrdersView.vue'),    meta: { requiresAuth: true } },
       { path: 'orders/:number', name: 'order',    component: () => import('@/views/shop/OrderView.vue'),    meta: { requiresAuth: true } },
       { path: 'wishlist',       name: 'wishlist', component: () => import('@/views/shop/WishlistView.vue'), meta: { requiresAuth: true } },
+      { path: 'blog',              name: 'blog',          component: () => import('@/views/shop/BlogView.vue') },
+      { path: 'blog/:slug',       name: 'blog.post',     component: () => import('@/views/shop/BlogPostView.vue') },
+      { path: 'gammes/:slug',     name: 'product-line',  component: () => import('@/views/shop/ProductLineView.vue') },
     ],
   },
 
@@ -38,6 +41,12 @@ const routes = [
       { path: 'coupons',            name: 'admin.coupons',          component: () => import('@/views/admin/CouponsView.vue') },
       { path: 'users',              name: 'admin.users',            component: () => import('@/views/admin/UsersView.vue') },
       { path: 'settings',           name: 'admin.settings',         component: () => import('@/views/admin/SettingsView.vue') },
+      { path: 'blog',                        name: 'admin.blog',                  component: () => import('@/views/admin/BlogView.vue') },
+      { path: 'blog/create',                name: 'admin.blog.create',           component: () => import('@/views/admin/BlogFormView.vue') },
+      { path: 'blog/:id/edit',              name: 'admin.blog.edit',             component: () => import('@/views/admin/BlogFormView.vue') },
+      { path: 'product-lines',              name: 'admin.product-lines',         component: () => import('@/views/admin/ProductLinesView.vue') },
+      { path: 'product-lines/create',       name: 'admin.product-lines.create',  component: () => import('@/views/admin/ProductLineFormView.vue') },
+      { path: 'product-lines/:id/edit',     name: 'admin.product-lines.edit',    component: () => import('@/views/admin/ProductLineFormView.vue') },
     ],
   },
 

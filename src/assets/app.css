@@ -409,10 +409,136 @@ select.input {
   cursor: pointer;
 }
 
+/* Options du select — fond blanc + sélection rose */
+select option {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--gray-800);
+  background: #fff;
+  padding: 8px 12px;
+}
+select option:checked {
+  background: var(--rose-50);
+  color: var(--rose-700);
+}
+select option:disabled {
+  color: var(--gray-400);
+}
+
 /* Textarea — radius modéré, pill sur plusieurs lignes est inconfortable */
 textarea.input {
   border-radius: var(--radius-md);
   padding: 11px 18px;
   line-height: 1.65;
   resize: vertical;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Checkbox & Radio — style Rosa Beauty
+   Remplacement complet du rendu natif navigateur
+   ══════════════════════════════════════════════════════════════ */
+
+input[type="checkbox"],
+input[type="radio"] {
+  /* Supprimer le style natif */
+  appearance: none;
+  -webkit-appearance: none;
+
+  /* Dimensions & forme */
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+
+  /* Fond & bordure */
+  background: var(--cream-50);
+  border: 1.5px solid var(--cream-300);
+
+  /* Transitions */
+  transition:
+    border-color  var(--transition-fast),
+    background    var(--transition-fast),
+    box-shadow    var(--transition-fast);
+}
+
+/* Hover */
+input[type="checkbox"]:hover:not(:disabled),
+input[type="radio"]:hover:not(:disabled) {
+  border-color: var(--rose-300);
+  background: var(--rose-50);
+}
+
+/* Focus clavier */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--rose-400);
+  outline-offset: 2px;
+}
+
+/* Désactivé */
+input[type="checkbox"]:disabled,
+input[type="radio"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Checkbox ─────────────────────────────────────── */
+input[type="checkbox"] {
+  border-radius: 5px;
+}
+
+/* Coché */
+input[type="checkbox"]:checked {
+  background: var(--rose-500);
+  border-color: var(--rose-500);
+}
+
+/* Coche SVG inline (✓) */
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='2 6 5 9 10 3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 11px 11px;
+}
+
+/* État indéterminé */
+input[type="checkbox"]:indeterminate {
+  background: var(--rose-300);
+  border-color: var(--rose-300);
+}
+input[type="checkbox"]:indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 3px; right: 3px;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+  transform: translateY(-50%);
+}
+
+/* ── Radio ────────────────────────────────────────── */
+input[type="radio"] {
+  border-radius: 50%;
+}
+
+/* Sélectionné */
+input[type="radio"]:checked {
+  background: #fff;
+  border-color: var(--rose-500);
+  border-width: 2px;
+  box-shadow: inset 0 0 0 4px var(--rose-500);
+}
+
+/* ── Halo rose sur check/select ─────────────────── */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.12);
+}
+input[type="radio"]:checked {
+  box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.12), inset 0 0 0 4px var(--rose-500);
 }

@@ -26,7 +26,23 @@
             <h1 class="admin-order-header__title">{{ order.number }}</h1>
             <p class="admin-order-header__date">Passée le {{ formatDate(order.created_at) }}</p>
           </div>
-          <span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span>
+          <div class="flex items-center gap-3">
+            <span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span>
+            <button
+              @click="downloadInvoice"
+              :disabled="downloadingPdf"
+              class="admin-pdf-btn"
+              title="Télécharger la facture PDF"
+            >
+              <svg v-if="!downloadingPdf" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3M3 7V4a1 1 0 011-1h4l2 3h8a1 1 0 011 1v3" />
+              </svg>
+              <svg v-else class="w-4 h-4 admin-pdf-btn__spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/>
+              </svg>
+              <span class="text-sm font-medium">Facture PDF</span>
+            </button>
+          </div>
         </div>
 
         <!-- Items -->
@@ -54,8 +70,8 @@
                   </div>
                 </td>
                 <td class="py-3 text-center text-gray-600">{{ item.quantity }}</td>
-                <td class="py-3 text-right text-gray-600">{{ formatPrice(item.price) }}</td>
-                <td class="py-3 text-right font-semibold text-gray-800">{{ formatPrice(item.price * item.quantity) }}</td>
+                <td class="py-3 text-right text-gray-600">{{ formatPrice(item.unit_price) }}</td>
+                <td class="py-3 text-right font-semibold text-gray-800">{{ formatPrice(item.unit_price * item.quantity) }}</td>
               </tr>
             </tbody>
           </table>
@@ -82,10 +98,16 @@
         <div class="card p-6">
           <h2 class="font-semibold text-gray-800 mb-3">Adresse de livraison</h2>
           <address class="text-sm text-gray-600 not-italic leading-relaxed">
-            {{ order.shipping_first_name }} {{ order.shipping_last_name }}<br />
-            {{ order.shipping_address }}<br />
-            {{ order.shipping_city }}, {{ order.shipping_country }}<br />
-            Tél : {{ order.phone }}
+            <span class="font-medium text-gray-800">
+              {{ order.shipping_address?.first_name }} {{ order.shipping_address?.last_name }}
+            </span><br />
+            {{ order.shipping_address?.address_line1 }}<br />
+            <template v-if="order.shipping_address?.address_line2">
+              {{ order.shipping_address.address_line2 }}<br />
+            </template>
+            {{ order.shipping_address?.city }}<template v-if="order.shipping_address?.zip">, {{ order.shipping_address.zip }}</template><br />
+            <template v-if="order.shipping_address?.country">{{ countryName(order.shipping_address.country) }}<br /></template>
+            <span class="text-gray-400">Tél :</span> {{ order.shipping_address?.phone ?? '—' }}
           </address>
         </div>
       </div>
@@ -127,14 +149,7 @@
 
           <div>
             <label class="label">Statut</label>
-            <select v-model="editForm.status" class="input">
-              <option value="pending">En attente</option>
-              <option value="processing">En cours</option>
-              <option value="shipped">Expédiée</option>
-              <option value="delivered">Livrée</option>
-              <option value="cancelled">Annulée</option>
-              <option value="refunded">Remboursée</option>
-            </select>
+            <AppSelect v-model="editForm.status" :options="orderStatusOptions" />
           </div>
 
           <div>
@@ -173,17 +188,27 @@ import api from '@/api'
 import { buildClientMessage, buildWaLink } from '@/utils/whatsapp'
 
 const route = useRoute()
-const order       = ref(null)
-const loading     = ref(true)
-const saving      = ref(false)
-const saveSuccess = ref(false)
-const saveError   = ref('')
-const settings    = ref({})
+const order          = ref(null)
+const loading        = ref(true)
+const saving         = ref(false)
+const saveSuccess    = ref(false)
+const saveError      = ref('')
+const settings       = ref({})
+const downloadingPdf = ref(false)
 
 const editForm = reactive({
   status: '',
   tracking_number: '',
 })
+
+const orderStatusOptions = [
+  { value: 'pending',    label: 'En attente' },
+  { value: 'processing', label: 'En cours' },
+  { value: 'shipped',    label: 'Expédiée' },
+  { value: 'delivered',  label: 'Livrée' },
+  { value: 'cancelled',  label: 'Annulée' },
+  { value: 'refunded',   label: 'Remboursée' },
+]
 
 async function fetchOrder() {
   loading.value = true
@@ -211,6 +236,28 @@ const clientWaLink = computed(() => {
   const message  = buildClientMessage(order.value, shopName)
   return buildWaLink(phone, message)
 })
+
+async function downloadInvoice() {
+  if (!order.value) return
+  downloadingPdf.value = true
+  try {
+    const response = await api.get(`/admin/orders/${route.params.id}/invoice`, {
+      responseType: 'blob',
+    })
+    const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href  = url
+    link.download = `facture-${order.value.number}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch {
+    // silent — user can retry
+  } finally {
+    downloadingPdf.value = false
+  }
+}
 
 async function updateOrder() {
   saving.value = true
@@ -254,6 +301,15 @@ function statusBadge(status) {
   return map[status] ?? 'badge badge-gray'
 }
 
+function countryName(code) {
+  if (!code) return '—'
+  try {
+    return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code) ?? code
+  } catch {
+    return code
+  }
+}
+
 function paymentLabel(method) {
   const map = {
     wave: 'Wave', orange_money: 'Orange Money', stripe: 'Stripe',
@@ -284,6 +340,27 @@ onMounted(fetchOrder)
   align-items: flex-start;
   gap: var(--space-4);
 }
+
+.admin-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--rose-500);
+  color: #fff;
+  border: 1.5px solid var(--rose-500);
+  transition: all var(--transition-fast);
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+.admin-pdf-btn:hover:not(:disabled) {
+  background: var(--rose-600);
+  border-color: var(--rose-600);
+}
+.admin-pdf-btn:disabled { opacity: 0.65; cursor: default; }
+.admin-pdf-btn__spin { animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .admin-order-header__title {
   font-family: var(--font-display);
   font-size: 1.625rem;

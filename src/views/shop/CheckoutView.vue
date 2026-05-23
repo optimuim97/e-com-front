@@ -64,34 +64,12 @@
               <div class="grid-2">
                 <div>
                   <label class="label">Pays *</label>
-                  <select v-model="form.shipping_country" class="input" required @change="onShippingCountryChange">
-                    <option value="">Sélectionner un pays</option>
-                    <optgroup label="Afrique de l'Ouest">
-                      <option value="CI">🇨🇮 Côte d'Ivoire</option>
-                      <option value="SN">🇸🇳 Sénégal</option>
-                      <option value="ML">🇲🇱 Mali</option>
-                      <option value="BF">🇧🇫 Burkina Faso</option>
-                      <option value="GN">🇬🇳 Guinée</option>
-                      <option value="TG">🇹🇬 Togo</option>
-                      <option value="BJ">🇧🇯 Bénin</option>
-                      <option value="GH">🇬🇭 Ghana</option>
-                      <option value="NG">🇳🇬 Nigeria</option>
-                    </optgroup>
-                    <optgroup label="Europe">
-                      <option value="FR">🇫🇷 France</option>
-                      <option value="BE">🇧🇪 Belgique</option>
-                      <option value="CH">🇨🇭 Suisse</option>
-                      <option value="DE">🇩🇪 Allemagne</option>
-                      <option value="GB">🇬🇧 Royaume-Uni</option>
-                    </optgroup>
-                    <optgroup label="Amérique">
-                      <option value="CA">🇨🇦 Canada</option>
-                      <option value="US">🇺🇸 États-Unis</option>
-                    </optgroup>
-                    <optgroup label="Autre">
-                      <option value="OTHER">🌍 Autre pays</option>
-                    </optgroup>
-                  </select>
+                  <AppSelect
+                    v-model="form.shipping_country"
+                    :options="shippingCountryOptions"
+                    placeholder="Sélectionner un pays"
+                    @update:modelValue="onShippingCountryChange"
+                  />
                 </div>
                 <div>
                   <label class="label">Code postal</label>
@@ -155,21 +133,11 @@
                 <div class="grid-2">
                   <div>
                     <label class="label">Pays *</label>
-                    <select v-model="form.billing_country" class="input" required>
-                      <option value="">Sélectionner un pays</option>
-                      <option value="CI">Côte d'Ivoire</option>
-                      <option value="SN">Sénégal</option>
-                      <option value="ML">Mali</option>
-                      <option value="BF">Burkina Faso</option>
-                      <option value="GN">Guinée</option>
-                      <option value="TG">Togo</option>
-                      <option value="BJ">Bénin</option>
-                      <option value="GH">Ghana</option>
-                      <option value="FR">France</option>
-                      <option value="BE">Belgique</option>
-                      <option value="CA">Canada</option>
-                      <option value="OTHER">Autre</option>
-                    </select>
+                    <AppSelect
+                      v-model="form.billing_country"
+                      :options="billingCountryOptions"
+                      placeholder="Sélectionner un pays"
+                    />
                   </div>
                 </div>
               </div>
@@ -250,7 +218,7 @@
               </div>
               <p v-if="couponError" class="checkout-msg checkout-msg--error">{{ couponError }}</p>
               <p v-if="couponApplied" class="checkout-msg checkout-msg--success">
-                Code appliqué — {{ couponDiscount }}% de réduction
+                Code appliqué — {{ formatPrice(discountAmount) }} de réduction
               </p>
             </div>
           </section>
@@ -293,12 +261,14 @@
               <span>{{ formatPrice(Number(cartStore.subtotal)) }}</span>
             </li>
             <li v-if="couponApplied" class="checkout-summary__line--discount">
-              <span>Réduction ({{ couponDiscount }}%)</span>
-              <span>-{{ formatPrice(Number(cartStore.subtotal) * couponDiscount / 100) }}</span>
+              <span>Réduction{{ couponLabelSuffix }}</span>
+              <span>-{{ formatPrice(discountAmount) }}</span>
             </li>
             <li>
               <span>Livraison</span>
-              <span class="checkout-summary__free">Gratuite</span>
+              <span :class="shippingCost === 0 ? 'checkout-summary__free' : ''">
+                {{ shippingCost > 0 ? formatPrice(shippingCost) : 'Gratuite' }}
+              </span>
             </li>
             <li class="checkout-summary__line--total">
               <span>Total</span>
@@ -334,10 +304,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/stores/cart'
+import { useAuthStore } from '@/stores/auth'
 import { usePinStore } from '@/stores/pin'
 import PinRevealModal from '@/components/PinRevealModal.vue'
 import CitySelect from '@/components/shop/CitySelect.vue'
@@ -345,11 +316,13 @@ import CityFree from '@/components/shop/CityFree.vue'
 
 const router = useRouter()
 const cartStore = useCartStore()
+const authStore = useAuthStore()
 const pinStore = usePinStore()
 
 const generatedPin = ref(null)
 const pendingOrderNr = ref(null)
 const sameAsShipping = ref(true)
+const couponFromCart = ref(false)
 
 const form = ref({
   // Personal info
@@ -382,6 +355,41 @@ const form = ref({
   billing_country: 'CI',
 })
 
+const shippingCountryOptions = [
+  { value: 'CI',    label: '🇨🇮 Côte d\'Ivoire' },
+  { value: 'SN',    label: '🇸🇳 Sénégal' },
+  { value: 'ML',    label: '🇲🇱 Mali' },
+  { value: 'BF',    label: '🇧🇫 Burkina Faso' },
+  { value: 'GN',    label: '🇬🇳 Guinée' },
+  { value: 'TG',    label: '🇹🇬 Togo' },
+  { value: 'BJ',    label: '🇧🇯 Bénin' },
+  { value: 'GH',    label: '🇬🇭 Ghana' },
+  { value: 'NG',    label: '🇳🇬 Nigeria' },
+  { value: 'FR',    label: '🇫🇷 France' },
+  { value: 'BE',    label: '🇧🇪 Belgique' },
+  { value: 'CH',    label: '🇨🇭 Suisse' },
+  { value: 'DE',    label: '🇩🇪 Allemagne' },
+  { value: 'GB',    label: '🇬🇧 Royaume-Uni' },
+  { value: 'CA',    label: '🇨🇦 Canada' },
+  { value: 'US',    label: '🇺🇸 États-Unis' },
+  { value: 'OTHER', label: '🌍 Autre pays' },
+]
+
+const billingCountryOptions = [
+  { value: 'CI',    label: 'Côte d\'Ivoire' },
+  { value: 'SN',    label: 'Sénégal' },
+  { value: 'ML',    label: 'Mali' },
+  { value: 'BF',    label: 'Burkina Faso' },
+  { value: 'GN',    label: 'Guinée' },
+  { value: 'TG',    label: 'Togo' },
+  { value: 'BJ',    label: 'Bénin' },
+  { value: 'GH',    label: 'Ghana' },
+  { value: 'FR',    label: 'France' },
+  { value: 'BE',    label: 'Belgique' },
+  { value: 'CA',    label: 'Canada' },
+  { value: 'OTHER', label: 'Autre' },
+]
+
 const paymentMethods = [
   { value: 'wave', label: 'Wave', icon: '💙' },
   { value: 'orange_money', label: 'Orange Money', icon: '🟠' },
@@ -392,16 +400,58 @@ const paymentMethods = [
 
 const couponCode = ref('')
 const couponApplied = ref(false)
-const couponDiscount = ref(0)
+const couponDiscount = ref(0)   // percentage when local coupon; 0 when from cart (use discountAmount)
 const couponError = ref('')
 const couponLoading = ref(false)
 const submitting = ref(false)
 const submitError = ref('')
 
+// Monetary discount: from server when coupon came from cart, computed locally otherwise
+const discountAmount = computed(() => {
+  if (!couponApplied.value) return 0
+  if (couponFromCart.value) return Number(cartStore.cart.discount ?? 0)
+  return Number(cartStore.subtotal) * couponDiscount.value / 100
+})
+
+// Label suffix shown next to "Réduction" in the summary
+const couponLabelSuffix = computed(() => {
+  if (!couponApplied.value) return ''
+  if (couponFromCart.value) {
+    const c = cartStore.coupon
+    return c?.type === 'percentage' ? ` (${c.value}%)` : ''
+  }
+  return ` (${couponDiscount.value}%)`
+})
+
+const shippingCost = computed(() => form.value.shipping_method === 'express' ? 2000 : 0)
+
 const orderTotal = computed(() => {
-  const sub = Number(cartStore.subtotal ?? 0)
-  if (couponApplied.value) return sub - sub * couponDiscount.value / 100
-  return sub
+  // Use server-validated total when coupon comes from cart (avoids trusting client math)
+  const base = couponFromCart.value
+    ? Number(cartStore.total ?? 0)
+    : Number(cartStore.subtotal ?? 0) - discountAmount.value
+  return base + shippingCost.value
+})
+
+onMounted(() => {
+  // Pre-fill personal info from logged-in user
+  const u = authStore.user
+  if (u) {
+    const parts = (u.name ?? '').trim().split(/\s+/)
+    form.value.first_name = parts[0] ?? ''
+    form.value.last_name  = parts.slice(1).join(' ')
+    form.value.email      = u.email ?? ''
+    form.value.phone      = u.phone ?? ''
+  }
+
+  // Restore coupon applied from the cart page (already server-validated)
+  const c = cartStore.coupon
+  if (c) {
+    couponCode.value     = c.code
+    couponApplied.value  = true
+    couponFromCart.value = true
+    couponDiscount.value = c.type === 'percentage' ? c.value : 0
+  }
 })
 
 // Remet à zéro les champs ville/commune/région quand le pays change
@@ -498,7 +548,10 @@ async function submitOrder() {
     }
   } catch (e) {
     console.error('Order error:', e.response?.data)
-    submitError.value = e.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.'
+    // 5xx : le toast global a déjà prévenu l'utilisateur
+    if (!e._serverError) {
+      submitError.value = e.response?.data?.message || 'Une erreur est survenue. Veuillez réessayer.'
+    }
   } finally {
     submitting.value = false
   }

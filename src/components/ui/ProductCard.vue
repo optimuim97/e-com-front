@@ -15,18 +15,9 @@
       </div>
 
       <!-- Wishlist -->
-      <button
-        class="product-card__wish"
-        :class="{ 'product-card__wish--active': wishlisted }"
-        @click.prevent="toggleWishlist"
-        :aria-label="wishlisted ? 'Retirer des favoris' : 'Ajouter aux favoris'"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24"
-          :fill="wishlisted ? 'currentColor' : 'none'"
-          stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-        </svg>
-      </button>
+      <div class="absolute top-3 right-3 z-10" @click.prevent>
+        <WishlistButton :productId="product.id" />
+      </div>
 
       <!-- Image principale -->
       <RouterLink :to="`/products/${product.slug}`" class="product-card__img-link">
@@ -74,7 +65,18 @@
 
     <!-- ── Infos produit ── -->
     <div class="product-card__info">
-      <span class="product-card__cat">{{ product.category?.name }}</span>
+      <div class="product-card__meta">
+        <span class="product-card__cat">{{ product.category?.name }}</span>
+        <RouterLink
+          v-if="product.product_line"
+          :to="`/gammes/${product.product_line.slug}`"
+          class="product-card__line"
+          :style="{ color: product.product_line.color_hex, borderColor: product.product_line.color_hex + '44', background: product.product_line.color_hex + '12' }"
+          @click.stop
+        >
+          {{ product.product_line.name }}
+        </RouterLink>
+      </div>
 
       <RouterLink :to="`/products/${product.slug}`" class="product-card__name-link">
         <h3 class="product-card__name">{{ product.name }}</h3>
@@ -121,6 +123,8 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { RouterLink } from 'vue-router';
+import WishlistButton from '@/components/shop/WishlistButton.vue'
+
 
 const props = defineProps({
   product:  { type: Object,  required: true },
@@ -287,6 +291,12 @@ function toggleWishlist() {
   gap: var(--space-2);
   flex: 1;
 }
+.product-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
 .product-card__cat {
   font-size: 0.6875rem;
   font-weight: 500;
@@ -294,6 +304,17 @@ function toggleWishlist() {
   text-transform: uppercase;
   color: var(--rose-400);
 }
+.product-card__line {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: 1px solid;
+  transition: opacity var(--transition-fast);
+}
+.product-card__line:hover { opacity: 0.75; }
 .product-card__name-link { display: block; }
 .product-card__name {
   font-family: var(--font-display);

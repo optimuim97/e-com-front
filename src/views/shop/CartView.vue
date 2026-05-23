@@ -45,8 +45,11 @@
             </div>
 
             <div class="cart-item__actions">
-              <button @click="cartStore.remove(item.id)" class="cart-item__remove" aria-label="Retirer">
-                <XMarkIcon class="w-4 h-4" />
+              <button @click="removeItem(item.id)"
+                :disabled="removingItemId === item.id"
+                class="cart-item__remove" aria-label="Retirer">
+                <span v-if="removingItemId === item.id" class="cart-item__spinner"></span>
+                <XMarkIcon v-else class="w-4 h-4" />
               </button>
               <div class="cart-item__qty">
                 <button @click="changeQty(item, -1)" :disabled="loadingItemId === item.id"
@@ -71,13 +74,21 @@
           <!-- Coupon -->
           <div class="cart-summary__coupon">
             <div v-if="!cartStore.cart.coupon" class="cart-summary__coupon-form">
-              <input v-model="couponCode" class="input" placeholder="Code promo" />
-              <button @click="applyCoupon" class="btn btn-outline btn-sm">Appliquer</button>
+              <input v-model="couponCode" class="input" placeholder="Code promo"
+                :disabled="couponLoading" @keydown.enter="applyCoupon" />
+              <button @click="applyCoupon"
+                :disabled="couponLoading"
+                class="btn btn-outline btn-sm cart-summary__coupon-btn">
+                <span v-if="couponLoading" class="cart-item__spinner"></span>
+                <span v-else>Appliquer</span>
+              </button>
             </div>
-            <div v-else class="cart-summary__coupon-applied">
+            <p v-if="couponError" class="cart-summary__coupon-error">{{ couponError }}</p>
+            <div v-if="cartStore.cart.coupon" class="cart-summary__coupon-applied">
               <span>{{ cartStore.cart.coupon.code }}</span>
-              <button @click="cartStore.removeCoupon()" aria-label="Retirer le code">
-                <XMarkIcon class="w-4 h-4" />
+              <button @click="removeCoupon" :disabled="removingCoupon" aria-label="Retirer le code">
+                <span v-if="removingCoupon" class="cart-item__spinner"></span>
+                <XMarkIcon v-else class="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -97,7 +108,7 @@
             </li>
           </ul>
 
-          <RouterLink to="/checkout" class="btn btn-primary btn-lg cart-summary__cta">
+          <RouterLink :to="{name : 'checkout', params: cartData }" class="btn btn-primary btn-lg cart-summary__cta">
             Passer la commande
           </RouterLink>
 
@@ -116,9 +127,13 @@ import { RouterLink } from 'vue-router';
 import { XMarkIcon, PlusIcon, MinusIcon } from '@heroicons/vue/24/outline';
 import { useCartStore } from '@/stores/cart';
 
-const cartStore     = useCartStore();
-const couponCode    = ref('');
-const loadingItemId = ref(null);
+const cartStore       = useCartStore();
+const couponCode      = ref('');
+const couponLoading   = ref(false);
+const couponError     = ref('');
+const removingCoupon  = ref(false);
+const loadingItemId   = ref(null);
+const removingItemId  = ref(null);
 
 async function changeQty(item, delta) {
   if (loadingItemId.value) return;
@@ -132,14 +147,43 @@ async function changeQty(item, delta) {
   }
 }
 
+async function removeItem(itemId) {
+  if (removingItemId.value) return;
+  removingItemId.value = itemId;
+  try {
+    await cartStore.remove(itemId);
+  } finally {
+    removingItemId.value = null;
+  }
+}
+
+async function removeCoupon() {
+  removingCoupon.value = true;
+  try {
+    await cartStore.removeCoupon();
+  } finally {
+    removingCoupon.value = false;
+  }
+}
+
 function formatPrice(price) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price ?? 0);
 }
 
 async function applyCoupon() {
   if (!couponCode.value.trim()) return;
-  await cartStore.applyCoupon(couponCode.value.trim());
-  couponCode.value = '';
+  couponLoading.value = true;
+  couponError.value   = '';
+  try {
+    await cartStore.applyCoupon(couponCode.value.trim());
+    couponCode.value = '';
+  } catch (e) {
+    if (!e._serverError) {
+      couponError.value = e.response?.data?.message ?? 'Code invalide.';
+    }
+  } finally {
+    couponLoading.value = false;
+  }
 }
 </script>
 
@@ -334,6 +378,17 @@ async function applyCoupon() {
   gap: var(--space-2);
 }
 .cart-summary__coupon-form .input { flex: 1; }
+.cart-summary__coupon-btn {
+  min-width: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cart-summary__coupon-error {
+  font-size: 0.75rem;
+  color: #b91c1c;
+  margin-top: var(--space-1);
+}
 
 .cart-summary__coupon-applied {
   display: flex;

@@ -31,48 +31,14 @@
 
     <div class="container products-layout">
       <!-- Sidebar filtres -->
-      <aside class="products-filters" :class="{ 'products-filters--open': filtersOpen }">
-        <div class="products-filters__header">
-          <h2 class="products-filters__title">Filtres</h2>
-          <button class="products-filters__close hide-desktop" @click="filtersOpen = false">×</button>
-        </div>
-
-        <!-- Catégories -->
-        <div class="filter-group">
-          <h3 class="filter-group__title">Catégorie</h3>
-          <ul class="filter-group__list">
-            <li>
-              <label class="filter-checkbox">
-                <input type="radio" v-model="filters.category" :value="null" class="filter-checkbox__input" />
-                <span class="filter-checkbox__box"></span>
-                <span class="filter-checkbox__label">Toutes</span>
-              </label>
-            </li>
-            <li v-for="cat in categories" :key="cat.id">
-              <label class="filter-checkbox">
-                <input type="radio" v-model="filters.category" :value="cat.slug" class="filter-checkbox__input" />
-                <span class="filter-checkbox__box"></span>
-                <span class="filter-checkbox__label">{{ cat.name }}</span>
-              </label>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Prix -->
-        <div class="filter-group">
-          <h3 class="filter-group__title">Prix (FCFA)</h3>
-          <div class="filter-price-inputs">
-            <input v-model.number="filters.min_price" type="number" placeholder="Min" class="input filter-price-input" />
-            <span class="filter-price-sep">–</span>
-            <input v-model.number="filters.max_price" type="number" placeholder="Max" class="input filter-price-input" />
-          </div>
-        </div>
-
-        <!-- Reset -->
-        <button v-if="hasActiveFilters" class="filter-reset" @click="resetFilters">
-          Effacer tous les filtres
-        </button>
-      </aside>
+      <ProductFilters
+        :categories="categories"
+        :filters="filters"
+        :has-active-filters="hasActiveFilters"
+        :open="filtersOpen"
+        @reset="resetFilters"
+        @close="filtersOpen = false"
+      />
 
       <!-- Grille produits -->
       <div class="products-main">
@@ -90,12 +56,10 @@
           </p>
 
           <div class="products-sort">
-            <label for="sort-select" class="products-sort__label">Trier par</label>
-            <select id="sort-select" v-model="filters.sort" class="input products-sort__select">
-              <option value="">Plus récents</option>
-              <option value="price_asc">Prix : croissant</option>
-              <option value="price_desc">Prix : décroissant</option>
-            </select>
+            <span class="products-sort__label">Trier par</span>
+            <div class="products-sort__select">
+              <AppSelect v-model="filters.sort" :options="sortOptions" placeholder="Plus récents" />
+            </div>
           </div>
         </div>
 
@@ -107,8 +71,7 @@
           <ProductCard
             v-for="p in products"
             :key="p.id"
-            :product="normalizeProduct(p)"
-            :featured="p.is_featured"
+            :product="p"
             @add-to-cart="addToCart"
           />
         </div>
@@ -141,15 +104,22 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/stores/cart'
-import ProductCard from '@/components/ui/ProductCard.vue'
+import ProductCard    from '@/components/ui/ProductCard.vue'
+import AppSelect      from '@/components/ui/AppSelect.vue'
+import ProductFilters from '@/components/shop/ProductFilters.vue'
 
-const route = useRoute()
+const route     = useRoute()
 const cartStore = useCartStore()
-const products = ref([])
+const products  = ref([])
 const categories = ref([])
-const meta = ref({})
-const loading = ref(true)
+const meta      = ref({})
+const loading   = ref(true)
 const filtersOpen = ref(false)
+
+const sortOptions = [
+  { value: 'price_asc',  label: 'Prix : croissant' },
+  { value: 'price_desc', label: 'Prix : décroissant' },
+]
 
 const filters = reactive({
   category:  route.query.category ?? null,
@@ -170,27 +140,6 @@ function debouncedSearch() {
 const hasActiveFilters = computed(() =>
   !!(filters.category || filters.search || filters.min_price || filters.max_price)
 )
-
-function normalizeProduct(p) {
-  return {
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    shortDesc: p.description_short ?? null,
-    category: p.category?.name ?? '',
-    price: p.price,
-    priceOld: p.compare_price ?? null,
-    image: p.images?.[0]?.url ?? null,
-    imageAlt: p.images?.[1]?.url ?? null,
-    isNew: !!p.is_new,
-    isBestSeller: !!p.is_featured,
-    discount: p.discount_percent ?? null,
-    rating: p.rating_avg ?? null,
-    reviewCount: p.reviews_count ?? 0,
-    stock: p.stock,
-    wishlisted: false,
-  }
-}
 
 function addToCart(product) {
   const id = product.id ?? product
@@ -267,10 +216,7 @@ function resetFilters() {
   min-width: 280px;
 }
 
-.products-search-input {
-  /* Variante de .input avec un padding-left pour laisser place à l'icône loupe */
-  padding-left: 44px;
-}
+.products-search-input { padding-left: 44px; }
 
 .products-search-icon {
   position: absolute;
@@ -290,132 +236,6 @@ function resetFilters() {
   padding-bottom: var(--space-16);
   align-items: start;
 }
-
-/* ── Filtres ── */
-.products-filters {
-  background: var(--color-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border-light);
-  padding: var(--space-5);
-  position: sticky;
-  top: calc(var(--navbar-height) + var(--space-6));
-}
-
-.products-filters__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-5);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--cream-200);
-}
-
-.products-filters__title {
-  font-family: var(--font-display);
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--gray-800);
-}
-
-.products-filters__close {
-  font-size: 1.5rem;
-  color: var(--gray-400);
-  padding: 4px;
-}
-
-/* ── Groupes de filtres ── */
-.filter-group {
-  margin-bottom: var(--space-6);
-  padding-bottom: var(--space-6);
-  border-bottom: 1px solid var(--cream-200);
-}
-.filter-group:last-of-type { border-bottom: none; }
-
-.filter-group__title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: var(--gray-600);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: var(--space-4);
-}
-
-.filter-group__list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  cursor: pointer;
-}
-
-.filter-checkbox__input { display: none; }
-
-.filter-checkbox__box {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--cream-300);
-  border-radius: 50%;
-  background: #fff;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.filter-checkbox__input:checked + .filter-checkbox__box {
-  background: var(--rose-500);
-  border-color: var(--rose-500);
-}
-.filter-checkbox__input:checked + .filter-checkbox__box::after {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: #fff;
-  border-radius: 50%;
-  display: block;
-}
-
-.filter-checkbox__label {
-  font-size: 0.875rem;
-  color: var(--gray-600);
-  flex: 1;
-}
-
-/* ── Prix ── */
-.filter-price-inputs {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.filter-price-input {
-  /* Variante .input compacte pour les filtres prix min/max */
-  flex: 1;
-  width: 0;
-  padding: 8px 14px;
-  font-size: 0.8125rem;
-}
-.filter-price-sep { color: var(--gray-300); }
-
-.filter-reset {
-  width: 100%;
-  padding: 10px;
-  font-size: 0.8125rem;
-  color: var(--rose-500);
-  border: 1.5px dashed var(--rose-200);
-  border-radius: var(--radius-md);
-  background: none;
-  margin-top: var(--space-2);
-  transition: all var(--transition-fast);
-}
-.filter-reset:hover { background: var(--rose-50); }
 
 /* ── Toolbar ── */
 .products-toolbar {
@@ -461,7 +281,6 @@ function resetFilters() {
 }
 
 .products-sort__select {
-  /* Variante .input compacte pour le tri */
   width: auto;
   padding: 8px 36px 8px 16px;
 }
@@ -536,19 +355,6 @@ function resetFilters() {
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .products-layout { grid-template-columns: 1fr; }
-  .products-filters {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    bottom: 0;
-    z-index: var(--z-modal);
-    width: 280px;
-    border-radius: 0;
-    overflow-y: auto;
-    transition: left var(--transition-normal);
-    box-shadow: var(--shadow-lg);
-  }
-  .products-filters--open { left: 0; }
   .products-hero__inner { flex-direction: column; align-items: flex-start; }
   .products-hero__search { min-width: unset; width: 100%; }
 }

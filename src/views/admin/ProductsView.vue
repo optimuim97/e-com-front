@@ -15,11 +15,7 @@
     <!-- Filtres -->
     <div class="card filters-bar">
       <input v-model="search" class="input" placeholder="Rechercher…" />
-      <select v-model="statusFilter" class="input filters-bar__select">
-        <option value="">Tous les statuts</option>
-        <option value="1">Actifs</option>
-        <option value="0">Inactifs</option>
-      </select>
+      <AppSelect v-model="statusFilter" :options="statusFilterOptions" placeholder="Tous les statuts" class="filters-bar__select" />
     </div>
 
     <!-- Table -->
@@ -104,6 +100,11 @@ const meta         = ref({})
 const loading      = ref(true)
 const search       = ref('')
 const statusFilter = ref('')
+
+const statusFilterOptions = [
+  { value: '1', label: 'Actifs' },
+  { value: '0', label: 'Inactifs' },
+]
 const currentPage  = ref(1)
 
 function formatPrice(price) {

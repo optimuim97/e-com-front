@@ -74,6 +74,7 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import {
   Squares2X2Icon, ShoppingBagIcon, TagIcon, TicketIcon,
   UsersIcon, ArrowLeftOnRectangleIcon, FolderIcon, Cog6ToothIcon,
+  NewspaperIcon, SparklesIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/stores/auth';
 
@@ -84,9 +85,11 @@ const router = useRouter();
 const nav = [
   { to: '/admin',            label: 'Dashboard',    icon: Squares2X2Icon  },
   { to: '/admin/products',   label: 'Produits',     icon: ShoppingBagIcon },
-  { to: '/admin/categories', label: 'Catégories',   icon: FolderIcon      },
-  { to: '/admin/orders',     label: 'Commandes',    icon: TagIcon         },
-  { to: '/admin/coupons',    label: 'Coupons',      icon: TicketIcon      },
+  { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon    },
+  { to: '/admin/product-lines', label: 'Gammes',      icon: SparklesIcon  },
+  { to: '/admin/orders',        label: 'Commandes',   icon: TagIcon       },
+  { to: '/admin/coupons',       label: 'Coupons',     icon: TicketIcon    },
+  { to: '/admin/blog',          label: 'Blog',        icon: NewspaperIcon },
   { to: '/admin/users',      label: 'Clients',      icon: UsersIcon       },
   { to: '/admin/settings',   label: 'Paramètres',   icon: Cog6ToothIcon   },
 ];
@@ -100,8 +103,14 @@ const titles = {
   'admin.coupons':    'Coupons & promotions',
   'admin.users':      'Clientes & clients',
   'admin.settings':   'Paramètres boutique',
-  'admin.product-create': 'Nouveau produit',
-  'admin.product-edit':   'Modifier le produit',
+  'admin.products.create': 'Nouveau produit',
+  'admin.products.edit':   'Modifier le produit',
+  'admin.blog':                  'Blog & Actualités',
+  'admin.blog.create':           'Nouvel article',
+  'admin.blog.edit':             'Modifier l\'article',
+  'admin.product-lines':         'Gammes de produits',
+  'admin.product-lines.create':  'Nouvelle gamme',
+  'admin.product-lines.edit':    'Modifier la gamme',
 };
 
 const currentTitle = computed(() => titles[route.name] ?? 'Admin');

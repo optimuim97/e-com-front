@@ -40,7 +40,7 @@ export const useCartStore = defineStore('cart', () => {
     cart.value = data;
   }
 
-  async function applyCoupon(code) {
+  async function applyCoupon(code)  {
     const { data } = await api.post('/cart/coupon', { code });
     cart.value = data;
   }

@@ -33,13 +33,24 @@
             </div>
             <div class="order-header__actions">
               <span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span>
-              <button @click="showChangePinModal = true" class="order-pin-btn" title="Modifier mon code PIN">
+              <div class="order-header__btns">
+                <button @click="downloadInvoice" :disabled="downloadingPdf" class="order-pdf-btn" title="Télécharger la facture PDF">
+                  <svg v-if="!downloadingPdf" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3M3 7V4a1 1 0 011-1h4l2 3h8a1 1 0 011 1v3" />
+                  </svg>
+                  <svg v-else width="13" height="13" class="order-pdf-btn__spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke-linecap="round"/>
+                  </svg>
+                  Facture
+                </button>
+                <button @click="showChangePinModal = true" class="order-pin-btn" title="Modifier mon code PIN">
                 <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round"
                     d="M16.5 10.5V7.5a4.5 4.5 0 10-9 0v3M4.5 10.5h15A1.5 1.5 0 0121 12v7.5A1.5 1.5 0 0119.5 21h-15A1.5 1.5 0 013 19.5V12a1.5 1.5 0 011.5-1.5z" />
                 </svg>
                 PIN
-              </button>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -162,9 +173,32 @@ const order    = ref(null)
 const loading  = ref(true)
 const settings = ref({})
 const showChangePinModal = ref(false)
+const downloadingPdf     = ref(false)
 
 function onPinVerified() {
   // PIN verified — order content is now visible
+}
+
+async function downloadInvoice() {
+  if (!order.value) return
+  downloadingPdf.value = true
+  try {
+    const response = await api.get(`/orders/${order.value.number}/invoice`, {
+      responseType: 'blob',
+    })
+    const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href  = url
+    link.download = `facture-${order.value.number}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch {
+    // silent — user can retry
+  } finally {
+    downloadingPdf.value = false
+  }
 }
 
 async function fetchOrder() {
@@ -318,6 +352,34 @@ onMounted(fetchOrder)
   align-items: flex-end;
   gap: var(--space-2);
 }
+.order-header__btns {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.order-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: var(--rose-500);
+  border: 1.5px solid var(--rose-500);
+  transition: all var(--transition-fast);
+  font-weight: 500;
+}
+.order-pdf-btn:hover:not(:disabled) {
+  background: var(--rose-600);
+  border-color: var(--rose-600);
+}
+.order-pdf-btn:disabled { opacity: 0.65; cursor: default; }
+.order-pdf-btn__spin {
+  animation: spin 0.7s linear infinite;
+}
+
 .order-pin-btn {
   display: inline-flex;
   align-items: center;

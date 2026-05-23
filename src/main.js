@@ -4,10 +4,12 @@ import Toast from 'vue-toastification';
 import 'vue-toastification/dist/index.css';
 import router from './router';
 import App from './App.vue';
+import AppSelect from '@/components/ui/AppSelect.vue';
 import './assets/css/design-system.css'
 import './assets/app.css'
 
 const app = createApp(App);
+app.component('AppSelect', AppSelect);
 
 app.use(createPinia());
 app.use(router);

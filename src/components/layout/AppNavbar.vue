@@ -3,10 +3,7 @@
     <!-- Bande d'annonce -->
     <div class="navbar__announce" v-if="!announceDismissed">
       <div class="navbar__announce-inner container">
-        <span>
-          🌹 Livraison offerte dès 25 000 FCFA &nbsp;·&nbsp;
-          Paiement sécurisé Wave & Orange Money
-        </span>
+        <span>{{ settings.announceText }}</span>
         <button class="navbar__announce-close" @click="announceDismissed = true" aria-label="Fermer">
           ×
         </button>
@@ -143,7 +140,8 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuthStore }     from '@/stores/auth'
+import { useSettingsStore } from '@/stores/settings'
 
 const props = defineProps({
   cartCount:     { type: Number, default: 0 },
@@ -152,8 +150,9 @@ const props = defineProps({
 
 defineEmits(['open-search'])
 
-const route = useRoute()
-const auth = useAuthStore()
+const route    = useRoute()
+const auth     = useAuthStore()
+const settings = useSettingsStore()
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const announceDismissed = ref(false)
@@ -161,6 +160,7 @@ const announceDismissed = ref(false)
 const navLinks = computed(() => [
   { to: '/',          label: 'Accueil' },
   { to: '/products',  label: 'Produits' },
+  { to: '/blog',      label: 'Blog' },
   ...(auth.isLoggedIn ? [{ to: '/wishlist', label: 'Favoris', badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
   ...(auth.isLoggedIn ? [{ to: '/orders',   label: 'Mes commandes' }] : []),
 ])

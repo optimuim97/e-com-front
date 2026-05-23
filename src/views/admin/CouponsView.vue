@@ -91,10 +91,7 @@
 
               <div>
                 <label class="label">Type *</label>
-                <select v-model="form.type" class="input">
-                  <option value="percent">Pourcentage (%)</option>
-                  <option value="fixed">Montant fixe (FCFA)</option>
-                </select>
+                <AppSelect v-model="form.type" :options="couponTypeOptions" />
               </div>
 
               <div>
@@ -156,6 +153,11 @@ const showModal = ref(false)
 const editingId = ref(null)
 const saving = ref(false)
 const formError = ref('')
+
+const couponTypeOptions = [
+  { value: 'percentage', label: 'Pourcentage (%)' },
+  { value: 'fixed',      label: 'Montant fixe (FCFA)' },
+]
 
 const form = reactive({
   code: '',

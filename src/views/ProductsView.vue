@@ -117,14 +117,10 @@
           </p>
 
           <div class="products-sort">
-            <label for="sort-select" class="products-sort__label">Trier par</label>
-            <select id="sort-select" v-model="sortBy" class="products-sort__select">
-              <option value="featured">En vedette</option>
-              <option value="newest">Nouveautés</option>
-              <option value="price-asc">Prix : croissant</option>
-              <option value="price-desc">Prix : décroissant</option>
-              <option value="rating">Meilleures notes</option>
-            </select>
+            <span class="products-sort__label">Trier par</span>
+            <div class="products-sort__select">
+              <AppSelect v-model="sortBy" :options="sortOptions" />
+            </div>
           </div>
 
           <!-- Vue grille/liste -->
@@ -219,6 +215,14 @@ const selectedCategories = ref([])
 const selectedTags = ref([])
 const maxPrice = ref(25000)
 const sortBy = ref('featured')
+
+const sortOptions = [
+  { value: 'featured',   label: 'En vedette' },
+  { value: 'newest',     label: 'Nouveautés' },
+  { value: 'price-asc',  label: 'Prix : croissant' },
+  { value: 'price-desc', label: 'Prix : décroissant' },
+  { value: 'rating',     label: 'Meilleures notes' },
+]
 const viewMode = ref('grid')
 const filtersOpen = ref(false)
 

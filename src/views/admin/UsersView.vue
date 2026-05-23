@@ -9,15 +9,67 @@
       <span class="badge badge-gray">{{ pagination.total ?? 0 }} client(s)</span>
     </header>
 
-    <!-- Search bar -->
+    <!-- Search + Export -->
     <div class="card filters-bar">
       <input
         v-model="search"
         @input="debouncedFetch"
         type="text"
-        class="input"
+        class="input filters-bar__search"
         placeholder="Rechercher par nom ou email…"
       />
+      <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
+        </svg>
+        Exporter
+      </button>
+    </div>
+
+    <!-- Export panel -->
+    <div v-if="showExport" class="card export-panel">
+      <h3 class="export-panel__title">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
+        </svg>
+        Exporter les clients
+      </h3>
+
+      <div class="export-filters">
+        <div class="export-field">
+          <label class="export-label">Inscription du</label>
+          <input v-model="exportFilters.date_from" type="date" class="input export-input" />
+        </div>
+        <div class="export-field">
+          <label class="export-label">Au</label>
+          <input v-model="exportFilters.date_to" type="date" class="input export-input" />
+        </div>
+        <div class="export-field">
+          <label class="export-label">Pays (commandes)</label>
+          <AppSelect v-model="exportFilters.country" :options="countryOptions" placeholder="Tous" />
+        </div>
+      </div>
+
+      <div class="export-actions">
+        <p class="export-hint">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round"/></svg>
+          Les administrateurs sont exclus de l'export.
+        </p>
+        <div class="export-btns">
+          <button @click="downloadExport('xlsx')" :disabled="exporting" class="btn btn-primary btn-sm">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/>
+            </svg>
+            {{ exporting ? 'Génération…' : 'Télécharger Excel (.xlsx)' }}
+          </button>
+          <button @click="downloadExport('csv')" :disabled="exporting" class="btn btn-outline btn-sm">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            {{ exporting ? 'Génération…' : 'Télécharger CSV' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Loading -->
@@ -82,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import api from '@/api'
 
 const users = ref([])
@@ -90,6 +142,56 @@ const loading = ref(true)
 const search = ref('')
 const pagination = ref({})
 const page = ref(1)
+
+const countryOptions = [
+  { value: 'CI', label: "Côte d'Ivoire" },
+  { value: 'SN', label: 'Sénégal' },
+  { value: 'ML', label: 'Mali' },
+  { value: 'BF', label: 'Burkina Faso' },
+  { value: 'GN', label: 'Guinée' },
+  { value: 'CM', label: 'Cameroun' },
+  { value: 'FR', label: 'France' },
+]
+
+/* ── Export ── */
+const showExport    = ref(false)
+const exporting     = ref(false)
+const exportFilters = reactive({
+  date_from: '',
+  date_to:   '',
+  country:   '',
+})
+
+async function downloadExport(format) {
+  exporting.value = true
+  try {
+    const params = { format }
+    if (exportFilters.date_from) params.date_from = exportFilters.date_from
+    if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
+    if (exportFilters.country)   params.country    = exportFilters.country
+
+    const response = await api.get('/admin/users/export', {
+      params,
+      responseType: 'blob',
+    })
+
+    const ext      = format === 'csv' ? 'csv' : 'xlsx'
+    const date     = new Date().toISOString().slice(0, 10)
+    const filename = `clients-${date}.${ext}`
+    const url      = URL.createObjectURL(new Blob([response.data]))
+    const link     = document.createElement('a')
+    link.href      = url
+    link.download  = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export failed', e)
+  } finally {
+    exporting.value = false
+  }
+}
 
 let debounceTimer = null
 function debouncedFetch() {
@@ -139,7 +241,75 @@ onMounted(fetchUsers)
 <style scoped>
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
 
-.filters-bar { padding: var(--space-4); }
+.filters-bar {
+  padding: var(--space-4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.filters-bar__search { flex: 1; min-width: 220px; }
+
+/* ── Export ── */
+.export-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.export-toggle-btn:hover,
+.export-toggle-btn.active { border-color: var(--rose-400); color: var(--rose-600); background: var(--rose-50); }
+
+.export-panel {
+  padding: var(--space-5);
+  border: 1.5px solid var(--rose-100);
+  background: var(--rose-50);
+}
+.export-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--space-4);
+}
+.export-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.export-field { display: flex; flex-direction: column; gap: 4px; }
+.export-label { font-size: 0.75rem; font-weight: 500; color: var(--gray-500); letter-spacing: 0.04em; }
+.export-input { min-width: 160px; padding: 8px 12px; font-size: 0.8125rem; background: #fff; }
+.export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rose-100);
+}
+.export-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  max-width: 360px;
+  line-height: 1.4;
+}
+.export-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 
 .table-scroll { overflow-x: auto; }
 

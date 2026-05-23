@@ -49,7 +49,9 @@ async function handleSubmit() {
     const redirect = route.query.redirect || (user.roles?.includes('admin') ? '/admin' : '/');
     router.push(redirect);
   } catch (e) {
-    error.value = e.response?.data?.message ?? 'Identifiants incorrects.';
+    if (!e._serverError) {
+      error.value = e.response?.data?.message ?? 'Identifiants incorrects.';
+    }
   } finally {
     loading.value = false;
   }

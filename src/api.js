@@ -4,9 +4,12 @@ const api = axios.create({
   baseURL:         import.meta.env.VITE_API_URL ?? 'http://localhost:7000',
   withCredentials: true,
   headers: {
-    'Accept':          'application/json',
-    'Content-Type':    'application/json',
-    'X-Requested-With':'XMLHttpRequest',
+    'Accept':           'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    // Content-Type intentionnellement absent :
+    // axios le gère automatiquement selon le payload
+    //   → 'application/json'      pour les objets JS
+    //   → 'multipart/form-data'   pour les FormData (uploads)
   },
 });
 
@@ -17,14 +20,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Rediriger vers /login si 401
+// Gestion globale des erreurs HTTP
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    const status = err.response?.status;
+
+    if (status === 401) {
       localStorage.removeItem('auth_token');
       window.location.href = '/login';
+    } else if (status >= 500 || !err.response) {
+      // Marquer l'erreur pour que les composants ne doublent pas le message
+      err._serverError = true;
+      // Notifier App.vue via un événement DOM (useToast non disponible hors composant)
+      window.dispatchEvent(new CustomEvent('api:server-error', { detail: { status } }));
     }
+
     return Promise.reject(err);
   },
 );

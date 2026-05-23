@@ -29,6 +29,69 @@
         class="input filters-bar__search"
         placeholder="Rechercher par numéro, client…"
       />
+      <!-- Export button -->
+      <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
+        </svg>
+        Exporter
+      </button>
+    </div>
+
+    <!-- Export panel -->
+    <div v-if="showExport" class="card export-panel">
+      <h3 class="export-panel__title">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
+        </svg>
+        Exporter les commandes
+      </h3>
+
+      <div class="export-filters">
+        <!-- Date range -->
+        <div class="export-field">
+          <label class="export-label">Du</label>
+          <input v-model="exportFilters.date_from" type="date" class="input export-input" />
+        </div>
+        <div class="export-field">
+          <label class="export-label">Au</label>
+          <input v-model="exportFilters.date_to" type="date" class="input export-input" />
+        </div>
+
+        <!-- Status -->
+        <div class="export-field">
+          <label class="export-label">Statut</label>
+          <AppSelect v-model="exportFilters.status" :options="orderStatusOptions" placeholder="Tous" />
+        </div>
+
+        <!-- Country -->
+        <div class="export-field">
+          <label class="export-label">Pays</label>
+          <AppSelect v-model="exportFilters.country" :options="exportCountryOptions" placeholder="Tous" />
+        </div>
+      </div>
+
+      <!-- Format + Download buttons -->
+      <div class="export-actions">
+        <p class="export-hint">
+          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round"/></svg>
+          Les filtres actifs (statut, recherche) ne s'appliquent pas à l'export — utilisez les filtres ci-dessus.
+        </p>
+        <div class="export-btns">
+          <button @click="downloadExport('xlsx')" :disabled="exporting" class="btn btn-primary btn-sm">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/>
+            </svg>
+            {{ exporting ? 'Génération…' : 'Télécharger Excel (.xlsx)' }}
+          </button>
+          <button @click="downloadExport('csv')" :disabled="exporting" class="btn btn-outline btn-sm">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            {{ exporting ? 'Génération…' : 'Télécharger CSV' }}
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- Table -->
@@ -103,6 +166,67 @@ const filters = reactive({
   search: '',
   page: 1,
 })
+
+const orderStatusOptions = [
+  { value: 'pending',    label: 'En attente' },
+  { value: 'processing', label: 'En cours' },
+  { value: 'shipped',    label: 'Expédiées' },
+  { value: 'delivered',  label: 'Livrées' },
+  { value: 'cancelled',  label: 'Annulées' },
+  { value: 'refunded',   label: 'Remboursées' },
+]
+
+const exportCountryOptions = [
+  { value: 'CI', label: "Côte d'Ivoire" },
+  { value: 'SN', label: 'Sénégal' },
+  { value: 'ML', label: 'Mali' },
+  { value: 'BF', label: 'Burkina Faso' },
+  { value: 'GN', label: 'Guinée' },
+  { value: 'CM', label: 'Cameroun' },
+  { value: 'FR', label: 'France' },
+]
+
+/* ── Export ── */
+const showExport = ref(false)
+const exporting  = ref(false)
+const exportFilters = reactive({
+  date_from: '',
+  date_to:   '',
+  status:    '',
+  country:   '',
+})
+
+async function downloadExport(format) {
+  exporting.value = true
+  try {
+    const params = { format }
+    if (exportFilters.date_from) params.date_from = exportFilters.date_from
+    if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
+    if (exportFilters.status)    params.status     = exportFilters.status
+    if (exportFilters.country)   params.country    = exportFilters.country
+
+    const response = await api.get('/admin/orders/export', {
+      params,
+      responseType: 'blob',
+    })
+
+    const ext      = format === 'csv' ? 'csv' : 'xlsx'
+    const date     = new Date().toISOString().slice(0, 10)
+    const filename = `commandes-${date}.${ext}`
+    const url      = URL.createObjectURL(new Blob([response.data]))
+    const link     = document.createElement('a')
+    link.href      = url
+    link.download  = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export failed', e)
+  } finally {
+    exporting.value = false
+  }
+}
 
 const statusTabs = [
   { value: '', label: 'Toutes' },
@@ -212,6 +336,86 @@ onMounted(fetchOrders)
   background: var(--rose-500);
   color: #fff;
   box-shadow: var(--shadow-rose);
+}
+
+/* ── Export toggle ── */
+.export-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.export-toggle-btn:hover,
+.export-toggle-btn.active {
+  border-color: var(--rose-400);
+  color: var(--rose-600);
+  background: var(--rose-50);
+}
+
+/* ── Export panel ── */
+.export-panel {
+  padding: var(--space-5);
+  border: 1.5px solid var(--rose-100);
+  background: var(--rose-50);
+}
+.export-panel__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--space-4);
+}
+.export-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.export-field { display: flex; flex-direction: column; gap: 4px; }
+.export-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  letter-spacing: 0.04em;
+}
+.export-input {
+  min-width: 160px;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  background: #fff;
+}
+.export-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--rose-100);
+}
+.export-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  max-width: 400px;
+  line-height: 1.4;
+}
+.export-btns {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
 }
 
 .table-scroll { overflow-x: auto; }

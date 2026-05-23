@@ -220,33 +220,12 @@
             <!-- ── Pays ── -->
             <div class="drawer__group">
               <label class="label">Pays *</label>
-              <select v-model="form.country" class="input" @change="onCountryChange">
-                <optgroup label="Afrique de l'Ouest">
-                  <option value="CI">🇨🇮 Côte d'Ivoire</option>
-                  <option value="SN">🇸🇳 Sénégal</option>
-                  <option value="ML">🇲🇱 Mali</option>
-                  <option value="BF">🇧🇫 Burkina Faso</option>
-                  <option value="GN">🇬🇳 Guinée</option>
-                  <option value="TG">🇹🇬 Togo</option>
-                  <option value="BJ">🇧🇯 Bénin</option>
-                  <option value="GH">🇬🇭 Ghana</option>
-                  <option value="NG">🇳🇬 Nigeria</option>
-                </optgroup>
-                <optgroup label="Europe">
-                  <option value="FR">🇫🇷 France</option>
-                  <option value="BE">🇧🇪 Belgique</option>
-                  <option value="CH">🇨🇭 Suisse</option>
-                  <option value="DE">🇩🇪 Allemagne</option>
-                  <option value="GB">🇬🇧 Royaume-Uni</option>
-                </optgroup>
-                <optgroup label="Amérique">
-                  <option value="CA">🇨🇦 Canada</option>
-                  <option value="US">🇺🇸 États-Unis</option>
-                </optgroup>
-                <optgroup label="Autre">
-                  <option value="OTHER">🌍 Autre pays</option>
-                </optgroup>
-              </select>
+              <AppSelect
+                v-model="form.country"
+                :options="countryOptions"
+                placeholder="Sélectionner un pays"
+                @update:modelValue="onCountryChange"
+              />
             </div>
 
             <!-- ── Ville / Commune ── -->
@@ -398,6 +377,26 @@ watch(() => cartStore.isOpen, (val) => {
   }
 });
 
+const countryOptions = [
+  { value: 'CI',    label: '🇨🇮 Côte d\'Ivoire' },
+  { value: 'SN',    label: '🇸🇳 Sénégal' },
+  { value: 'ML',    label: '🇲🇱 Mali' },
+  { value: 'BF',    label: '🇧🇫 Burkina Faso' },
+  { value: 'GN',    label: '🇬🇳 Guinée' },
+  { value: 'TG',    label: '🇹🇬 Togo' },
+  { value: 'BJ',    label: '🇧🇯 Bénin' },
+  { value: 'GH',    label: '🇬🇭 Ghana' },
+  { value: 'NG',    label: '🇳🇬 Nigeria' },
+  { value: 'FR',    label: '🇫🇷 France' },
+  { value: 'BE',    label: '🇧🇪 Belgique' },
+  { value: 'CH',    label: '🇨🇭 Suisse' },
+  { value: 'DE',    label: '🇩🇪 Allemagne' },
+  { value: 'GB',    label: '🇬🇧 Royaume-Uni' },
+  { value: 'CA',    label: '🇨🇦 Canada' },
+  { value: 'US',    label: '🇺🇸 États-Unis' },
+  { value: 'OTHER', label: '🌍 Autre pays' },
+]
+
 function onCountryChange() {
   form.value.city    = '';
   form.value.commune = '';
@@ -533,7 +532,9 @@ async function submitOrder() {
       router.push({ name: 'orders' });
     }
   } catch (e) {
-    submitError.value = e.response?.data?.message ?? 'Une erreur est survenue.';
+    if (!e._serverError) {
+      submitError.value = e.response?.data?.message ?? 'Une erreur est survenue.';
+    }
   } finally {
     submitting.value = false;
   }
@@ -960,7 +961,7 @@ export default { components: { StepDot } };
   align-items: flex-start;
   padding: var(--space-2) 0;
 }
-.drawer__cgv input { accent-color: var(--rose-500); margin-top: 2px; }
+.drawer__cgv input { flex-shrink: 0; margin-top: 1px; }
 .drawer__cgv span {
   font-size: 0.75rem;
   color: var(--gray-500);

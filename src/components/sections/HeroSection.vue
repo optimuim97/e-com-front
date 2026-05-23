@@ -78,9 +78,10 @@
         <div class="hero__product-card">
           <div class="hero__product-img-wrap">
             <img
-              :src="heroProduct.image"
-              :alt="heroProduct.name"
+              :src="displayProduct.image"
+              :alt="displayProduct.name"
               class="hero__product-img"
+              @error="$event.target.style.display='none'"
             />
             <!-- Badge "Vente flash" -->
             <div class="hero__flash-badge">
@@ -90,12 +91,12 @@
           </div>
           <div class="hero__product-info">
             <span class="eyebrow">Bestseller</span>
-            <h3 class="hero__product-name">{{ heroProduct.name }}</h3>
+            <h3 class="hero__product-name">{{ displayProduct.name }}</h3>
             <div class="hero__product-price">
-              <span class="hero__price-old">{{ heroProduct.priceOld }}</span>
-              <span class="hero__price-new">{{ heroProduct.price }}</span>
+              <span v-if="displayProduct.priceOld" class="hero__price-old">{{ displayProduct.priceOld }}</span>
+              <span class="hero__price-new">{{ displayProduct.price }}</span>
             </div>
-            <button class="btn btn-primary hero__product-btn" @click="$emit('add-to-cart', heroProduct)">
+            <button class="btn btn-primary hero__product-btn" @click="$emit('add-to-cart', displayProduct)">
               Ajouter au panier
             </button>
           </div>
@@ -124,16 +125,41 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useSettingsStore } from '@/stores/settings'
 
 defineEmits(['add-to-cart'])
 
-const heroProduct = {
-  name: 'Huile de Rose Musquée Pure',
-  price: '7 500 FCFA',
-  priceOld: '12 000 FCFA',
-  image: '/images/huile-rose-musquee.png',
-}
+const props = defineProps({
+  /** Produit best-seller passé depuis HomeView (optionnel) */
+  heroProduct: { type: Object, default: null },
+})
+
+const settings = useSettingsStore()
+
+/* Produit affiché : API ou fallback statique */
+const displayProduct = computed(() => {
+  if (props.heroProduct) {
+    const p = props.heroProduct
+    return {
+      id:       p.id,
+      name:     p.name,
+      price:    settings.formatPrice(p.price),
+      priceOld: p.compare_price ? settings.formatPrice(p.compare_price) : null,
+      image:    p.images?.[0]?.url ?? '/images/huile-rose-musquee.png',
+      slug:     p.slug,
+    }
+  }
+  return {
+    id:       null,
+    name:     'Huile de Rose Musquée Pure',
+    price:    settings.formatPrice(7500),
+    priceOld: settings.formatPrice(12000),
+    image:    '/images/huile-rose-musquee.png',
+    slug:     null,
+  }
+})
 
 const avatars = [
   '/images/avatar-1.jpg',

@@ -59,8 +59,10 @@ async function handleSubmit() {
     await auth.register(form.value);
     router.push('/');
   } catch (e) {
-    const errors = e.response?.data?.errors;
-    error.value = errors ? Object.values(errors).flat()[0] : 'Une erreur est survenue.';
+    if (!e._serverError) {
+      const errors = e.response?.data?.errors;
+      error.value = errors ? Object.values(errors).flat()[0] : 'Une erreur est survenue.';
+    }
   } finally {
     loading.value = false;
   }

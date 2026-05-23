@@ -44,20 +44,18 @@
           </div>
           <div>
             <label class="label">Type</label>
-            <select v-model="form.type" class="input">
-              <option value="physical">Physique</option>
-              <option value="digital">Numérique</option>
-              <option value="service">Service</option>
-            </select>
+            <AppSelect v-model="form.type" :options="typeOptions" />
           </div>
         </div>
 
         <div>
           <label class="label">Catégorie</label>
-          <select v-model="form.category_id" class="input">
-            <option value="">Sans catégorie</option>
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-          </select>
+          <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Sans catégorie" />
+        </div>
+
+        <div>
+          <label class="label">Gamme de produits</label>
+          <AppSelect v-model="form.product_line_id" :options="productLineOptions" placeholder="Aucune gamme" />
         </div>
       </div>
 
@@ -258,6 +256,7 @@ const imageError  = ref('')
 const dragOver    = ref(false)
 const fileInput   = ref(null)
 const categories  = ref([])
+const productLines = ref([])
 const images      = ref([])       // images sauvegardées (depuis l'API)
 const pendingFiles = ref([])      // { file, preview } en attente d'upload
 
@@ -266,13 +265,28 @@ const form = reactive({
   description:   '',
   sku:           '',
   type:          'physical',
-  category_id:   '',
-  price:         '',
+  category_id:      '',
+  product_line_id:  '',
+  price:            '',
   compare_price: '',
   stock:         0,
   is_active:     true,
   is_featured:   false,
 })
+
+const typeOptions = [
+  { value: 'physical', label: 'Physique' },
+  { value: 'digital',  label: 'Numérique' },
+  { value: 'service',  label: 'Service' },
+]
+
+const categoryOptions = computed(() => [
+  ...categories.value.map(c => ({ value: c.id, label: c.name })),
+])
+
+const productLineOptions = computed(() => [
+  ...productLines.value.map(l => ({ value: l.id, label: l.name })),
+])
 
 // ─── Données ────────────────────────────────────────────────────────────────
 
@@ -280,6 +294,13 @@ async function fetchCategories() {
   try {
     const { data } = await api.get('/admin/categories')
     categories.value = data.data ?? data
+  } catch {}
+}
+
+async function fetchProductLines() {
+  try {
+    const { data } = await api.get('/admin/product-lines', { params: { per_page: 100 } })
+    productLines.value = data.data ?? data
   } catch {}
 }
 
@@ -293,7 +314,8 @@ async function fetchProduct() {
       description:   p.description   ?? '',
       sku:           p.sku           ?? '',
       type:          p.type          ?? 'physical',
-      category_id:   p.category?.id  ?? '',
+      category_id:      p.category?.id      ?? '',
+      product_line_id:  p.product_line?.id  ?? '',
       price:         p.price         ?? '',
       compare_price: p.compare_price ?? '',
       stock:         p.stock         ?? 0,
@@ -402,7 +424,8 @@ async function submit() {
       description:   form.description,
       sku:           form.sku,
       type:          form.type,
-      category_id:   form.category_id  || null,
+      category_id:      form.category_id      || null,
+      product_line_id:  form.product_line_id  || null,
       price:         form.price,
       compare_price: form.compare_price || null,
       stock:         form.stock,
@@ -432,7 +455,7 @@ async function submit() {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  await fetchCategories()
+  await Promise.all([fetchCategories(), fetchProductLines()])
   if (isEdit.value) await fetchProduct()
 })
 </script>
