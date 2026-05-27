@@ -10,9 +10,11 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 import { RouterView, useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
+import { useI18n } from 'vue-i18n';
 import WhatsAppButton from '@/components/shop/WhatsAppButton.vue';
 import { useSettingsStore } from '@/stores/settings';
 
+const { t } = useI18n();
 const route    = useRoute();
 const toast    = useToast();
 const settings = useSettingsStore();
@@ -24,7 +26,7 @@ const isAdminRoute = computed(() => route.path.startsWith('/admin'));
 
 function onServerError() {
   toast.error(
-    'Un souci technique vient de se produire. Pas d\'inquiétude — réessayez dans un instant, notre équipe est déjà informée.',
+    t('serverError'),
     { timeout: 7000, closeOnClick: true },
   );
 }

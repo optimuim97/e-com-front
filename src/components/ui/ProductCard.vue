@@ -9,8 +9,8 @@
     >
       <!-- Badges top-left -->
       <div class="product-card__badges">
-        <span v-if="product.stock === 0"   class="badge badge-dark">Épuisé</span>
-        <span v-if="product.is_featured"   class="badge badge-rose">Vedette</span>
+        <span v-if="product.stock === 0"   class="badge badge-dark">{{ $t('product.soldOut') }}</span>
+        <span v-if="product.is_featured"   class="badge badge-rose">{{ $t('product.featured') }}</span>
         <span v-if="discountPercent"       class="badge badge-gold">-{{ discountPercent }}%</span>
       </div>
 
@@ -58,7 +58,7 @@
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
-          Ajouter au panier
+          {{ $t('product.addToCart') }}
         </button>
       </div>
     </div>
@@ -100,7 +100,7 @@
           :class="{ 'product-card__cart-btn--added': added, 'product-card__cart-btn--out': product.stock === 0 }"
           :disabled="product.stock === 0"
           @click.prevent="addToCart"
-          :aria-label="`Ajouter ${product.name} au panier`"
+          :aria-label="$t('product.addToCart') + ' ' + product.name"
         >
           <Transition name="swap" mode="out-in">
             <svg v-if="!added" key="bag" width="17" height="17" viewBox="0 0 24 24"
@@ -123,13 +123,15 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { RouterLink } from 'vue-router';
-import WishlistButton from '@/components/shop/WishlistButton.vue'
+import { useI18n } from 'vue-i18n';
+import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 
 
 const props = defineProps({
   product:  { type: Object,  required: true },
 });
 
+const { t } = useI18n();
 const emit = defineEmits(['add-to-cart', 'toggle-wishlist']);
 
 const hovered    = ref(false);

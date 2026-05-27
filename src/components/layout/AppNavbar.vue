@@ -4,7 +4,7 @@
     <div class="navbar__announce" v-if="!announceDismissed">
       <div class="navbar__announce-inner container">
         <span>{{ settings.announceText }}</span>
-        <button class="navbar__announce-close" @click="announceDismissed = true" aria-label="Fermer">
+        <button class="navbar__announce-close" @click="announceDismissed = true" :aria-label="$t('common.close')">
           ×
         </button>
       </div>
@@ -13,21 +13,13 @@
     <!-- Navbar principale -->
     <nav class="navbar__main container">
       <!-- Logo -->
-      <RouterLink to="/" class="navbar__logo" aria-label="Rosa Beauty - Accueil">
-        <div class="navbar__logo-icon">
-          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
-            <circle cx="20" cy="20" r="19" fill="#fff0f5" stroke="#e8336d" stroke-width="1.5"/>
-            <path d="M20 10 C20 10 14 14 14 20 C14 26 20 30 20 30 C20 30 26 26 26 20 C26 14 20 10 20 10Z"
-                  fill="#e8336d" opacity="0.9"/>
-            <path d="M14 17 C14 17 9 18 9 22 C9 26 14 27 14 27" stroke="#f9518a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-            <path d="M26 17 C26 17 31 18 31 22 C31 26 26 27 26 27" stroke="#f9518a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-            <circle cx="20" cy="20" r="3" fill="#fff" opacity="0.9"/>
-          </svg>
-        </div>
-        <div class="navbar__logo-text">
-          <span class="navbar__logo-name">Rosa Beauty</span>
-          <span class="navbar__logo-sub">Facial Care</span>
-        </div>
+      <RouterLink to="/" class="navbar__logo" :aria-label="'Rosa Beauty - ' + $t('common.home')">
+        <img
+          src="/logos/rosa-logo-readable-600.png"
+          alt="Rosa Beauty Facial Care"
+          class="navbar__logo-img"
+          width="180" height="180"
+        />
       </RouterLink>
 
       <!-- Navigation desktop -->
@@ -46,28 +38,31 @@
 
       <!-- Actions droite -->
       <div class="navbar__actions">
+        <!-- Language switcher -->
+        <LanguageSwitcher />
+
         <!-- Recherche -->
-        <button class="navbar__icon-btn" @click="$emit('open-search')" aria-label="Rechercher">
+        <button class="navbar__icon-btn" @click="$emit('open-search')" :aria-label="$t('nav.searchLabel')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
         </button>
 
         <!-- Compte / Déconnexion -->
-        <RouterLink v-if="!auth.isLoggedIn" to="/login" class="navbar__icon-btn" aria-label="Se connecter">
+        <RouterLink v-if="!auth.isLoggedIn" to="/login" class="navbar__icon-btn" :aria-label="$t('nav.loginLabel')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
             <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
         </RouterLink>
         <template v-else>
-          <RouterLink v-if="auth.isAdmin" to="/admin" class="navbar__icon-btn" aria-label="Administration">
+          <RouterLink v-if="auth.isAdmin" to="/admin" class="navbar__icon-btn" :aria-label="$t('nav.adminLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
           </RouterLink>
 
           <!-- Favoris -->
-          <RouterLink to="/wishlist" class="navbar__icon-btn navbar__icon-btn--relative" aria-label="Mes favoris">
+          <RouterLink to="/wishlist" class="navbar__icon-btn navbar__icon-btn--relative" :aria-label="$t('nav.wishlistLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
@@ -75,12 +70,12 @@
           </RouterLink>
 
           <!-- Commandes / Profil -->
-          <RouterLink to="/orders" class="navbar__icon-btn" aria-label="Mes commandes">
+          <RouterLink to="/orders" class="navbar__icon-btn" :aria-label="$t('nav.ordersLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
           </RouterLink>
-          <button class="navbar__icon-btn" @click="auth.logout()" aria-label="Se déconnecter">
+          <button class="navbar__icon-btn" @click="auth.logout()" :aria-label="$t('nav.logoutLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
@@ -88,7 +83,7 @@
         </template>
 
         <!-- Panier -->
-        <RouterLink to="/cart" class="navbar__cart-btn" aria-label="Mon panier">
+        <RouterLink to="/cart" class="navbar__cart-btn" :aria-label="$t('nav.cartLabel')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -102,7 +97,7 @@
           class="navbar__burger"
           @click="mobileMenuOpen = !mobileMenuOpen"
           :aria-expanded="mobileMenuOpen"
-          aria-label="Menu"
+          :aria-label="$t('nav.menuLabel')"
         >
           <span></span><span></span><span></span>
         </button>
@@ -126,7 +121,7 @@
         </ul>
         <div class="navbar__mobile-cta">
           <RouterLink to="/products" class="btn btn-primary" @click="mobileMenuOpen = false">
-            Voir tous les produits
+            {{ $t('common.viewAllProducts') }}
           </RouterLink>
         </div>
       </div>
@@ -140,8 +135,10 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useAuthStore }     from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
+import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
+import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
 const props = defineProps({
   cartCount:     { type: Number, default: 0 },
@@ -150,6 +147,7 @@ const props = defineProps({
 
 defineEmits(['open-search'])
 
+const { t } = useI18n()
 const route    = useRoute()
 const auth     = useAuthStore()
 const settings = useSettingsStore()
@@ -158,11 +156,12 @@ const mobileMenuOpen = ref(false)
 const announceDismissed = ref(false)
 
 const navLinks = computed(() => [
-  { to: '/',          label: 'Accueil' },
-  { to: '/products',  label: 'Produits' },
-  { to: '/blog',      label: 'Blog' },
-  ...(auth.isLoggedIn ? [{ to: '/wishlist', label: 'Favoris', badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
-  ...(auth.isLoggedIn ? [{ to: '/orders',   label: 'Mes commandes' }] : []),
+  { to: '/',            label: t('common.home') },
+  { to: '/products',    label: t('common.products') },
+  { to: '/blog',        label: t('common.blog') },
+  { to: '/programme',   label: t('common.club') },
+  ...(auth.isLoggedIn ? [{ to: '/wishlist', label: t('common.wishlist'), badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
+  ...(auth.isLoggedIn ? [{ to: '/orders',   label: t('common.myOrders') }] : []),
 ])
 
 const spacerHeight = computed(() => {
@@ -234,37 +233,26 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-8);
-  height: 72px;
+  height: 96px;
 }
 
 /* ── Logo ── */
 .navbar__logo {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
   flex-shrink: 0;
   transition: opacity var(--transition-fast);
 }
 .navbar__logo:hover { opacity: 0.85; }
 
-.navbar__logo-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
+.navbar__logo-img {
+  height: 88px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
-.navbar__logo-name {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 500;
-  color: var(--gray-800);
-  letter-spacing: -0.01em;
-}
-.navbar__logo-sub {
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-primary);
+@media (max-width: 640px) {
+  .navbar__logo-img { height: 68px; }
 }
 
 /* ── Nav links ── */
@@ -485,7 +473,4 @@ onUnmounted(() => {
   .navbar__burger { display: flex; }
 }
 
-@media (max-width: 480px) {
-  .navbar__logo-sub { display: none; }
-}
 </style>

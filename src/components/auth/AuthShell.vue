@@ -11,16 +11,12 @@
     <div class="auth-inner">
       <header class="auth-header">
         <RouterLink to="/" class="auth-logo" aria-label="Rosa Beauty - Accueil">
-          <svg viewBox="0 0 40 40" fill="none" width="44" height="44">
-            <circle cx="20" cy="20" r="19" fill="#fff0f5" stroke="#e8336d" stroke-width="1.5"/>
-            <path d="M20 10 C20 10 14 14 14 20 C14 26 20 30 20 30 C20 30 26 26 26 20 C26 14 20 10 20 10Z"
-                  fill="#e8336d" opacity="0.9"/>
-            <circle cx="20" cy="20" r="3" fill="#fff" opacity="0.9"/>
-          </svg>
-          <div class="auth-logo__text">
-            <span class="auth-logo__name">Rosa Beauty</span>
-            <span class="auth-logo__sub">Facial Care</span>
-          </div>
+          <img
+            src="/logos/rosa-logo-readable-600.png"
+            alt="Rosa Beauty Facial Care"
+            class="auth-logo__img"
+            width="200" height="200"
+          />
         </RouterLink>
 
         <span class="eyebrow">{{ eyebrow }}</span>
@@ -109,8 +105,16 @@ defineProps({
   gap: var(--space-2);
 }
 
+.auth-logo__img {
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
 .auth-logo {
   display: flex;
+  justify-content: center;
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-4);

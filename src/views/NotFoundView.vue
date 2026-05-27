@@ -16,25 +16,25 @@
         <span>4</span>
       </div>
 
-      <span class="eyebrow">Égarée dans le jardin</span>
+      <span class="eyebrow">{{ $t('notFound.eyebrow') }}</span>
       <h1 class="display-lg notfound-title">
-        Cette page est <em>introuvable</em>
+        {{ $t('notFound.title') }} <em>{{ $t('notFound.titleEm') }}</em>
       </h1>
       <p class="notfound-desc">
-        La page que vous cherchez n'existe pas ou a été déplacée.
+        {{ $t('notFound.desc') }}
         <br />
-        Mais ne vous inquiétez pas — il y a plein d'autres soins à découvrir.
+        {{ $t('notFound.descExtra') }}
       </p>
 
       <div class="notfound-actions">
         <RouterLink to="/" class="btn btn-primary btn-lg">
-          Retour à l'accueil
+          {{ $t('notFound.backHome') }}
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </RouterLink>
         <RouterLink to="/products" class="btn btn-outline btn-lg">
-          Voir la boutique
+          {{ $t('notFound.viewShop') }}
         </RouterLink>
       </div>
     </div>

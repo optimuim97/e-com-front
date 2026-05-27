@@ -66,7 +66,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import WishlistButton from '@/components/shop/WishlistButton.vue'
+import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 
 const props = defineProps({ product: { type: Object, required: true } })
 

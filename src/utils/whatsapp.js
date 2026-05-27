@@ -15,7 +15,11 @@ function statusLabel(status) {
     return map[status] ?? status
 }
 
-export function buildAdminMessage(order) {
+/**
+ * @param {Object} order        - L'objet commande (avec items, shipping_address, payments…)
+ * @param {Object} [settings]   - Réglages boutique (payment_mobile_number, etc.)
+ */
+export function buildAdminMessage(order, settings = {}) {
     const addr = order.shipping_address ?? {}
     const name = [addr.first_name, addr.last_name].filter(Boolean).join(' ')
     const itemLines = (order.items ?? []).map(i => {
@@ -23,17 +27,33 @@ export function buildAdminMessage(order) {
         return `• ${i.product_name}${label} x${i.quantity} — ${formatPrice(i.unit_price * i.quantity)}`
     })
 
+    // Méthode de paiement
+    const provider  = order.payments?.[0]?.provider ?? order.payment_method ?? ''
+    const methodMap = {
+        wave: 'Wave', orange_money: 'Orange Money',
+        stripe: 'Carte bancaire', delivery: 'À la livraison',
+    }
+    const methodLabel = methodMap[provider] ?? provider
+
+    // Ligne Wave : numéro de paiement
+    let waveLine = null
+    if (provider === 'wave' && settings.payment_mobile_number) {
+        waveLine = `💳 Paiement Wave → ${settings.payment_mobile_number}`
+    }
+
     return [
-        `Nouvelle commande`,
+        `🌹 Nouvelle commande Rosa Beauty`,
         `N°: ${order.number}`,
         `Client: ${name || 'Inconnu'}`,
         addr.phone ? `Tél: ${addr.phone}` : null,
         `Adresse: ${addr.address_line1 ?? ''}, ${addr.city ?? ''}`,
         '',
-        'Articles:',
+        '🛒 Articles:',
         ...itemLines,
         '',
-        `Total: ${formatPrice(order.total)}`,
+        `💰 Total: ${formatPrice(order.total)}`,
+        methodLabel ? `Paiement: ${methodLabel}` : null,
+        waveLine,
     ].filter(l => l !== null).join('\n')
 }
 

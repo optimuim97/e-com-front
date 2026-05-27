@@ -4,12 +4,12 @@
     <div class="footer__newsletter">
       <div class="container footer__newsletter-inner">
         <div class="footer__nl-content">
-          <span class="eyebrow">Newsletter</span>
+          <span class="eyebrow">{{ $t('footer.newsletter') }}</span>
           <h2 class="display-md footer__nl-title">
-            Restez dans <em>la fleur</em>
+            {{ $t('footer.nlTitle') }}
           </h2>
           <p class="footer__nl-desc">
-            Découvrez en avant-première nos nouveautés, offres exclusives et conseils beauté.
+            {{ $t('footer.nlDesc') }}
           </p>
         </div>
         <form class="footer__nl-form" @submit.prevent="subscribeNewsletter">
@@ -17,20 +17,20 @@
             <input
               v-model="email"
               type="email"
-              placeholder="votre@email.com"
+              :placeholder="$t('footer.nlPlaceholder')"
               required
               class="footer__nl-input"
-              aria-label="Votre adresse email"
+              :aria-label="$t('auth.email')"
             />
             <button type="submit" class="btn btn-primary footer__nl-btn" :disabled="subscribed">
               <Transition name="swap" mode="out-in">
-                <span v-if="!subscribed" key="sub">Rejoindre</span>
-                <span v-else key="done">✓ Inscrite !</span>
+                <span v-if="!subscribed" key="sub">{{ $t('footer.nlJoin') }}</span>
+                <span v-else key="done">{{ $t('footer.nlDone') }}</span>
               </Transition>
             </button>
           </div>
           <p class="footer__nl-privacy">
-            🔒 Pas de spam. Désinscription en un clic. Confidentialité garantie.
+            {{ $t('footer.nlPrivacy') }}
           </p>
         </form>
       </div>
@@ -42,11 +42,12 @@
         <!-- Logo & Description -->
         <div class="footer__brand">
           <RouterLink to="/" class="footer__logo">
-            <div class="footer__logo-icon">🌹</div>
-            <div>
-              <div class="footer__logo-name">Rosa Beauty</div>
-              <div class="footer__logo-sub">Facial Care</div>
-            </div>
+            <img
+              src="/logos/rosa-logo-readable-600.png"
+              alt="Rosa Beauty Facial Care"
+              class="footer__logo-img"
+              width="220" height="220"
+            />
           </RouterLink>
           <p class="footer__brand-desc">
             {{ settings.shopTagline || "Des soins naturels à base d'eau de rose pure pour révéler votre beauté naturelle." }}
@@ -98,13 +99,13 @@
     <div class="footer__bottom">
       <div class="container footer__bottom-inner">
         <p class="footer__copy">
-          © {{ currentYear }} {{ settings.shopName }}. Tous droits réservés.
+          {{ $t('footer.copyright', { year: currentYear, shopName: settings.shopName }) }}
         </p>
         <div class="footer__bottom-links">
-          <RouterLink to="/confidentialite" class="footer__bottom-link">Confidentialité</RouterLink>
-          <RouterLink to="/cgv" class="footer__bottom-link">CGV</RouterLink>
-          <RouterLink to="/cookies" class="footer__bottom-link">Cookies</RouterLink>
-          <RouterLink to="/mentions-legales" class="footer__bottom-link">Mentions légales</RouterLink>
+          <RouterLink to="/confidentialite" class="footer__bottom-link">{{ $t('footer.privacy') }}</RouterLink>
+          <RouterLink to="/cgv" class="footer__bottom-link">{{ $t('footer.terms') }}</RouterLink>
+          <RouterLink to="/cookies" class="footer__bottom-link">{{ $t('footer.cookies') }}</RouterLink>
+          <RouterLink to="/mentions-legales" class="footer__bottom-link">{{ $t('footer.legal') }}</RouterLink>
         </div>
         <!-- Modes de paiement -->
         <div class="footer__payments">
@@ -116,10 +117,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 
+const { t } = useI18n()
 const email      = ref('')
 const subscribed = ref(false)
 const settings   = useSettingsStore()
@@ -132,29 +135,29 @@ function subscribeNewsletter() {
 
 const currentYear = new Date().getFullYear()
 
-const navColumns = [
+const navColumns = computed(() => [
   {
-    title: 'Navigation',
+    title: t('footer.navTitle'),
     links: [
-      { label: 'Accueil',   to: '/' },
-      { label: 'Produits',  to: '/produits' },
-      { label: 'Soins',     to: '/programme' },
-      { label: 'Blog',      to: '/blog' },
-      { label: 'À propos',  to: '/a-propos' },
-      { label: 'Contact',   to: '/contact' },
+      { label: t('footer.navHome'),     to: '/' },
+      { label: t('footer.navProducts'), to: '/produits' },
+      { label: t('footer.navCare'),     to: '/programme' },
+      { label: t('footer.navBlog'),     to: '/blog' },
+      { label: t('footer.navAbout'),    to: '/a-propos' },
+      { label: t('footer.navContact'),  to: '/contact' },
     ],
   },
   {
-    title: 'Informations',
+    title: t('footer.infoTitle'),
     links: [
-      { label: 'Livraison & Retours', to: '/livraison' },
-      { label: 'FAQ',                 to: '/faq' },
-      { label: 'Mon compte',          to: '/compte' },
-      { label: 'Ma wishlist',         to: '/favoris' },
-      { label: 'Suivi de commande',   to: '/suivi' },
+      { label: t('footer.infoDelivery'),  to: '/livraison' },
+      { label: t('footer.infoFaq'),       to: '/faq' },
+      { label: t('footer.infoAccount'),   to: '/compte' },
+      { label: t('footer.infoWishlist'),  to: '/favoris' },
+      { label: t('footer.infoTracking'),  to: '/suivi' },
     ],
   },
-]
+])
 
 </script>
 
@@ -268,7 +271,13 @@ const navColumns = [
   margin-bottom: var(--space-5);
 }
 
-.footer__logo-icon { font-size: 2rem; }
+.footer__logo-img {
+  height: 130px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  /* Filter to soften image on dark/cream footer if needed */
+}
 
 .footer__logo-name {
   font-family: var(--font-display);

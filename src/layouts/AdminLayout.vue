@@ -3,18 +3,16 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <!-- Logo -->
-      <div class="admin-sidebar__logo">
-        <svg viewBox="0 0 40 40" fill="none" width="36" height="36">
-          <circle cx="20" cy="20" r="19" fill="#fff0f5" stroke="#e8336d" stroke-width="1.5"/>
-          <path d="M20 10 C20 10 14 14 14 20 C14 26 20 30 20 30 C20 30 26 26 26 20 C26 14 20 10 20 10Z"
-                fill="#e8336d" opacity="0.9"/>
-          <circle cx="20" cy="20" r="3" fill="#fff" opacity="0.9"/>
-        </svg>
+      <RouterLink to="/" class="admin-sidebar__logo" aria-label="Rosa Beauty — Accueil">
+        <img
+          src="/logos/rosa-logo-readable-400.png"
+          alt="Rosa Beauty"
+          class="admin-sidebar__logo-img"
+        />
         <div class="admin-sidebar__logo-text">
-          <span class="admin-sidebar__logo-name">Rosa Beauty</span>
           <span class="admin-sidebar__logo-sub">Administration</span>
         </div>
-      </div>
+      </RouterLink>
 
       <!-- Nav -->
       <nav class="admin-sidebar__nav">
@@ -74,9 +72,10 @@ import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import {
   Squares2X2Icon, ShoppingBagIcon, TagIcon, TicketIcon,
   UsersIcon, ArrowLeftOnRectangleIcon, FolderIcon, Cog6ToothIcon,
-  NewspaperIcon, SparklesIcon,
+  NewspaperIcon, SparklesIcon, StarIcon, ChatBubbleLeftRightIcon,
+  EnvelopeIcon, TruckIcon,
 } from '@heroicons/vue/24/outline';
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/features/auth/auth.store';
 
 const auth   = useAuthStore();
 const route  = useRoute();
@@ -88,9 +87,13 @@ const nav = [
   { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon    },
   { to: '/admin/product-lines', label: 'Gammes',      icon: SparklesIcon  },
   { to: '/admin/orders',        label: 'Commandes',   icon: TagIcon       },
+  { to: '/admin/deliveries',    label: 'Livraisons',  icon: TruckIcon     },
   { to: '/admin/coupons',       label: 'Coupons',     icon: TicketIcon    },
   { to: '/admin/blog',          label: 'Blog',        icon: NewspaperIcon },
-  { to: '/admin/users',      label: 'Clients',      icon: UsersIcon       },
+  { to: '/admin/programme',    label: 'Club fidélité',icon: StarIcon                   },
+  { to: '/admin/reviews',          label: 'Avis clients',    icon: ChatBubbleLeftRightIcon },
+  { to: '/admin/abandoned-carts',  label: 'Paniers abandonnés', icon: EnvelopeIcon        },
+  { to: '/admin/users',        label: 'Clients',     icon: UsersIcon                   },
   { to: '/admin/settings',   label: 'Paramètres',   icon: Cog6ToothIcon   },
 ];
 
@@ -100,6 +103,7 @@ const titles = {
   'admin.categories': 'Catégories',
   'admin.orders':     'Commandes',
   'admin.order':      'Détail commande',
+  'admin.deliveries': 'Gestion des livraisons',
   'admin.coupons':    'Coupons & promotions',
   'admin.users':      'Clientes & clients',
   'admin.settings':   'Paramètres boutique',
@@ -111,6 +115,9 @@ const titles = {
   'admin.product-lines':         'Gammes de produits',
   'admin.product-lines.create':  'Nouvelle gamme',
   'admin.product-lines.edit':    'Modifier la gamme',
+  'admin.program':               'Rosa Beauty Club — Fidélité',
+  'admin.reviews':               'Avis & Modération',
+  'admin.abandoned-carts':       'Relances — Paniers abandonnés',
 };
 
 const currentTitle = computed(() => titles[route.name] ?? 'Admin');
@@ -144,28 +151,37 @@ async function handleLogout() {
 
 .admin-sidebar__logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-5) var(--space-5);
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3) var(--space-3);
   border-bottom: 1px solid var(--cream-200);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
 }
+.admin-sidebar__logo:hover { opacity: 0.85; }
+
+.admin-sidebar__logo-img {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
 .admin-sidebar__logo-text {
   display: flex;
   flex-direction: column;
+  align-items: center;
   line-height: 1.1;
-}
-.admin-sidebar__logo-name {
-  font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 500;
-  color: var(--gray-800);
 }
 .admin-sidebar__logo-sub {
   font-size: 0.625rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-primary);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .admin-sidebar__nav {
@@ -329,7 +345,8 @@ async function handleLogout() {
   .admin-sidebar__user-info,
   .admin-nav-link span { display: none; }
   .admin-nav-link { justify-content: center; padding: 12px; }
-  .admin-sidebar__logo { justify-content: center; padding: var(--space-4); }
+  .admin-sidebar__logo { justify-content: center; padding: var(--space-3); }
+  .admin-sidebar__logo-img { max-width: 64px; }
   .admin-sidebar__user { justify-content: center; }
   .admin-topbar { padding: 0 var(--space-4); }
   .admin-content { padding: var(--space-4); }

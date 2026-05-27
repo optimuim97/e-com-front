@@ -9,7 +9,17 @@
     <main class="flex-1">
       <RouterView v-slot="{ Component }">
         <Transition name="page" mode="out-in">
-          <component :is="Component" :key="route.path" />
+          <!--
+            keep-alive pour les pages "liste" : la data et le DOM sont préservés
+            entre navigations. Les pages détail (ProductView, OrderView…) ne sont
+            PAS dans include, donc elles se recréent normalement avec la bonne clé.
+          -->
+          <keep-alive :include="CACHED_VIEWS" :max="6">
+            <component
+              :is="Component"
+              :key="route.meta.stableKey ?? route.path"
+            />
+          </keep-alive>
         </Transition>
       </RouterView>
     </main>
@@ -22,12 +32,16 @@
 <script setup>
 import { watch } from 'vue'
 import { RouterView, useRouter, useRoute } from 'vue-router'
-import { useCartStore }     from '@/stores/cart'
-import { useWishlistStore } from '@/stores/wishlist'
-import { useAuthStore }     from '@/stores/auth'
+
+// Pages dont le DOM + état est préservé entre navigations
+// Le nom doit correspondre à l'option `name` du composant Vue (ou au nom du fichier)
+const CACHED_VIEWS = ['HomeView', 'ProductsView', 'BlogView', 'WishlistView']
+import { useCartStore }     from '@/features/cart/cart.store'
+import { useWishlistStore } from '@/features/wishlist/wishlist.store'
+import { useAuthStore }     from '@/features/auth/auth.store'
 import AppNavbar  from '@/components/layout/AppNavbar.vue'
 import AppFooter  from '@/components/layout/AppFooter.vue'
-import CartDrawer from '@/components/shop/CartDrawer.vue'
+import CartDrawer from '@/features/cart/CartDrawer.vue'
 
 const cartStore     = useCartStore()
 const wishlistStore = useWishlistStore()
