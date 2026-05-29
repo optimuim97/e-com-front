@@ -11,9 +11,10 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // En dev : proxy les appels /api et /sanctum vers Laravel
-      '/api':     { target: 'http://localhost:8000', changeOrigin: true },
-      '/sanctum': { target: 'http://localhost:8000', changeOrigin: true },
+      // En dev : proxy les appels /api, /sanctum et /broadcasting vers Laravel
+      '/api':          { target: 'http://127.0.0.1:7000', changeOrigin: true },
+      '/sanctum':      { target: 'http://127.0.0.1:7000', changeOrigin: true },
+      '/broadcasting': { target: 'http://127.0.0.1:7000', changeOrigin: true },
     },
   },
 });

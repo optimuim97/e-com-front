@@ -11,6 +11,10 @@ import ordersRoutes   from '@/features/orders/orders.routes'
 import blogRoutes     from '@/features/blog/blog.routes'
 import wishlistRoutes from '@/features/wishlist/wishlist.routes'
 import programRoutes  from '@/features/program/program.routes'
+import accountRoutes  from '@/features/account/account.routes'
+import aboutRoutes   from '@/features/about/about.routes'
+import contactRoutes from '@/features/contact/contact.routes'
+import paymentRoutes from '@/features/payment/payment.routes'
 
 // ── Admin routes ──────────────────────────────────────────────────────────────
 import adminRoutes from '@/admin/admin.routes'
@@ -34,6 +38,10 @@ const router = createRouter({
         ...blogRoutes,
         ...wishlistRoutes,
         ...programRoutes,
+        ...accountRoutes,
+        ...aboutRoutes,
+        ...contactRoutes,
+        ...paymentRoutes,
       ],
     },
 

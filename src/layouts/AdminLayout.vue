@@ -51,12 +51,15 @@
           <span class="eyebrow">Espace admin</span>
           <h1 class="admin-topbar__title">{{ currentTitle }}</h1>
         </div>
-        <RouterLink to="/" class="admin-topbar__shop-link">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M19 12H5M12 5l-7 7 7 7" transform="rotate(180 12 12)"/>
-          </svg>
-          Voir la boutique
-        </RouterLink>
+        <div class="admin-topbar__right">
+          <NotificationBell />
+          <RouterLink to="/" class="admin-topbar__shop-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M19 12H5M12 5l-7 7 7 7" transform="rotate(180 12 12)"/>
+            </svg>
+            Voir la boutique
+          </RouterLink>
+        </div>
       </header>
 
       <main class="admin-content">
@@ -67,7 +70,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import {
   Squares2X2Icon, ShoppingBagIcon, TagIcon, TicketIcon,
@@ -76,10 +79,16 @@ import {
   EnvelopeIcon, TruckIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
+import NotificationBell from '@/admin/components/NotificationBell.vue';
 
-const auth   = useAuthStore();
-const route  = useRoute();
-const router = useRouter();
+const auth    = useAuthStore();
+const route   = useRoute();
+const router  = useRouter();
+const notifStore = useAdminNotificationsStore();
+
+onMounted(() => notifStore.subscribe());
+onBeforeUnmount(() => notifStore.unsubscribe());
 
 const nav = [
   { to: '/admin',            label: 'Dashboard',    icon: Squares2X2Icon  },
@@ -315,6 +324,12 @@ async function handleLogout() {
   color: var(--gray-800);
   letter-spacing: -0.01em;
 }
+.admin-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .admin-topbar__shop-link {
   display: inline-flex;
   align-items: center;

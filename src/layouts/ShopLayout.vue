@@ -49,8 +49,13 @@ const authStore     = useAuthStore()
 const router = useRouter()
 const route  = useRoute()
 
-// Chargement initial
-cartStore.fetch().catch(() => {})
+// Chargement initial du panier
+// Si un brouillon de commande est en attente (l'utilisateur vient de se connecter/inscrire
+// depuis le panier), on ne recharge PAS le panier serveur pour ne pas écraser les articles
+// en mémoire. Le brouillon sera restauré par CartDrawer.onMounted.
+if (!sessionStorage.getItem('rosa_checkout_draft')) {
+  cartStore.fetch().catch(() => {})
+}
 
 // Charger la wishlist dès que l'user est authentifié
 watch(

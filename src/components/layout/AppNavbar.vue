@@ -24,14 +24,85 @@
 
       <!-- Navigation desktop -->
       <ul class="navbar__nav" role="list">
-        <li v-for="link in navLinks" :key="link.to">
+        <!-- Accueil -->
+        <li>
+          <RouterLink to="/" class="navbar__link" :class="{ 'navbar__link--active': $route.path === '/' }">
+            {{ $t('common.home') }}
+          </RouterLink>
+        </li>
+
+        <!-- Produits avec dropdown catégories -->
+        <li class="navbar__dropdown-wrap" @mouseenter="productsOpen = true" @mouseleave="productsOpen = false">
           <RouterLink
-            :to="link.to"
-            class="navbar__link"
-            :class="{ 'navbar__link--active': $route.path === link.to }"
+            to="/products"
+            class="navbar__link navbar__link--has-arrow"
+            :class="{ 'navbar__link--active': $route.path.startsWith('/products') || $route.path.startsWith('/gammes') }"
           >
-            {{ link.label }}
-            <span v-if="link.badge" class="navbar__link-badge">{{ link.badge }}</span>
+            {{ $t('common.products') }}
+            <svg class="navbar__arrow" :class="{ 'navbar__arrow--open': productsOpen }" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </RouterLink>
+
+          <!-- Dropdown -->
+          <Transition name="dropdown">
+            <div v-if="productsOpen" class="navbar__dropdown">
+              <div class="navbar__dropdown-inner">
+                <!-- Toutes les catégories -->
+                <div class="navbar__dropdown-col">
+                  <p class="navbar__dropdown-heading">Catégories</p>
+                  <RouterLink
+                    v-for="cat in homeStore.categories"
+                    :key="cat.id"
+                    :to="`/products?category=${cat.slug}`"
+                    class="navbar__dropdown-link"
+                    @click="productsOpen = false"
+                  >
+                    <span class="navbar__dropdown-dot"></span>
+                    {{ cat.name }}
+                  </RouterLink>
+                  <RouterLink to="/products" class="navbar__dropdown-all" @click="productsOpen = false">
+                    Voir tous les produits →
+                  </RouterLink>
+                </div>
+
+                <!-- Gammes -->
+                <div class="navbar__dropdown-col navbar__dropdown-col--border">
+                  <p class="navbar__dropdown-heading">Gammes</p>
+                  <RouterLink
+                    v-for="line in productLines"
+                    :key="line.id"
+                    :to="`/gammes/${line.slug}`"
+                    class="navbar__dropdown-link"
+                    @click="productsOpen = false"
+                  >
+                    <span class="navbar__dropdown-dot navbar__dropdown-dot--rose"></span>
+                    {{ line.name }}
+                  </RouterLink>
+                </div>
+              </div>
+            </div>
+          </Transition>
+        </li>
+
+        <!-- À propos -->
+        <li>
+          <RouterLink to="/a-propos" class="navbar__link" :class="{ 'navbar__link--active': $route.path === '/a-propos' }">
+            À propos
+          </RouterLink>
+        </li>
+
+        <!-- Blog -->
+        <li>
+          <RouterLink to="/blog" class="navbar__link" :class="{ 'navbar__link--active': $route.path.startsWith('/blog') }">
+            {{ $t('common.blog') }}
+          </RouterLink>
+        </li>
+
+        <!-- Contact -->
+        <li>
+          <RouterLink to="/contact" class="navbar__link" :class="{ 'navbar__link--active': $route.path === '/contact' }">
+            Contact
           </RouterLink>
         </li>
       </ul>
@@ -69,17 +140,14 @@
             <span v-if="wishlistCount > 0" class="navbar__badge navbar__badge--wish">{{ wishlistCount }}</span>
           </RouterLink>
 
-          <!-- Commandes / Profil -->
-          <RouterLink to="/orders" class="navbar__icon-btn" :aria-label="$t('nav.ordersLabel')">
+          <!-- Profil utilisateur -->
+          <RouterLink to="/profil" class="navbar__icon-btn navbar__icon-btn--relative" :aria-label="'Mon profil'">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
+            <!-- Point rouge si profil à compléter -->
+            <span v-if="auth.isQuickOrderUser" class="navbar__badge navbar__badge--alert" title="Complétez votre profil"></span>
           </RouterLink>
-          <button class="navbar__icon-btn" @click="auth.logout()" :aria-label="$t('nav.logoutLabel')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-          </button>
         </template>
 
         <!-- Panier -->
@@ -138,6 +206,8 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
+import { useHomeStore }     from '@/features/home/home.store'
+import api from '@/api'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
 
 const props = defineProps({
@@ -151,17 +221,24 @@ const { t } = useI18n()
 const route    = useRoute()
 const auth     = useAuthStore()
 const settings = useSettingsStore()
+const homeStore = useHomeStore()
 const isScrolled = ref(false)
 const mobileMenuOpen = ref(false)
 const announceDismissed = ref(false)
+const productsOpen = ref(false)
+const productLines = ref([])
 
+// Mobile nav links (gardés pour menu burger)
 const navLinks = computed(() => [
-  { to: '/',            label: t('common.home') },
-  { to: '/products',    label: t('common.products') },
-  { to: '/blog',        label: t('common.blog') },
-  { to: '/programme',   label: t('common.club') },
+  { to: '/',          label: t('common.home') },
+  { to: '/products',  label: t('common.products') },
+  { to: '/a-propos',  label: 'À propos' },
+  { to: '/blog',      label: t('common.blog') },
+  { to: '/contact',   label: 'Contact' },
+  { to: '/programme', label: t('common.club') },
   ...(auth.isLoggedIn ? [{ to: '/wishlist', label: t('common.wishlist'), badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
   ...(auth.isLoggedIn ? [{ to: '/orders',   label: t('common.myOrders') }] : []),
+  ...(auth.isLoggedIn ? [{ to: '/profil',   label: 'Mon profil', badge: auth.isQuickOrderUser ? '!' : null }] : []),
 ])
 
 const spacerHeight = computed(() => {
@@ -174,8 +251,13 @@ function handleScroll() {
   isScrolled.value = window.scrollY > 16
 }
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener('scroll', handleScroll, { passive: true })
+  homeStore.fetchCategories()
+  try {
+    const res = await api.get('/product-lines')
+    productLines.value = res.data.data ?? res.data
+  } catch { /* silencieux */ }
 })
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
@@ -310,6 +392,116 @@ onUnmounted(() => {
   letter-spacing: 0.05em;
 }
 
+/* ── Dropdown ── */
+.navbar__dropdown-wrap {
+  position: relative;
+}
+
+.navbar__link--has-arrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.navbar__arrow {
+  transition: transform var(--transition-fast);
+  opacity: 0.6;
+}
+.navbar__arrow--open { transform: rotate(180deg); }
+
+.navbar__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid var(--cream-200);
+  z-index: 200;
+  min-width: 360px;
+}
+
+.navbar__dropdown-inner {
+  display: flex;
+  padding: 8px;
+  gap: 0;
+}
+
+.navbar__dropdown-col {
+  flex: 1;
+  padding: 12px 16px;
+}
+
+.navbar__dropdown-col--border {
+  border-left: 1px solid var(--cream-200);
+}
+
+.navbar__dropdown-heading {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--gray-400);
+  margin-bottom: 10px;
+  padding-left: 8px;
+}
+
+.navbar__dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  font-weight: 400;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+}
+.navbar__dropdown-link:hover {
+  background: var(--rose-50);
+  color: var(--color-primary);
+}
+
+.navbar__dropdown-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gray-300);
+  flex-shrink: 0;
+}
+.navbar__dropdown-dot--rose { background: var(--rose-400); }
+
+.navbar__dropdown-all {
+  display: block;
+  margin-top: 10px;
+  padding: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+.navbar__dropdown-all:hover { opacity: 0.75; }
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.18s ease;
+  transform-origin: top center;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px) scale(0.97);
+}
+.dropdown-enter-to,
+.dropdown-leave-from {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
 /* ── Actions ── */
 .navbar__actions {
   display: flex;
@@ -383,6 +575,24 @@ onUnmounted(() => {
   right: 2px;
   background: var(--rose-500);
   color: #fff;
+}
+
+.navbar__badge--alert {
+  top: 4px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  min-width: unset;
+  padding: 0;
+  background: #f59e0b;
+  border: 1.5px solid var(--cream-50);
+  border-radius: 50%;
+  animation: pulse-alert 2s ease-in-out infinite;
+}
+
+@keyframes pulse-alert {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+  50%       { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); }
 }
 
 .navbar__icon-btn--relative {
