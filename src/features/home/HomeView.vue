@@ -1,0 +1,162 @@
+<template>
+  <div>
+    <HeroSection
+      :heroProduct="heroProduct"
+      :flashProduct="flashProduct"
+      :ratingAvg="homeStats.rating_avg || 4.9"
+      :reviewsCount="homeStats.reviews_count || 0"
+      :clientsCount="homeStats.clients_count || 0"
+      :featuredReview="homeStats.featured_review"
+      :heroEyebrow="settings.homeHeroEyebrow"
+      :heroTitle="settings.homeHeroTitle"
+      :heroSubtitle="settings.homeHeroSubtitle"
+      @add-to-cart="addToCart"
+    />
+
+    <!-- Vente flash -->
+    <FlashSaleSection
+      v-if="homeStats.flash_sales && homeStats.flash_sales.length"
+      :products="homeStats.flash_sales"
+      :label="settings.homeFlashLabel || 'Ventes flash'"
+      @add-to-cart="addToCart"
+    />
+
+    <BenefitsSection :items="benefits" />
+
+    <CategoriesSection :categories="categories" :loading="loadingCats" />
+
+    <!-- Nouvelle collection -->
+    <NewCollectionSection
+      v-if="homeStats.new_collection && homeStats.new_collection.length"
+      :products="homeStats.new_collection"
+      @add-to-cart="addToCart"
+    />
+
+    <BestSellersSection
+      :products="featured"
+      :loading="loadingProducts"
+      @add-to-cart="addToCart"
+    />
+
+    <AboutSection
+      :shopName="settings.shopName"
+      :tagline="settings.shopTagline || FALLBACK_TAGLINE"
+      :promises="promises"
+      :stats="dynamicStats"
+    />
+
+    <GallerySection />
+
+    <TestimonialsSection :items="testimonials" />
+  </div>
+</template>
+
+<script setup>
+import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
+import { useCartStore }     from '@/features/cart/cart.store'
+import { useSettingsStore } from '@/stores/settings'
+import { useHomeStore }     from '@/features/home/home.store'
+
+import HeroSection          from '@/features/home/sections/HeroSection.vue'
+import GallerySection       from '@/features/home/sections/GallerySection.vue'
+import BenefitsSection      from '@/features/home/sections/BenefitsSection.vue'
+import CategoriesSection    from '@/features/home/sections/CategoriesSection.vue'
+import BestSellersSection   from '@/features/home/sections/BestSellersSection.vue'
+import NewCollectionSection from '@/features/home/sections/NewCollectionSection.vue'
+import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
+import AboutSection         from '@/features/home/sections/AboutSection.vue'
+import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'
+
+/* ── Stores ─────────────────────────────────────────────────────────────── */
+const { t }     = useI18n()
+const cartStore = useCartStore()
+const settings  = useSettingsStore()
+const homeStore = useHomeStore()
+
+/* ── storeToRefs : déstructuration réactive (conserve la réactivité) ──── */
+const {
+  categories,
+  featured,
+  homeStats,
+  loadingCats,
+  loadingProducts,
+} = storeToRefs(homeStore)
+
+const FALLBACK_TAGLINE = computed(() => t('about.defaultTagline'))
+
+/* ── Chargement : ne refetch que si le TTL de 5 min est dépassé ─────────── */
+onMounted(() => homeStore.fetchAll())
+
+/* ── Produit hero : best-seller en priorité, sinon premier featured ──────── */
+const heroProduct  = computed(() => homeStats.value.best_seller ?? featured.value[0] ?? null)
+const flashProduct = computed(() => homeStats.value.flash_sales?.[0] ?? null)
+
+/* ── Témoignages ─────────────────────────────────────────────────────────── */
+const FALLBACK_TESTIMONIALS = [
+  { name: 'Aminata K.',    location: 'Abidjan', quote: "L'élixir de roses a transformé ma peau en deux semaines. Mon teint est plus unifié et ma peau respire vraiment.", rating: 5 },
+  { name: 'Fatoumata D.', location: 'Abidjan', quote: "L'eau de rose pure est incroyable. Je l'utilise matin et soir et ma peau est tellement plus douce.", rating: 5 },
+  { name: 'Nathalie B.',  location: 'Bouaké',  quote: 'Le lait corporel à la rose sent divinement bon et hydrate vraiment. Ma peau est soyeuse toute la journée.', rating: 5 },
+]
+const testimonials = computed(() =>
+  homeStats.value.testimonials?.length ? homeStats.value.testimonials : FALLBACK_TESTIMONIALS
+)
+
+/* ── Panier ─────────────────────────────────────────────────────────────── */
+function addToCart(product) {
+  cartStore.add(product.id ?? product, 1)
+}
+
+/* ── Bénéfices ───────────────────────────────────────────────────────────── */
+const benefits = computed(() => [
+  {
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+    title: t('benefits.naturalFormulas'),
+    desc:  t('benefits.naturalDesc'),
+  },
+  {
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
+    title: t('benefits.pureRose'),
+    desc:  t('benefits.pureRoseDesc'),
+  },
+  {
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`,
+    title: t('benefits.visibleResults'),
+    desc:  t('benefits.visibleResultsDesc'),
+  },
+  {
+    icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+    title: t('benefits.deliveryTitle', { delay: settings.shippingDelay || 'rapide' }),
+    desc:  settings.shippingFreeThreshold > 0
+      ? t('benefits.deliveryDescFree', { threshold: settings.shippingFreeThreshold.toLocaleString('fr-FR'), currency: settings.shopCurrency })
+      : t('benefits.deliveryDesc'),
+  },
+])
+
+const promises = computed(() => [
+  t('about.promises.ingredients'),
+  t('about.promises.dermatological'),
+  t('about.promises.cruelfree'),
+  t('about.promises.madeInCI'),
+])
+
+/* ── Stats dynamiques ────────────────────────────────────────────────────── */
+const dynamicStats = computed(() => [
+  {
+    value: homeStats.value.clients_count
+      ? `${homeStats.value.clients_count.toLocaleString('fr-FR')}+`
+      : '2 000+',
+    label: t('about.satisfiedClients'),
+  },
+  { value: '100%', label: t('about.naturalPure') },
+  {
+    value: categories.value.length || 5,
+    label: t('about.careRanges'),
+  },
+  {
+    value: settings.shippingDelay || '48h',
+    label: t('about.deliveryDelay'),
+  },
+])
+</script>

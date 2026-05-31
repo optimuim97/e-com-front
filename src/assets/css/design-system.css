@@ -106,8 +106,8 @@
   --z-modal:    300;
   --z-toast:    400;
 
-  /* ── Navbar height ── */
-  --navbar-height: 72px;
+  /* ── Navbar height ── mis à jour dynamiquement par AppNavbar.vue */
+  --navbar-height: 136px; /* valeur initiale : 96px nav + 40px announce */
 }
 
 /* ══ Reset & Base ══

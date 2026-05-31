@@ -25,6 +25,7 @@
     </main>
 
     <CartDrawer />
+    <BottomNav />
     <AppFooter />
   </div>
 </template>
@@ -42,6 +43,7 @@ import { useAuthStore }     from '@/features/auth/auth.store'
 import AppNavbar  from '@/components/layout/AppNavbar.vue'
 import AppFooter  from '@/components/layout/AppFooter.vue'
 import CartDrawer from '@/features/cart/CartDrawer.vue'
+import BottomNav  from '@/components/layout/BottomNav.vue'
 
 const cartStore     = useCartStore()
 const wishlistStore = useWishlistStore()
@@ -77,11 +79,12 @@ function handleSearch() {
 
 <style scoped>
 .page-enter-active,
-.page-leave-active {
-  transition: opacity 0.2s ease;
-}
+.page-leave-active { transition: opacity 0.2s ease; }
 .page-enter-from,
-.page-leave-to {
-  opacity: 0;
+.page-leave-to { opacity: 0; }
+
+/* Espace pour la bottom nav sur mobile */
+@media (max-width: 768px) {
+  .flex-1 { padding-bottom: 72px; }
 }
 </style>

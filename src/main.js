@@ -16,7 +16,21 @@ app.component('AppSelect', AppSelect);
 app.use(createPinia());
 app.use(router);
 app.use(i18n);
-app.use(Toast, { position: 'top-right', timeout: 3000 });
+app.use(Toast, {
+  position:       'bottom-right',
+  timeout:        3000,
+  maxToasts:      3,
+  transition:     'Vue-Toastification__fade',
+  closeOnClick:   true,
+  pauseOnHover:   true,
+  draggable:      false,
+  hideProgressBar: false,
+  // Empêche les doublons : même contenu → pas de nouveau toast
+  filterBeforeCreate: (toast, toasts) => {
+    if (toasts.some(t => t.content === toast.content)) return false
+    return toast
+  },
+});
 app.use(echoPlugin);
 
 app.mount('#app');

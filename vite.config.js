@@ -9,7 +9,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: {
-    port: 5173,
+    port: 5174,
     proxy: {
       // En dev : proxy les appels /api, /sanctum et /broadcasting vers Laravel
       '/api':          { target: 'http://127.0.0.1:7000', changeOrigin: true },

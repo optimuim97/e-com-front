@@ -66,8 +66,8 @@
                   </RouterLink>
                 </div>
 
-                <!-- Gammes -->
-                <div class="navbar__dropdown-col navbar__dropdown-col--border">
+                <!-- Gammes — uniquement si des gammes existent en BD -->
+                <div v-if="productLines.length > 0" class="navbar__dropdown-col navbar__dropdown-col--border">
                   <p class="navbar__dropdown-heading">Gammes</p>
                   <RouterLink
                     v-for="line in productLines"
@@ -201,7 +201,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore }     from '@/features/auth/auth.store'
@@ -242,10 +242,15 @@ const navLinks = computed(() => [
 ])
 
 const spacerHeight = computed(() => {
-  const base = 72
+  const base     = 96   // hauteur réelle de navbar__main
   const announce = announceDismissed.value ? 0 : 40
   return base + announce
 })
+
+// Expose la hauteur totale comme variable CSS → tous les sticky en dessous s'ajustent
+watch(spacerHeight, (h) => {
+  document.documentElement.style.setProperty('--navbar-height', `${h}px`)
+}, { immediate: true })
 
 function handleScroll() {
   isScrolled.value = window.scrollY > 16

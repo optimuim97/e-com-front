@@ -1,5 +1,13 @@
 <template>
   <main class="auth-page">
+    <!-- Retour accueil — visible pour tous les utilisateurs -->
+    <RouterLink to="/" class="auth-back">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Retour à l'accueil
+    </RouterLink>
+
     <!-- Background décoratif -->
     <div class="auth-bg" aria-hidden="true">
       <div class="auth-bg__blob auth-bg__blob--1"></div>
@@ -59,6 +67,33 @@ defineProps({
   background: linear-gradient(160deg, var(--cream-50) 0%, var(--rose-50) 60%, var(--cream-100) 100%);
   position: relative;
   overflow: hidden;
+}
+
+/* Lien retour accueil */
+.auth-back {
+  position: absolute;
+  top: var(--space-5);
+  left: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  transition: all var(--transition-fast);
+  z-index: 2;
+}
+.auth-back:hover {
+  color: var(--rose-500);
+  border-color: var(--rose-200);
+  background: rgba(255,255,255,0.95);
+  transform: translateX(-2px);
 }
 
 .auth-bg { position: absolute; inset: 0; pointer-events: none; }

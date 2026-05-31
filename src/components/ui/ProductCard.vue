@@ -296,34 +296,38 @@ function toggleWishlist() {
 .product-card__meta {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
   flex-wrap: wrap;
 }
+/* Catégorie : contexte discret, pas de compétition visuelle */
 .product-card__cat {
-  font-size: 0.6875rem;
+  font-size: 0.5625rem;
   font-weight: 500;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: var(--rose-400);
+  color: var(--gray-400);
 }
+/* Tag gamme : toute petite pilule colorée, presque un détail */
 .product-card__line {
-  font-size: 0.625rem;
+  font-size: 0.5375rem;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 2px 7px;
+  padding: 1px 5px;
   border-radius: var(--radius-full);
   border: 1px solid;
   transition: opacity var(--transition-fast);
+  line-height: 1.7;
 }
-.product-card__line:hover { opacity: 0.75; }
+.product-card__line:hover { opacity: 0.7; }
 .product-card__name-link { display: block; }
+/* Nom : vedette principale de la carte */
 .product-card__name {
   font-family: var(--font-display);
-  font-size: 1.0625rem;
-  font-weight: 500;
+  font-size: 1.125rem;
+  font-weight: 600;
   color: var(--gray-800);
-  line-height: 1.3;
+  line-height: 1.25;
   transition: color var(--transition-fast);
 }
 .product-card__name-link:hover .product-card__name { color: var(--color-primary); }
@@ -359,8 +363,8 @@ function toggleWishlist() {
 .product-card__price-current {
   font-family: var(--font-display);
   font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-800);
+  font-weight: 700;
+  color: var(--rose-600);
 }
 
 /* ── Bouton panier ── */
