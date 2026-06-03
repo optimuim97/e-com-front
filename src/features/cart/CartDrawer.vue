@@ -11,6 +11,18 @@
     <Transition name="drawer">
       <aside v-if="cartStore.isOpen" class="drawer" :data-step="step">
 
+        <!-- Bouton fermer flottant : grand, tactile, toujours visible -->
+        <button
+          @click="cartStore.close()"
+          class="drawer__close-floating"
+          aria-label="Fermer le panier"
+          type="button"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+
         <!-- Stepper bar (shared) -->
         <div class="drawer__topbar">
           <button v-if="step > 1" @click="step--" class="drawer__icon-btn" aria-label="Étape précédente">
@@ -823,6 +835,47 @@ function fmt(val) {
   overflow: hidden;
   /* Pas de transform: translateZ ici — sur iOS Chrome ça bloque les events
      tactiles des enfants (boutons, scroll). Le 100dvh suffit pour la stabilité. */
+}
+
+/* ── Bouton fermer flottant ── */
+.drawer__close-floating {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 30;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--gray-700, #374151);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--cream-200, #e5e7eb);
+  transition: transform 0.12s ease, background 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer__close-floating:hover,
+.drawer__close-floating:active {
+  background: var(--rose-500, #e8336d);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* Mobile : plus grand, plus tactile */
+@media (max-width: 640px) {
+  .drawer__close-floating {
+    width: 44px;
+    height: 44px;
+    top: 12px;
+    right: 12px;
+  }
+  /* L'ancien bouton fermer du topbar fait doublon → on le masque */
+  .drawer__topbar > .drawer__icon-btn[aria-label="Fermer"],
+  .drawer__topbar > .drawer__icon-spacer:last-child {
+    display: none;
+  }
 }
 
 /* ── Topbar (stepper) ── */
