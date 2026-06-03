@@ -105,10 +105,34 @@
             <template v-if="order.shipping_address?.address_line2">
               {{ order.shipping_address.address_line2 }}<br />
             </template>
+            <template v-if="order.shipping_address?.commune">
+              <span class="text-gray-400">Commune :</span> {{ order.shipping_address.commune }}<br />
+            </template>
             {{ order.shipping_address?.city }}<template v-if="order.shipping_address?.zip">, {{ order.shipping_address.zip }}</template><br />
             <template v-if="order.shipping_address?.country">{{ countryName(order.shipping_address.country) }}<br /></template>
             <span class="text-gray-400">Tél :</span> {{ order.shipping_address?.phone ?? '—' }}
+            <template v-if="order.shipping_address?.email">
+              <br /><span class="text-gray-400">Email :</span> {{ order.shipping_address.email }}
+            </template>
           </address>
+
+          <!-- Zone de livraison résolue -->
+          <div v-if="order.shipping_zone" class="zone-block">
+            <div class="zone-block__head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span>Zone de livraison</span>
+            </div>
+            <div class="zone-block__body">
+              <strong>{{ order.shipping_zone.name }}</strong>
+              <span class="zone-block__group">{{ order.shipping_zone.group }}</span>
+            </div>
+          </div>
+          <div v-else class="zone-block zone-block--unknown">
+            <span>Zone non identifiée — frais saisis manuellement.</span>
+          </div>
         </div>
       </div>
 
@@ -322,6 +346,51 @@ onMounted(fetchOrder)
 </script>
 
 <style scoped>
+/* ── Zone de livraison résolue ── */
+.zone-block {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--rose-50, #fdeef2);
+  border: 1px solid var(--rose-100, #fbd7e1);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.zone-block__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rose-600, #c0386b);
+}
+.zone-block__head svg { flex-shrink: 0; }
+.zone-block__body {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.zone-block__body strong {
+  font-size: 0.9375rem;
+  color: var(--gray-800);
+  font-weight: 600;
+}
+.zone-block__group {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+.zone-block--unknown {
+  background: var(--cream-100, #fdf2ec);
+  border-color: var(--cream-300, #e5e7eb);
+  color: var(--gray-500);
+  font-size: 0.8125rem;
+  font-style: italic;
+}
+
 .admin-back-link {
   display: inline-flex;
   align-items: center;
