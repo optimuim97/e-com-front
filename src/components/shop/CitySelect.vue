@@ -308,8 +308,18 @@ function selectHighlightedCommune() {
 }
 
 // ── Sync depuis l'extérieur ──────────────────────────────────────────────────
+// IMPORTANT : ne PAS appeler clearCity() ici, sinon le champ ville reçoit
+// un .focus() au montage du composant, ce qui fait scroller la page vers
+// le haut quand on arrive à l'étape 2 du checkout.
 watch(() => props.city, (val) => {
-  if (!val) { clearCity(); return }
+  if (!val) {
+    // Reset silencieux (pas de focus, pas d'emit — l'extérieur a déjà la valeur vide)
+    selectedCity.value    = null
+    cityQuery.value       = ''
+    selectedCommune.value = ''
+    communeQuery.value    = ''
+    return
+  }
   const found = citiesCI.find(c => c.name.toLowerCase() === val.toLowerCase())
   if (found && found.id !== selectedCity.value?.id) {
     selectedCity.value = found

@@ -384,12 +384,23 @@ function goStep(n) {
   currentStep.value = n
 }
 
-// Blur auto-focus sur pays au passage à l'étape 2
-watch(currentStep, async (val) => {
-  if (val === 2) {
-    await nextTick()
-    document.activeElement?.blur()
-  }
+// Au changement d'étape : retire le focus auto + scroll en haut de la nouvelle
+// section pour que l'utilisateur voie le titre, pas un champ au milieu.
+watch(currentStep, async () => {
+  await nextTick()
+  document.activeElement?.blur()
+  // Cible la card de la section affichée. Petit délai pour laisser la
+  // transition Vue terminer le mount avant de scroller.
+  requestAnimationFrame(() => {
+    const section = document.querySelector('.co-section')
+    if (!section) return
+    const rect = section.getBoundingClientRect()
+    // Si la section est déjà visible en haut, ne pas re-scroller pour rien
+    if (rect.top < 0 || rect.top > window.innerHeight * 0.4) {
+      const targetY = window.scrollY + rect.top - 80 // marge sous le header sticky
+      window.scrollTo({ top: targetY, behavior: 'smooth' })
+    }
+  })
 })
 
 // ── Formulaire ───────────────────────────────────────────────────────────────
