@@ -74,6 +74,7 @@
     "reviewsFallback": "(284 reviews)",
     "clients": "+{count} clients",
     "clientsFallback": "+2,000 clients",
+    "clientsLabel": "happy customers",
     "cta": "Discover our care",
     "ctaProgram": "Our program",
     "natural": "100% natural",

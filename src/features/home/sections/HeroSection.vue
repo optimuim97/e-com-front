@@ -1,202 +1,150 @@
 <template>
   <section class="hero">
 
-    <!-- ── Carousel fond ─────────────────────────────────────────────────── -->
-    <div class="hero__carousel" aria-hidden="true">
-      <TransitionGroup name="carousel-fade" tag="div" class="hero__carousel-track">
-        <div
-          v-for="(img, i) in carouselImages"
-          v-show="i === currentSlide"
-          :key="img"
-          class="hero__carousel-slide"
-        >
-          <img :src="img" alt="" class="hero__carousel-img" loading="lazy" />
-        </div>
-      </TransitionGroup>
-      <!-- Fondu gradient pour lisibilité du texte -->
-      <div class="hero__carousel-overlay"></div>
+    <!-- ── Décor botanique en watermark (SVG, anti-template) ──────────────── -->
+    <div class="hero__decor" aria-hidden="true">
+      <!-- Branche de roses en haut à gauche -->
+      <svg class="hero__decor-branch hero__decor-branch--tl" viewBox="0 0 220 320" fill="none">
+        <path d="M30 0c0 60 18 92 48 132 30 40 60 92 60 168" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+        <ellipse cx="60" cy="48" rx="14" ry="6" fill="currentColor" opacity="0.18" transform="rotate(-32 60 48)"/>
+        <ellipse cx="80" cy="92" rx="18" ry="7" fill="currentColor" opacity="0.14" transform="rotate(-18 80 92)"/>
+        <ellipse cx="105" cy="148" rx="20" ry="7" fill="currentColor" opacity="0.13" transform="rotate(8 105 148)"/>
+        <ellipse cx="120" cy="200" rx="22" ry="8" fill="currentColor" opacity="0.12" transform="rotate(28 120 200)"/>
+        <!-- Bourgeon rose stylisé -->
+        <g transform="translate(38 22)" opacity="0.22">
+          <path d="M0 8c0-5 4-8 8-8s8 3 8 8c0 2-1 4-3 5 2 1 4 3 4 6s-3 6-7 6-9-2-9-7c0-2 1-3 2-4-2-1-3-3-3-6z" fill="currentColor"/>
+        </g>
+      </svg>
 
-      <!-- Dots -->
-      <div class="hero__carousel-dots">
-        <button
-          v-for="(_, i) in carouselImages"
-          :key="i"
-          class="hero__carousel-dot"
-          :class="{ 'hero__carousel-dot--active': i === currentSlide }"
-          @click="goToSlide(i)"
-          :aria-label="`Image ${i + 1}`"
-        ></button>
-      </div>
-    </div>
+      <!-- Branche en bas à droite -->
+      <svg class="hero__decor-branch hero__decor-branch--br" viewBox="0 0 240 280" fill="none">
+        <path d="M210 280c-20-60-40-110-90-170S30 50 30 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>
+        <ellipse cx="170" cy="210" rx="22" ry="8" fill="currentColor" opacity="0.13" transform="rotate(40 170 210)"/>
+        <ellipse cx="125" cy="155" rx="22" ry="8" fill="currentColor" opacity="0.13" transform="rotate(60 125 155)"/>
+        <ellipse cx="80"  cy="98"  rx="18" ry="7" fill="currentColor" opacity="0.14" transform="rotate(80 80 98)"/>
+        <g transform="translate(196 246) rotate(20)" opacity="0.22">
+          <path d="M0 8c0-5 4-8 8-8s8 3 8 8c0 2-1 4-3 5 2 1 4 3 4 6s-3 6-7 6-9-2-9-7c0-2 1-3 2-4-2-1-3-3-3-6z" fill="currentColor"/>
+        </g>
+      </svg>
 
-    <!-- Fond décoratif blobs (sur le carousel) -->
-    <div class="hero__bg" aria-hidden="true">
-      <div class="hero__bg-blob hero__bg-blob--1"></div>
-      <div class="hero__bg-blob hero__bg-blob--2"></div>
+      <!-- Pétales flottants minimalistes -->
+      <svg class="hero__petal hero__petal--1" viewBox="0 0 60 80" fill="none">
+        <path d="M30 0c12 18 18 36 18 50s-8 28-18 30c-10-2-18-16-18-30S18 18 30 0z" fill="currentColor" opacity="0.6"/>
+      </svg>
+      <svg class="hero__petal hero__petal--2" viewBox="0 0 60 80" fill="none">
+        <path d="M30 0c12 18 18 36 18 50s-8 28-18 30c-10-2-18-16-18-30S18 18 30 0z" fill="currentColor" opacity="0.45"/>
+      </svg>
     </div>
 
     <div class="container hero__inner">
 
-      <!-- Colonne gauche : texte -->
+      <!-- ── Colonne gauche : texte éditorial ──────────────────────────── -->
       <div class="hero__content">
-        <div class="hero__eyebrow animate-fade-up">
-          <span class="badge badge-rose">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
-            {{ eyebrowText }}
-          </span>
-        </div>
+        <span class="hero__eyebrow">
+          <span class="hero__eyebrow-line"></span>
+          {{ eyebrowText.toUpperCase() }}
+        </span>
 
-        <h1 class="display-xl hero__title animate-fade-up animate-fade-up-delay-1">
+        <h1 class="hero__title">
           <template v-if="heroTitle">{{ heroTitle }}</template>
           <template v-else>
-            {{ $t('hero.defaultTitle').split(' ').slice(0, 2).join(' ') }} <br>
-            <em class="hero__title-em">{{ $t('hero.titleNatural') }}</em><br>
-            {{ $t('hero.titleRevealed') }}
+            Révélez l'<em>éclat naturel</em><br>
+            de votre peau
           </template>
         </h1>
 
-        <p class="hero__desc animate-fade-up animate-fade-up-delay-2">
+        <p class="hero__desc">
           {{ subtitleText }}
         </p>
 
-        <!-- Preuves sociales — uniquement si données réelles -->
-        <div v-if="hasRealReviews" class="hero__trust animate-fade-up animate-fade-up-delay-3">
-          <div class="hero__stars">
-            <span v-for="i in 5" :key="i" class="hero__star" :class="{ 'hero__star--filled': i <= Math.round(ratingAvg) }">★</span>
-            <span class="hero__rating">
-              {{ ratingAvg.toFixed(1).replace('.', ',') }}
-              <span class="hero__reviews">{{ reviewsLabel }}</span>
-            </span>
-          </div>
-          <div v-if="clientsCount > 0" class="hero__trust-divider"></div>
-          <div v-if="clientsCount > 0" class="hero__avatars">
-            <img v-for="(a, i) in avatars" :key="i" :src="a" alt="" class="hero__avatar" :style="{ zIndex: avatars.length - i }" v-img-fallback />
-            <span class="hero__avatars-text">{{ clientsLabel }}</span>
-          </div>
-        </div>
-
-        <!-- CTAs -->
-        <div class="hero__ctas animate-fade-up animate-fade-up-delay-4">
-          <RouterLink to="/products" class="btn btn-primary btn-lg">
-            {{ $t('hero.cta') }}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <!-- CTA + lien secondaire textuel (style Esthetic) -->
+        <div class="hero__ctas">
+          <RouterLink to="/products" class="hero__cta-primary">
+            <span>{{ $t('hero.cta') }}</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </RouterLink>
-          <RouterLink to="/programme" class="btn btn-outline btn-lg">
+          <RouterLink to="/programme" class="hero__cta-text">
             {{ $t('hero.ctaProgram') }}
           </RouterLink>
         </div>
 
-        <!-- Badges de confiance -->
-        <div class="hero__badges animate-fade-up animate-fade-up-delay-4">
-          <div class="hero__trust-badge" v-for="badge in trustBadges" :key="badge.label">
-            <span class="hero__trust-icon" v-html="badge.icon"></span>
-            <span>{{ badge.label }}</span>
+        <!-- Preuves de confiance — version éditoriale minimale -->
+        <div v-if="hasRealReviews || clientsCount > 0" class="hero__proof">
+          <div v-if="hasRealReviews" class="hero__proof-block">
+            <strong class="hero__proof-value">{{ ratingAvg.toFixed(1).replace('.', ',') }}/5</strong>
+            <span class="hero__proof-label">{{ reviewsLabel }}</span>
+          </div>
+          <span v-if="hasRealReviews && clientsCount > 0" class="hero__proof-sep"></span>
+          <div v-if="clientsCount > 0" class="hero__proof-block">
+            <strong class="hero__proof-value">{{ clientsCount.toLocaleString('fr-FR') }}+</strong>
+            <span class="hero__proof-label">{{ $t('hero.clientsLabel') }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Colonne droite : produit -->
-      <div class="hero__visual animate-fade-up animate-fade-up-delay-2">
+      <!-- ── Colonne droite : visuel produit en cercle ─────────────────── -->
+      <div class="hero__visual">
+        <!-- Disque crème de fond -->
+        <div class="hero__disc" aria-hidden="true"></div>
 
-        <!-- Carte produit -->
-        <div class="hero__product-card">
-          <div class="hero__product-img-wrap">
-            <img
-              v-if="displayProduct.image"
-              :src="displayProduct.image"
-              :alt="displayProduct.name"
-              class="hero__product-img"
-              @error="$event.target.style.display='none'"
-            />
-            <div v-else class="hero__product-img-placeholder">🌹</div>
-
-            <!-- Badge best-seller ou flash -->
-            <div class="hero__product-badge" :class="displayProduct.isFlash ? 'hero__product-badge--flash' : 'hero__product-badge--bs'">
-              <template v-if="displayProduct.isFlash">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                {{ $t('hero.flashBadge') }}
-              </template>
-              <template v-else>
-                🏆 {{ $t('common.bestseller') }}
-              </template>
-            </div>
-          </div>
-
-          <div class="hero__product-info">
-            <RouterLink v-if="displayProduct.slug" :to="`/products/${displayProduct.slug}`" class="hero__product-name-link">
-              <h3 class="hero__product-name">{{ displayProduct.name }}</h3>
-            </RouterLink>
-            <h3 v-else class="hero__product-name">{{ displayProduct.name }}</h3>
-
-            <div class="hero__product-price">
-              <span v-if="displayProduct.priceOld" class="hero__price-old">{{ displayProduct.priceOld }}</span>
-              <span class="hero__price-new">{{ displayProduct.price }}</span>
-            </div>
-            <button class="btn btn-primary hero__product-btn" @click="$emit('add-to-cart', displayProduct)">
-              {{ $t('common.addToCart') }}
-            </button>
-          </div>
+        <!-- Photo principale (modèle/produit) -->
+        <div class="hero__photo">
+          <img
+            v-if="displayProduct.image"
+            :src="displayProduct.image"
+            :alt="displayProduct.name"
+            loading="eager"
+            @error="$event.target.style.display='none'"
+          />
+          <!-- Fallback SVG fleur si pas d'image -->
+          <svg v-else class="hero__photo-fallback" viewBox="0 0 100 100" fill="none">
+            <g transform="translate(50 50)">
+              <path d="M0-22c8 0 14 6 14 14 0 6-4 11-9 13 5 2 9 7 9 13 0 8-6 14-14 14s-14-6-14-14c0-6 4-11 9-13-5-2-9-7-9-13 0-8 6-14 14-14z" fill="currentColor" opacity="0.32"/>
+              <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.5"/>
+            </g>
+          </svg>
         </div>
 
-        <!-- Carte avis flottante — UNIQUEMENT si avis réel disponible -->
-<!--        <div v-if="featuredReview" class="hero__float-review">-->
-<!--          <div class="hero__float-avatar">{{ featuredReview.initial }}</div>-->
-<!--          <div>-->
-<!--            <div class="hero__float-stars">-->
-<!--              <span v-for="i in 5" :key="i" :class="{ 'hero__float-star&#45;&#45;off': i > featuredReview.rating }">★</span>-->
-<!--            </div>-->
-<!--            <p class="hero__float-text">"{{ featuredReview.quote }}"</p>-->
-<!--            <span class="hero__float-name">{{ featuredReview.name }} · {{ featuredReview.location }}</span>-->
-<!--          </div>-->
-<!--        </div>-->
+        <!-- Carte mini-produit flottante (info + prix) -->
+        <div v-if="displayProduct.name" class="hero__card">
+          <div class="hero__card-tag">
+            <template v-if="displayProduct.isFlash">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              {{ $t('hero.flashBadge') }}
+            </template>
+            <template v-else>
+              <!-- Médaille / récompense SVG (remplace 🏆) -->
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="8" r="6"/>
+                <path d="M15.5 12.5 17 23l-5-3-5 3 1.5-10.5"/>
+              </svg>
+              {{ $t('common.bestseller') }}
+            </template>
+          </div>
 
-        <div class="hero__visual-bg" aria-hidden="true"></div>
+          <RouterLink v-if="displayProduct.slug" :to="`/products/${displayProduct.slug}`" class="hero__card-name-link">
+            <h3 class="hero__card-name">{{ displayProduct.name }}</h3>
+          </RouterLink>
+          <h3 v-else class="hero__card-name">{{ displayProduct.name }}</h3>
+
+          <div class="hero__card-price">
+            <span v-if="displayProduct.priceOld" class="hero__card-price-old">{{ displayProduct.priceOld }}</span>
+            <span class="hero__card-price-new">{{ displayProduct.price }}</span>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- Scroll indicator -->
-    <div class="hero__scroll" aria-hidden="true">
-      <div class="hero__scroll-line"></div>
     </div>
   </section>
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
-
-// ── Carousel ──────────────────────────────────────────────────────────────────
-const carouselImages = [
-  '/image_site/FLS_8032.jpeg',
-  '/image_site/FLS_8111.jpeg',
-  '/image_site/FLS_8130.jpeg',
-  '/image_site/FLS_8142.jpeg',
-  '/image_site/DSC_7542.jpeg',
-  '/image_site/DSC_7553.jpeg',
-  '/image_site/DSC_7629.jpeg',
-]
-const SLIDE_DURATION = 5000
-const currentSlide = ref(0)
-let timer = null
-
-function nextSlide() {
-  currentSlide.value = (currentSlide.value + 1) % carouselImages.length
-}
-function goToSlide(i) {
-  currentSlide.value = i
-  resetTimer()
-}
-function resetTimer() {
-  clearInterval(timer)
-  timer = setInterval(nextSlide, SLIDE_DURATION)
-}
-
-onMounted(() => resetTimer())
-onBeforeUnmount(() => clearInterval(timer))
 
 defineEmits(['add-to-cart'])
 
@@ -206,7 +154,7 @@ const props = defineProps({
   ratingAvg:      { type: Number, default: 0 },
   reviewsCount:   { type: Number, default: 0 },
   clientsCount:   { type: Number, default: 0 },
-  featuredReview: { type: Object, default: null },  // null = pas d'avis réel
+  featuredReview: { type: Object, default: null },
   heroEyebrow:    { type: String, default: '' },
   heroTitle:      { type: String, default: '' },
   heroSubtitle:   { type: String, default: '' },
@@ -215,10 +163,8 @@ const props = defineProps({
 const { t } = useI18n()
 const settings = useSettingsStore()
 
-/* Affiche la zone trust uniquement si des vrais avis existent */
 const hasRealReviews = computed(() => props.reviewsCount > 0 && props.ratingAvg > 0)
 
-/* Produit affiché : flash si actif, sinon best-seller/hero */
 const displayProduct = computed(() => {
   const source = props.flashProduct?.is_flash_active ? props.flashProduct : props.heroProduct
   if (source) {
@@ -235,7 +181,6 @@ const displayProduct = computed(() => {
       isFlash,
     }
   }
-  // Fallback minimal sans données bidon
   return {
     id: null, name: t('hero.defaultProductName'),
     price: settings.formatPrice(7000), priceOld: null,
@@ -249,453 +194,348 @@ const subtitleText = computed(() => props.heroSubtitle || t('hero.defaultSubtitl
 const reviewsLabel = computed(() =>
   props.reviewsCount > 0 ? t('hero.reviews', { count: props.reviewsCount }) : ''
 )
-const clientsLabel = computed(() =>
-  props.clientsCount > 0 ? t('hero.clients', { count: props.clientsCount.toLocaleString('fr-FR') }) : ''
-)
-
-const avatars = ['/images/avatar-1.jpg', '/images/avatar-2.jpg', '/images/avatar-3.jpg']
-
-const trustBadges = computed(() => [
-  {
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
-    label: t('hero.natural'),
-  },
-  {
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>`,
-    label: t('hero.noParaben'),
-  },
-  {
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
-    label: t('hero.delivery48h'),
-  },
-  {
-    icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>`,
-    label: t('hero.return14d'),
-  },
-])
 </script>
 
 <style scoped>
+/* ───────────────────────────────────────────────────────────────────────────
+   Hero éditorial — inspiration Esthetic / Beautifo
+   Direction : crème, asymétrique, botanique très subtil, typographie serif
+─────────────────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  display: flex;
-  align-items: center;
   overflow: hidden;
-  padding: var(--space-10) 0 var(--space-8);
-  background: var(--cream-50);
-  min-height: 88vh;
+  padding: clamp(48px, 8vw, 96px) 0 clamp(40px, 6vw, 80px);
+  background: linear-gradient(180deg, #fffaf6 0%, #fdf3ef 100%);
+  isolation: isolate;
 }
 
-/* ── Carousel ──────────────────────────────────────────────────────────────── */
-.hero__carousel {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.hero__carousel-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.hero__carousel-slide {
-  position: absolute;
-  inset: 0;
-}
-
-.hero__carousel-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
-  display: block;
-}
-
-/* Fondu gradient pour lisibilité du texte à gauche */
-.hero__carousel-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(
-      to right,
-      rgba(253, 247, 243, 0.96) 0%,
-      rgba(253, 247, 243, 0.88) 28%,
-      rgba(253, 247, 243, 0.50) 52%,
-      rgba(253, 247, 243, 0.10) 72%,
-      transparent 100%
-    ),
-    linear-gradient(
-      to bottom,
-      rgba(253, 247, 243, 0.4) 0%,
-      transparent 15%,
-      transparent 80%,
-      rgba(253, 247, 243, 0.5) 100%
-    );
-}
-
-/* Dots */
-.hero__carousel-dots {
-  position: absolute;
-  bottom: 28px;
-  right: 40px;
-  display: flex;
-  gap: 8px;
-  z-index: 2;
-}
-.hero__carousel-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.45);
-  border: 1.5px solid rgba(255,255,255,0.6);
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-.hero__carousel-dot--active {
-  background: #fff;
-  width: 24px;
-  border-radius: 4px;
-}
-
-/* Cross-fade transition */
-.carousel-fade-enter-active,
-.carousel-fade-leave-active {
-  transition: opacity 1.2s ease;
-  position: absolute;
-  inset: 0;
-}
-.carousel-fade-enter-from,
-.carousel-fade-leave-to { opacity: 0; }
-.carousel-fade-enter-to,
-.carousel-fade-leave-from { opacity: 1; }
-
-/* ── Blobs décoratifs ──────────────────────────────────────────────────────── */
-.hero__bg {
+/* ── Décor botanique (couleur héritée → rose discret) ────────────────────── */
+.hero__decor {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
+  color: var(--rose-400, #f06292);
 }
 
-.hero__bg-blob {
+.hero__decor-branch {
   position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.12;
+  width: clamp(140px, 14vw, 220px);
+  height: auto;
 }
-.hero__bg-blob--1 {
-  width: 400px; height: 400px;
-  background: radial-gradient(circle, var(--rose-200), transparent 70%);
-  top: -80px; right: -80px;
-  animation: floatY 8s ease-in-out infinite;
-}
-.hero__bg-blob--2 {
-  width: 280px; height: 280px;
-  background: radial-gradient(circle, var(--gold-200), transparent 70%);
-  bottom: -60px; left: -40px;
-  animation: floatY 10s ease-in-out infinite reverse;
+.hero__decor-branch--tl { top: -10px; left: -10px; }
+.hero__decor-branch--br {
+  bottom: -20px;
+  right: -10px;
+  transform: scaleX(-1);
 }
 
-/* petals removed */
+.hero__petal {
+  position: absolute;
+  color: var(--rose-300, #f8a8b8);
+  filter: blur(0.3px);
+}
+.hero__petal--1 {
+  width: 36px;
+  top: 22%;
+  right: 8%;
+  transform: rotate(28deg);
+  animation: petalDrift 14s ease-in-out infinite;
+}
+.hero__petal--2 {
+  width: 28px;
+  bottom: 24%;
+  left: 6%;
+  transform: rotate(-20deg);
+  animation: petalDrift 18s ease-in-out infinite reverse;
+}
 
-/* ── Layout ── */
+@keyframes petalDrift {
+  0%, 100% { transform: translateY(0) rotate(28deg); }
+  50%      { transform: translateY(-14px) rotate(32deg); }
+}
+
+/* ── Layout asymétrique ──────────────────────────────────────────────────── */
 .hero__inner {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-16);
+  grid-template-columns: 1.05fr 0.95fr; /* texte légèrement plus large */
+  gap: clamp(32px, 6vw, 96px);
   align-items: center;
+  min-height: 78vh;
 }
 
-/* ── Contenu gauche ── */
+/* ── Contenu gauche ──────────────────────────────────────────────────────── */
 .hero__content {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: clamp(16px, 2vw, 28px);
+  max-width: 540px;
 }
 
-.hero__title { color: var(--gray-800); }
-.hero__title-em {
-  font-style: italic;
-  color: var(--color-primary);
+.hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--rose-600, #c0386b);
+  text-transform: uppercase;
 }
+.hero__eyebrow-line {
+  display: inline-block;
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 5vw, 3.75rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  color: #2a1f24;
+  margin: 0;
+}
+.hero__title em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--rose-500, #e8336d);
+  /* Soulignement crayonné subtil */
+  background: linear-gradient(transparent 78%, rgba(232,51,109,0.16) 78%);
+  padding: 0 2px;
+}
+
 .hero__desc {
   font-size: 1.0625rem;
-  color: var(--gray-600);
-  line-height: 1.75;
-  max-width: 440px;
+  line-height: 1.7;
+  color: #6b5e60;
+  max-width: 460px;
+  margin: 0;
 }
 
-/* ── Trust ── */
-.hero__trust {
+/* ── CTAs ────────────────────────────────────────────────────────────────── */
+.hero__ctas {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: clamp(16px, 3vw, 32px);
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
-.hero__stars { display: flex; align-items: center; gap: 4px; }
-.hero__star { color: #e2d5c8; font-size: 0.875rem; }
-.hero__star--filled { color: #f0b462; }
-.hero__rating {
-  font-size: 0.875rem;
+.hero__cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: #2a1f24;
+  color: #fffaf6;
+  font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--gray-700);
-  margin-left: 4px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: transform 0.18s ease, background 0.18s ease;
 }
-.hero__reviews { font-weight: 400; color: var(--gray-400); }
-
-.hero__trust-divider { width: 1px; height: 24px; background: var(--cream-300); }
-
-.hero__avatars { display: flex; align-items: center; gap: var(--space-2); }
-.hero__avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  object-fit: cover;
-  margin-left: -8px;
-  background: var(--rose-200);
+.hero__cta-primary:hover {
+  background: var(--rose-500, #e8336d);
+  transform: translateY(-1px);
 }
-.hero__avatar:first-child { margin-left: 0; }
-.hero__avatars-text { font-size: 0.8125rem; color: var(--gray-500); margin-left: var(--space-2); }
+.hero__cta-primary svg { transition: transform 0.18s ease; }
+.hero__cta-primary:hover svg { transform: translateX(3px); }
 
-/* ── CTAs ── */
-.hero__ctas { display: flex; gap: var(--space-3); flex-wrap: wrap; }
-
-/* ── Badges confiance ── */
-.hero__badges {
-  display: flex;
-  gap: var(--space-5);
-  flex-wrap: wrap;
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--cream-300);
+.hero__cta-text {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #2a1f24;
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  position: relative;
+  padding-bottom: 3px;
 }
-.hero__trust-badge {
+.hero__cta-text::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+.hero__cta-text:hover::after { transform-origin: left; transform: scaleX(1); }
+
+/* ── Preuves discrètes ──────────────────────────────────────────────────── */
+.hero__proof {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: 0.75rem;
-  color: var(--gray-500);
+  gap: 24px;
+  padding-top: 20px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(168, 50, 80, 0.1);
 }
-.hero__trust-icon { color: var(--color-primary); display: flex; }
+.hero__proof-block { display: flex; flex-direction: column; gap: 2px; }
+.hero__proof-value {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #2a1f24;
+  line-height: 1;
+}
+.hero__proof-label {
+  font-size: 0.6875rem;
+  color: #8e7f82;
+  letter-spacing: 0.04em;
+}
+.hero__proof-sep {
+  display: inline-block;
+  width: 1px;
+  height: 28px;
+  background: rgba(168, 50, 80, 0.18);
+}
 
-/* ── Visuel droite ── */
+/* ── Visuel droite ───────────────────────────────────────────────────────── */
 .hero__visual {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 520px;
+  margin-left: auto;
 }
 
-.hero__visual-bg {
+/* Disque crème en arrière-plan, légèrement décalé */
+.hero__disc {
   position: absolute;
-  inset: -60px;
-  /* Halo ambiant plus profond — enveloppe la carte dans la lumière du décor */
+  inset: 4% 8% 12% 0;
   background:
-    radial-gradient(ellipse 80% 70% at 50% 50%, rgba(255, 200, 215, 0.42) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 50% at 60% 60%, rgba(248, 180, 140, 0.14) 0%, transparent 60%);
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.5) 0%, transparent 50%),
+    linear-gradient(140deg, #fbe8e1 0%, #f5d6cf 100%);
   border-radius: 50%;
   z-index: 0;
-  filter: blur(8px);
 }
 
-/* ── Carte produit ── */
-.hero__product-card {
-  position: relative;
-  z-index: 1;
-  /* Glassmorphisme teinté crème/rose — la carte respire avec le décor */
-  background: linear-gradient(
-    155deg,
-    rgba(255, 248, 246, 0.76) 0%,
-    rgba(253, 240, 241, 0.70) 100%
-  );
-  backdrop-filter: blur(22px) saturate(1.4);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4);
-  border-radius: var(--radius-2xl);
-  border: 1px solid rgba(255, 210, 218, 0.38);
+/* Photo principale ronde, légèrement excentrée */
+.hero__photo {
+  position: absolute;
+  top: 6%;
+  right: 0;
+  bottom: 14%;
+  left: 12%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--cream-100, #fdf2ec);
   box-shadow:
-    0 24px 64px rgba(168, 50, 80, 0.13),
-    0 6px 20px rgba(0, 0, 0, 0.05),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  overflow: hidden;
-  width: 320px;
-  animation: scaleIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+    0 30px 60px -20px rgba(168, 50, 80, 0.22),
+    inset 0 0 0 1px rgba(255,255,255,0.4);
+  z-index: 1;
 }
-
-.hero__product-img-wrap {
-  position: relative;
-  height: 260px;
-  /* Fond image plus translucide pour laisser transparaître l'ambiance */
-  background: linear-gradient(145deg, rgba(255, 236, 240, 0.55), rgba(253, 242, 232, 0.70));
-  overflow: hidden;
-}
-
-.hero__product-img {
+.hero__photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
   display: block;
-  animation: floatY 5s ease-in-out infinite;
 }
-
-.hero__product-img-placeholder {
-  font-size: 5rem;
-  opacity: 0.4;
-}
-
-/* Badge best-seller / flash */
-.hero__product-badge {
+.hero__photo-fallback {
+  width: 60%;
+  height: 60%;
   position: absolute;
-  top: var(--space-3);
-  left: var(--space-3);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  padding: 5px 10px;
-  border-radius: var(--radius-full);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.hero__product-badge--bs {
-  /* Badge givré — s'intègre naturellement dans la carte */
-  background: rgba(255, 255, 255, 0.58);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  color: var(--color-primary);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-}
-.hero__product-badge--flash {
-  background: var(--rose-500);
-  color: #fff;
-  box-shadow: 0 2px 12px rgba(232, 51, 109, 0.3);
+  inset: 0;
+  margin: auto;
+  color: var(--rose-400, #f06292);
 }
 
-.hero__product-info {
-  padding: var(--space-5);
+/* Mini-carte produit flottante */
+.hero__card {
+  position: absolute;
+  left: -8%;
+  bottom: 6%;
+  z-index: 2;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow:
+    0 16px 32px -10px rgba(168, 50, 80, 0.18),
+    0 2px 6px rgba(0,0,0,0.04);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  /* Séparateur image/info en fondu au lieu d'une coupure nette */
-  background: linear-gradient(to bottom,
-    rgba(253, 242, 242, 0.18) 0%,
-    rgba(255, 248, 246, 0.32) 100%
-  );
-  border-top: 1px solid rgba(232, 170, 180, 0.18);
+  gap: 6px;
+  min-width: 220px;
+  max-width: 260px;
+  border: 1px solid rgba(255,255,255,0.8);
 }
+.hero__card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--rose-50, #fdeef2);
+  color: var(--rose-600, #c0386b);
+}
+.hero__card-name-link { text-decoration: none; }
+.hero__card-name {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2a1f24;
+  line-height: 1.3;
+  margin: 4px 0 0;
+}
+.hero__card-name-link:hover .hero__card-name { color: var(--rose-600, #c0386b); }
 
-.hero__product-name-link { text-decoration: none; }
-.hero__product-name {
+.hero__card-price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 2px;
+}
+.hero__card-price-old {
+  font-size: 0.75rem;
+  color: #a0918e;
+  text-decoration: line-through;
+}
+.hero__card-price-new {
   font-family: var(--font-display);
   font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--gray-800);
-  line-height: 1.3;
-  transition: color 0.15s;
-}
-.hero__product-name-link:hover .hero__product-name { color: var(--color-primary); }
-
-.hero__product-price { display: flex; align-items: center; gap: var(--space-3); }
-.hero__price-old { font-size: 0.875rem; color: var(--gray-400); text-decoration: line-through; }
-.hero__price-new {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
   font-weight: 600;
-  color: var(--color-primary);
-}
-.hero__product-btn { width: 100%; justify-content: center; }
-
-/* ── Carte avis flottante (uniquement si avis réel) ─────────────────────── */
-.hero__float-review {
-  position: absolute;
-  bottom: var(--space-4);
-  left: -40px;
-  background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4);
-  box-shadow: var(--shadow-md);
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-3);
-  max-width: 240px;
-  z-index: 2;
-  animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both;
-  border: 1px solid var(--rose-100);
+  color: var(--rose-600, #c0386b);
 }
 
-.hero__float-avatar {
-  width: 36px; height: 36px;
-  flex-shrink: 0;
-  background: linear-gradient(135deg, var(--rose-400), var(--rose-600));
-  color: #fff;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.hero__float-stars { color: #f0b462; font-size: 0.75rem; letter-spacing: 1px; }
-.hero__float-star--off { color: #e2d5c8; }
-
-.hero__float-text {
-  font-size: 0.75rem;
-  color: var(--gray-700);
-  line-height: 1.4;
-  margin: 2px 0;
-  font-style: italic;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.hero__float-name { font-size: 0.6875rem; color: var(--gray-400); }
-
-/* ── Scroll indicator ── */
-.hero__scroll {
-  position: absolute;
-  bottom: var(--space-6);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-}
-.hero__scroll-line {
-  width: 1px;
-  height: 48px;
-  background: linear-gradient(to bottom, var(--rose-400), transparent);
-  animation: shimmer 2s ease-in-out infinite;
-}
-
-/* ── Responsive ── */
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .hero {
-    min-height: 65vh;
-    padding: var(--space-8) 0 var(--space-6);
-  }
   .hero__inner {
     grid-template-columns: 1fr;
-    gap: var(--space-8);
-    text-align: center;
+    text-align: left;
+    gap: 48px;
+    min-height: auto;
   }
-  .hero__desc { max-width: 100%; }
-  .hero__ctas, .hero__trust, .hero__badges { justify-content: center; }
-  /* Carte produit masquée sur mobile → libère de la place pour le contenu */
-  .hero__visual { display: none; }
+  .hero__content { max-width: 100%; margin: 0 auto; }
+  .hero__visual { max-width: 420px; margin: 0 auto; }
+  .hero__decor-branch--tl { width: 120px; }
+  .hero__decor-branch--br { width: 120px; }
 }
 
 @media (max-width: 640px) {
-  .hero { min-height: auto; padding: var(--space-10) 0 var(--space-8); }
+  .hero { padding: 56px 0 48px; }
   .hero__title { font-size: 2rem; }
-  .hero__ctas { flex-direction: column; }
-  .hero__ctas .btn { justify-content: center; }
-  .hero__badges { gap: var(--space-3); }
+  .hero__desc { font-size: 0.9375rem; }
+  .hero__ctas { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .hero__cta-primary { width: 100%; justify-content: center; }
+  .hero__visual { max-width: 320px; aspect-ratio: 1; }
+  .hero__card { left: -4%; min-width: 180px; padding: 12px 14px; }
+  .hero__card-name { font-size: 0.875rem; }
+  .hero__card-price-new { font-size: 1rem; }
+  .hero__decor-branch { display: none; }
+  .hero__petal { display: none; }
+  .hero__proof { gap: 16px; }
 }
 </style>

@@ -74,6 +74,7 @@
     "reviewsFallback": "(284 avis)",
     "clients": "+{count} clientes",
     "clientsFallback": "+2 000 clientes",
+    "clientsLabel": "clientes conquises",
     "cta": "Découvrir les soins",
     "ctaProgram": "Notre programme",
     "natural": "100% naturel",
