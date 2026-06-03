@@ -119,8 +119,12 @@
               </button>
               <p class="drawer__choice-title">Comment souhaitez-vous commander ?</p>
 
-              <!-- Commande rapide -->
-              <button class="drawer__choice-card drawer__choice-card--quick" @click="goQuickOrder">
+              <!-- Commande rapide (admin setting) -->
+              <button
+                v-if="settings.enableQuickOrder"
+                class="drawer__choice-card drawer__choice-card--quick"
+                @click="goQuickOrder"
+              >
                 <span class="drawer__choice-card__icon">⚡</span>
                 <div class="drawer__choice-card__body">
                   <strong>Commande rapide</strong>
@@ -475,11 +479,35 @@ async function restoreCheckoutDraft() {
     // Aller directement à l'étape paiement — l'utilisateur vient de s'authentifier
     step.value = 2
 
-    // Si le panier en mémoire est vide (ex : rechargement de page après login)
-    // et qu'on a des articles dans le brouillon, les re-ajouter au serveur (silencieusement)
-    if (draft.items?.length && cartStore.items.length === 0) {
+    // ── Fusion panier hors-ligne → panier authentifié ────────────────────
+    // On rejoue les items du brouillon sur le serveur (qui dédoublonne par
+    // product_id+variant_id et incrémente la quantité). Les items qui étaient
+    // déjà dans le panier auth sont conservés.
+    if (draft.items?.length) {
+      // Index des items déjà présents pour éviter de doubler une quantité
+      // identique (cas du même panier rejoué après un simple rechargement)
+      const existing = new Map()
+      for (const it of cartStore.items) {
+        const key = `${it.product_id}::${it.variant_id ?? ''}`
+        existing.set(key, it.quantity)
+      }
+
+      let mergedCount = 0
       for (const item of draft.items) {
-        try { await cartStore.add(item.product_id, item.quantity, item.variant_id, { silent: true }) } catch { /* ignore */ }
+        const key = `${item.product_id}::${item.variant_id ?? ''}`
+        const alreadyHere = existing.get(key) ?? 0
+        // Si l'item du brouillon est déjà couvert (qty serveur >= qty brouillon),
+        // pas la peine de réajouter (évite un double après refresh)
+        if (alreadyHere >= item.quantity) continue
+        const delta = item.quantity - alreadyHere
+        try {
+          await cartStore.add(item.product_id, delta, item.variant_id, { silent: true })
+          mergedCount++
+        } catch { /* produit indisponible / stock épuisé : on ignore */ }
+      }
+      if (mergedCount > 0) {
+        // Re-fetch pour s'assurer que le panier reflète exactement l'état serveur
+        try { await cartStore.fetch() } catch { /* ignore */ }
       }
     }
 

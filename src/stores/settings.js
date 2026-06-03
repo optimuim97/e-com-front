@@ -62,6 +62,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const paymentStripeEnabled      = bool('payment_stripe_enabled',       false)
   const paymentMobileNumber       = get('payment_mobile_number', '')
 
+  /* ── Tunnel de commande ───────────────────────────────────────────────── */
+  const enableQuickOrder          = bool('enable_quick_order',           true)
+
   /* Méthodes actives pour le footer / checkout */
   const activePayments = computed(() => {
     const list = []
@@ -154,6 +157,8 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentWaveEnabled, paymentOrangeMoneyEnabled,
     paymentDeliveryEnabled, paymentStripeEnabled,
     paymentMobileNumber, activePayments,
+    // Tunnel
+    enableQuickOrder,
     // Announce
     announceText,
     // Réseaux sociaux

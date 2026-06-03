@@ -195,6 +195,16 @@
               <span>Le client peut choisir de récupérer sa commande en boutique.</span>
             </div>
           </label>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('enable_quick_order')" class="toggle" :class="{ 'toggle--on': form.enable_quick_order === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Commande rapide (sans compte)</strong>
+              <span>Permet au client de passer commande avec juste nom + téléphone, sans créer de compte. Désactiver pour forcer la création de compte.</span>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -459,6 +469,8 @@ const form = ref({
   payment_delivery_enabled:      'true',
   payment_stripe_enabled:        'false',
   payment_mobile_number:         '',
+  // Tunnel de commande
+  enable_quick_order:            'true',
   // Réseaux sociaux
   social_instagram: '',
   social_facebook:  '',
