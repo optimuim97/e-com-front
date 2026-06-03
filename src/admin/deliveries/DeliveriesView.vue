@@ -118,16 +118,15 @@
         </tbody>
       </table>
 
-      <!-- Pagination -->
-      <div v-if="pagination.last_page > 1" class="table-pagination">
-        <button
-          v-for="p in pagination.last_page"
-          :key="p"
-          class="page-btn"
-          :class="{ 'page-btn--active': p === pagination.current_page }"
-          @click="filters.page = p; load()"
-        >{{ p }}</button>
-      </div>
+      <AdminPagination
+        :current-page="pagination.current_page"
+        :last-page="pagination.last_page"
+        :total="pagination.total"
+        :show-per-page="false"
+        item-singular="livraison"
+        item-plural="livraisons"
+        @update:page="p => { filters.page = p; load(); }"
+      />
     </div>
 
     <!-- ── Modal Assigner livreur ── -->
@@ -235,6 +234,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '@/api'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 
 /* ── State ── */
 const deliveries = ref([])

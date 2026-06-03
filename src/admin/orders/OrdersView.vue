@@ -120,7 +120,7 @@
           <tbody>
             <template v-for="order in orders" :key="order.id">
               <tr :class="{ 'admin-table__row--expanded': expandedId === order.id }">
-                <td class="admin-table__mono">{{ order.order_number }}</td>
+                <td class="admin-table__mono">{{ order.number }}</td>
                 <td>
                   <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
                   <div class="admin-table__sub">{{ order.user?.email ?? '' }}</div>
@@ -159,46 +159,27 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="orders.length" class="pagination">
-        <div class="pagination__left">
-          <select v-model.number="filters.per_page" @change="changePerPage" class="input pagination__perpage">
-            <option :value="10">10 / page</option>
-            <option :value="20">20 / page</option>
-            <option :value="50">50 / page</option>
-            <option :value="100">100 / page</option>
-          </select>
-          <span class="pagination__total">
-            {{ pagination.total ?? 0 }} commandes
-          </span>
-        </div>
-        <div class="pagination__actions">
-          <button @click="changePage(1)"
-            :disabled="pagination.current_page <= 1" class="btn btn-outline btn-sm" title="Première page">«</button>
-          <button @click="changePage(pagination.current_page - 1)"
-            :disabled="pagination.current_page <= 1" class="btn btn-outline btn-sm">←</button>
-          <button
-            v-for="(p, i) in pageNumbers"
-            :key="i"
-            :disabled="p === '…'"
-            :class="['btn', 'btn-sm', p === pagination.current_page ? 'btn-primary' : 'btn-outline', { 'pagination__ellipsis': p === '…' }]"
-            @click="typeof p === 'number' && changePage(p)"
-          >{{ p }}</button>
-          <button @click="changePage(pagination.current_page + 1)"
-            :disabled="pagination.current_page >= pagination.last_page" class="btn btn-outline btn-sm">→</button>
-          <button @click="changePage(pagination.last_page)"
-            :disabled="pagination.current_page >= pagination.last_page" class="btn btn-outline btn-sm" title="Dernière page">»</button>
-        </div>
-      </div>
+      <!-- Pagination unifiée -->
+      <AdminPagination
+        :current-page="pagination.current_page"
+        :last-page="pagination.last_page"
+        :total="pagination.total"
+        :per-page="filters.per_page"
+        item-singular="commande"
+        item-plural="commandes"
+        @update:page="changePage"
+        @update:per-page="onPerPageUpdate"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 
 const orderStats = useOrderStatsStore()
@@ -227,26 +208,6 @@ const filters = reactive({
   per_page: 20,
 })
 
-// Liste de pages à afficher (max 5 boutons centrés autour de la page courante)
-const pageNumbers = computed(() => {
-  const last = pagination.value.last_page ?? 1
-  const cur  = pagination.value.current_page ?? 1
-  if (last <= 7) return Array.from({ length: last }, (_, i) => i + 1)
-
-  const pages = new Set([1, last, cur])
-  for (let d = 1; d <= 2; d++) {
-    if (cur - d > 1) pages.add(cur - d)
-    if (cur + d < last) pages.add(cur + d)
-  }
-  const sorted = Array.from(pages).sort((a, b) => a - b)
-  // Insertion ellipses
-  const out = []
-  for (let i = 0; i < sorted.length; i++) {
-    out.push(sorted[i])
-    if (i < sorted.length - 1 && sorted[i + 1] - sorted[i] > 1) out.push('…')
-  }
-  return out
-})
 
 const orderStatusOptions = [
   { value: 'pending',    label: 'En attente' },
@@ -340,6 +301,12 @@ function changePage(page) {
 }
 
 function changePerPage() {
+  filters.page = 1
+  fetchOrders()
+}
+
+function onPerPageUpdate(n) {
+  filters.per_page = n
   filters.page = 1
   fetchOrders()
 }

@@ -116,16 +116,15 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="meta && meta.last_page > 1" class="reviews-admin__pagination">
-      <button class="btn btn-outline btn-sm" :disabled="page <= 1" @click="loadReviews(page - 1)">
-        ← Précédent
-      </button>
-      <span class="reviews-admin__page-info">Page {{ page }} / {{ meta.last_page }}</span>
-      <button class="btn btn-outline btn-sm" :disabled="page >= meta.last_page" @click="loadReviews(page + 1)">
-        Suivant →
-      </button>
-    </div>
+    <AdminPagination
+      :current-page="page"
+      :last-page="meta?.last_page"
+      :total="meta?.total"
+      :show-per-page="false"
+      item-singular="avis"
+      item-plural="avis"
+      @update:page="loadReviews"
+    />
 
     <!-- Note modal -->
     <Teleport to="body">
@@ -151,6 +150,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { reviewApi } from '@/features/reviews/review.api'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 
 const reviews      = ref([])
 const meta         = ref(null)

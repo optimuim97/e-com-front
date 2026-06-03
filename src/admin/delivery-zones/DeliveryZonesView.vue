@@ -23,14 +23,9 @@
       </button>
     </div>
 
-    <!-- Search + filters -->
+    <!-- Search -->
     <div class="zones-toolbar">
       <input v-model="search" type="text" class="input zones-search" placeholder="Rechercher (zone, alias, pays)…" />
-      <select v-model.number="perPage" class="input zones-perpage">
-        <option :value="10">10 / page</option>
-        <option :value="25">25 / page</option>
-        <option :value="50">50 / page</option>
-      </select>
     </div>
 
     <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
@@ -83,14 +78,17 @@
         </tbody>
       </table>
 
-      <!-- Pagination -->
-      <div class="zones-pagination" v-if="filteredRows.length > perPage">
-        <button class="btn btn-xs btn-outline" :disabled="page === 1" @click="page--">‹ Préc.</button>
-        <span class="zones-pagination__info">
-          Page {{ page }} / {{ pageCount }} · {{ filteredRows.length }} zones
-        </span>
-        <button class="btn btn-xs btn-outline" :disabled="page === pageCount" @click="page++">Suiv. ›</button>
-      </div>
+      <!-- Pagination unifiée -->
+      <AdminPagination
+        :current-page="page"
+        :last-page="pageCount"
+        :total="filteredRows.length"
+        :per-page="perPage"
+        item-singular="zone"
+        item-plural="zones"
+        @update:page="p => page = p"
+        @update:per-page="p => { perPage = p; page = 1; }"
+      />
     </div>
 
     <!-- Modal -->
@@ -142,6 +140,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/api';
+import AdminPagination from '@/admin/components/AdminPagination.vue';
 
 const zones      = ref([]);
 const loading    = ref(true);

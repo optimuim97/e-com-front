@@ -96,14 +96,15 @@
         </tbody>
       </table>
 
-      <!-- Pagination -->
-      <div v-if="pagination && pagination.last_page > 1" class="flex justify-center gap-2 px-5 py-4 border-t border-gray-50">
-        <button v-for="p in pagination.last_page" :key="p"
-          @click="goPage(p)"
-          :class="['blog-page-btn', { active: p === pagination.current_page }]">
-          {{ p }}
-        </button>
-      </div>
+      <AdminPagination
+        :current-page="pagination?.current_page"
+        :last-page="pagination?.last_page"
+        :total="pagination?.total"
+        :show-per-page="false"
+        item-singular="article"
+        item-plural="articles"
+        @update:page="goPage"
+      />
     </div>
 
     <!-- Delete confirm modal -->
@@ -127,6 +128,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 import api from '@/api'
 
 const posts        = ref([])

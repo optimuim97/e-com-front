@@ -73,18 +73,15 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div v-if="meta.last_page > 1" class="pagination">
-        <p>Page {{ currentPage }} / {{ meta.last_page }}</p>
-        <div class="pagination__actions">
-          <button v-for="page in meta.last_page" :key="page"
-            @click="currentPage = page"
-            class="page-btn"
-            :class="{ 'page-btn--active': page === currentPage }">
-            {{ page }}
-          </button>
-        </div>
-      </div>
+      <AdminPagination
+        :current-page="currentPage"
+        :last-page="meta.last_page"
+        :total="meta.total"
+        :show-per-page="false"
+        item-singular="produit"
+        item-plural="produits"
+        @update:page="p => currentPage = p"
+      />
     </div>
   </div>
 </template>
@@ -92,6 +89,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { PlusIcon, PencilIcon, TrashIcon, PhotoIcon } from '@heroicons/vue/24/outline'
 import api from '@/api'
 

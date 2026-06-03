@@ -112,12 +112,15 @@
       </table>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="meta && meta.last_page > 1" class="pagination">
-      <button class="btn btn-outline btn-sm" :disabled="page <= 1" @click="load(page - 1)">← Précédent</button>
-      <span class="pagination__info">{{ page }} / {{ meta.last_page }}</span>
-      <button class="btn btn-outline btn-sm" :disabled="page >= meta.last_page" @click="load(page + 1)">Suivant →</button>
-    </div>
+    <AdminPagination
+      :current-page="page"
+      :last-page="meta?.last_page"
+      :total="meta?.total"
+      :show-per-page="false"
+      item-singular="panier abandonné"
+      item-plural="paniers abandonnés"
+      @update:page="load"
+    />
 
   </div>
 </template>
@@ -125,6 +128,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/api'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 
 const carts   = ref([])
 const stats   = ref(null)

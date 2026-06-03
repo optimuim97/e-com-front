@@ -66,14 +66,15 @@
       </div>
     </div>
 
-    <!-- Pagination -->
-    <div v-if="pagination.last_page > 1" class="pagination">
-      <p>Page {{ pagination.current_page }} / {{ pagination.last_page }}</p>
-      <div class="pagination__actions">
-        <button @click="changePage(pagination.current_page - 1)" :disabled="pagination.current_page <= 1" class="btn btn-outline btn-sm">←</button>
-        <button @click="changePage(pagination.current_page + 1)" :disabled="pagination.current_page >= pagination.last_page" class="btn btn-outline btn-sm">→</button>
-      </div>
-    </div>
+    <AdminPagination
+      :current-page="pagination.current_page"
+      :last-page="pagination.last_page"
+      :total="pagination.total"
+      :show-per-page="false"
+      item-singular="gamme"
+      item-plural="gammes"
+      @update:page="changePage"
+    />
 
     <!-- Confirm delete modal -->
     <Teleport to="body">
@@ -98,6 +99,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import AdminPagination from '@/admin/components/AdminPagination.vue'
 import api from '@/api'
 
 const lines      = ref([])
