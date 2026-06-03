@@ -68,21 +68,26 @@ const pending     = ref(false)
 onMounted(async () => {
   if (!orderNumber) { checking.value = false; return }
 
-  // Interroger le backend pour le statut (max 3 tentatives, 2s entre chaque)
-  for (let i = 0; i < 3; i++) {
-    try {
-      const { data } = await api.get(`/payment/cinetpay/status/${orderNumber}`)
-      if (data.paid) {
-        paid.value = true
-        break
-      } else if (data.status === 'payment_failed') {
-        break // failed
-      } else {
-        pending.value = true
-        break
+  // Interroger le backend pour le statut (max 3 tentatives, 2s entre chaque).
+  // On essaie GeniusPay d'abord, puis CinetPay en repli.
+  async function fetchStatus() {
+    for (const provider of ['geniuspay', 'cinetpay']) {
+      try {
+        const { data } = await api.get(`/payment/${provider}/status/${orderNumber}`)
+        return data
+      } catch {
+        // provider suivant
       }
-    } catch {
-      // continuer
+    }
+    return null
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const data = await fetchStatus()
+    if (data) {
+      if (data.paid) { paid.value = true; break }
+      else if (['payment_failed', 'cancelled'].includes(data.status)) { break }
+      else { pending.value = true; break }
     }
     if (i < 2) await new Promise(r => setTimeout(r, 2000))
   }

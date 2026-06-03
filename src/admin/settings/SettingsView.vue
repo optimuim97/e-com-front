@@ -241,8 +241,18 @@
           <div class="field">
             <label class="label">Numéro Wave / OM pour l'affichage</label>
             <input v-model="form.payment_mobile_number" type="text" class="input" placeholder="07 00 00 00 00" />
-            <p class="hint">Affiché aux clients lors du paiement mobile.</p>
+            <p class="hint">Affiché aux clients lors du paiement mobile manuel.</p>
           </div>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('payment_geniuspay_enabled')" class="toggle" :class="{ 'toggle--on': form.payment_geniuspay_enabled === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Paiement en ligne GeniusPay (Wave & Orange Money)</strong>
+              <span>Si activé, Wave et Orange Money passent par GeniusPay : le client est redirigé vers une page de paiement sécurisée et la commande se confirme automatiquement. Sinon, paiement mobile manuel (numéro affiché ci-dessus).</span>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -476,6 +486,7 @@ const form = ref({
   payment_delivery_enabled:      'true',
   payment_stripe_enabled:        'false',
   payment_mobile_number:         '',
+  payment_geniuspay_enabled:     'false',
   // Tunnel de commande
   enable_quick_order:            'true',
   // Réseaux sociaux

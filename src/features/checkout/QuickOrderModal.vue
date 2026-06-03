@@ -244,6 +244,13 @@ async function submit() {
     }
 
     cartStore.clear()
+
+    // Paiement en ligne (GeniusPay) : rediriger vers la page de paiement
+    if (data.payment_url) {
+      window.location.href = data.payment_url
+      return
+    }
+
     confirmedOrder.value = data
     confirmed.value = true
 
