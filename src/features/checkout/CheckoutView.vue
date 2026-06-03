@@ -500,8 +500,7 @@ watch(
   () => {
     clearTimeout(quoteTimer)
     quoteTimer = setTimeout(refreshShippingQuote, 250)
-  },
-  { deep: true }
+  }
 )
 
 const orderTotal = computed(() => {

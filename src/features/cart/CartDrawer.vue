@@ -499,8 +499,7 @@ watch(
   () => {
     clearTimeout(quoteTimer)
     quoteTimer = setTimeout(fetchShippingQuote, 250)
-  },
-  { deep: true }
+  }
 )
 
 const couponCode    = ref('');
@@ -808,9 +807,8 @@ export default { components: { StepDot } };
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
   height: 100vh;
-  height: 100dvh; /* Fix iOS Chrome : suit la hauteur dynamique du viewport */
+  height: 100dvh; /* iOS Chrome : suit la hauteur dynamique du viewport */
   width: 100%;
   max-width: 460px;
   z-index: 50;
@@ -819,11 +817,8 @@ export default { components: { StepDot } };
   flex-direction: column;
   box-shadow: -16px 0 60px rgba(168, 50, 80, 0.2);
   overflow: hidden;
-  /* Nouveau stacking context : empêche le drawer de "flotter" pendant
-     l'animation du URL bar sur iOS Chrome */
-  transform: translateZ(0);
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
+  /* Pas de transform: translateZ ici — sur iOS Chrome ça bloque les events
+     tactiles des enfants (boutons, scroll). Le 100dvh suffit pour la stabilité. */
 }
 
 /* ── Topbar (stepper) ── */
