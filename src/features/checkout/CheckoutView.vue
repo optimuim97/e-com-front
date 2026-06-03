@@ -35,6 +35,12 @@
           ← Panier
         </RouterLink>
       </div>
+
+      <!-- Barre de progression visuelle (toujours visible, même quand
+           les labels sont masqués sur mobile) -->
+      <div class="co-progress" aria-hidden="true">
+        <div class="co-progress__bar" :style="{ width: `${(currentStep / STEPS.length) * 100}%` }"></div>
+      </div>
     </div>
 
     <!-- ── Mini récap mobile (total + nb articles) ── -->
@@ -643,6 +649,21 @@ function formatPrice(val) {
   border-bottom: 1px solid var(--cream-200);
   box-shadow: 0 1px 12px rgba(0,0,0,0.04);
 }
+
+/* Barre de progression visuelle sous le stepper */
+.co-progress {
+  position: relative;
+  height: 3px;
+  background: var(--cream-200);
+  overflow: hidden;
+}
+.co-progress__bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--rose-400), var(--rose-500));
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(232, 51, 109, 0.4);
+}
 .co-header__inner {
   display: flex;
   align-items: center;
@@ -1018,17 +1039,41 @@ function formatPrice(val) {
   .co-summary { display: none; }
 
   .co-grid-2 { grid-template-columns: 1fr; }
-  .co-step__label { display: none; }
+  /* Mobile : on garde un label court (10-12 chars max) pour que l'utilisateur
+     sache où il en est. Le label est défini côté JS via STEPS[i].label. */
+  .co-step__label {
+    display: inline;
+    font-size: 0.625rem;
+    letter-spacing: 0.04em;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   .co-body {
     padding: var(--space-4) var(--space-3) 100px; /* 100px pour le CTA fixé */
   }
   .co-header__inner {
-    padding-top: var(--space-3);
-    padding-bottom: var(--space-3);
-    gap: var(--space-3);
+    padding-top: 10px;
+    padding-bottom: 10px;
+    gap: var(--space-2);
   }
-  .co-header__logo-img { height: 40px; }
-  .co-header__back { font-size: 0.75rem; }
+  .co-header__logo-img { height: 32px; }
+  .co-header__back {
+    font-size: 0.75rem;
+    /* Cacher le label "Panier" sur mobile, garder juste la flèche */
+    overflow: hidden;
+    max-width: 24px;
+    text-indent: -9999px;
+    position: relative;
+  }
+  .co-header__back::before {
+    content: '←';
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    text-indent: 0;
+    font-size: 1rem;
+  }
 
   .co-section__head {
     padding: var(--space-4);
@@ -1064,8 +1109,9 @@ function formatPrice(val) {
   display: none; /* affiché uniquement sur mobile via media query */
   background: #fff;
   border-bottom: 1px solid var(--cream-200);
-  position: sticky;
-  top: var(--navbar-height);
+  /* En mode flux normal (pas sticky) : la mini-recap doit s'effacer quand
+     l'utilisateur scrolle pour ne PAS rivaliser avec le stepper sticky. */
+  position: relative;
   z-index: 19;
 }
 .co-mini-recap__inner {
