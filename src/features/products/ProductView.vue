@@ -116,11 +116,11 @@
               <span v-if="cartLoading" class="product-info__spinner"></span>
               <span v-else>{{ $t('product.addToCartWithPrice', { price: formatPrice(product.price * qty) }) }}</span>
             </button>
-            <button class="btn btn-outline product-info__wish" :aria-label="$t('product.addToWishlist')">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-              </svg>
-            </button>
+            <WishlistButton
+              v-if="product?.id"
+              :product-id="product.id"
+              class="product-info__wish"
+            />
           </div>
 
           <!-- Trust badges -->
@@ -270,6 +270,7 @@ import { useCartStore } from '@/features/cart/cart.store'
 import { useAuthStore } from '@/features/auth/auth.store'
 import StarRating from '@/features/reviews/StarRating.vue'
 import { reviewApi } from '@/features/reviews/review.api'
+import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -625,11 +626,13 @@ watch(() => route.params.slug, () => {
   justify-content: center;
 }
 .product-info__wish {
-  padding: 12px;
-  width: 48px;
+  /* Aligne le WishlistButton (qui est circulaire par défaut) sur la
+     hauteur du CTA panier qui est en btn-lg (~52px) */
+  width: 52px !important;
+  height: 52px !important;
   flex-shrink: 0;
-  justify-content: center;
 }
+
 .product-info__spinner {
   width: 16px; height: 16px;
   border: 2px solid rgba(255,255,255,0.4);

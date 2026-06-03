@@ -65,6 +65,9 @@ export const useSettingsStore = defineStore('settings', () => {
   /* ── Tunnel de commande ───────────────────────────────────────────────── */
   const enableQuickOrder          = bool('enable_quick_order',           true)
 
+  /* ── Page d'accueil ───────────────────────────────────────────────────── */
+  const heroImageUrl              = get('home_hero_image_url',           '')
+
   /* Méthodes actives pour le footer / checkout */
   const activePayments = computed(() => {
     const list = []
@@ -159,6 +162,8 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentMobileNumber, activePayments,
     // Tunnel
     enableQuickOrder,
+    // Hero
+    heroImageUrl,
     // Announce
     announceText,
     // Réseaux sociaux

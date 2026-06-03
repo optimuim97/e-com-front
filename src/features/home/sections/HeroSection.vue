@@ -92,19 +92,11 @@
         <!-- Photo principale (modèle/produit) -->
         <div class="hero__photo">
           <img
-            v-if="displayProduct.image"
-            :src="displayProduct.image"
-            :alt="displayProduct.name"
+            :src="heroPhoto"
+            :alt="displayProduct.name || 'Rosabeauty'"
             loading="eager"
-            @error="$event.target.style.display='none'"
+            @error="onPhotoError"
           />
-          <!-- Fallback SVG fleur si pas d'image -->
-          <svg v-else class="hero__photo-fallback" viewBox="0 0 100 100" fill="none">
-            <g transform="translate(50 50)">
-              <path d="M0-22c8 0 14 6 14 14 0 6-4 11-9 13 5 2 9 7 9 13 0 8-6 14-14 14s-14-6-14-14c0-6 4-11 9-13-5-2-9-7-9-13 0-8 6-14 14-14z" fill="currentColor" opacity="0.32"/>
-              <circle cx="0" cy="0" r="4" fill="currentColor" opacity="0.5"/>
-            </g>
-          </svg>
         </div>
 
         <!-- Carte mini-produit flottante (info + prix) -->
@@ -141,12 +133,27 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 
 defineEmits(['add-to-cart'])
+
+// Pool de photos modèles disponibles localement (utilisé en fallback
+// si pas d'image produit/featured ni de hero_image configurée)
+const FALLBACK_HERO_PHOTOS = [
+  '/image_site/FLS_8032.jpeg',
+  '/image_site/FLS_8111.jpeg',
+  '/image_site/FLS_8130.jpeg',
+  '/image_site/DSC_7553.jpeg',
+]
+const fallbackIndex = ref(0)
+function onPhotoError(e) {
+  // Si l'image actuelle est en erreur, on essaie le prochain fallback
+  fallbackIndex.value = (fallbackIndex.value + 1) % FALLBACK_HERO_PHOTOS.length
+  e.target.src = FALLBACK_HERO_PHOTOS[fallbackIndex.value]
+}
 
 const props = defineProps({
   heroProduct:    { type: Object, default: null },
@@ -191,6 +198,13 @@ const displayProduct = computed(() => {
 const eyebrowText  = computed(() => props.heroEyebrow  || t('hero.defaultEyebrow'))
 const subtitleText = computed(() => props.heroSubtitle || t('hero.defaultSubtitle'))
 
+// Photo principale : settings.heroImageUrl > image produit > fallback local
+const heroPhoto = computed(() => {
+  return settings.heroImageUrl
+    || displayProduct.value.image
+    || FALLBACK_HERO_PHOTOS[0]
+})
+
 const reviewsLabel = computed(() =>
   props.reviewsCount > 0 ? t('hero.reviews', { count: props.reviewsCount }) : ''
 )
@@ -205,7 +219,17 @@ const reviewsLabel = computed(() =>
   position: relative;
   overflow: hidden;
   padding: clamp(48px, 8vw, 96px) 0 clamp(40px, 6vw, 80px);
-  background: linear-gradient(180deg, #fffaf6 0%, #fdf3ef 100%);
+  background:
+    /* Image de fond très en transparence pour donner de la matière */
+    linear-gradient(
+      105deg,
+      rgba(255, 250, 246, 0.96) 0%,
+      rgba(255, 245, 240, 0.85) 45%,
+      rgba(253, 226, 218, 0.45) 75%,
+      rgba(248, 200, 200, 0.25) 100%
+    ),
+    url('/image_site/FLS_8130.jpeg') no-repeat right center / cover,
+    linear-gradient(180deg, #fffaf6 0%, #fdf3ef 100%);
   isolation: isolate;
 }
 
@@ -330,44 +354,53 @@ const reviewsLabel = computed(() =>
 .hero__cta-primary {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 28px;
-  background: #2a1f24;
-  color: #fffaf6;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 12px;
+  padding: 18px 36px;
+  background: linear-gradient(135deg, var(--rose-500, #e8336d), var(--rose-600, #c0386b));
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-decoration: none;
   border-radius: 999px;
-  transition: transform 0.18s ease, background 0.18s ease;
+  box-shadow:
+    0 10px 24px -8px rgba(232, 51, 109, 0.45),
+    inset 0 1px 0 rgba(255,255,255,0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .hero__cta-primary:hover {
-  background: var(--rose-500, #e8336d);
+  transform: translateY(-2px);
+  box-shadow:
+    0 16px 32px -10px rgba(232, 51, 109, 0.55),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  background: linear-gradient(135deg, var(--rose-600, #c0386b), var(--rose-700, #a02858));
+}
+.hero__cta-primary svg { transition: transform 0.2s ease; }
+.hero__cta-primary:hover svg { transform: translateX(4px); }
+
+/* CTA secondaire : bouton outline rose qui s'aligne avec le primaire */
+.hero__cta-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 26px;
+  border: 1.5px solid var(--rose-300, #f8a8b8);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  color: var(--rose-700, #a02858);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+}
+.hero__cta-text:hover {
+  border-color: var(--rose-500, #e8336d);
+  background: #fff;
+  color: var(--rose-600, #c0386b);
   transform: translateY(-1px);
 }
-.hero__cta-primary svg { transition: transform 0.18s ease; }
-.hero__cta-primary:hover svg { transform: translateX(3px); }
-
-.hero__cta-text {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #2a1f24;
-  text-decoration: none;
-  letter-spacing: 0.04em;
-  position: relative;
-  padding-bottom: 3px;
-}
-.hero__cta-text::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  height: 1px;
-  background: currentColor;
-  transform-origin: right;
-  transition: transform 0.3s ease;
-}
-.hero__cta-text:hover::after { transform-origin: left; transform: scaleX(1); }
 
 /* ── Preuves discrètes ──────────────────────────────────────────────────── */
 .hero__proof {
