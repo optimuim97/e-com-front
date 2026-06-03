@@ -304,11 +304,11 @@
   }
   .toggle--on .toggle__dot { transform: translateX(20px); }
 
-  /* ── Admin table ── */
+  /* ── Admin table (densité compacte par défaut) ── */
   .admin-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
   .admin-table thead {
     background: var(--cream-100);
@@ -316,38 +316,71 @@
   }
   .admin-table thead th {
     text-align: left;
-    padding: var(--space-3) var(--space-4);
-    font-size: 0.6875rem;
+    padding: 8px var(--space-3);
+    font-size: 0.625rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--gray-500);
   }
   .admin-table tbody tr { transition: background var(--transition-fast); }
   .admin-table tbody tr:hover { background: var(--rose-50); }
   .admin-table tbody td {
-    padding: var(--space-3) var(--space-4);
+    padding: 8px var(--space-3);
     border-bottom: 1px solid var(--cream-100);
     color: var(--gray-600);
+    line-height: 1.35;
   }
   .admin-table__bold  { font-weight: 500; color: var(--gray-800); }
-  .admin-table__mono  { font-family: ui-monospace, monospace; font-size: 0.8125rem; color: var(--gray-400); }
+  .admin-table__mono  { font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--gray-400); }
   .admin-table__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
 
-  /* ── Admin page header ── */
+  /* Row "détails inline" (panneau d'action en-dessous d'une ligne) */
+  .admin-table tbody tr.admin-table__row--expanded > td {
+    border-bottom: none;
+    background: var(--rose-50);
+  }
+  .admin-table tbody tr.admin-table__detail-row > td {
+    padding: 0;
+    background: var(--cream-50);
+    border-bottom: 1px solid var(--cream-200);
+  }
+
+  /* ── Admin page header (titre plus compact) ── */
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     flex-wrap: wrap;
     gap: var(--space-3);
+    margin-bottom: var(--space-3);
   }
   .page-header__title {
     font-family: var(--font-display);
-    font-size: 1.75rem;
+    font-size: 1.375rem;
     font-weight: 500;
     color: var(--gray-800);
-    margin-top: 4px;
+    margin-top: 2px;
+  }
+
+  /* ── Pagination admin (compacte) ── */
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px var(--space-3);
+    border-top: 1px solid var(--cream-200);
+    background: var(--cream-50);
+    font-size: 0.75rem;
+    color: var(--gray-500);
+  }
+  .pagination p { margin: 0; }
+  .pagination__actions { display: flex; gap: 4px; }
+  .pagination .btn-sm {
+    padding: 4px 10px !important;
+    font-size: 0.75rem !important;
+    height: auto !important;
+    line-height: 1.2;
   }
 
   /* ── Form error ── */

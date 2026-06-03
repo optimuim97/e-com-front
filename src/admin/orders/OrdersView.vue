@@ -118,40 +118,46 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="order in orders" :key="order.id">
-              <td class="admin-table__mono">{{ order.order_number }}</td>
-              <td>
-                <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
-                <div class="admin-table__sub">{{ order.user?.email ?? '' }}</div>
-              </td>
-              <td>{{ formatDate(order.created_at) }}</td>
-              <td class="admin-table__total">{{ formatPrice(order.total) }}</td>
-              <td><span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span></td>
-              <td>{{ paymentLabel(order.payment_method) }}</td>
-              <td class="admin-table__action">
-                <div class="admin-table__action-row">
-                  <button
-                    class="btn btn-xs btn-primary"
-                    @click="openQuickAction(order)"
-                    title="Traitement rapide"
-                  >⚡ Traiter</button>
-                  <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
-                    Détail →
-                  </RouterLink>
-                </div>
-              </td>
-            </tr>
+            <template v-for="order in orders" :key="order.id">
+              <tr :class="{ 'admin-table__row--expanded': expandedId === order.id }">
+                <td class="admin-table__mono">{{ order.order_number }}</td>
+                <td>
+                  <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
+                  <div class="admin-table__sub">{{ order.user?.email ?? '' }}</div>
+                </td>
+                <td>{{ formatDate(order.created_at) }}</td>
+                <td class="admin-table__total">{{ formatPrice(order.total) }}</td>
+                <td><span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span></td>
+                <td>{{ paymentLabel(order.payment_method) }}</td>
+                <td class="admin-table__action">
+                  <div class="admin-table__action-row">
+                    <button
+                      class="btn btn-xs btn-primary"
+                      @click="toggleQuickAction(order)"
+                      :title="expandedId === order.id ? 'Replier' : 'Traitement rapide'"
+                    >
+                      {{ expandedId === order.id ? '▾ Fermer' : '⚡ Traiter' }}
+                    </button>
+                    <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
+                      Détail →
+                    </RouterLink>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="expandedId === order.id" class="admin-table__detail-row">
+                <td :colspan="7">
+                  <OrderQuickActionModal
+                    :order="order"
+                    inline
+                    @close="expandedId = null"
+                    @updated="onOrderUpdated"
+                  />
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
-
-      <!-- Modal traitement rapide -->
-      <OrderQuickActionModal
-        v-if="quickActionOrder"
-        :order="quickActionOrder"
-        @close="quickActionOrder = null"
-        @updated="onOrderUpdated"
-      />
 
       <!-- Pagination -->
       <div v-if="pagination.last_page > 1" class="pagination">
@@ -175,10 +181,10 @@ import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 
 const orderStats = useOrderStatsStore()
-const quickActionOrder = ref(null)
+const expandedId = ref(null)
 
-function openQuickAction(order) {
-  quickActionOrder.value = order
+function toggleQuickAction(order) {
+  expandedId.value = expandedId.value === order.id ? null : order.id
 }
 
 function onOrderUpdated(updated) {

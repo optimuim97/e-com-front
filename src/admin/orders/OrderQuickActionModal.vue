@@ -1,12 +1,16 @@
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
-    <div class="modal">
-      <header class="modal__header">
+  <component
+    :is="inline ? 'div' : 'div'"
+    :class="inline ? 'qa-inline' : 'modal-overlay'"
+    @click="inline ? null : ($event.target === $event.currentTarget && $emit('close'))"
+  >
+    <div :class="inline ? 'qa-panel' : 'modal'">
+      <header :class="inline ? 'qa-header' : 'modal__header'">
         <div>
           <span class="eyebrow">Traitement rapide</span>
           <h3>Commande {{ order.number }}</h3>
         </div>
-        <button class="modal__close" @click="$emit('close')" aria-label="Fermer">✕</button>
+        <button :class="inline ? 'qa-close' : 'modal__close'" @click="$emit('close')" aria-label="Fermer">✕</button>
       </header>
 
       <!-- Récap commande -->
@@ -108,7 +112,7 @@
         <p v-if="success" class="form-success">{{ success }}</p>
       </footer>
     </div>
-  </div>
+  </component>
 </template>
 
 <script setup>
@@ -117,7 +121,8 @@ import { RouterLink } from 'vue-router';
 import api from '@/api';
 
 const props = defineProps({
-  order: { type: Object, required: true },
+  order:  { type: Object,  required: true },
+  inline: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close', 'updated']);
 
@@ -227,6 +232,40 @@ function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
   background: rgba(0,0,0,0.45);
   display: flex; align-items: center; justify-content: center;
   padding: var(--space-4);
+}
+
+/* ── Mode inline (dans la ligne du tableau) ── */
+.qa-inline {
+  background: var(--cream-50);
+  padding: 0;
+}
+.qa-panel {
+  background: #fff;
+  border-left: 3px solid var(--rose-500);
+  margin: 0;
+  padding: 0;
+}
+.qa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--cream-200);
+  background: var(--cream-50);
+}
+.qa-header h3 { font-family: var(--font-display); font-size: 1rem; margin: 2px 0 0; }
+.qa-close {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: transparent; color: var(--gray-500);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem; cursor: pointer; border: 1px solid var(--cream-300);
+}
+.qa-close:hover { background: var(--rose-500); color: #fff; border-color: var(--rose-500); }
+.qa-inline .modal__section { padding: var(--space-3) var(--space-4); }
+.qa-inline .recap-grid { grid-template-columns: repeat(4, 1fr); }
+.qa-inline .modal__footer { padding: var(--space-3) var(--space-4); }
+@media (max-width: 900px) {
+  .qa-inline .recap-grid { grid-template-columns: repeat(2, 1fr); }
 }
 .modal {
   background: #fff;
