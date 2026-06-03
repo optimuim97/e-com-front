@@ -127,7 +127,7 @@ function placeholderStyle(cat) {
 
 .category-card__img-wrap {
   position: relative;
-  aspect-ratio: 3/4;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
 }
 
@@ -171,9 +171,9 @@ function placeholderStyle(cat) {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: var(--space-5) var(--space-4) var(--space-4);
+  padding: var(--space-4) var(--space-3) var(--space-3);
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   color: #fff;
   letter-spacing: 0.015em;
@@ -182,12 +182,12 @@ function placeholderStyle(cat) {
   transition: padding 0.3s ease;
 }
 .category-card:hover .category-card__label {
-  padding-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
 }
 
 /* Skeleton */
 .category-skeleton {
-  aspect-ratio: 3/4;
+  aspect-ratio: 1 / 1;
   border-radius: var(--radius-xl);
   background: var(--cream-100);
   animation: pulse 1.5s ease-in-out infinite;
