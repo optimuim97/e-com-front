@@ -16,7 +16,11 @@
       <span>Produits</span>
     </RouterLink>
 
-    <button class="bottom-nav__item bottom-nav__item--cart" @click="cartStore.open()">
+    <RouterLink
+      to="/cart"
+      class="bottom-nav__item bottom-nav__item--cart"
+      :class="{ 'bottom-nav__item--active': route.path.startsWith('/cart') }"
+    >
       <div class="bottom-nav__cart-wrap">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
@@ -26,7 +30,7 @@
         <span v-if="cartStore.itemCount > 0" class="bottom-nav__badge">{{ cartStore.itemCount }}</span>
       </div>
       <span>Panier</span>
-    </button>
+    </RouterLink>
   </nav>
   </Transition>
 </template>

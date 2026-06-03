@@ -814,7 +814,7 @@ function fmt(val) {
   inset: 0;
   height: 100vh;
   height: 100dvh;
-  z-index: 40;
+  z-index: 290; /* au-dessus du navbar (var(--z-sticky)+1 / 200) */
   background: rgba(20, 18, 19, 0.4);
   backdrop-filter: blur(6px);
 }
@@ -827,7 +827,7 @@ function fmt(val) {
   height: 100dvh; /* iOS Chrome : suit la hauteur dynamique du viewport */
   width: 100%;
   max-width: 460px;
-  z-index: 50;
+  z-index: 300; /* au-dessus du navbar et de son menu mobile (200) */
   background: var(--color-bg);
   display: flex;
   flex-direction: column;
