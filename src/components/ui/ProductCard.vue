@@ -82,10 +82,6 @@
         <h3 class="product-card__name">{{ product.name }}</h3>
       </RouterLink>
 
-      <p v-if="product.description" class="product-card__desc">
-        {{ product.description }}
-      </p>
-
       <!-- Footer : prix + bouton panier -->
       <div class="product-card__footer">
         <div class="product-card__price">
@@ -331,15 +327,6 @@ function toggleWishlist() {
   transition: color var(--transition-fast);
 }
 .product-card__name-link:hover .product-card__name { color: var(--color-primary); }
-.product-card__desc {
-  font-size: 0.8125rem;
-  color: var(--gray-400);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 
 /* ── Footer ── */
 .product-card__footer {
@@ -411,7 +398,6 @@ function toggleWishlist() {
     gap: var(--space-1);
   }
   .product-card__meta,
-  .product-card__desc,
   .product-card__line,
   .product-card__cat {
     display: none;
