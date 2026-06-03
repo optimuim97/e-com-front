@@ -19,11 +19,25 @@
           <span v-else class="drawer__icon-spacer"></span>
 
           <div class="drawer__steps">
-            <StepDot :n="1" :active="step === 1" :done="step > 1" label="Panier" />
-            <span class="drawer__step-line" :class="{ 'drawer__step-line--active': step > 1 }"></span>
-            <StepDot :n="2" :active="step === 2" :done="step > 2" label="Infos" />
-            <span class="drawer__step-line" :class="{ 'drawer__step-line--active': step > 2 }"></span>
-            <StepDot :n="3" :active="step === 3" :done="false" label="Commande" />
+            <template v-for="(s, idx) in steps" :key="s.n">
+              <div
+                class="drawer__stepdot"
+                :class="{ 'drawer__stepdot--active': step === s.n, 'drawer__stepdot--done': step > s.n }"
+              >
+                <span class="drawer__stepdot-circle">
+                  <svg v-if="step > s.n" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span v-else>{{ s.n }}</span>
+                </span>
+                <span class="drawer__stepdot-label">{{ s.label }}</span>
+              </div>
+              <span
+                v-if="idx < steps.length - 1"
+                class="drawer__step-line"
+                :class="{ 'drawer__step-line--active': step > s.n }"
+              ></span>
+            </template>
           </div>
 
           <button @click="cartStore.close()" class="drawer__icon-btn" aria-label="Fermer">
@@ -461,6 +475,12 @@ async function restoreCheckoutDraft() {
   } catch { /* ignore */ }
 }
 
+const steps = [
+  { n: 1, label: 'Panier' },
+  { n: 2, label: 'Infos' },
+  { n: 3, label: 'Commande' },
+];
+
 const step           = ref(1);
 const loadingItemId  = ref(null);
 const showQuickOrder = ref(false);
@@ -774,22 +794,6 @@ function fmt(val) {
 }
 </script>
 
-<!-- StepDot inline component -->
-<script>
-const StepDot = {
-  props: { n: Number, active: Boolean, done: Boolean, label: String },
-  template: `
-    <div class="drawer__stepdot" :class="{ 'drawer__stepdot--active': active, 'drawer__stepdot--done': done }">
-      <span class="drawer__stepdot-circle">
-        <svg v-if="done" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-        <span v-else>{{ n }}</span>
-      </span>
-      <span class="drawer__stepdot-label">{{ label }}</span>
-    </div>
-  `,
-};
-export default { components: { StepDot } };
-</script>
 
 <style scoped>
 /* ── Overlay & drawer ── */
