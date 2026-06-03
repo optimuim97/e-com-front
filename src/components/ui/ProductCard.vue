@@ -403,4 +403,43 @@ function toggleWishlist() {
 .swap-enter-active, .swap-leave-active { transition: all 0.18s; }
 .swap-enter-from { opacity: 0; transform: scale(0.5) rotate(20deg); }
 .swap-leave-to   { opacity: 0; transform: scale(0.5) rotate(-20deg); }
+
+/* ── Mobile : ne garder que l'essentiel ── */
+@media (max-width: 767px) {
+  .product-card__info {
+    padding: var(--space-3) var(--space-3) var(--space-3);
+    gap: var(--space-1);
+  }
+  .product-card__meta,
+  .product-card__desc,
+  .product-card__line,
+  .product-card__cat {
+    display: none;
+  }
+  .product-card__name {
+    font-size: 0.875rem;
+    line-height: 1.2;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .product-card__footer {
+    padding-top: var(--space-2);
+    border-top: none;
+    gap: var(--space-2);
+  }
+  .product-card__price-current {
+    font-size: 1rem;
+  }
+  .product-card__price-old {
+    font-size: 0.6875rem;
+  }
+  .product-card__cart-btn {
+    width: 34px;
+    height: 34px;
+  }
+  /* Badges + wishlist : un peu plus compacts */
+  .product-card__badges { top: var(--space-2); left: var(--space-2); }
+}
 </style>

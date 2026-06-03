@@ -133,7 +133,7 @@
               </div>
               <div>
                 <span>Livraison</span>
-                <span :class="shippingCost === 0 ? 'drawer__green' : ''">{{ shippingLabel }}</span>
+                <span :class="shippingLabelClass">{{ shippingLabel }}</span>
               </div>
               <div class="drawer__totals-final">
                 <span>Total estimé</span>
@@ -184,7 +184,7 @@
               </div>
               <div>
                 <span>Livraison</span>
-                <span :class="shippingCost === 0 ? 'drawer__green' : 'drawer__amber'">{{ shippingLabel }}</span>
+                <span :class="shippingLabelClass">{{ shippingLabel }}</span>
               </div>
               <div class="drawer__totals-final">
                 <span>Total estimé</span>
@@ -258,6 +258,15 @@
               </div>
               <p v-else class="drawer__address-empty">Votre adresse précise apparaîtra ici</p>
 
+              <!-- Hors zone : frais communiqués manuellement -->
+              <div v-if="shippingManual" class="drawer__notice drawer__notice--warn">
+                <span class="drawer__notice-icon">📞</span>
+                <div>
+                  <strong>Zone non tarifée</strong>
+                  <p>Cette destination n'a pas de tarif fixe. Nos agents vous communiqueront les frais de livraison après validation de votre commande.</p>
+                </div>
+              </div>
+
               <div class="drawer__group">
                 <label class="label">Point de repère</label>
                 <textarea v-model="form.instructions" class="input drawer__textarea"
@@ -316,7 +325,7 @@
                 </div>
                 <div class="drawer__recap-line">
                   <span>Livraison</span>
-                  <span :class="shippingCost === 0 ? 'drawer__green' : 'drawer__amber'">{{ shippingLabel }}</span>
+                  <span :class="shippingLabelClass">{{ shippingLabel }}</span>
                 </div>
                 <div class="drawer__recap-line drawer__recap-line--total">
                   <span>Total</span>
@@ -370,22 +379,37 @@ const authStore  = useAuthStore();
 const settings   = useSettingsStore();
 const router     = useRouter();
 
-// ── Frais de livraison calculés depuis les settings ────────────────────────
+// ── Frais de livraison : quote API selon la ville/commune ──────────────────
+// shippingQuote : null avant recherche, { ...zone } si trouvée, { not_found: true } sinon
+const shippingQuote = ref(null)
+
+const shippingFound  = computed(() => shippingQuote.value && !shippingQuote.value.not_found)
+const shippingManual = computed(() => shippingQuote.value?.not_found === true)
+
 const shippingCost = computed(() => {
-  const cost      = settings.shippingDefaultCost  ?? 0
-  const threshold = settings.shippingFreeThreshold ?? 0
-  if (cost <= 0) return 0
-  if (threshold > 0 && cartStore.subtotal >= threshold) return 0
-  return cost
+  if (shippingFound.value) {
+    return shippingQuote.value.is_free ? 0 : shippingQuote.value.price
+  }
+  // Hors zone OU pas encore renseigné : on n'invente aucun montant.
+  return 0
 })
 
 const shippingLabel = computed(() => {
-  if (shippingCost.value === 0) {
-    return settings.shippingFreeThreshold > 0 && cartStore.subtotal >= settings.shippingFreeThreshold
-      ? 'Gratuite 🎉'
-      : 'Incluse'
+  if (shippingFound.value) {
+    if (shippingQuote.value.is_free) return 'Offerte 🎉'
+    const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
+    return fmt(shippingQuote.value.price) + suffix
   }
-  return fmt(shippingCost.value)
+  if (shippingManual.value) {
+    return 'À confirmer par nos agents'
+  }
+  return 'À renseigner'
+})
+
+const shippingLabelClass = computed(() => {
+  if (shippingFound.value && shippingQuote.value.is_free) return 'drawer__green'
+  if (shippingManual.value) return 'drawer__amber'
+  return ''
 })
 
 const grandTotal = computed(() => cartStore.total + shippingCost.value)
@@ -451,6 +475,34 @@ const form = ref({
   address: '', lat: null, lng: null, instructions: '',
 });
 
+// ── Quote livraison API : déclenchée dès (pays, ville, commune) ────────────
+let quoteTimer = null
+async function fetchShippingQuote() {
+  const city    = form.value.city
+  const commune = form.value.commune
+  const country = form.value.country || 'CI'
+  // CI : il faut au moins une ville ou commune. Étranger : pays seul suffit.
+  if (country === 'CI' && !city && !commune) { shippingQuote.value = null; return }
+  try {
+    const { data } = await api.get('/shipping/quote', {
+      params: { city, commune, country, subtotal: cartStore.subtotal },
+    })
+    shippingQuote.value = data?.found ? data : { not_found: true }
+  } catch (e) {
+    // 404 = aucune zone configurée pour cette destination
+    shippingQuote.value = e.response?.status === 404 ? { not_found: true } : null
+  }
+}
+
+watch(
+  () => [form.value.city, form.value.commune, form.value.country, cartStore.subtotal],
+  () => {
+    clearTimeout(quoteTimer)
+    quoteTimer = setTimeout(fetchShippingQuote, 250)
+  },
+  { deep: true }
+)
+
 const couponCode    = ref('');
 const couponApplied = ref(false);
 const couponLoading = ref(false);
@@ -493,6 +545,7 @@ watch(() => cartStore.isOpen, (val) => {
     form.value.address = '';
     form.value.lat     = null;
     form.value.lng     = null;
+    shippingQuote.value = null;
     leafletMap?.remove();
     leafletMap = null;
   }
@@ -744,6 +797,8 @@ export default { components: { StepDot } };
 .drawer-overlay {
   position: fixed;
   inset: 0;
+  height: 100vh;
+  height: 100dvh;
   z-index: 40;
   background: rgba(20, 18, 19, 0.4);
   backdrop-filter: blur(6px);
@@ -753,7 +808,9 @@ export default { components: { StepDot } };
   position: fixed;
   top: 0;
   right: 0;
-  height: 100%;
+  bottom: 0;
+  height: 100vh;
+  height: 100dvh; /* Fix iOS Chrome : suit la hauteur dynamique du viewport */
   width: 100%;
   max-width: 460px;
   z-index: 50;
@@ -762,6 +819,11 @@ export default { components: { StepDot } };
   flex-direction: column;
   box-shadow: -16px 0 60px rgba(168, 50, 80, 0.2);
   overflow: hidden;
+  /* Nouveau stacking context : empêche le drawer de "flotter" pendant
+     l'animation du URL bar sur iOS Chrome */
+  transform: translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
 }
 
 /* ── Topbar (stepper) ── */
@@ -865,11 +927,15 @@ export default { components: { StepDot } };
 .drawer__body {
   flex: 1;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 0 var(--space-5) var(--space-5);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
+
+/* ── Overlay : suit aussi le viewport dynamique ── */
 
 /* ── Empty ── */
 .drawer__empty {

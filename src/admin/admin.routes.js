@@ -23,5 +23,6 @@ export default {
     { path: 'reviews',                     name: 'admin.reviews',                component: () => import('./reviews/ReviewsModerationView.vue') },
     { path: 'abandoned-carts',             name: 'admin.abandoned-carts',        component: () => import('./abandoned-carts/AbandonedCartsView.vue') },
     { path: 'deliveries',                  name: 'admin.deliveries',             component: () => import('./deliveries/DeliveriesView.vue') },
+    { path: 'delivery-zones',              name: 'admin.delivery-zones',         component: () => import('./delivery-zones/DeliveryZonesView.vue') },
   ],
 }

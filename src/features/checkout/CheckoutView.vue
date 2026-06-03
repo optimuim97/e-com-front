@@ -61,7 +61,7 @@
           </ul>
           <div class="co-mini-total">
             <span>Livraison</span>
-            <span :class="shippingCost === 0 ? 'co-summary__free' : ''">{{ shippingCost > 0 ? formatPrice(shippingCost) : 'Gratuite 🎉' }}</span>
+            <span :class="shippingFound && shippingQuote.is_free ? 'co-summary__free' : ''">{{ shippingLabel }}</span>
           </div>
           <div class="co-mini-total co-mini-total--bold">
             <span>Total</span>
@@ -163,6 +163,15 @@
               <CheckoutField :def="{ label: 'Point de repère' }" optional>
                 <input v-model="form.customer_note" type="text" class="input" placeholder="Ex. Face à la pharmacie, immeuble bleu…" />
               </CheckoutField>
+
+              <!-- Hors zone : frais communiqués manuellement -->
+              <div v-if="shippingManual" class="co-shipping-notice">
+                <span>📞</span>
+                <div>
+                  <strong>Frais de livraison à confirmer</strong>
+                  <p>Cette destination n'est pas dans nos zones tarifées. Nos agents vous contacteront pour vous communiquer les frais après validation de votre commande.</p>
+                </div>
+              </div>
             </div>
             <div class="co-section__foot">
               <button @click="currentStep = 1" class="btn btn-outline co-back-btn">
@@ -251,8 +260,8 @@
             </li>
             <li>
               <span>Livraison</span>
-              <span :class="shippingCost === 0 ? 'co-summary__free' : ''">
-                {{ shippingCost > 0 ? formatPrice(shippingCost) : 'Gratuite 🎉' }}
+              <span :class="shippingFound && shippingQuote.is_free ? 'co-summary__free' : ''">
+                {{ shippingLabel }}
               </span>
             </li>
             <li class="co-summary__total">
@@ -350,6 +359,7 @@ import AppSelect           from '@/components/ui/AppSelect.vue'
 import PhoneInput          from '@/components/ui/PhoneInput.vue'
 import CitySelect          from '@/components/shop/CitySelect.vue'
 import CityFree            from '@/components/shop/CityFree.vue'
+import api                            from '@/api'
 import { checkoutApi }                from './checkout.api'
 import { makeForm, mapErrors, FIELDS } from './checkout.fields'
 import CheckoutField                  from '@/shared/components/ui/FormField.vue'
@@ -442,14 +452,57 @@ const couponLabelSuffix = computed(() => {
   return couponDiscount.value ? ` (${couponDiscount.value}%)` : ''
 })
 
-// ── Frais de livraison depuis les settings (cohérent avec CartDrawer) ────────
+// ── Frais de livraison : quote API. Hors zone => frais dictés par agents. ────
+const shippingQuote  = ref(null)
+const shippingFound  = computed(() => shippingQuote.value && !shippingQuote.value.not_found)
+const shippingManual = computed(() => shippingQuote.value?.not_found === true)
+
 const shippingCost = computed(() => {
-  const cost      = settings.shippingDefaultCost  ?? 0
-  const threshold = settings.shippingFreeThreshold ?? 0
-  if (cost <= 0) return 0
-  if (threshold > 0 && Number(cartStore.subtotal) >= threshold) return 0
-  return cost
+  if (shippingFound.value) {
+    return shippingQuote.value.is_free ? 0 : shippingQuote.value.price
+  }
+  return 0 // hors zone : aucun montant injecté, agents reviendront vers le client
 })
+
+const shippingLabel = computed(() => {
+  if (shippingFound.value) {
+    if (shippingQuote.value.is_free) return 'Offerte 🎉'
+    const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
+    return formatPrice(shippingQuote.value.price) + suffix
+  }
+  if (shippingManual.value) return 'À confirmer par nos agents'
+  return 'À renseigner'
+})
+
+let quoteTimer = null
+async function refreshShippingQuote() {
+  const city    = form.value.shipping_city
+  const commune = form.value.shipping_commune
+  const country = form.value.shipping_country || 'CI'
+  if (country === 'CI' && !city && !commune) { shippingQuote.value = null; return }
+  try {
+    const { data } = await api.get('/shipping/quote', {
+      params: { city, commune, country, subtotal: cartStore.subtotal },
+    })
+    shippingQuote.value = data?.found ? data : { not_found: true }
+  } catch (e) {
+    shippingQuote.value = e.response?.status === 404 ? { not_found: true } : null
+  }
+}
+
+watch(
+  () => [
+    form.value.shipping_city,
+    form.value.shipping_commune,
+    form.value.shipping_country,
+    cartStore.subtotal,
+  ],
+  () => {
+    clearTimeout(quoteTimer)
+    quoteTimer = setTimeout(refreshShippingQuote, 250)
+  },
+  { deep: true }
+)
 
 const orderTotal = computed(() => {
   const base = couponFromCart.value
@@ -843,6 +896,30 @@ function formatPrice(val) {
   color: var(--gray-600);
 }
 .co-summary__free { color: #15803d; font-weight: 500; }
+
+.co-shipping-notice {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--gold-100, #fef9c3);
+  border: 1px solid var(--gold-200, #fde68a);
+  border-radius: var(--radius-md, 0.5rem);
+}
+.co-shipping-notice span { font-size: 1.125rem; flex-shrink: 0; }
+.co-shipping-notice strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--gold-600, #b45309);
+  margin-bottom: 2px;
+}
+.co-shipping-notice p {
+  font-size: 0.8125rem;
+  color: var(--gold-600, #b45309);
+  line-height: 1.5;
+  margin: 0;
+}
 .co-summary__discount { color: #15803d; }
 .co-summary__total {
   font-family: var(--font-display);
