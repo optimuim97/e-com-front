@@ -84,46 +84,49 @@
         </div>
       </div>
 
-      <!-- ── Colonne droite : visuel produit en cercle ─────────────────── -->
+      <!-- ── Colonne droite : carrousel lifestyle en cercle ────────────── -->
       <div class="hero__visual">
         <!-- Disque crème de fond -->
         <div class="hero__disc" aria-hidden="true"></div>
 
-        <!-- Photo principale (modèle/produit) -->
+        <!-- Carrousel de photos lifestyle (fondu) -->
         <div class="hero__photo">
-          <img
-            :src="heroPhoto"
-            :alt="displayProduct.name || 'Rosabeauty'"
-            loading="eager"
-            @error="onPhotoError"
-          />
+          <TransitionGroup name="hero-fade" tag="div" class="hero__photo-track">
+            <img
+              v-for="(src, i) in heroPhotos"
+              v-show="i === currentPhoto"
+              :key="src"
+              :src="src"
+              :alt="'Rosabeauty — soin visage ' + (i + 1)"
+              class="hero__photo-img"
+              :loading="i === 0 ? 'eager' : 'lazy'"
+              @error="onPhotoError(i)"
+            />
+          </TransitionGroup>
+
+          <!-- Dots du carrousel -->
+          <div v-if="heroPhotos.length > 1" class="hero__photo-dots">
+            <button
+              v-for="(_, i) in heroPhotos"
+              :key="i"
+              class="hero__photo-dot"
+              :class="{ 'hero__photo-dot--active': i === currentPhoto }"
+              @click="goToPhoto(i)"
+              :aria-label="`Photo ${i + 1}`"
+            ></button>
+          </div>
         </div>
 
-        <!-- Carte mini-produit flottante (info + prix) -->
-        <div v-if="displayProduct.name" class="hero__card">
-          <div class="hero__card-tag">
-            <template v-if="displayProduct.isFlash">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-              {{ $t('hero.flashBadge') }}
-            </template>
-            <template v-else>
-              <!-- Médaille / récompense SVG (remplace 🏆) -->
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="6"/>
-                <path d="M15.5 12.5 17 23l-5-3-5 3 1.5-10.5"/>
-              </svg>
-              {{ $t('common.bestseller') }}
-            </template>
-          </div>
-
-          <RouterLink v-if="displayProduct.slug" :to="`/products/${displayProduct.slug}`" class="hero__card-name-link">
-            <h3 class="hero__card-name">{{ displayProduct.name }}</h3>
-          </RouterLink>
-          <h3 v-else class="hero__card-name">{{ displayProduct.name }}</h3>
-
-          <div class="hero__card-price">
-            <span v-if="displayProduct.priceOld" class="hero__card-price-old">{{ displayProduct.priceOld }}</span>
-            <span class="hero__card-price-new">{{ displayProduct.price }}</span>
+        <!-- Badge de réassurance flottant (pas de produit) -->
+        <div class="hero__badge">
+          <span class="hero__badge-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </span>
+          <div class="hero__badge-text">
+            <strong>{{ $t('hero.natural') }}</strong>
+            <span>{{ $t('hero.madeInCI') }}</span>
           </div>
         </div>
       </div>
@@ -133,27 +136,19 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 
 defineEmits(['add-to-cart'])
 
-// Pool de photos modèles disponibles localement (utilisé en fallback
-// si pas d'image produit/featured ni de hero_image configurée)
+// Pool de photos lifestyle locales (fallback si l'admin n'a rien configuré)
 const FALLBACK_HERO_PHOTOS = [
   '/image_site/FLS_8032.jpeg',
-  '/image_site/FLS_8111.jpeg',
-  '/image_site/FLS_8130.jpeg',
   '/image_site/DSC_7553.jpeg',
+  '/image_site/FLS_8111.jpeg',
 ]
-const fallbackIndex = ref(0)
-function onPhotoError(e) {
-  // Si l'image actuelle est en erreur, on essaie le prochain fallback
-  fallbackIndex.value = (fallbackIndex.value + 1) % FALLBACK_HERO_PHOTOS.length
-  e.target.src = FALLBACK_HERO_PHOTOS[fallbackIndex.value]
-}
 
 const props = defineProps({
   heroProduct:    { type: Object, default: null },
@@ -198,12 +193,38 @@ const displayProduct = computed(() => {
 const eyebrowText  = computed(() => props.heroEyebrow  || t('hero.defaultEyebrow'))
 const subtitleText = computed(() => props.heroSubtitle || t('hero.defaultSubtitle'))
 
-// Photo principale : settings.heroImageUrl > image produit > fallback local
-const heroPhoto = computed(() => {
-  return settings.heroImageUrl
-    || displayProduct.value.image
-    || FALLBACK_HERO_PHOTOS[0]
+// ── Carrousel de photos lifestyle ───────────────────────────────────────────
+// Source : settings.heroImages (liste configurée en admin) sinon fallback local.
+const heroPhotos = computed(() => {
+  const configured = settings.heroImages // array (voir store)
+  if (Array.isArray(configured) && configured.length) return configured
+  return FALLBACK_HERO_PHOTOS
 })
+
+const currentPhoto = ref(0)
+let photoTimer = null
+const PHOTO_DURATION = 5000
+
+function nextPhoto() {
+  currentPhoto.value = (currentPhoto.value + 1) % heroPhotos.value.length
+}
+function goToPhoto(i) {
+  currentPhoto.value = i
+  resetPhotoTimer()
+}
+function resetPhotoTimer() {
+  clearInterval(photoTimer)
+  if (heroPhotos.value.length > 1) photoTimer = setInterval(nextPhoto, PHOTO_DURATION)
+}
+function onPhotoError(i) {
+  // Si une photo configurée échoue, on la remplace par un fallback local
+  const fb = FALLBACK_HERO_PHOTOS[i % FALLBACK_HERO_PHOTOS.length]
+  const imgs = heroPhotos.value
+  if (imgs[i] !== fb) imgs[i] = fb
+}
+
+onMounted(resetPhotoTimer)
+onBeforeUnmount(() => clearInterval(photoTimer))
 
 const reviewsLabel = computed(() =>
   props.reviewsCount > 0 ? t('hero.reviews', { count: props.reviewsCount }) : ''
@@ -466,81 +487,91 @@ const reviewsLabel = computed(() =>
     inset 0 0 0 1px rgba(255,255,255,0.4);
   z-index: 1;
 }
-.hero__photo img {
+.hero__photo-track {
+  position: absolute;
+  inset: 0;
+}
+.hero__photo-img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.hero__photo-fallback {
-  width: 60%;
-  height: 60%;
+
+/* Transition fondu entre photos */
+.hero-fade-enter-active,
+.hero-fade-leave-active {
+  transition: opacity 1s ease;
+}
+.hero-fade-enter-from,
+.hero-fade-leave-to { opacity: 0; }
+
+/* Dots du carrousel (en bas du cercle) */
+.hero__photo-dots {
   position: absolute;
-  inset: 0;
-  margin: auto;
-  color: var(--rose-400, #f06292);
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 7px;
+  z-index: 2;
+}
+.hero__photo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.7);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+.hero__photo-dot--active {
+  background: #fff;
+  width: 20px;
 }
 
-/* Mini-carte produit flottante */
-.hero__card {
+/* Badge réassurance flottant (remplace la carte produit) */
+.hero__badge {
   position: absolute;
-  left: -8%;
-  bottom: 6%;
+  left: -6%;
+  bottom: 8%;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: #fff;
   border-radius: 16px;
-  padding: 16px 18px;
+  padding: 14px 18px;
   box-shadow:
     0 16px 32px -10px rgba(168, 50, 80, 0.18),
     0 2px 6px rgba(0,0,0,0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 220px;
-  max-width: 260px;
   border: 1px solid rgba(255,255,255,0.8);
 }
-.hero__card-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  font-size: 0.625rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: var(--rose-50, #fdeef2);
-  color: var(--rose-600, #c0386b);
-}
-.hero__card-name-link { text-decoration: none; }
-.hero__card-name {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 500;
-  color: #2a1f24;
-  line-height: 1.3;
-  margin: 4px 0 0;
-}
-.hero__card-name-link:hover .hero__card-name { color: var(--rose-600, #c0386b); }
-
-.hero__card-price {
+.hero__badge-icon {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-top: 2px;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--rose-50, #fdeef2);
+  color: var(--rose-500, #e8336d);
+  flex-shrink: 0;
 }
-.hero__card-price-old {
-  font-size: 0.75rem;
-  color: #a0918e;
-  text-decoration: line-through;
-}
-.hero__card-price-new {
+.hero__badge-text { display: flex; flex-direction: column; gap: 2px; }
+.hero__badge-text strong {
   font-family: var(--font-display);
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: var(--rose-600, #c0386b);
+  color: #2a1f24;
+  line-height: 1.2;
+}
+.hero__badge-text span {
+  font-size: 0.6875rem;
+  color: #8e7f82;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
@@ -564,9 +595,8 @@ const reviewsLabel = computed(() =>
   .hero__ctas { flex-direction: column; align-items: flex-start; gap: 16px; }
   .hero__cta-primary { width: 100%; justify-content: center; }
   .hero__visual { max-width: 320px; aspect-ratio: 1; }
-  .hero__card { left: -4%; min-width: 180px; padding: 12px 14px; }
-  .hero__card-name { font-size: 0.875rem; }
-  .hero__card-price-new { font-size: 1rem; }
+  .hero__badge { left: -2%; bottom: 4%; padding: 10px 14px; gap: 8px; }
+  .hero__badge-icon { width: 32px; height: 32px; }
   .hero__decor-branch { display: none; }
   .hero__petal { display: none; }
   .hero__proof { gap: 16px; }

@@ -309,6 +309,13 @@
           </div>
 
           <div class="field">
+            <label class="label">Photos du hero (carrousel)</label>
+            <textarea v-model="form.home_hero_images" class="input textarea" rows="3"
+              placeholder="/image_site/FLS_8032.jpeg&#10;/image_site/DSC_7553.jpeg&#10;https://.../photo.jpg"></textarea>
+            <p class="hint">Une URL par ligne (ou séparées par des virgules). Ces photos défilent en fondu dans le cercle du hero. Laissez vide pour utiliser les photos par défaut.</p>
+          </div>
+
+          <div class="field">
             <label class="label">Label de la section ventes flash</label>
             <input v-model="form.home_flash_label" type="text" class="input" placeholder="Ventes flash" maxlength="40" />
           </div>
@@ -486,6 +493,7 @@ const form = ref({
   home_hero_eyebrow:    '',
   home_hero_title:      '',
   home_hero_subtitle:   '',
+  home_hero_images:     '',
   home_flash_label:     'Ventes flash',
   home_promo_banner:    '',
   // WhatsApp

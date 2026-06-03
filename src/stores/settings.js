@@ -67,6 +67,14 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /* ── Page d'accueil ───────────────────────────────────────────────────── */
   const heroImageUrl              = get('home_hero_image_url',           '')
+  // Liste d'images hero (séparées par des virgules ou retours à la ligne)
+  const heroImages = computed(() => {
+    const raw = data.value.home_hero_images || ''
+    return String(raw)
+      .split(/[\n,]+/)
+      .map(s => s.trim())
+      .filter(Boolean)
+  })
 
   /* Méthodes actives pour le footer / checkout */
   const activePayments = computed(() => {
@@ -163,7 +171,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // Tunnel
     enableQuickOrder,
     // Hero
-    heroImageUrl,
+    heroImageUrl, heroImages,
     // Announce
     announceText,
     // Réseaux sociaux
