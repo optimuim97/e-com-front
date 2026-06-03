@@ -11,8 +11,9 @@
             <em>de chaque femme</em>
           </h1>
           <p class="ap-hero__desc">
-            Rosa Beauty est née d'une conviction profonde : offrir des soins doux, efficaces et authentiques
-            qui subliment chaque femme dans son unicité. Une marque fondée avec amour, pour toutes.
+            Rosabeauty Facial Care est née d'une histoire personnelle, d'une passion pour la beauté
+            et d'une volonté d'aider les femmes à prendre soin de leur peau avec douceur et confiance.
+            La <strong>première marque ivoirienne dédiée à la rose</strong>, pour révéler l'éclat naturel de votre peau. 🌹
           </p>
           <div class="ap-hero__founder">
             <div class="ap-hero__founder-avatar">M</div>
@@ -48,12 +49,17 @@
         <div class="ap-founder__quote-col">
           <span class="eyebrow">La vision</span>
           <blockquote class="ap-founder__blockquote">
-            « Rosa Beauty, c'est plus qu'une marque, c'est une expérience — une invitation à prendre soin
-            de soi avec amour et délicatesse. »
+            « Votre corps est votre meilleur accessoire, prenez-en soin. »
           </blockquote>
           <p class="ap-founder__text">
-            J'ai créé Rosa Beauty avec une conviction simple : révéler la beauté naturelle de chaque femme
-            à travers des soins doux, efficaces et authentiques.
+            Comme beaucoup de femmes, j'ai moi-même été confrontée à des problèmes de peau qui affectaient
+            ma confiance en moi. Au cours de ma quête pour retrouver une peau saine et lumineuse, j'ai découvert
+            les bienfaits exceptionnels de la rose. Séduite par ses propriétés apaisantes, hydratantes et éclatantes,
+            elle est rapidement devenue un élément essentiel de ma routine beauté.
+          </p>
+          <p class="ap-founder__text">
+            Les résultats ont éveillé en moi une véritable passion et l'envie de partager ce trésor naturel
+            avec d'autres femmes. C'est ainsi qu'est née Rosabeauty Facial Care.
           </p>
           <div class="ap-founder__sig">
             <span class="ap-founder__sig-name">Maïmouna Diabagate</span>
@@ -130,13 +136,14 @@
             Un <em>rituel de soins</em><br>pensé pour vous
           </h2>
           <p>
-            Chaque produit Rosa Beauty est pensé comme un véritable rituel de soins, pour apporter
-            éclat, bien-être et confiance au quotidien. Nous formulons avec une obsession du détail :
-            des actifs naturels concentrés, sans parabens, sans sulfates agressifs.
+            Chez Rosabeauty Facial Care, notre mission n'est pas de transformer la couleur de votre peau,
+            mais de l'aider à être <strong>saine, lumineuse, équilibrée et rayonnante</strong>. Nous croyons que chaque
+            femme mérite de se sentir belle dans sa peau et de prendre soin d'elle avec des produits adaptés à ses besoins.
           </p>
           <p>
-            Chaque formule est pensée pour les peaux africaines — leur éclat, leurs besoins
-            spécifiques, les conditions climatiques de notre territoire.
+            Au fil des années, Rosabeauty Facial Care a grandi grâce à la confiance de milliers de clientes.
+            Chaque produit est pensé avec amour, exigence et respect de la peau, afin d'offrir une expérience
+            de soin unique — pensée pour les peaux africaines, leur éclat et leurs besoins spécifiques.
           </p>
           <ul class="ap-mission__list">
             <li v-for="item in missionPoints" :key="item">
@@ -207,9 +214,12 @@
       <div class="container ap-cta__inner">
         <div class="ap-cta__quote-mark">"</div>
         <h2 class="display-md ap-cta__headline">
-          Parce que votre corps est<br><em>votre meilleur accessoire</em>
+          Votre corps est<br><em>votre meilleur accessoire</em>
         </h2>
-        <p>Prenez-en soin. Découvrez nos formules naturelles pensées pour sublimer votre peau au quotidien.</p>
+        <p>
+          Prenez-en soin. Plus qu'une marque de cosmétiques, Rosabeauty Facial Care est une invitation
+          à prendre soin de soi, à s'aimer davantage et à révéler sa beauté naturelle.
+        </p>
         <div class="ap-cta__btns">
           <RouterLink to="/products" class="btn btn-primary">Voir nos produits</RouterLink>
           <RouterLink to="/contact"  class="btn btn-outline">Nous contacter</RouterLink>

@@ -19,6 +19,13 @@
             {{ p }}
           </li>
         </ul>
+
+        <RouterLink to="/a-propos" class="about-link animate-fade-up animate-fade-up-delay-4">
+          Notre histoire &amp; nos valeurs
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </RouterLink>
       </div>
 
       <!-- Stats droite -->
@@ -34,6 +41,8 @@
 </template>
 
 <script setup>
+import { RouterLink } from 'vue-router'
+
 defineProps({
   shopName: { type: String, required: true },
   tagline:  { type: String, required: true },
@@ -120,6 +129,22 @@ defineProps({
 .stat-label {
   font-size: 0.75rem;
   color: var(--gray-400);
+}
+
+.about-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  margin-top: var(--space-2);
+  transition: gap var(--transition-fast), opacity var(--transition-fast);
+}
+.about-link:hover {
+  gap: var(--space-3);
+  opacity: 0.8;
 }
 
 @media (max-width: 1024px) {
