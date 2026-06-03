@@ -71,6 +71,14 @@
               <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" />
             </div>
 
+            <!-- Email (optionnel, pour recevoir la facture) -->
+            <div class="qo-field">
+              <label class="label">
+                E-mail <span class="qo-optional">(optionnel — pour recevoir la facture PDF)</span>
+              </label>
+              <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" />
+            </div>
+
             <!-- Commune -->
             <div class="qo-field">
               <label class="label">Commune / Quartier (Abidjan) *</label>
@@ -185,6 +193,7 @@ const paymentMethods = [
 const form = ref({
   name: '',
   phone: '',
+  email: '',
   commune: '',
   payment: 'wave',
   note: '',
@@ -221,6 +230,7 @@ async function submit() {
     const { data } = await api.post('/quick-order', {
       name:           form.value.name,
       phone:          form.value.phone,
+      email:          form.value.email?.trim() || null,
       commune:        form.value.commune,
       payment_method: form.value.payment,
       note:           form.value.note || null,
