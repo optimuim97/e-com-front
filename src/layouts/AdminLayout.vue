@@ -25,6 +25,11 @@
         >
           <component :is="item.icon" class="admin-nav-link__icon" />
           <span>{{ item.label }}</span>
+          <span
+            v-if="badgeFor(item.to)"
+            class="admin-nav-link__badge"
+            :title="`${badgeFor(item.to)} en attente`"
+          >{{ badgeFor(item.to) }}</span>
         </RouterLink>
       </nav>
 
@@ -80,15 +85,29 @@ import {
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
+import { useOrderStatsStore } from '@/admin/stores/orderStats.store';
 import NotificationBell from '@/admin/components/NotificationBell.vue';
 
 const auth    = useAuthStore();
 const route   = useRoute();
 const router  = useRouter();
 const notifStore = useAdminNotificationsStore();
+const orderStats = useOrderStatsStore();
 
-onMounted(() => notifStore.subscribe());
-onBeforeUnmount(() => notifStore.unsubscribe());
+onMounted(() => {
+  notifStore.subscribe();
+  orderStats.start();
+});
+onBeforeUnmount(() => {
+  notifStore.unsubscribe();
+  orderStats.stop();
+});
+
+// Mapping nav.to -> count à afficher en badge
+function badgeFor(to) {
+  if (to === '/admin/orders') return orderStats.pending || null;
+  return null;
+}
 
 const nav = [
   { to: '/admin',            label: 'Dashboard',    icon: Squares2X2Icon  },
@@ -220,6 +239,25 @@ async function handleLogout() {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+.admin-nav-link > span:first-of-type { flex: 1; }
+.admin-nav-link__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 9999px;
+  background: var(--rose-500);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.admin-nav-link--active .admin-nav-link__badge {
+  background: #fff;
+  color: var(--rose-600);
 }
 .admin-nav-link:hover {
   background: var(--rose-50);

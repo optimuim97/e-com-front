@@ -129,14 +129,29 @@
               <td><span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span></td>
               <td>{{ paymentLabel(order.payment_method) }}</td>
               <td class="admin-table__action">
-                <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
-                  Détail →
-                </RouterLink>
+                <div class="admin-table__action-row">
+                  <button
+                    class="btn btn-xs btn-primary"
+                    @click="openQuickAction(order)"
+                    title="Traitement rapide"
+                  >⚡ Traiter</button>
+                  <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
+                    Détail →
+                  </RouterLink>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <!-- Modal traitement rapide -->
+      <OrderQuickActionModal
+        v-if="quickActionOrder"
+        :order="quickActionOrder"
+        @close="quickActionOrder = null"
+        @updated="onOrderUpdated"
+      />
 
       <!-- Pagination -->
       <div v-if="pagination.last_page > 1" class="pagination">
@@ -156,6 +171,23 @@
 import { ref, reactive, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
+import OrderQuickActionModal from './OrderQuickActionModal.vue'
+import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
+
+const orderStats = useOrderStatsStore()
+const quickActionOrder = ref(null)
+
+function openQuickAction(order) {
+  quickActionOrder.value = order
+}
+
+function onOrderUpdated(updated) {
+  // Mettre à jour la ligne dans la liste
+  const idx = orders.value.findIndex(o => o.id === updated.id)
+  if (idx >= 0) orders.value[idx] = { ...orders.value[idx], ...updated }
+  // Rafraîchir le badge sidebar
+  orderStats.refresh()
+}
 
 const orders = ref([])
 const loading = ref(true)
@@ -445,6 +477,18 @@ onMounted(fetchOrders)
   transition: color var(--transition-fast);
 }
 .admin-table__action a:hover { color: var(--rose-700); }
+.admin-table__action-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+.btn-xs {
+  padding: 4px 10px !important;
+  font-size: 0.6875rem !important;
+  height: auto !important;
+  border-radius: var(--radius-sm);
+}
 
 .pagination {
   padding: var(--space-3) var(--space-4);
