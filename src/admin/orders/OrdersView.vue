@@ -6,8 +6,68 @@
         <span class="eyebrow">Boutique</span>
         <h1 class="page-header__title">Commandes</h1>
       </div>
-      <span class="badge badge-gray">{{ pagination.total ?? 0 }} commande(s)</span>
+      <span class="badge badge-gray">{{ orderStats.total }} commande(s) au total</span>
     </header>
+
+    <!-- ── Vue d'ensemble : cartes stats ── -->
+    <div class="orders-stats">
+      <button
+        class="stat-card stat-card--all"
+        :class="{ 'stat-card--active': filters.status === '' }"
+        @click="setStatusFilter('')"
+      >
+        <span class="stat-card__label">Total</span>
+        <span class="stat-card__value">{{ orderStats.total }}</span>
+        <span class="stat-card__hint">{{ orderStats.today }} aujourd'hui · {{ orderStats.thisWeek }} cette semaine</span>
+      </button>
+
+      <button
+        class="stat-card stat-card--pending"
+        :class="{ 'stat-card--active': filters.status === 'pending' }"
+        @click="setStatusFilter('pending')"
+        :title="`${fmt(orderStats.pendingRevenue)} en attente de validation`"
+      >
+        <span class="stat-card__label">En attente</span>
+        <span class="stat-card__value">{{ orderStats.pending }}</span>
+        <span class="stat-card__hint">{{ fmt(orderStats.pendingRevenue) }}</span>
+      </button>
+
+      <button
+        class="stat-card stat-card--processing"
+        :class="{ 'stat-card--active': filters.status === 'processing' }"
+        @click="setStatusFilter('processing')"
+      >
+        <span class="stat-card__label">En traitement</span>
+        <span class="stat-card__value">{{ orderStats.processing }}</span>
+        <span class="stat-card__hint">À préparer</span>
+      </button>
+
+      <button
+        class="stat-card stat-card--shipped"
+        :class="{ 'stat-card--active': filters.status === 'shipped' }"
+        @click="setStatusFilter('shipped')"
+      >
+        <span class="stat-card__label">Expédiées</span>
+        <span class="stat-card__value">{{ orderStats.shipped }}</span>
+        <span class="stat-card__hint">En cours de livraison</span>
+      </button>
+
+      <button
+        class="stat-card stat-card--delivered"
+        :class="{ 'stat-card--active': filters.status === 'delivered' }"
+        @click="setStatusFilter('delivered')"
+      >
+        <span class="stat-card__label">Livrées</span>
+        <span class="stat-card__value">{{ orderStats.delivered }}</span>
+        <span class="stat-card__hint">Terminées</span>
+      </button>
+
+      <div class="stat-card stat-card--revenue">
+        <span class="stat-card__label">Chiffre d'affaires</span>
+        <span class="stat-card__value">{{ fmtCompact(orderStats.revenue) }}</span>
+        <span class="stat-card__hint">Panier moyen {{ fmt(orderStats.avgBasket) }}</span>
+      </div>
+    </div>
 
     <!-- Filters -->
     <div class="card filters-bar">
@@ -311,6 +371,23 @@ function onPerPageUpdate(n) {
   fetchOrders()
 }
 
+function setStatusFilter(status) {
+  filters.status = status
+  filters.page = 1
+  fetchOrders()
+}
+
+function fmt(v) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(v ?? 0))
+}
+
+function fmtCompact(v) {
+  const n = Number(v ?? 0)
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M FCFA'
+  if (n >= 1_000)     return (n / 1_000).toFixed(0) + 'k FCFA'
+  return n.toLocaleString('fr-FR') + ' FCFA'
+}
+
 async function fetchOrders() {
   loading.value = true
   try {
@@ -514,6 +591,77 @@ onMounted(fetchOrders)
   height: auto !important;
   border-radius: var(--radius-sm);
 }
+
+/* ── Cartes stats vue d'ensemble ── */
+.orders-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--cream-200);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.stat-card:hover {
+  border-color: var(--rose-300);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(168, 50, 80, 0.08);
+}
+.stat-card--active {
+  border-color: var(--rose-500);
+  background: var(--rose-50);
+  box-shadow: inset 3px 0 0 var(--rose-500);
+}
+.stat-card__label {
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-500);
+  font-weight: 600;
+}
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  line-height: 1;
+  margin-top: 2px;
+}
+.stat-card__hint {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+  margin-top: 4px;
+}
+
+/* Accents par statut */
+.stat-card--pending .stat-card__value    { color: var(--gold-600, #b45309); }
+.stat-card--processing .stat-card__value { color: #2563eb; }
+.stat-card--shipped .stat-card__value    { color: #7c3aed; }
+.stat-card--delivered .stat-card__value  { color: #15803d; }
+.stat-card--revenue {
+  background: linear-gradient(135deg, var(--rose-500), #f06292);
+  border-color: transparent;
+  color: #fff;
+  cursor: default;
+}
+.stat-card--revenue:hover {
+  transform: none;
+  box-shadow: none;
+}
+.stat-card--revenue .stat-card__label,
+.stat-card--revenue .stat-card__hint  { color: rgba(255,255,255,0.85); }
+.stat-card--revenue .stat-card__value { color: #fff; }
 
 .pagination {
   padding: var(--space-3) var(--space-4);
