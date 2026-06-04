@@ -16,7 +16,7 @@
 
       <!-- Error -->
       <div v-else-if="!order" class="order-empty card">
-        <div class="order-empty__icon">🌸</div>
+        <div class="order-empty__icon"><FlowerMark /></div>
         <h2 class="display-md">{{ $t('orders.notFound') }}</h2>
         <RouterLink to="/orders" class="btn btn-primary">Retour</RouterLink>
       </div>
@@ -52,6 +52,18 @@
                 </button>
               </div>
             </div>
+          </div>
+
+          <!-- Bannière "Payer maintenant" : commande en ligne non réglée -->
+          <div v-if="showPayNow" class="order-pay-banner">
+            <div class="order-pay-banner__body">
+              <strong>Paiement en attente</strong>
+              <p>Finalisez le règlement de <strong>{{ formatPrice(order.total) }}</strong> en toute sécurité pour valider votre commande.</p>
+            </div>
+            <button class="order-pay-banner__btn" :disabled="paying" @click="payNow">
+              <span v-if="paying" class="order-pay-banner__spin"></span>
+              <span v-else>Payer maintenant</span>
+            </button>
           </div>
 
           <!-- Tracking -->
@@ -159,7 +171,29 @@
         <!-- Payment -->
         <section class="card order-block">
           <h2 class="order-block__title">{{ $t('orders.paymentMethod') }}</h2>
-          <p class="order-payment">{{ paymentLabel(order.payment_method ?? order.payments?.[0]?.provider) }}</p>
+          <div class="order-pay-detail">
+            <div class="order-pay-detail__row">
+              <span class="order-pay-detail__label">Moyen</span>
+              <span class="order-pay-detail__value">{{ paymentLabel(order.payment_method ?? order.payments?.[0]?.provider) }}</span>
+            </div>
+            <div class="order-pay-detail__row">
+              <span class="order-pay-detail__label">Statut</span>
+              <span :class="['order-pay-status', order.is_paid ? 'order-pay-status--ok' : 'order-pay-status--pending']">
+                {{ order.is_paid ? 'Payée' : 'En attente de paiement' }}
+              </span>
+            </div>
+            <div v-if="order.payment_reference" class="order-pay-detail__row">
+              <span class="order-pay-detail__label">Référence</span>
+              <span class="order-pay-detail__ref">
+                {{ order.payment_reference }}
+                <CopyButton :text="order.payment_reference" title="Copier la référence" copied-text="Copié !" />
+              </span>
+            </div>
+            <div v-if="paidPayment" class="order-pay-detail__row">
+              <span class="order-pay-detail__label">Réglée le</span>
+              <span class="order-pay-detail__value">{{ formatDate(paidPayment.paid_at) }}</span>
+            </div>
+          </div>
         </section>
       </div>
     </div>
@@ -200,6 +234,34 @@ const settings = ref({})
 const showChangePinModal = ref(false)
 const downloadingPdf     = ref(false)
 const copied   = ref(false)
+const paying   = ref(false)
+
+// Bouton "Payer maintenant" : commande en ligne, non réglée, pas annulée
+const showPayNow = computed(() =>
+  order.value
+  && !order.value.is_paid
+  && order.value.is_online_payment
+  && !['cancelled', 'refunded'].includes(order.value.status)
+)
+
+const paidPayment = computed(() =>
+  order.value?.payments?.find(p => p.status === 'completed') ?? null
+)
+
+async function payNow() {
+  if (!order.value) return
+  paying.value = true
+  try {
+    const { data } = await api.post(`/orders/${order.value.number}/pay`)
+    if (data.payment_url) {
+      window.location.href = data.payment_url
+    }
+  } catch (e) {
+    alert(e.response?.data?.message ?? 'Impossible d\'initialiser le paiement.')
+  } finally {
+    paying.value = false
+  }
+}
 
 function onPinVerified() {
   // PIN verified — order content is now visible
@@ -610,4 +672,76 @@ onMounted(fetchOrder)
   font-size: 0.9375rem;
   color: var(--gray-600);
 }
+
+/* ── Bannière Payer maintenant ── */
+.order-pay-banner {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  background: linear-gradient(135deg, var(--rose-50), #fff7f9);
+  border: 1.5px solid var(--rose-200);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.order-pay-banner__body { flex: 1; min-width: 200px; font-size: 0.875rem; }
+.order-pay-banner__body strong { color: var(--rose-700); display: block; font-size: 0.9375rem; margin-bottom: 2px; }
+.order-pay-banner__body p { color: var(--rose-600); margin: 0; }
+.order-pay-banner__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, var(--rose-500), var(--rose-600));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -6px rgba(232, 51, 109, 0.5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+.order-pay-banner__btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 12px 26px -8px rgba(232, 51, 109, 0.6); }
+.order-pay-banner__btn:disabled { opacity: 0.7; cursor: default; }
+.order-pay-banner__spin {
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Bloc traçabilité paiement ── */
+.order-pay-detail { display: flex; flex-direction: column; gap: var(--space-3); }
+.order-pay-detail__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: 0.875rem;
+}
+.order-pay-detail__label { color: var(--gray-400); }
+.order-pay-detail__value { color: var(--gray-700); font-weight: 500; }
+.order-pay-detail__ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+}
+.order-pay-status {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.order-pay-status--ok { background: #dcfce7; color: #15803d; }
+.order-pay-status--pending { background: var(--gold-100, #fef9c3); color: var(--gold-600, #b45309); }
 </style>

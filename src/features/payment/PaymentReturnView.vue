@@ -56,10 +56,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import api from '@/api'
 
 const route       = useRoute()
+const router      = useRouter()
 const orderNumber = route.query.order
 const checking    = ref(true)
 const paid        = ref(false)
@@ -93,6 +94,14 @@ onMounted(async () => {
   }
 
   checking.value = false
+
+  // Paiement confirmé → on ramène l'utilisateur sur le détail de SA commande
+  // après un court instant (il voit le message de succès puis est redirigé).
+  if (paid.value && orderNumber) {
+    setTimeout(() => {
+      router.push({ name: 'order', params: { number: orderNumber } })
+    }, 2500)
+  }
 })
 </script>
 
