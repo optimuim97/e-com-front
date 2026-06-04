@@ -32,7 +32,7 @@
               class="flash-card__img"
               loading="lazy"
             />
-            <div v-else class="flash-card__placeholder">💄</div>
+            <div v-else class="flash-card__placeholder"><FlowerMark /></div>
             <span class="flash-card__badge">
               -{{ discountPct(p) }}%
             </span>

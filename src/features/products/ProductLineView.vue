@@ -52,7 +52,7 @@
         <div v-for="i in 8" :key="i" class="product-skeleton"></div>
       </div>
       <div v-else-if="products.length === 0" class="empty-state card">
-        <div class="empty-state__icon">🌹</div>
+        <div class="empty-state__icon"><FlowerMark /></div>
         <p>Aucun produit dans cette gamme pour le moment.</p>
       </div>
       <div v-else class="products-grid">

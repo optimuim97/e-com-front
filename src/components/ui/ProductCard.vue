@@ -42,7 +42,7 @@
           loading="lazy"
         />
         <!-- Fallback -->
-        <div v-if="!cover" class="product-card__img-placeholder">🌹</div>
+        <div v-if="!cover" class="product-card__img-placeholder"><FlowerMark /></div>
       </RouterLink>
 
       <!-- Ajout rapide au survol -->

@@ -97,7 +97,7 @@
           <img src="/image_site/FLS_8111.jpeg" alt="Rosa Beauty" class="cp-hero__img" />
           <div class="cp-hero__img-overlay"></div>
           <div class="cp-hero__img-badge">
-            <span>🌸</span>
+            <span><FlowerMark /></span>
             <span>Réponse sous 24h</span>
           </div>
         </div>

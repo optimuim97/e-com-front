@@ -34,7 +34,7 @@
           :class="{ 'opacity-50 grayscale': product.stock === 0 }"
           @error="imgError = true"
         />
-        <div v-else class="w-full h-full flex items-center justify-center text-5xl select-none">🌹</div>
+        <div v-else class="w-full h-full flex items-center justify-center text-5xl select-none"><FlowerMark /></div>
       </div>
     </RouterLink>
 

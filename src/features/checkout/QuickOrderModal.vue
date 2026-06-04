@@ -5,13 +5,13 @@
 
         <!-- ── Confirmation post-commande ────────────────────────────── -->
         <div v-if="confirmed" class="qo-confirmed">
-          <div class="qo-confirmed__icon">🌹</div>
+          <div class="qo-confirmed__icon"><FlowerMark /></div>
           <h2 class="qo-confirmed__title">Commande confirmée !</h2>
           <p class="qo-confirmed__number">N° <strong>{{ confirmedOrder.number }}</strong></p>
 
           <!-- PIN généré -->
           <div v-if="confirmedOrder.generated_pin" class="qo-pin-box">
-            <p class="qo-pin-box__label">🔐 Votre code PIN de sécurité</p>
+            <p class="qo-pin-box__label">Votre code PIN de sécurité</p>
             <div class="qo-pin-box__digits">
               <span v-for="d in confirmedOrder.generated_pin.split('')" :key="d" class="qo-pin-box__digit">{{ d }}</span>
             </div>
@@ -20,7 +20,7 @@
 
           <!-- Wave : instructions de paiement -->
           <div v-if="isWavePayment && waveNumber" class="qo-wave-box">
-            <p class="qo-wave-box__label">💙 Paiement Wave</p>
+            <p class="qo-wave-box__label">Paiement Wave</p>
             <p class="qo-wave-box__number">{{ waveNumber }}</p>
             <p class="qo-wave-box__total">Montant à envoyer : <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
             <p class="qo-wave-box__ref">Référence : <strong>{{ confirmedOrder.number }}</strong></p>
@@ -35,7 +35,7 @@
 
           <div class="qo-confirmed__actions">
             <button class="btn btn-primary" @click="viewOrder">Voir ma commande</button>
-            <button class="btn btn-outline btn-sm" @click="goToProfile">🔐 Sécuriser mon compte</button>
+            <button class="btn btn-outline btn-sm" @click="goToProfile">Sécuriser mon compte</button>
           </div>
         </div>
 
@@ -95,7 +95,7 @@
                 <label v-for="pm in paymentMethods" :key="pm.value"
                   class="qo-payment" :class="{ 'qo-payment--active': form.payment === pm.value }">
                   <input type="radio" :value="pm.value" v-model="form.payment" required />
-                  <span class="qo-payment__icon">{{ pm.icon }}</span>
+                  <span class="qo-payment__icon" v-html="pm.icon"></span>
                   <span class="qo-payment__label">{{ pm.label }}</span>
                 </label>
               </div>
@@ -117,7 +117,7 @@
 
             <button type="submit" class="btn btn-primary btn-lg qo-submit" :disabled="submitting">
               <span v-if="submitting" class="qo-spinner"></span>
-              <span v-else>⚡ Commander maintenant</span>
+              <span v-else>Commander maintenant</span>
             </button>
           </form>
         </template>
@@ -184,10 +184,13 @@ const COMMUNES = [
   'Autres / Hors Abidjan',
 ]
 
+const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
+const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+
 const paymentMethods = [
-  { value: 'wave',         label: 'Wave',           icon: '💙' },
-  { value: 'orange_money', label: 'Orange Money',   icon: '🟠' },
-  { value: 'delivery',     label: 'À la livraison', icon: '🚚' },
+  { value: 'wave',         label: 'Wave',           icon: ICON_MOBILE },
+  { value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE },
+  { value: 'delivery',     label: 'À la livraison', icon: ICON_TRUCK },
 ]
 
 const form = ref({

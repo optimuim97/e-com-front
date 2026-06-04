@@ -7,7 +7,7 @@
 
     <!-- Error -->
     <div v-else-if="error" class="product-error">
-      <div class="product-error__icon">🌸</div>
+      <div class="product-error__icon"><FlowerMark /></div>
       <h2 class="display-md">{{ $t('product.notFound') }}</h2>
       <p>{{ $t('product.notFoundDesc') }}</p>
       <RouterLink to="/products" class="btn btn-primary">{{ $t('product.backToShop') }}</RouterLink>

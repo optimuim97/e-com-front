@@ -65,7 +65,7 @@
         />
       </div>
       <div v-else class="products-empty">
-        <div class="products-empty__icon">🌸</div>
+        <div class="products-empty__icon"><FlowerMark /></div>
         <h3>{{ $t('products.noProduct') }}</h3>
         <p>{{ $t('products.noProductDesc') }}</p>
         <button class="btn btn-outline" @click="resetFilters">{{ $t('products.clearFilters') }}</button>

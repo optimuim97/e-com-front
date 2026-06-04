@@ -6,12 +6,14 @@ import router from './router';
 import i18n from './i18n';
 import App from './App.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
+import FlowerMark from '@/components/ui/FlowerMark.vue';
 import echoPlugin from '@/plugins/echo';
 import './assets/css/design-system.css'
 import './assets/app.css'
 
 const app = createApp(App);
 app.component('AppSelect', AppSelect);
+app.component('FlowerMark', FlowerMark);
 
 app.use(createPinia());
 app.use(router);

@@ -19,7 +19,7 @@
 
       <!-- Empty -->
       <div v-else-if="orders.length === 0" class="orders-empty card">
-        <div class="orders-empty__icon">🌸</div>
+        <div class="orders-empty__icon"><FlowerMark /></div>
         <h2 class="display-md">{{ $t('orders.empty') }}</h2>
         <p>{{ $t('orders.emptyDesc') }}</p>
         <RouterLink to="/products" class="btn btn-primary btn-lg">

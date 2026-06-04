@@ -21,7 +21,7 @@
 
       <!-- Vide -->
       <div v-else-if="wishlist.items.length === 0" class="wishlist-empty card">
-        <div class="wishlist-empty__icon">🌹</div>
+        <div class="wishlist-empty__icon"><FlowerMark /></div>
         <h2 class="display-md">{{ $t('wishlist.empty') }}</h2>
         <p>{{ $t('wishlist.emptyDesc') }}</p>
         <RouterLink to="/products" class="btn btn-primary btn-lg">
@@ -48,7 +48,7 @@
                 class="wishlist-card__img"
                 @error="e => e.target.style.display = 'none'"
               />
-              <div v-else class="wishlist-card__fallback">🌹</div>
+              <div v-else class="wishlist-card__fallback"><FlowerMark /></div>
 
               <!-- Badge rupture -->
               <span v-if="item.product_stock === 0" class="wishlist-card__badge">{{ $t('common.soldOut') }}</span>

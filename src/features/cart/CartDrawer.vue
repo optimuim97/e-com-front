@@ -66,7 +66,7 @@
 
           <div class="drawer__body">
             <div v-if="cartStore.items.length === 0" class="drawer__empty">
-              <div class="drawer__empty-icon">🌸</div>
+              <div class="drawer__empty-icon"><FlowerMark /></div>
               <p>Votre panier est encore vide</p>
               <RouterLink to="/products" @click="cartStore.close()" class="btn btn-outline btn-sm">
                 Découvrir nos soins
@@ -82,7 +82,7 @@
                     :alt="item.product?.name"
                     @error="erroredImages.add(item.id)"
                   />
-                  <span v-else>🌹</span>
+                  <span v-else><FlowerMark /></span>
                 </div>
                 <div class="drawer__item-info">
                   <span class="drawer__item-cat">{{ item.product?.category?.name }}</span>
@@ -125,7 +125,9 @@
                 class="drawer__choice-card drawer__choice-card--quick"
                 @click="goQuickOrder"
               >
-                <span class="drawer__choice-card__icon">⚡</span>
+                <span class="drawer__choice-card__icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </span>
                 <div class="drawer__choice-card__body">
                   <strong>Commande rapide</strong>
                   <span>Sans inscription — juste votre nom et téléphone</span>
@@ -135,7 +137,9 @@
 
               <!-- Se connecter -->
               <button class="drawer__choice-card" @click="goLogin">
-                <span class="drawer__choice-card__icon">🔑</span>
+                <span class="drawer__choice-card__icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a4 4 0 1 0-4 4M11 11l-7 7v3h3l7-7"/><circle cx="16.5" cy="7.5" r="4.5"/></svg>
+                </span>
                 <div class="drawer__choice-card__body">
                   <strong>Se connecter</strong>
                   <span>Vous avez déjà un compte Rosa Beauty</span>
@@ -145,7 +149,9 @@
 
               <!-- Créer un compte -->
               <button class="drawer__choice-card" @click="goRegister">
-                <span class="drawer__choice-card__icon">✨</span>
+                <span class="drawer__choice-card__icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+                </span>
                 <div class="drawer__choice-card__body">
                   <strong>Créer un compte</strong>
                   <span>Nouveau chez Rosa Beauty ? Inscrivez-vous</span>
@@ -244,7 +250,7 @@
             <!-- ── Section adresse ── -->
             <div class="drawer__section">
               <h3 class="drawer__section-title">
-                <span>📍</span> Adresse de livraison
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span> Adresse de livraison
               </h3>
 
               <div class="drawer__group">
@@ -290,7 +296,7 @@
 
               <!-- Hors zone : frais communiqués manuellement -->
               <div v-if="shippingManual" class="drawer__notice drawer__notice--warn">
-                <span class="drawer__notice-icon">📞</span>
+                <span class="drawer__notice-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
                 <div>
                   <strong>Zone non tarifée</strong>
                   <p>Cette destination n'a pas de tarif fixe. Nos agents vous communiqueront les frais de livraison après validation de votre commande.</p>
@@ -307,14 +313,14 @@
             <!-- ── Section paiement ── -->
             <div class="drawer__section">
               <h3 class="drawer__section-title">
-                <span>💳</span> Mode de paiement
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span> Mode de paiement
               </h3>
               <div class="drawer__payments">
                 <label v-for="pm in paymentMethods" :key="pm.value"
                   class="drawer__payment"
                   :class="{ 'drawer__payment--active': form.payment === pm.value }">
                   <input type="radio" :value="pm.value" v-model="form.payment" class="drawer__payment-input" />
-                  <span class="drawer__payment-icon">{{ pm.icon }}</span>
+                  <span class="drawer__payment-icon" v-html="pm.icon"></span>
                   <div class="drawer__payment-info">
                     <strong>{{ pm.label }}</strong>
                     <span>{{ pm.desc }}</span>
@@ -328,7 +334,7 @@
             <!-- ── Section récapitulatif + promo ── -->
             <div class="drawer__section drawer__section--recap">
               <h3 class="drawer__section-title">
-                <span>🧾</span> Récapitulatif
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l2 2 4-4M6 2h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg></span> Récapitulatif
               </h3>
 
               <!-- Code promo -->
@@ -337,11 +343,11 @@
                   placeholder="Code promo" :disabled="couponApplied" />
                 <button @click="applyPromo" :disabled="couponLoading || couponApplied"
                   class="btn btn-outline btn-sm">
-                  {{ couponApplied ? '✓ Appliqué' : 'Appliquer' }}
+                  {{ couponApplied ? 'Appliqué' : 'Appliquer' }}
                 </button>
               </div>
               <p v-if="couponError" class="drawer__msg drawer__msg--error">{{ couponError }}</p>
-              <p v-if="couponApplied" class="drawer__msg drawer__msg--success">🎉 Réduction appliquée !</p>
+              <p v-if="couponApplied" class="drawer__msg drawer__msg--success">Réduction appliquée !</p>
 
               <!-- Totaux -->
               <div class="drawer__recap-totals">
@@ -426,7 +432,7 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value) {
-    if (shippingQuote.value.is_free) return 'Offerte 🎉'
+    if (shippingQuote.value.is_free) return 'Offerte'
     const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
     return fmt(shippingQuote.value.price) + suffix
   }
@@ -576,11 +582,15 @@ const mapEl         = ref(null);
 let leafletMap    = null;
 let leafletMarker = null;
 
+const ICON_MOBILE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
+const ICON_CARD   = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>'
+const ICON_TRUCK  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+
 const paymentMethods = [
-  { value: 'wave',         label: 'Wave',                    icon: '💙', desc: 'Paiement mobile rapide',             badge: 'RAPIDE' },
-  { value: 'orange_money', label: 'Orange Money',            icon: '🟠', desc: 'Mobile Money Orange',               badge: null },
-  { value: 'cinetpay',     label: 'Carte bancaire',          icon: '💳', desc: 'Visa, Mastercard — paiement sécurisé', badge: null },
-  { value: 'cod',          label: 'Paiement à la livraison', icon: '🚚', desc: 'Payez en recevant votre colis',     badge: null },
+  { value: 'wave',         label: 'Wave',                    icon: ICON_MOBILE, desc: 'Paiement mobile rapide',             badge: 'RAPIDE' },
+  { value: 'orange_money', label: 'Orange Money',            icon: ICON_MOBILE, desc: 'Mobile Money Orange',               badge: null },
+  { value: 'cinetpay',     label: 'Carte bancaire',          icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé', badge: null },
+  { value: 'cod',          label: 'Paiement à la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis',     badge: null },
 ];
 
 watch(() => step.value, async (val) => {
@@ -663,7 +673,7 @@ const countryOptions = [
   { value: 'GB',    label: '🇬🇧 Royaume-Uni' },
   { value: 'CA',    label: '🇨🇦 Canada' },
   { value: 'US',    label: '🇺🇸 États-Unis' },
-  { value: 'OTHER', label: '🌍 Autre pays' },
+  { value: 'OTHER', label: 'Autre pays' },
 ]
 
 function onCountryChange() {

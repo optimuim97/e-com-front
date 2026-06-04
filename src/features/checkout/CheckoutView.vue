@@ -88,7 +88,9 @@
           <Transition name="step-slide" mode="out-in">
           <section v-if="currentStep === 1" class="card co-section" key="step1">
             <header class="co-section__head">
-              <span class="co-section__icon">👤</span>
+              <span class="co-section__icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
               <div>
                 <h2 class="co-section__title">Informations personnelles</h2>
                 <p class="co-section__hint">Comment doit-on vous appeler ?</p>
@@ -127,7 +129,9 @@
           <Transition name="step-slide" mode="out-in">
           <section v-if="currentStep === 2" class="card co-section" key="step2">
             <header class="co-section__head">
-              <span class="co-section__icon">📍</span>
+              <span class="co-section__icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </span>
               <div>
                 <h2 class="co-section__title">Adresse de livraison</h2>
                 <p class="co-section__hint">Où souhaitez-vous recevoir votre commande ?</p>
@@ -172,7 +176,7 @@
 
               <!-- Hors zone : frais communiqués manuellement -->
               <div v-if="shippingManual" class="co-shipping-notice">
-                <span>📞</span>
+                <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
                 <div>
                   <strong>Frais de livraison à confirmer</strong>
                   <p>Cette destination n'est pas dans nos zones tarifées. Nos agents vous contacteront pour vous communiquer les frais après validation de votre commande.</p>
@@ -199,7 +203,9 @@
           <Transition name="step-slide" mode="out-in">
           <section v-if="currentStep === 3" class="card co-section" key="step3">
             <header class="co-section__head">
-              <span class="co-section__icon">💳</span>
+              <span class="co-section__icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
+              </span>
               <div>
                 <h2 class="co-section__title">Mode de paiement</h2>
                 <p class="co-section__hint">Choisissez votre méthode préférée</p>
@@ -214,7 +220,7 @@
                   :class="{ 'payment-method--active': form.payment_method === method.value }"
                 >
                   <input type="radio" :value="method.value" v-model="form.payment_method" required />
-                  <span class="payment-method__icon">{{ method.icon }}</span>
+                  <span class="payment-method__icon" v-html="method.icon"></span>
                   <div class="payment-method__body">
                     <strong>{{ method.label }}</strong>
                     <span v-if="method.desc">{{ method.desc }}</span>
@@ -244,7 +250,7 @@
             <li v-for="item in cartStore.items" :key="item.id" class="co-summary__item">
               <div class="co-summary__item-img">
                 <img v-if="item.product?.images?.[0]?.url" :src="item.product.images[0].url" :alt="item.product?.name" @error="e => e.target.style.display='none'" />
-                <span v-else>🌹</span>
+                <span v-else><FlowerMark /></span>
               </div>
               <div class="co-summary__item-info">
                 <p>{{ item.product?.name ?? item.name ?? 'Produit' }}</p>
@@ -296,7 +302,7 @@
               </button>
             </div>
             <p v-if="couponError" class="co-msg co-msg--error">{{ couponError }}</p>
-            <p v-if="couponApplied" class="co-msg co-msg--success">🎉 Réduction appliquée !</p>
+            <p v-if="couponApplied" class="co-msg co-msg--success">Réduction appliquée !</p>
           </div>
 
           <!-- Bouton confirmer — visible uniquement à l'étape 3 -->
@@ -440,11 +446,15 @@ function onShippingCountryChange() {
 }
 
 // ── Moyens de paiement ────────────────────────────────────────────────────────
+const ICON_MOBILE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
+const ICON_CARD   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>'
+const ICON_TRUCK  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+
 const paymentMethods = computed(() => [
-  { value: 'wave',         label: 'Wave',              icon: '💙', desc: 'Paiement mobile rapide' },
-  { value: 'orange_money', label: 'Orange Money',      icon: '🟠', desc: 'Mobile Money Orange' },
-  { value: 'cinetpay',     label: 'Carte bancaire',    icon: '💳', desc: 'Visa, Mastercard — sécurisé' },
-  { value: 'cod',          label: 'À la livraison',    icon: '🚚', desc: 'Payez en recevant votre colis' },
+  { value: 'wave',         label: 'Wave',              icon: ICON_MOBILE, desc: 'Paiement mobile rapide' },
+  { value: 'orange_money', label: 'Orange Money',      icon: ICON_MOBILE, desc: 'Mobile Money Orange' },
+  { value: 'cinetpay',     label: 'Carte bancaire',    icon: ICON_CARD,   desc: 'Visa, Mastercard — sécurisé' },
+  { value: 'cod',          label: 'À la livraison',    icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' },
 ])
 
 // ── Coupon ────────────────────────────────────────────────────────────────────
@@ -483,7 +493,7 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value) {
-    if (shippingQuote.value.is_free) return 'Offerte 🎉'
+    if (shippingQuote.value.is_free) return 'Offerte'
     const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
     return formatPrice(shippingQuote.value.price) + suffix
   }
@@ -886,10 +896,13 @@ function formatPrice(val) {
 }
 .co-summary__item {
   display: grid;
-  grid-template-columns: 44px 1fr auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   gap: var(--space-2);
   align-items: center;
 }
+/* La cellule info doit pouvoir rétrécir pour que l'ellipsis fonctionne
+   et que le prix reste sur la même ligne. */
+.co-summary__item-info { min-width: 0; }
 .co-summary__item-img {
   width: 44px; height: 44px;
   border-radius: var(--radius-sm);
@@ -1149,11 +1162,19 @@ function formatPrice(val) {
 }
 .co-mini-item {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: var(--space-2);
   font-size: 0.8125rem;
   color: var(--gray-600);
+  align-items: center;
 }
+.co-mini-item__name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.co-mini-item__price { white-space: nowrap; }
 .co-mini-item__qty { color: var(--gray-400); }
 .co-mini-item__price { font-weight: 600; color: var(--gray-800); }
 .co-mini-total {

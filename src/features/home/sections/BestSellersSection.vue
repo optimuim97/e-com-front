@@ -65,7 +65,7 @@
           >
             <div class="line-card__img-wrap">
               <img v-if="line.cover_image" :src="line.cover_image" :alt="line.name" class="line-card__img" />
-              <div v-else class="line-card__img-placeholder">🌹</div>
+              <div v-else class="line-card__img-placeholder"><FlowerMark /></div>
             </div>
             <div class="line-card__body">
               <h3 class="line-card__name">{{ line.name }}</h3>

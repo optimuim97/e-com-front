@@ -12,8 +12,8 @@
     <div class="auth-bg" aria-hidden="true">
       <div class="auth-bg__blob auth-bg__blob--1"></div>
       <div class="auth-bg__blob auth-bg__blob--2"></div>
-      <div class="auth-bg__petal auth-bg__petal--1">🌸</div>
-      <div class="auth-bg__petal auth-bg__petal--2">🌹</div>
+      <div class="auth-bg__petal auth-bg__petal--1"><FlowerMark /></div>
+      <div class="auth-bg__petal auth-bg__petal--2"><FlowerMark /></div>
     </div>
 
     <div class="auth-inner">

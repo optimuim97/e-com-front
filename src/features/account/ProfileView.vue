@@ -9,16 +9,16 @@
       <div>
         <h1 class="profile-hero__name">{{ user.name }}</h1>
         <p class="profile-hero__meta">
-          <span v-if="user.phone">📱 {{ user.phone }}</span>
-          <span v-if="!user.is_generated_email && user.email">✉️ {{ user.email }}</span>
-          <span v-else class="profile-hero__quick-badge">⚡ Compte rapide</span>
+          <span v-if="user.phone">{{ user.phone }}</span>
+          <span v-if="!user.is_generated_email && user.email">{{ user.email }}</span>
+          <span v-else class="profile-hero__quick-badge">Compte rapide</span>
         </p>
       </div>
     </div>
 
     <!-- ── Bannière setup (compte rapide non configuré) ── -->
     <div v-if="user.is_generated_email" class="profile-setup-banner">
-      <div class="profile-setup-banner__icon">🔓</div>
+      <div class="profile-setup-banner__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
       <div class="profile-setup-banner__body">
         <strong>Sécurisez votre compte</strong>
         <p>Ajoutez votre vrai email et créez un mot de passe pour accéder à vos commandes depuis n'importe quel appareil.</p>
@@ -108,7 +108,7 @@
         <!-- Setup compte rapide -->
         <section v-if="user.is_generated_email" ref="setupSection" class="profile-card profile-card--accent">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">🔐 Configurer mon compte</h2>
+            <h2 class="profile-card__title">Configurer mon compte</h2>
           </div>
           <p class="profile-card__desc">
             Ajoutez votre email et créez un mot de passe. Vous pourrez ensuite vous connecter normalement depuis n'importe quel appareil.
@@ -138,7 +138,7 @@
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw1 = !showPw1">
-                  {{ showPw1 ? '🙈' : '👁️' }}
+                  <span class="pw-eye" v-html="eyeIcon(showPw1)"></span>
                 </button>
               </div>
               <p class="profile-field__hint">Minimum 8 caractères, avec lettres et chiffres.</p>
@@ -155,7 +155,7 @@
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw2 = !showPw2">
-                  {{ showPw2 ? '🙈' : '👁️' }}
+                  <span class="pw-eye" v-html="eyeIcon(showPw2)"></span>
                 </button>
               </div>
             </div>
@@ -167,7 +167,7 @@
 
             <button type="submit" class="btn btn-primary btn-lg profile-form__submit" :disabled="setupSaving">
               <span v-if="setupSaving" class="profile-spin"></span>
-              <span v-else>🔐 Sécuriser mon compte</span>
+              <span v-else>Sécuriser mon compte</span>
             </button>
           </form>
         </section>
@@ -191,7 +191,7 @@
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPwCurrent = !showPwCurrent">
-                  {{ showPwCurrent ? '🙈' : '👁️' }}
+                  <span class="pw-eye" v-html="eyeIcon(showPwCurrent)"></span>
                 </button>
               </div>
             </div>
@@ -207,7 +207,7 @@
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw1 = !showPw1">
-                  {{ showPw1 ? '🙈' : '👁️' }}
+                  <span class="pw-eye" v-html="eyeIcon(showPw1)"></span>
                 </button>
               </div>
             </div>
@@ -223,7 +223,7 @@
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw2 = !showPw2">
-                  {{ showPw2 ? '🙈' : '👁️' }}
+                  <span class="pw-eye" v-html="eyeIcon(showPw2)"></span>
                 </button>
               </div>
             </div>
@@ -400,6 +400,13 @@ function statusLabel(s) { return STATUS_LABELS[s] ?? s }
 
 function fmt(val) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+}
+
+// Icône œil ouvert / barré pour les champs mot de passe (remplace 👁️/🙈)
+function eyeIcon(shown) {
+  return shown
+    ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>'
+    : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
 }
 </script>
 

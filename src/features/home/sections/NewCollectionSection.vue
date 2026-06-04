@@ -23,7 +23,7 @@
               class="new-card__img"
               loading="lazy"
             />
-            <div v-else class="new-card__placeholder">🌹</div>
+            <div v-else class="new-card__placeholder"><FlowerMark /></div>
 
             <span class="new-card__badge">{{ $t('newCollection.badge') }}</span>
           </RouterLink>

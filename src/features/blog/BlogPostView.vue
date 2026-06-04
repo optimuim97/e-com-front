@@ -7,7 +7,7 @@
 
     <!-- Not found -->
     <div v-else-if="!post" class="container post-notfound">
-      <div class="post-notfound__icon">🌸</div>
+      <div class="post-notfound__icon"><FlowerMark /></div>
       <h1 class="display-md">{{ $t('blog.postNotFound') }}</h1>
       <RouterLink to="/blog" class="btn btn-primary mt-4">{{ $t('blog.backToBlog') }}</RouterLink>
     </div>

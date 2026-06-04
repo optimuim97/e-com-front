@@ -16,7 +16,7 @@
     <div class="container cart-content">
       <!-- Empty -->
       <div v-if="!cartStore.cart.items?.length" class="cart-empty card">
-        <div class="cart-empty__icon">🌸</div>
+        <div class="cart-empty__icon"><FlowerMark /></div>
         <h2 class="display-md">{{ $t('cart.empty') }}</h2>
         <p>{{ $t('cart.emptyDesc') }}</p>
         <RouterLink to="/products" class="btn btn-primary btn-lg">
@@ -34,7 +34,7 @@
             <div class="cart-item__img-wrap">
               <img v-if="item.product?.images?.[0]?.url" :src="item.product.images[0].url"
                 :alt="item.product.name" class="cart-item__img" />
-              <div v-else class="cart-item__img-fallback">🌹</div>
+              <div v-else class="cart-item__img-fallback"><FlowerMark /></div>
             </div>
 
             <div class="cart-item__info">
