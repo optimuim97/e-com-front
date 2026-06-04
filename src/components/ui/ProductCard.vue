@@ -320,10 +320,11 @@ function toggleWishlist() {
 /* Nom : vedette principale de la carte */
 .product-card__name {
   font-family: var(--font-display);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--gray-800);
-  line-height: 1.25;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  color: var(--gray-900, #1a1416);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
   transition: color var(--transition-fast);
 }
 .product-card__name-link:hover .product-card__name { color: var(--color-primary); }
@@ -349,9 +350,10 @@ function toggleWishlist() {
 }
 .product-card__price-current {
   font-family: var(--font-display);
-  font-size: 1.125rem;
-  font-weight: 700;
+  font-size: 1.375rem;
+  font-weight: 800;
   color: var(--rose-600);
+  letter-spacing: -0.01em;
 }
 
 /* ── Bouton panier ── */
@@ -403,8 +405,8 @@ function toggleWishlist() {
     display: none;
   }
   .product-card__name {
-    font-size: 0.875rem;
-    line-height: 1.2;
+    font-size: 1.0625rem;
+    line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -416,7 +418,7 @@ function toggleWishlist() {
     gap: var(--space-2);
   }
   .product-card__price-current {
-    font-size: 1rem;
+    font-size: 1.1875rem;
   }
   .product-card__price-old {
     font-size: 0.6875rem;
