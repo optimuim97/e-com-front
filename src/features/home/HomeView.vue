@@ -45,6 +45,9 @@
       :stats="dynamicStats"
     />
 
+    <!-- Teasers : Histoire / Club / Blog -->
+    <ExploreSection />
+
     <GallerySection />
 
     <TestimonialsSection :items="testimonials" />
@@ -67,6 +70,7 @@ import BestSellersSection   from '@/features/home/sections/BestSellersSection.vu
 import NewCollectionSection from '@/features/home/sections/NewCollectionSection.vue'
 import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
 import AboutSection         from '@/features/home/sections/AboutSection.vue'
+import ExploreSection       from '@/features/home/sections/ExploreSection.vue'
 import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'
 
 /* ── Stores ─────────────────────────────────────────────────────────────── */
