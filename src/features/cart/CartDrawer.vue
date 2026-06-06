@@ -158,6 +158,10 @@
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
+
+              <!-- Connexion sociale rapide -->
+              <div class="drawer__choice-divider"><span>ou en un clic</span></div>
+              <FacebookButton @success="onSocialSuccess" />
             </div>
           </Transition>
 
@@ -399,6 +403,7 @@ import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue';
 import CitySelect      from '@/components/shop/CitySelect.vue';
 import CityFree        from '@/components/shop/CityFree.vue';
 import QuickOrderModal from '@/features/checkout/QuickOrderModal.vue';
+import FacebookButton  from '@/features/auth/FacebookButton.vue';
 import PhoneInput      from '@/components/ui/PhoneInput.vue';
 import { useRouter, RouterLink } from 'vue-router';
 import api from '@/api';
@@ -654,6 +659,14 @@ function goRegister() {
   saveDraft()
   cartStore.close();
   router.push('/register');
+}
+
+// Connexion Facebook réussie depuis le panneau de choix → on enchaîne le checkout
+function onSocialSuccess() {
+  showAuthChoice.value = false;
+  if (!form.value.name  && authStore.user?.name)  form.value.name  = authStore.user.name;
+  if (!form.value.phone && authStore.user?.phone) form.value.phone = authStore.user.phone;
+  step.value = 2;
 }
 
 const countryOptions = [
@@ -1498,6 +1511,22 @@ function fmt(val) {
   font-weight: 500;
   color: var(--gray-800);
   margin-bottom: var(--space-2);
+}
+
+.drawer__choice-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--gray-400);
+  font-size: 0.75rem;
+  margin: var(--space-2) 0;
+}
+.drawer__choice-divider::before,
+.drawer__choice-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cream-300);
 }
 
 .drawer__choice-card {

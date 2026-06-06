@@ -66,6 +66,17 @@ export const useAuthStore = defineStore('auth', () => {
     return data;
   }
 
+  /** Établit la session depuis un token (auth sociale / popup OAuth) */
+  async function setSession(token, userData = null) {
+    localStorage.setItem('auth_token', token);
+    if (userData) {
+      user.value = userData;
+      checked.value = true;
+    }
+    // Recharge le profil complet (rôles, is_generated_email, etc.)
+    await fetchUser();
+  }
+
   const isQuickOrderUser = computed(() => user.value?.is_generated_email === true);
 
   // Initialisation : si un token existe, récupérer l'utilisateur ; sinon checked = true immédiatement
@@ -77,7 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, checked, isAdmin, isStaff, isLoggedIn, isQuickOrderUser,
-    fetchUser, login, register, logout,
+    fetchUser, login, register, logout, setSession,
     updateInfo, setupAccount, changePassword,
   };
 });

@@ -23,6 +23,10 @@
         <span v-if="loading" class="spinner spinner--sm"></span>
         <span v-else>{{ $t('auth.loginSubmit') }}</span>
       </button>
+
+      <!-- Séparateur + connexion sociale -->
+      <div class="auth-divider"><span>ou</span></div>
+      <FacebookButton @success="onSocial" @error="onSocialError" />
     </form>
   </AuthShell>
 </template>
@@ -33,6 +37,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/features/auth/auth.store';
 import AuthShell from '@/components/auth/AuthShell.vue';
+import FacebookButton from '@/features/auth/FacebookButton.vue';
 
 const { t } = useI18n();
 const auth   = useAuthStore();
@@ -42,6 +47,14 @@ const route  = useRoute();
 const form    = ref({ email: '', password: '' });
 const error   = ref('');
 const loading = ref(false);
+
+function onSocial(data) {
+  const redirect = route.query.redirect || (data?.user && auth.isAdmin ? '/admin' : '/');
+  router.push(redirect);
+}
+function onSocialError(msg) {
+  error.value = msg || t('auth.loginError');
+}
 
 async function handleSubmit() {
   error.value   = '';
@@ -80,5 +93,21 @@ async function handleSubmit() {
   justify-content: center;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--gray-400);
+  font-size: 0.75rem;
+  margin: var(--space-1) 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cream-300, #e5e7eb);
 }
 </style>
