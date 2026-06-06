@@ -12,18 +12,16 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/features/auth/auth.store'
 
-/** Origine du backend (sans /api). Dérivée de VITE_API_URL ou fallback dev. */
-function backendOrigin() {
-  const apiUrl = import.meta.env.VITE_API_URL
-  if (apiUrl) {
-    try {
-      // VITE_API_URL peut être absolu (https://api...) ou relatif (/api)
-      if (/^https?:\/\//.test(apiUrl)) return new URL(apiUrl).origin
-    } catch { /* ignore */ }
-  }
-  // Dev : backend Laravel sur :8000 ; Prod : même origine que le site
-  if (import.meta.env.DEV) return 'http://localhost:8000'
-  return window.location.origin
+/**
+ * Base API atteignable depuis le navigateur (passe par le proxy → Laravel).
+ * On réutilise VITE_API_URL (même valeur que axios), sinon "/api" same-origin.
+ * Les routes social sont exposées sous /api/auth/{provider}/...
+ */
+function apiBase() {
+  const apiUrl = import.meta.env.VITE_API_URL || '/api'
+  if (/^https?:\/\//.test(apiUrl)) return apiUrl.replace(/\/$/, '')
+  // Relatif → préfixer par l'origine courante
+  return window.location.origin + (apiUrl.startsWith('/') ? apiUrl : '/' + apiUrl)
 }
 
 export function useSocialAuth() {
@@ -36,7 +34,7 @@ export function useSocialAuth() {
       loading.value = true
       error.value = ''
 
-      const url = `${backendOrigin()}/auth/${provider}/redirect`
+      const url = `${apiBase()}/auth/${provider}/redirect`
       const w = 600, h = 720
       const left = window.screenX + (window.outerWidth - w) / 2
       const top  = window.screenY + (window.outerHeight - h) / 2
