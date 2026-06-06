@@ -13,7 +13,7 @@
           <p class="ap-hero__desc">
             Rosabeauty Facial Care est née d'une histoire personnelle, d'une passion pour la beauté
             et d'une volonté d'aider les femmes à prendre soin de leur peau avec douceur et confiance.
-            La <strong>première marque ivoirienne dédiée à la rose</strong>, pour révéler l'éclat naturel de votre peau. 🌹
+            La <strong>première marque ivoirienne dédiée à la rose</strong>, pour révéler l'éclat naturel de votre peau.
           </p>
           <div class="ap-hero__founder">
             <div class="ap-hero__founder-avatar">M</div>
@@ -92,21 +92,21 @@
           </p>
           <div class="ap-rose__benefits">
             <div class="ap-rose__benefit">
-              <div class="ap-rose__benefit-icon">💧</div>
+              <div class="ap-rose__benefit-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
               <div>
                 <strong>Hydratante</strong>
                 <p>Restaure le film hydrolipidique et retient l'eau dans les couches profondes.</p>
               </div>
             </div>
             <div class="ap-rose__benefit">
-              <div class="ap-rose__benefit-icon">🌸</div>
+              <div class="ap-rose__benefit-icon"><FlowerMark /></div>
               <div>
                 <strong>Apaisante</strong>
                 <p>Calme les irritations, réduit les rougeurs et renforce la tolérance cutanée.</p>
               </div>
             </div>
             <div class="ap-rose__benefit">
-              <div class="ap-rose__benefit-icon">✨</div>
+              <div class="ap-rose__benefit-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/></svg></div>
               <div>
                 <strong>Illuminatrice</strong>
                 <p>Unifie le teint, révèle l'éclat naturel et donne une peau lumineuse au quotidien.</p>
@@ -190,7 +190,7 @@
         </h2>
         <div class="ap-values__grid">
           <div v-for="val in values" :key="val.title" class="ap-value-card card">
-            <div class="ap-value-card__icon">{{ val.icon }}</div>
+            <div class="ap-value-card__icon" v-html="val.icon"></div>
             <h3 class="ap-value-card__title">{{ val.title }}</h3>
             <p class="ap-value-card__desc">{{ val.desc }}</p>
           </div>
@@ -278,24 +278,25 @@ const processSteps = [
   },
 ]
 
+const SVG = (p) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`
 const values = [
   {
-    icon:  '🌿',
+    icon:  SVG('<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/>'),
     title: 'Naturalité',
     desc:  'Des formules pensées pour préserver les bienfaits des actifs naturels, sans compromis sur l\'efficacité.',
   },
   {
-    icon:  '✨',
+    icon:  SVG('<path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/>'),
     title: 'Efficacité prouvée',
     desc:  'Chaque produit est formulé pour apporter des résultats visibles, adaptés à toutes les types de peaux.',
   },
   {
-    icon:  '🤝',
+    icon:  SVG('<path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>'),
     title: 'Accessibilité',
     desc:  'Une beauté de qualité ne devrait pas être réservée à quelques-unes. Rosa Beauty est pour toutes.',
   },
   {
-    icon:  '💚',
+    icon:  SVG('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'),
     title: 'Éthique',
     desc:  'Nous nous engageons pour une production responsable, respectueuse des personnes et de l\'environnement.',
   },

@@ -24,7 +24,7 @@
           </div>
           <div v-else class="program-hero__badge">
             <span class="tier-badge" :class="`tier-badge--${membership.tier}`">
-              {{ tierIcon(membership.tier) }} Membre {{ tierLabel(membership.tier) }}
+              <span class="tier-badge__ico" v-html="tierIcon(membership.tier)"></span> Membre {{ tierLabel(membership.tier) }}
             </span>
             <span class="points-display">{{ membership.points ?? 0 }} pts</span>
           </div>
@@ -34,12 +34,12 @@
           <div class="program-hero__orb orb-2"></div>
           <div class="program-hero__card-stack">
             <div class="loyalty-card loyalty-card--gold">
-              <span class="loyalty-card__logo">🌹 Rosa Beauty</span>
+              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty</span>
               <span class="loyalty-card__tier">Club Or</span>
               <span class="loyalty-card__pts">2 500 pts</span>
             </div>
             <div class="loyalty-card loyalty-card--silver">
-              <span class="loyalty-card__logo">🌹 Rosa Beauty</span>
+              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty</span>
               <span class="loyalty-card__tier">Club Argent</span>
               <span class="loyalty-card__pts">1 200 pts</span>
             </div>
@@ -57,7 +57,7 @@
 
           <!-- Points & niveau -->
           <div class="member-card member-card--points card">
-            <div class="member-card__icon">🏆</div>
+            <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
             <div>
               <p class="member-card__value">{{ membership.points ?? 0 }}</p>
               <p class="member-card__label">Points fidélité</p>
@@ -78,7 +78,7 @@
 
           <!-- Commandes / Achats -->
           <div class="member-card card">
-            <div class="member-card__icon">🛍️</div>
+            <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div>
             <div>
               <p class="member-card__value">{{ membership.orders_count ?? 0 }}</p>
               <p class="member-card__label">Commandes passées</p>
@@ -87,7 +87,7 @@
 
           <!-- Routine tracker -->
           <div class="member-card card">
-            <div class="member-card__icon">✨</div>
+            <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/></svg></div>
             <div>
               <p class="member-card__value">{{ trackerStreak }} j</p>
               <p class="member-card__label">Jours de routine</p>
@@ -97,7 +97,7 @@
 
           <!-- Consultations -->
           <div class="member-card card">
-            <div class="member-card__icon">💬</div>
+            <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
             <div>
               <p class="member-card__value">{{ myConsultations.length }}</p>
               <p class="member-card__label">Consultations</p>
@@ -113,7 +113,7 @@
         <div v-if="showTracker" class="modal-overlay" @click.self="showTracker = false">
           <div class="modal-card card">
             <div class="modal-card__header">
-              <h3>✨ Mon suivi de routine</h3>
+              <h3>Mon suivi de routine</h3>
               <button @click="showTracker = false" class="modal-card__close">✕</button>
             </div>
             <div class="tracker-body">
@@ -129,7 +129,10 @@
                   :class="{ 'tracker-day--done': day.done, 'tracker-day--today': day.isToday }"
                 >
                   <span class="tracker-day__label">{{ day.label }}</span>
-                  <span class="tracker-day__icon">{{ day.done ? '✅' : '⬜' }}</span>
+                  <span class="tracker-day__icon">
+                    <svg v-if="day.done" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg>
+                    <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+                  </span>
                 </div>
               </div>
               <div class="tracker-actions">
@@ -139,7 +142,7 @@
                   :disabled="checkingIn"
                   class="btn btn-primary w-full"
                 >
-                  {{ checkingIn ? 'Enregistrement…' : '✅ Valider ma routine du jour (+5 pts)' }}
+                  {{ checkingIn ? 'Enregistrement…' : 'Valider ma routine du jour (+5 pts)' }}
                 </button>
                 <p v-else class="text-green-600 text-center font-medium">✓ Routine validée aujourd'hui !</p>
               </div>
@@ -153,7 +156,7 @@
         <div v-if="showConsultationForm" class="modal-overlay" @click.self="showConsultationForm = false">
           <div class="modal-card card">
             <div class="modal-card__header">
-              <h3>💬 Demande de consultation</h3>
+              <h3>Demande de consultation</h3>
               <button @click="showConsultationForm = false" class="modal-card__close">✕</button>
             </div>
 
@@ -211,7 +214,7 @@
             :class="`tier-card--${tier.slug}`"
           >
             <div class="tier-card__header">
-              <span class="tier-card__icon">{{ tier.icon }}</span>
+              <span class="tier-card__icon" v-html="tier.icon"></span>
               <h3 class="tier-card__name">{{ tier.name }}</h3>
               <p class="tier-card__range">{{ tier.points_min }} – {{ tier.points_max ?? '∞' }} pts</p>
             </div>
@@ -237,10 +240,10 @@
               Nos expertes Rosa Beauty sont là pour vous guider dans le choix de vos soins, créer votre routine idéale et répondre à toutes vos questions — en WhatsApp, vidéo ou en boutique.
             </p>
             <ul class="advisor-section__features">
-              <li>💬 Consultation WhatsApp sous 24h</li>
-              <li>📹 Appel vidéo sur rendez-vous</li>
-              <li>🌿 Bilan peau gratuit pour les membres</li>
-              <li>🎁 Recommandations personnalisées</li>
+              <li>Consultation WhatsApp sous 24h</li>
+              <li>Appel vidéo sur rendez-vous</li>
+              <li>Bilan peau gratuit pour les membres</li>
+              <li>Recommandations personnalisées</li>
             </ul>
             <button
               v-if="authStore.user && isMember"
@@ -267,7 +270,7 @@
           </div>
           <div class="advisor-section__visual">
             <div class="advisor-card">
-              <div class="advisor-card__avatar">🌹</div>
+              <div class="advisor-card__avatar"><FlowerMark /></div>
               <div>
                 <p class="advisor-card__name">Équipe Rosa Beauty</p>
                 <p class="advisor-card__role">Conseillers beauté certifiés</p>
@@ -278,14 +281,12 @@
             </div>
             <div class="advisor-bubbles">
               <div class="advisor-bubble advisor-bubble--in">
-                Bonjour ! Quel est votre type de peau ? 🌿
-              </div>
+                Bonjour ! Quel est votre type de peau ?               </div>
               <div class="advisor-bubble advisor-bubble--out">
                 Mixte, avec quelques rougeurs…
               </div>
               <div class="advisor-bubble advisor-bubble--in">
-                Parfait ! Je vous recommande notre Eau de Rose Pure 🌹
-              </div>
+                Parfait ! Je vous recommande notre Eau de Rose Pure               </div>
             </div>
           </div>
         </div>
@@ -296,7 +297,7 @@
         <h2 class="program-section__title">Comment gagner des points ?</h2>
         <div class="earn-grid">
           <div v-for="action in earnActions" :key="action.label" class="earn-card card">
-            <span class="earn-card__icon">{{ action.icon }}</span>
+            <span class="earn-card__icon" v-html="action.icon"></span>
             <div>
               <p class="earn-card__label">{{ action.label }}</p>
               <p class="earn-card__pts">+ {{ action.pts }} pts</p>
@@ -347,20 +348,29 @@ import {
 const authStore = useAuthStore()
 
 // ── Programme data (public) ────────────────────────────────────────────────
+const SVG_ICON = (p) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`
+const MEDAL = (n) => SVG_ICON(`<circle cx="12" cy="8" r="6"/><path d="M15.5 12.5 17 23l-5-3-5 3 1.5-10.5"/><text x="12" y="10" font-size="6" text-anchor="middle" fill="currentColor" stroke="none">${n}</text>`)
+const ICON_BAG    = SVG_ICON('<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/>')
+const ICON_SPARK  = SVG_ICON('<path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/>')
+const ICON_STAR   = SVG_ICON('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>')
+const ICON_GIFT   = SVG_ICON('<rect x="3" y="8" width="18" height="4"/><path d="M12 8v13M5 12v9h14v-9M12 8a3 3 0 1 0-3-3c0 1.66 1.34 3 3 3zM12 8a3 3 0 1 1 3-3c0 1.66-1.34 3-3 3z"/>')
+const ICON_PHONE  = SVG_ICON('<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>')
+const ICON_CHAT   = SVG_ICON('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>')
+
 const programData = ref({
   tiers: [
     {
-      slug: 'bronze', name: 'Club Bronze', icon: '🥉',
+      slug: 'bronze', name: 'Club Bronze', icon: MEDAL(3),
       points_min: 0, points_max: 499,
       benefits: ['5% de réduction sur vos achats', 'Accès aux offres membres', 'Newsletter beauté exclusive'],
     },
     {
-      slug: 'silver', name: 'Club Argent', icon: '🥈',
+      slug: 'silver', name: 'Club Argent', icon: MEDAL(2),
       points_min: 500, points_max: 1999,
       benefits: ['10% de réduction', 'Consultation conseillère (1/mois)', 'Cadeau d\'anniversaire', 'Livraison prioritaire'],
     },
     {
-      slug: 'gold', name: 'Club Or', icon: '🥇',
+      slug: 'gold', name: 'Club Or', icon: MEDAL(1),
       points_min: 2000, points_max: null,
       benefits: ['15% de réduction', 'Consultations illimitées', 'Avant-premières produits', 'Cadeaux exclusifs', 'Livraison offerte'],
     },
@@ -368,12 +378,12 @@ const programData = ref({
 })
 
 const earnActions = [
-  { icon: '🛍️', label: 'Chaque achat',             pts: '1 par 100 FCFA' },
-  { icon: '✨', label: 'Routine quotidienne',       pts: '5' },
-  { icon: '⭐', label: 'Laisser un avis produit',   pts: '20' },
-  { icon: '🎂', label: 'Anniversaire',               pts: '100' },
-  { icon: '📲', label: 'Parrainer un(e) amie',      pts: '150' },
-  { icon: '💬', label: 'Première consultation',     pts: '50' },
+  { icon: ICON_BAG,   label: 'Chaque achat',             pts: '1 par 100 FCFA' },
+  { icon: ICON_SPARK, label: 'Routine quotidienne',       pts: '5' },
+  { icon: ICON_STAR,  label: 'Laisser un avis produit',   pts: '20' },
+  { icon: ICON_GIFT,  label: 'Anniversaire',               pts: '100' },
+  { icon: ICON_PHONE, label: 'Parrainer un(e) amie',      pts: '150' },
+  { icon: ICON_CHAT,  label: 'Première consultation',     pts: '50' },
 ]
 
 // ── Membership ──────────────────────────────────────────────────────────────
@@ -386,7 +396,7 @@ const TIER_LABELS     = { bronze: 'Bronze', silver: 'Argent', gold: 'Or' }
 const TIER_NEXT       = { bronze: 'silver', silver: 'gold', gold: null }
 
 const tierLabel  = (t) => TIER_LABELS[t] ?? t
-const tierIcon   = (t) => ({ bronze: '🥉', silver: '🥈', gold: '🥇' }[t] ?? '🌹')
+const tierIcon   = (t) => ({ bronze: MEDAL(3), silver: MEDAL(2), gold: MEDAL(1) }[t] ?? MEDAL(''))
 
 const nextTierLabel = computed(() => {
   const next = TIER_NEXT[membership.value.tier]
@@ -492,7 +502,7 @@ const consultationTypeLabel   = (v) => CONSULTATION_TYPES.find(t => t.value === 
 const consultationChannelLabel= (v) => CONSULTATION_CHANNELS.find(c => c.value === v)?.label ?? v
 const consultationStatusLabel = (s) => ({
   pending:   '⏳ En attente',
-  confirmed: '✅ Confirmée',
+  confirmed: 'Confirmée',
   done:      '✓ Terminée',
   cancelled: '✕ Annulée',
 }[s] ?? s)

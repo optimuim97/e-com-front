@@ -6,7 +6,7 @@
       <div class="container cp-hero__inner">
         <div class="cp-hero__text">
           <span class="eyebrow">Nous contacter</span>
-          <h1 class="display-lg cp-hero__title">Parlons-nous ✨</h1>
+          <h1 class="display-lg cp-hero__title">Parlons-nous</h1>
           <p class="cp-hero__desc">
             Une question sur un produit, une commande ou simplement envie d'en savoir plus ?
             Notre équipe vous répond dans les plus brefs délais.
@@ -115,7 +115,7 @@
           <!-- Succès -->
           <Transition name="fade">
             <div v-if="success" class="cp-success">
-              <div class="cp-success__icon">✅</div>
+              <div class="cp-success__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></div>
               <h3>Message envoyé !</h3>
               <p>Merci <strong>{{ sentName }}</strong>, nous vous répondrons très rapidement.</p>
               <button class="btn btn-outline" @click="resetForm">Envoyer un autre message</button>
@@ -276,7 +276,7 @@
 
             <!-- Horaires -->
             <div class="cp-info-card">
-              <span class="cp-info-card__icon">🕐</span>
+              <span class="cp-info-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
               <div class="cp-info-card__body">
                 <p class="cp-info-card__label">Horaires</p>
                 <p class="cp-info-card__val">Lun — Sam</p>
@@ -286,7 +286,7 @@
 
             <!-- Localisation -->
             <div class="cp-info-card">
-              <span class="cp-info-card__icon">📍</span>
+              <span class="cp-info-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
               <div class="cp-info-card__body">
                 <p class="cp-info-card__label">Localisation</p>
                 <p class="cp-info-card__val">Abidjan, Côte d'Ivoire</p>

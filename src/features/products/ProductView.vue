@@ -225,7 +225,7 @@
         <div v-if="reviewsLoading" class="reviews-list__loading">{{ $t('reviews.loading') }}</div>
 
         <div v-else-if="reviews.length === 0" class="reviews-list__empty">
-          <span class="reviews-list__empty-icon">✍️</span>
+          <span class="reviews-list__empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
           <p>{{ $t('reviews.empty') }}</p>
         </div>
 

@@ -3,7 +3,7 @@
     <div class="pay-return__card">
       <!-- Loading -->
       <template v-if="checking">
-        <div class="pay-return__icon pay-return__icon--spin">💳</div>
+        <div class="pay-return__icon pay-return__icon--spin"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></div>
         <h1 class="display-sm">Vérification du paiement…</h1>
         <p class="pay-return__desc">Merci de patienter, nous confirmons votre paiement.</p>
         <div class="pay-return__spinner"></div>
@@ -11,7 +11,7 @@
 
       <!-- Succès -->
       <template v-else-if="paid">
-        <div class="pay-return__icon">✅</div>
+        <div class="pay-return__icon pay-return__icon--ok"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></div>
         <h1 class="display-sm">Paiement confirmé !</h1>
         <p class="pay-return__desc">
           Votre commande <strong>{{ orderNumber }}</strong> a bien été payée.<br>
@@ -24,7 +24,7 @@
 
       <!-- En attente (paiement en cours de vérification) -->
       <template v-else-if="pending">
-        <div class="pay-return__icon">⏳</div>
+        <div class="pay-return__icon pay-return__icon--wait"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
         <h1 class="display-sm">Paiement en cours de vérification</h1>
         <p class="pay-return__desc">
           Votre paiement est en cours de traitement. Vous recevrez une confirmation dès que le paiement sera validé.
@@ -36,7 +36,7 @@
 
       <!-- Échec -->
       <template v-else>
-        <div class="pay-return__icon">❌</div>
+        <div class="pay-return__icon pay-return__icon--err"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
         <h1 class="display-sm">Paiement non abouti</h1>
         <p class="pay-return__desc">
           Le paiement n'a pas pu être traité. Votre commande est conservée — vous pouvez réessayer ou choisir un autre mode de paiement.
@@ -126,12 +126,16 @@ onMounted(async () => {
 }
 
 .pay-return__icon {
-  font-size: 3.5rem;
   margin-bottom: var(--space-4);
-  display: block;
+  display: flex;
+  justify-content: center;
+  color: var(--gray-400);
 }
+.pay-return__icon--ok   { color: #15803d; }
+.pay-return__icon--err  { color: #ef4444; }
+.pay-return__icon--wait { color: var(--gold-600, #b45309); }
 
-.pay-return__icon--spin {
+.pay-return__icon--spin svg {
   animation: spin 2s linear infinite;
 }
 

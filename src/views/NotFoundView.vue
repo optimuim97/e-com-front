@@ -4,15 +4,15 @@
     <div class="notfound-bg" aria-hidden="true">
       <div class="notfound-bg__blob notfound-bg__blob--1"></div>
       <div class="notfound-bg__blob notfound-bg__blob--2"></div>
-      <div class="notfound-bg__petal notfound-bg__petal--1">🌸</div>
-      <div class="notfound-bg__petal notfound-bg__petal--2">🌺</div>
-      <div class="notfound-bg__petal notfound-bg__petal--3">🌹</div>
+      <div class="notfound-bg__petal notfound-bg__petal--1"><FlowerMark /></div>
+      <div class="notfound-bg__petal notfound-bg__petal--2"><FlowerMark /></div>
+      <div class="notfound-bg__petal notfound-bg__petal--3"><FlowerMark /></div>
     </div>
 
     <div class="notfound-inner">
       <div class="notfound-number">
         <span>4</span>
-        <div class="notfound-flower">🌹</div>
+        <div class="notfound-flower"><FlowerMark /></div>
         <span>4</span>
       </div>
 
