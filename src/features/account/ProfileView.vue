@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-page">
+  <div v-if="user" class="profile-page">
 
     <!-- ── Header page ── -->
     <div class="profile-hero">
@@ -7,17 +7,17 @@
         <span>{{ initials }}</span>
       </div>
       <div>
-        <h1 class="profile-hero__name">{{ user.name }}</h1>
+        <h1 class="profile-hero__name">{{ user?.name }}</h1>
         <p class="profile-hero__meta">
-          <span v-if="user.phone">{{ user.phone }}</span>
-          <span v-if="!user.is_generated_email && user.email">{{ user.email }}</span>
+          <span v-if="user?.phone">{{ user.phone }}</span>
+          <span v-if="!user?.is_generated_email && user?.email">{{ user.email }}</span>
           <span v-else class="profile-hero__quick-badge">Compte rapide</span>
         </p>
       </div>
     </div>
 
     <!-- ── Bannière setup (compte rapide non configuré) ── -->
-    <div v-if="user.is_generated_email" class="profile-setup-banner">
+    <div v-if="user?.is_generated_email" class="profile-setup-banner">
       <div class="profile-setup-banner__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
       <div class="profile-setup-banner__body">
         <strong>Sécurisez votre compte</strong>
@@ -63,15 +63,15 @@
           <dl v-else class="profile-dl">
             <div class="profile-dl__row">
               <dt>Nom</dt>
-              <dd>{{ user.name }}</dd>
+              <dd>{{ user?.name }}</dd>
             </div>
             <div class="profile-dl__row">
               <dt>Téléphone</dt>
-              <dd>{{ user.phone || '—' }}</dd>
+              <dd>{{ user?.phone || '—' }}</dd>
             </div>
             <div class="profile-dl__row">
               <dt>Email</dt>
-              <dd v-if="!user.is_generated_email">{{ user.email }}</dd>
+              <dd v-if="!user?.is_generated_email">{{ user?.email }}</dd>
               <dd v-else class="profile-dl__no-email">Non renseigné</dd>
             </div>
           </dl>
@@ -106,7 +106,7 @@
       <div class="profile-col">
 
         <!-- Setup compte rapide -->
-        <section v-if="user.is_generated_email" ref="setupSection" class="profile-card profile-card--accent">
+        <section v-if="user?.is_generated_email" ref="setupSection" class="profile-card profile-card--accent">
           <div class="profile-card__header">
             <h2 class="profile-card__title">Configurer mon compte</h2>
           </div>
@@ -246,8 +246,9 @@
             <h2 class="profile-card__title">Session</h2>
           </div>
           <p class="profile-card__desc">Vous serez redirigé vers la page d'accueil.</p>
-          <button class="btn btn-outline profile-logout-btn" @click="handleLogout">
-            Déconnexion
+          <button class="btn btn-outline profile-logout-btn" @click="handleLogout" :disabled="logoutLoading">
+            <span v-if="logoutLoading" class="profile-spin profile-spin--danger"></span>
+            <span v-else>Déconnexion</span>
           </button>
         </section>
 
@@ -381,9 +382,17 @@ onMounted(async () => {
 })
 
 // ── Déconnexion ───────────────────────────────────────────────────────────────
+const logoutLoading = ref(false)
+
 async function handleLogout() {
-  await authStore.logout()
-  router.push({ name: 'home' })
+  logoutLoading.value = true
+  try {
+    // Naviguer d'abord pour éviter le flash blanc (v-if="user" masque la page dès user=null)
+    await router.push({ name: 'home' })
+    await authStore.logout()
+  } finally {
+    logoutLoading.value = false
+  }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -705,6 +714,10 @@ function eyeIcon(shown) {
   border-top-color: #fff;
   border-radius: 50%;
   animation: pspin 0.7s linear infinite;
+}
+.profile-spin--danger {
+  border-color: rgba(220, 38, 38, .25);
+  border-top-color: #dc2626;
 }
 @keyframes pspin { to { transform: rotate(360deg); } }
 

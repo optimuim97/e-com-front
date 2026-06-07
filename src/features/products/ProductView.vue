@@ -375,7 +375,7 @@ async function fetchProduct() {
 async function addToCart() {
   cartLoading.value = true
   try {
-    await cartStore.add(product.value.id, qty.value, selectedVariant.value)
+    await cartStore.add(product.value.id, qty.value, selectedVariant.value, { snapshot: product.value })
     cartSuccess.value = true
     setTimeout(() => { cartSuccess.value = false }, 3000)
   } finally {

@@ -134,7 +134,7 @@ function debouncedSearch() {
 
 function addToCart(product) {
   if (product.stock === 0) return
-  cartStore.add(product.id ?? product, 1)
+  cartStore.add(product.id ?? product, 1, null, { snapshot: product })
 }
 
 async function loadProducts() {

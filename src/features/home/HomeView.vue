@@ -109,7 +109,7 @@ const testimonials = computed(() =>
 
 /* ── Panier ─────────────────────────────────────────────────────────────── */
 function addToCart(product) {
-  cartStore.add(product.id ?? product, 1)
+  cartStore.add(product.id ?? product, 1, null, { snapshot: product })
 }
 
 /* ── Bénéfices ───────────────────────────────────────────────────────────── */

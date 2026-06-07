@@ -60,7 +60,12 @@ export const useSettingsStore = defineStore('settings', () => {
   const paymentOrangeMoneyEnabled = bool('payment_orange_money_enabled', true)
   const paymentDeliveryEnabled    = bool('payment_delivery_enabled',     true)
   const paymentStripeEnabled      = bool('payment_stripe_enabled',       false)
-  const paymentMobileNumber       = get('payment_mobile_number', '')
+  const paymentMobileNumber             = get('payment_mobile_number', '')
+  const paymentWaveNumber               = get('payment_wave_number', '')
+  const paymentWaveInstructions         = get('payment_wave_instructions', 'Envoyez le montant exact sur ce numéro Wave, puis communiquez votre référence de commande.')
+  const paymentOrangeMoneyNumber        = get('payment_orange_money_number', '')
+  const paymentOrangeMoneyInstructions  = get('payment_orange_money_instructions', 'Composez #144# sur votre téléphone Orange, puis envoyez le montant exact avec votre référence.')
+  const paymentGeniuspayEnabled         = bool('payment_geniuspay_enabled', false)
 
   /* ── Tunnel de commande ───────────────────────────────────────────────── */
   const enableQuickOrder          = bool('enable_quick_order',           true)
@@ -168,6 +173,9 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentWaveEnabled, paymentOrangeMoneyEnabled,
     paymentDeliveryEnabled, paymentStripeEnabled,
     paymentMobileNumber, activePayments,
+    paymentWaveNumber, paymentWaveInstructions,
+    paymentOrangeMoneyNumber, paymentOrangeMoneyInstructions,
+    paymentGeniuspayEnabled,
     // Tunnel
     enableQuickOrder,
     // Hero

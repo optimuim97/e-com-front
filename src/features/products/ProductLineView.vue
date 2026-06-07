@@ -131,7 +131,7 @@ async function fetchProducts() {
 function changePage(p) { currentPage = p; fetchProducts() }
 
 function addToCart(product) {
-  cartStore.add(product.id, 1)
+  cartStore.add(product.id, 1, null, { snapshot: product })
 }
 
 onMounted(async () => {

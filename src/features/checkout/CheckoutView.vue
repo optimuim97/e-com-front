@@ -79,14 +79,78 @@
 
     <!-- ── Contenu ── -->
     <div class="container co-body">
-      <div class="co-grid">
+      <div class="co-grid" :class="{ 'co-grid--confirmed': paymentInstructions && !cartStore.itemCount }">
 
         <!-- ── Colonne formulaire ── -->
         <div class="co-form">
 
+          <!-- ÉTAPE 0 : Gate d'authentification (invités uniquement) -->
+          <Transition name="step-slide" mode="out-in">
+          <div v-if="!authStore.isLoggedIn" key="gate">
+            <CheckoutAuthGate
+              @authenticated="onAuthenticated"
+              @quick-order="showQuickOrder = true"
+              @close="router.push({ name: 'cart' })"
+            />
+          </div>
+          </Transition>
+
+          <!-- CONFIRMATION DE PAIEMENT MANUEL (Wave / Orange Money) -->
+          <Transition name="step-slide" mode="out-in">
+          <section v-if="authStore.isLoggedIn && paymentInstructions" key="pay-instructions" class="card co-section">
+            <header class="co-section__head">
+              <span class="co-section__icon">{{ paymentInstructions.icon }}</span>
+              <div>
+                <h2 class="co-section__title">{{ paymentInstructions.title }}</h2>
+                <p class="co-section__hint">Commande n° <strong>{{ confirmedOrderNumber }}</strong></p>
+              </div>
+            </header>
+            <div class="co-section__body">
+              <!-- Numéro de paiement -->
+              <div v-if="paymentInstructions.number" class="pay-instr__number-box">
+                <p class="pay-instr__label">Numéro à créditer</p>
+                <div class="pay-instr__number">{{ paymentInstructions.number }}</div>
+                <p class="pay-instr__copy-hint">Appuyez pour copier</p>
+              </div>
+
+              <!-- Montant -->
+              <div class="pay-instr__amount-row">
+                <span>Montant exact à envoyer</span>
+                <strong class="pay-instr__amount">{{ formatPrice(confirmedOrderTotal) }}</strong>
+              </div>
+
+              <!-- Référence -->
+              <div class="pay-instr__ref-row">
+                <span>Référence commande</span>
+                <strong>{{ confirmedOrderNumber }}</strong>
+              </div>
+
+              <!-- Instructions -->
+              <div class="pay-instr__steps">
+                <p class="pay-instr__steps-title">Comment procéder :</p>
+                <p class="pay-instr__steps-text">{{ paymentInstructions.instructions }}</p>
+              </div>
+
+              <!-- Bouton WhatsApp admin -->
+              <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
+                class="btn btn-whatsapp pay-instr__wa">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Confirmer via WhatsApp
+              </a>
+            </div>
+            <div class="co-section__foot">
+              <button @click="goToOrder" class="btn btn-primary">
+                Voir ma commande
+              </button>
+            </div>
+          </section>
+          </Transition>
+
           <!-- ÉTAPE 1 : Infos personnelles -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="currentStep === 1" class="card co-section" key="step1">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 1" class="card co-section" key="step1">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -127,7 +191,7 @@
 
           <!-- ÉTAPE 2 : Adresse de livraison -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="currentStep === 2" class="card co-section" key="step2">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 2" class="card co-section" key="step2">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -201,7 +265,7 @@
 
           <!-- ÉTAPE 3 : Paiement -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="currentStep === 3" class="card co-section" key="step3">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 3" class="card co-section" key="step3">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
@@ -242,7 +306,7 @@
         </div>
 
         <!-- ── Sidebar récapitulatif ── -->
-        <aside class="co-summary card">
+        <aside class="co-summary card" v-if="cartStore.itemCount">
           <h3 class="co-summary__title">Récapitulatif</h3>
 
           <!-- Articles -->
@@ -355,6 +419,12 @@
       :pin="generatedPin"
       @close="onPinRevealed"
     />
+
+    <!-- Quick Order Modal (invité sans compte) -->
+    <QuickOrderModal
+      v-if="showQuickOrder"
+      @close="showQuickOrder = false"
+    />
   </main>
 </template>
 
@@ -362,19 +432,22 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useCartStore }    from '@/features/cart/cart.store'
-import { useAuthStore }    from '@/features/auth/auth.store'
+import { useCartStore }     from '@/features/cart/cart.store'
+import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
-import { usePinStore }     from '@/stores/pin'
-import PinRevealModal      from '@/shared/components/modals/PinRevealModal.vue'
-import AppSelect           from '@/components/ui/AppSelect.vue'
-import PhoneInput          from '@/components/ui/PhoneInput.vue'
-import CitySelect          from '@/components/shop/CitySelect.vue'
-import CityFree            from '@/components/shop/CityFree.vue'
-import api                            from '@/api'
-import { checkoutApi }                from './checkout.api'
-import { makeForm, mapErrors, FIELDS } from './checkout.fields'
-import CheckoutField                  from '@/shared/components/ui/FormField.vue'
+import { usePinStore }      from '@/stores/pin'
+import PinRevealModal       from '@/shared/components/modals/PinRevealModal.vue'
+import CheckoutAuthGate     from './CheckoutAuthGate.vue'
+import QuickOrderModal      from './QuickOrderModal.vue'
+import AppSelect            from '@/components/ui/AppSelect.vue'
+import PhoneInput           from '@/components/ui/PhoneInput.vue'
+import CitySelect           from '@/components/shop/CitySelect.vue'
+import CityFree             from '@/components/shop/CityFree.vue'
+import api                              from '@/api'
+import { checkoutApi }                  from './checkout.api'
+import { makeForm, mapErrors, FIELDS }  from './checkout.fields'
+import CheckoutField                    from '@/shared/components/ui/FormField.vue'
+import FlowerMark                       from '@/components/ui/FlowerMark.vue'
 
 const { t }        = useI18n()
 const router       = useRouter()
@@ -382,6 +455,78 @@ const cartStore    = useCartStore()
 const authStore    = useAuthStore()
 const settings     = useSettingsStore()
 const pinStore     = usePinStore()
+
+// ── Gate d'auth + QuickOrder ─────────────────────────────────────────────────
+const showQuickOrder = ref(false)
+
+/**
+ * Pré-remplissage du formulaire à la connexion.
+ * On utilise un watcher plutôt que l'emit @authenticated :
+ * auth.login() fait un await interne (mergeLocalCart) qui laisse Vue
+ * démonter CheckoutAuthGate avant que emit() soit appelé — l'event
+ * n'est donc jamais reçu. Le watcher sur isLoggedIn est fiable.
+ */
+watch(
+  () => authStore.isLoggedIn,
+  (loggedIn) => {
+    if (!loggedIn) return
+    const u = authStore.user
+    if (u) {
+      const parts = (u.name ?? '').trim().split(/\s+/)
+      form.value.first_name = parts[0] ?? ''
+      form.value.last_name  = parts.slice(1).join(' ')
+      form.value.email      = u.email ?? ''
+      form.value.phone      = u.phone ?? ''
+    }
+    currentStep.value = 1
+    cartStore.fetch().catch(() => {})
+  }
+)
+
+// Gardé pour rétrocompatibilité (Facebook OAuth, etc.)
+function onAuthenticated() {}
+
+// ── Instructions de paiement manuel (post-commande) ──────────────────────────
+const paymentInstructions = ref(null)   // { title, icon, number, instructions }
+const confirmedOrderNumber = ref(null)
+const confirmedOrderTotal  = ref(0)
+
+function buildPaymentInstructions(method, orderNumber, orderTotal) {
+  confirmedOrderNumber.value = orderNumber
+  confirmedOrderTotal.value  = orderTotal
+
+  if (method === 'wave') {
+    paymentInstructions.value = {
+      title:        'Paiement Wave',
+      icon:         '📱',
+      number:       settings.paymentWaveNumber.value || settings.paymentMobileNumber.value,
+      instructions: settings.paymentWaveInstructions.value,
+    }
+  } else if (method === 'orange_money') {
+    paymentInstructions.value = {
+      title:        'Paiement Orange Money',
+      icon:         '🟠',
+      number:       settings.paymentOrangeMoneyNumber.value || settings.paymentMobileNumber.value,
+      instructions: settings.paymentOrangeMoneyInstructions.value,
+    }
+  } else {
+    paymentInstructions.value = null
+  }
+}
+
+const adminWhatsappLink = computed(() => {
+  const phone = settings.whatsappNumber.value
+  if (!phone || !confirmedOrderNumber.value) return null
+  const msg = encodeURIComponent(
+    `Bonjour ! J'ai effectué un paiement pour ma commande N° ${confirmedOrderNumber.value}. Montant : ${formatPrice(confirmedOrderTotal.value)}.`
+  )
+  return `https://wa.me/${phone.replace(/\D/g, '')}?text=${msg}`
+})
+
+function goToOrder() {
+  paymentInstructions.value = null
+  router.push({ name: 'order', params: { number: confirmedOrderNumber.value } })
+}
 
 // ── Étapes ──────────────────────────────────────────────────────────────────
 const STEPS = [
@@ -539,6 +684,9 @@ const orderTotal = computed(() => {
 
 // ── Initialisation ────────────────────────────────────────────────────────────
 onMounted(() => {
+  // Rafraîchir le panier en arrière-plan (non-bloquant, comme ShopLayout)
+  cartStore.fetch().catch(() => {})
+
   const u = authStore.user
   if (u) {
     const parts = (u.name ?? '').trim().split(/\s+/)
@@ -572,58 +720,71 @@ async function applyCoupon() {
   }
 }
 
-async function submitOrder() {
-  submitting.value  = true
-  submitError.value = ''
-  try {
-    const shipping_address = {
-      first_name:    form.value.first_name,
-      last_name:     form.value.last_name,
-      phone:         form.value.phone,
-      email:         form.value.email,
-      address_line1: form.value.shipping_address_line1 || form.value.shipping_city,
-      city:          form.value.shipping_city,
-      commune:       form.value.shipping_commune || undefined,
-      region:        form.value.shipping_region  || undefined,
-      country:       form.value.shipping_country,
-    }
-
-    const items = cartStore.items.map(item => ({
+function buildPayload() {
+  const shipping_address = {
+    first_name:    form.value.first_name,
+    last_name:     form.value.last_name,
+    phone:         form.value.phone,
+    email:         form.value.email,
+    address_line1: form.value.shipping_address_line1 || form.value.shipping_city,
+    city:          form.value.shipping_city,
+    commune:       form.value.shipping_commune || undefined,
+    region:        form.value.shipping_region  || undefined,
+    country:       form.value.shipping_country,
+  }
+  return {
+    shipping_address,
+    billing_address: { ...shipping_address },
+    payment_method:  form.value.payment_method,
+    coupon_code:     couponApplied.value ? couponCode.value : null,
+    customer_note:   form.value.customer_note || null,
+    items: cartStore.items.map(item => ({
       product_id: item.product_id,
       variant_id: item.variant_id ?? null,
       quantity:   item.quantity,
       price:      item.price,
-    }))
+    })),
+  }
+}
 
-    const payload = {
-      shipping_address,
-      billing_address: { ...shipping_address },
-      payment_method:  form.value.payment_method,
-      coupon_code:     couponApplied.value ? couponCode.value : null,
-      customer_note:   form.value.customer_note || null,
-      items,
-    }
+async function submitOrder() {
+  await placeOrder(buildPayload())
+}
 
+async function placeOrder(payload) {
+  submitting.value  = true
+  submitError.value = ''
+  try {
     const { data } = await checkoutApi.placeOrder(payload)
     cartStore.clear?.()
 
+    // Paiement en ligne (GeniusPay, CinetPay…) → rediriger
     if (data.payment_url) {
       window.location.href = data.payment_url
       return
     }
+
+    // PIN généré (commande rapide)
     if (data.generated_pin) {
       pinStore.verified = true
       sessionStorage.setItem('pin_verified', '1')
-      generatedPin.value  = data.generated_pin
+      generatedPin.value   = data.generated_pin
       pendingOrderNr.value = data.number
-    } else {
-      router.push({ name: 'order', params: { number: data.number } })
+      return
     }
+
+    // Paiement manuel Wave / Orange Money → instructions
+    if (['wave', 'orange_money'].includes(payload.payment_method)) {
+      buildPaymentInstructions(payload.payment_method, data.number, data.total ?? orderTotal.value)
+      return
+    }
+
+    // Autres méthodes → page commande
+    router.push({ name: 'order', params: { number: data.number } })
   } catch (e) {
     if (!e._serverError) {
-      submitError.value  = e.response?.data?.message || t('checkout.submitError')
-      fieldErrors.value  = mapErrors(e.response?.data?.errors ?? {})
-      // Revenir à l'étape concernée si erreur de validation
+      submitError.value = e.response?.data?.message || t('checkout.submitError')
+      fieldErrors.value = mapErrors(e.response?.data?.errors ?? {})
       const errKeys = Object.keys(fieldErrors.value)
       if (errKeys.some(k => ['first_name','last_name','phone','email'].includes(k))) currentStep.value = 1
       else if (errKeys.some(k => k.startsWith('shipping_'))) currentStep.value = 2
@@ -765,7 +926,19 @@ function formatPrice(val) {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: var(--space-8);
-  align-items: start;
+  align-items: stretch;
+}
+/* Panier vide après confirmation : centrer la section paiement seule */
+.co-grid--confirmed {
+  grid-template-columns: 1fr;
+}
+.co-grid--confirmed aside {
+  display: none;
+}
+.co-grid--confirmed .co-form {
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── Form section ── */
@@ -869,6 +1042,7 @@ function formatPrice(val) {
 
 /* ── Sidebar ── */
 .co-summary {
+  align-self: start;           /* ne s'étire pas — la col form absorbe la différence */
   position: sticky;
   top: calc(var(--navbar-height) + var(--space-6));
   padding: var(--space-5) var(--space-6);
@@ -1232,6 +1406,64 @@ function formatPrice(val) {
   padding: 14px;
   font-size: 0.9375rem;
 }
+
+/* ── Instructions paiement manuel ── */
+.pay-instr__number-box {
+  text-align: center;
+  padding: var(--space-5) var(--space-4);
+  background: linear-gradient(135deg, var(--rose-50), var(--cream-50));
+  border: 2px solid var(--rose-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.pay-instr__label { font-size: 0.75rem; color: var(--gray-500); margin-bottom: var(--space-2); }
+.pay-instr__number {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--rose-600);
+  letter-spacing: 0.05em;
+}
+.pay-instr__copy-hint { font-size: 0.6875rem; color: var(--gray-400); margin-top: 4px; }
+.pay-instr__amount-row,
+.pay-instr__ref-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--cream-100);
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+.pay-instr__amount {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  color: var(--rose-600);
+}
+.pay-instr__steps {
+  padding: var(--space-3) var(--space-4);
+  background: var(--cream-50);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--cream-200);
+}
+.pay-instr__steps-title { font-size: 0.75rem; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
+.pay-instr__steps-text { font-size: 0.8125rem; color: var(--gray-500); line-height: 1.6; }
+.pay-instr__wa {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  background: #25d366;
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: background var(--transition-fast);
+}
+.pay-instr__wa:hover { background: #1db954; }
 
 /* Transitions */
 .expand-enter-active, .expand-leave-active { transition: opacity 0.2s ease; }

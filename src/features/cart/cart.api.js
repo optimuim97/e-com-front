@@ -7,4 +7,5 @@ export const cartApi = {
   removeItem:   (itemId)          => api.delete(`/cart/items/${itemId}`),
   applyCoupon:  (code)            => api.post('/cart/coupon', { code }),
   removeCoupon: ()                => api.delete('/cart/coupon'),
+  merge:        (items)           => api.post('/cart/merge', { items }),
 }

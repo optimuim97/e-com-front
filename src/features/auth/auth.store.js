@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed , nextTick} from 'vue';
+
 import api from '@/api';
+import { useCartStore } from '@/features/cart/cart.store';
 
 export const useAuthStore = defineStore('auth', () => {
   const user    = ref(null);
@@ -26,6 +28,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('auth_token', data.token);
     user.value    = data.user;
     checked.value = true;
+    // Fusionner le panier invité dans le panier utilisateur
+    try { await useCartStore().mergeLocalCart() } catch {}
     return data;
   }
 
@@ -34,6 +38,8 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('auth_token', data.token);
     user.value    = data.user;
     checked.value = true;
+    // Fusionner le panier invité dans le panier utilisateur
+    try { await useCartStore().mergeLocalCart() } catch {}
     return data;
   }
 

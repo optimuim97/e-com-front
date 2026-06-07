@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import {onMounted, ref} from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { XMarkIcon, PlusIcon, MinusIcon } from '@heroicons/vue/24/outline';
@@ -187,6 +187,10 @@ async function applyCoupon() {
     couponLoading.value = false;
   }
 }
+
+// onMounted(async () => {
+//    await cartStore.fetch();
+// })
 </script>
 
 <style scoped>
