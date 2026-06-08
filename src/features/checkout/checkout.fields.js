@@ -15,7 +15,7 @@
 export const FIELDS = {
   // ── Informations personnelles ──────────────────────────────────────────
   first_name:             { api: 'first_name',             label: 'Prénom(s)',            type: 'text',   required: true  },
-  last_name:              { api: 'last_name',              label: 'Nom',               type: 'text',   required: true  },
+  last_name:              { api: 'last_name',              label: 'Nom',               type: 'text',   required: false },
   email:                  { api: 'email',                  label: 'Email',             type: 'email',  required: true  },
   phone:                  { api: 'phone',                  label: 'Téléphone',         type: 'tel',    required: true  },
 

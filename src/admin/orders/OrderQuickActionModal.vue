@@ -87,6 +87,15 @@
             :disabled="busy === 'tracking'"
           />
           <button
+            class="btn btn-outline"
+            type="button"
+            :disabled="busy === 'gen-tracking' || busy === 'tracking'"
+            @click="generateTracking"
+            title="Générer un numéro de suivi"
+          >
+            {{ busy === 'gen-tracking' ? '…' : '🎲 Générer' }}
+          </button>
+          <button
             class="btn btn-primary"
             :disabled="!tracking.trim() || busy === 'tracking'"
             @click="saveTracking"
@@ -181,6 +190,19 @@ async function generatePaymentLink() {
   }
 }
 
+async function generateTracking() {
+  busy.value = 'gen-tracking';
+  error.value = '';
+  try {
+    const { data } = await api.post(`/admin/orders/${props.order.id}/generate-tracking`);
+    tracking.value = data.tracking_number;
+  } catch (e) {
+    error.value = e.response?.data?.message ?? 'Impossible de générer un numéro.';
+  } finally {
+    busy.value = null;
+  }
+}
+
 async function saveTracking() {
   busy.value = 'tracking';
   error.value = ''; success.value = '';
@@ -221,7 +243,7 @@ function statusLabel(s) { return STATUS_LABELS[s] ?? s; }
 
 const PAYMENT_LABELS = {
   wave: 'Wave 💙', orange_money: 'Orange Money 🟠', cinetpay: 'Carte bancaire 💳',
-  cod: 'Paiement à la livraison 🚚', cash: 'Espèces',
+  cod: 'Paiement à la livraison 🚚', delivery: 'Paiement à la livraison 🚚', cash: 'Espèces',
 };
 function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
 </script>

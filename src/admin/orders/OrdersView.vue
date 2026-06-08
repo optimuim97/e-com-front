@@ -180,7 +180,12 @@
           <tbody>
             <template v-for="order in orders" :key="order.id">
               <tr :class="{ 'admin-table__row--expanded': expandedId === order.id }">
-                <td class="admin-table__mono">{{ order.number }}</td>
+                <td class="admin-table__mono">
+                  {{ order.number }}
+                  <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
+                    📦 {{ order.tracking_number }}
+                  </div>
+                </td>
                 <td>
                   <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
                   <div class="admin-table__sub">{{ order.user?.email ?? '' }}</div>
@@ -434,8 +439,8 @@ function statusBadge(status) {
 
 function paymentLabel(method) {
   const map = {
-    wave: 'Wave', orange_money: 'Orange Money', stripe: 'Stripe',
-    virement: 'Virement', delivery: 'Livraison',
+    wave: 'Wave', orange_money: 'Orange Money',
+    cinetpay: 'Carte', cod: 'Livraison', delivery: 'Livraison',
   }
   return map[method] ?? method
 }
@@ -567,6 +572,13 @@ onMounted(fetchOrders)
 .admin-table__sub {
   font-size: 0.75rem;
   color: var(--gray-400);
+}
+.admin-table__tracking {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: var(--gray-500);
+  font-weight: 400;
+  margin-top: 2px;
 }
 .admin-table__total {
   font-weight: 600;

@@ -61,7 +61,12 @@
               <tr v-for="item in order.items" :key="item.id">
                 <td class="py-3">
                   <div class="flex items-center gap-3">
-                    <img :src="item.product_image || '/placeholder.png'" class="w-10 h-10 rounded-lg object-cover bg-gray-100" />
+                    <img
+                      :src="item.product_image || '/placeholder.png'"
+                      v-img-fallback
+                      :alt="item.product_name"
+                      class="w-10 h-10 rounded-lg object-cover bg-gray-100"
+                    />
                     <div>
                       <p class="font-medium text-gray-800">{{ item.product_name }}</p>
                       <p v-if="item.variant_name" class="text-xs text-gray-400">{{ item.variant_name }}</p>
@@ -178,7 +183,18 @@
 
           <div>
             <label class="label">Numéro de suivi</label>
-            <input v-model="editForm.tracking_number" type="text" class="input" placeholder="Ex. CI123456789" />
+            <div class="tracking-row">
+              <input v-model="editForm.tracking_number" type="text" class="input" placeholder="Ex. RB-2026-00123" />
+              <button
+                type="button"
+                class="btn-outline tracking-gen-btn"
+                :disabled="generatingTracking"
+                @click="generateTracking"
+                title="Générer un numéro de suivi"
+              >
+                {{ generatingTracking ? '…' : '🎲 Générer' }}
+              </button>
+            </div>
           </div>
 
           <button
@@ -219,6 +235,7 @@ const saveSuccess    = ref(false)
 const saveError      = ref('')
 const settings       = ref({})
 const downloadingPdf = ref(false)
+const generatingTracking = ref(false)
 
 const editForm = reactive({
   status: '',
@@ -283,6 +300,18 @@ async function downloadInvoice() {
   }
 }
 
+async function generateTracking() {
+  generatingTracking.value = true
+  try {
+    const { data } = await api.post(`/admin/orders/${route.params.id}/generate-tracking`)
+    editForm.tracking_number = data.tracking_number
+  } catch (e) {
+    saveError.value = e.response?.data?.message ?? 'Impossible de générer un numéro.'
+  } finally {
+    generatingTracking.value = false
+  }
+}
+
 async function updateOrder() {
   saving.value = true
   saveSuccess.value = false
@@ -336,8 +365,8 @@ function countryName(code) {
 
 function paymentLabel(method) {
   const map = {
-    wave: 'Wave', orange_money: 'Orange Money', stripe: 'Stripe',
-    virement: 'Virement bancaire', delivery: 'Paiement à la livraison',
+    wave: 'Wave', orange_money: 'Orange Money',
+    cinetpay: 'Carte bancaire', cod: 'À la livraison', delivery: 'À la livraison',
   }
   return map[method] ?? method
 }
@@ -443,4 +472,28 @@ onMounted(fetchOrder)
   color: var(--gray-400);
   margin-top: 4px;
 }
+
+.tracking-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.tracking-row .input { flex: 1; min-width: 0; }
+.tracking-gen-btn {
+  white-space: nowrap;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.tracking-gen-btn:hover:not(:disabled) {
+  border-color: var(--rose-400);
+  color: var(--rose-600);
+  background: var(--rose-50);
+}
+.tracking-gen-btn:disabled { opacity: 0.6; cursor: default; }
 </style>

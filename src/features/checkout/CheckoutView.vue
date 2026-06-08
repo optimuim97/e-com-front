@@ -44,7 +44,7 @@
     </div>
 
     <!-- ── Mini récap mobile (total + nb articles) ── -->
-    <div class="co-mini-recap hide-desktop">
+    <div v-if="cartStore.itemCount && !paymentInstructions" class="co-mini-recap hide-desktop">
       <div class="container co-mini-recap__inner">
         <span class="co-mini-recap__count">{{ cartStore.itemCount }} article{{ cartStore.itemCount > 1 ? 's' : '' }}</span>
         <button class="co-mini-recap__toggle" @click="summaryExpanded = !summaryExpanded">
@@ -140,7 +140,10 @@
                 Confirmer via WhatsApp
               </a>
             </div>
-            <div class="co-section__foot">
+            <div class="co-section__foot pay-instr__foot">
+              <button @click="goToProducts" class="btn btn-outline">
+                ← Retour aux produits
+              </button>
               <button @click="goToOrder" class="btn btn-primary">
                 Voir ma commande
               </button>
@@ -148,9 +151,23 @@
           </section>
           </Transition>
 
+          <!-- PANIER VIDE (avant commande) -->
+          <Transition name="step-slide" mode="out-in">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && !cartStore.itemCount" key="empty-cart" class="card co-section co-empty">
+            <div class="co-empty__body">
+              <div class="co-empty__icon">🛒</div>
+              <h2 class="co-section__title">Votre panier est vide</h2>
+              <p class="co-empty__hint">Ajoutez au moins un article pour finaliser une commande.</p>
+              <RouterLink :to="{ name: 'products' }" class="btn btn-primary co-empty__cta">
+                Découvrir les produits
+              </RouterLink>
+            </div>
+          </section>
+          </Transition>
+
           <!-- ÉTAPE 1 : Infos personnelles -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 1" class="card co-section" key="step1">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && cartStore.itemCount && currentStep === 1" class="card co-section" key="step1">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -165,8 +182,8 @@
                 <CheckoutField :def="FIELDS.first_name" :error="fe('first_name')">
                   <input v-model="form.first_name" type="text" class="input" required placeholder="Prénom" />
                 </CheckoutField>
-                <CheckoutField :def="FIELDS.last_name" :error="fe('last_name')">
-                  <input v-model="form.last_name" type="text" class="input" required placeholder="Nom" />
+                <CheckoutField :def="FIELDS.last_name" :error="fe('last_name')" optional>
+                  <input v-model="form.last_name" type="text" class="input" placeholder="Nom" />
                 </CheckoutField>
               </div>
               <CheckoutField :def="FIELDS.phone" :error="fe('phone')">
@@ -191,7 +208,7 @@
 
           <!-- ÉTAPE 2 : Adresse de livraison -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 2" class="card co-section" key="step2">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && cartStore.itemCount && currentStep === 2" class="card co-section" key="step2">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -265,7 +282,7 @@
 
           <!-- ÉTAPE 3 : Paiement -->
           <Transition name="step-slide" mode="out-in">
-          <section v-if="authStore.isLoggedIn && !paymentInstructions && currentStep === 3" class="card co-section" key="step3">
+          <section v-if="authStore.isLoggedIn && !paymentInstructions && cartStore.itemCount && currentStep === 3" class="card co-section" key="step3">
             <header class="co-section__head">
               <span class="co-section__icon">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
@@ -394,7 +411,7 @@
     <!-- ── CTA fixé en bas sur mobile (step 3) ── -->
     <Teleport to="body">
       <Transition name="slide-up">
-        <div v-if="currentStep === 3" class="co-mobile-cta hide-desktop">
+        <div v-if="currentStep === 3 && cartStore.itemCount && !paymentInstructions" class="co-mobile-cta hide-desktop">
           <div class="co-mobile-cta__inner">
             <div class="co-mobile-cta__total">
               <span>Total</span>
@@ -528,6 +545,11 @@ function goToOrder() {
   router.push({ name: 'order', params: { number: confirmedOrderNumber.value } })
 }
 
+function goToProducts() {
+  paymentInstructions.value = null
+  router.push({ name: 'products' })
+}
+
 // ── Étapes ──────────────────────────────────────────────────────────────────
 const STEPS = [
   { key: 'infos',    label: 'Infos' },
@@ -572,7 +594,7 @@ const couponFromCart = ref(false)
 
 // ── Validations par étape ────────────────────────────────────────────────────
 const step1Valid = computed(() =>
-  form.value.first_name?.trim() && form.value.last_name?.trim() && form.value.phone?.trim()
+  form.value.first_name?.trim() && form.value.phone?.trim()
 )
 const step2Valid = computed(() =>
   form.value.shipping_country && form.value.shipping_city?.trim()
@@ -1464,6 +1486,25 @@ function formatPrice(val) {
   transition: background var(--transition-fast);
 }
 .pay-instr__wa:hover { background: #1db954; }
+
+.pay-instr__foot {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.pay-instr__foot .btn { flex: 1; justify-content: center; min-width: 0; }
+
+.co-empty__body {
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+.co-empty__icon { font-size: 3rem; }
+.co-empty__hint { color: var(--gray-500); font-size: 0.9375rem; max-width: 380px; }
+.co-empty__cta { margin-top: var(--space-3); padding: 12px 28px; text-decoration: none; }
 
 /* Transitions */
 .expand-enter-active, .expand-leave-active { transition: opacity 0.2s ease; }
