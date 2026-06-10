@@ -164,6 +164,14 @@
       </div>
     </div>
 
+    <!-- Modal itinéraire de tournée -->
+    <DeliveryRouteMap
+      v-if="routeMap"
+      :title="routeMap.title"
+      :orders="routeMap.orders"
+      @close="routeMap = null"
+    />
+
     <!-- ── Vue "Par zone" ── -->
     <div v-if="viewMode === 'zone'" class="card">
       <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
@@ -187,33 +195,64 @@
             </span>
           </button>
           <div v-if="openZones.has(g.zone)" class="zone-group__body">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>N°</th>
-                  <th>Client</th>
-                  <th>Date</th>
-                  <th>Total</th>
-                  <th>Statut</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="o in g.orders" :key="o.id">
-                  <td class="admin-table__mono">{{ o.number }}</td>
-                  <td>
-                    <div class="admin-table__client">{{ o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}` }}</div>
-                    <div class="admin-table__sub">{{ o.shipping_address?.phone ?? '' }}</div>
-                  </td>
-                  <td>{{ formatDate(o.created_at) }}</td>
-                  <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
-                  <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
-                  <td class="admin-table__action">
-                    <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Détail →</RouterLink>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <!-- Sous-groupes par commune pour faciliter la tournée du livreur -->
+            <div v-for="cg in communeGroupsOf(g)" :key="cg.commune" class="commune-group">
+              <div class="commune-group__head">
+                <span class="commune-group__name">📍 {{ cg.commune }}</span>
+                <div class="commune-group__actions">
+                  <span class="commune-group__count">{{ cg.orders.length }} cmd</span>
+                  <button
+                    type="button"
+                    class="commune-group__export"
+                    @click="openRouteMap(g, cg)"
+                    title="Voir l'itinéraire de tournée pour cette commune"
+                  >
+                    🗺️ Itinéraire
+                  </button>
+                  <button
+                    type="button"
+                    class="commune-group__export"
+                    @click="exportCommuneCSV(g, cg)"
+                    title="Exporter cette commune en CSV (pour le livreur)"
+                  >
+                    ⬇ CSV
+                  </button>
+                </div>
+              </div>
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>N°</th>
+                    <th>Client</th>
+                    <th>Adresse</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="o in cg.orders" :key="o.id">
+                    <td class="admin-table__mono">{{ o.number }}</td>
+                    <td>
+                      <div class="admin-table__client">{{ o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}` }}</div>
+                      <a
+                        v-if="o.shipping_address?.phone"
+                        :href="`tel:${o.shipping_address.phone}`"
+                        class="admin-table__phone"
+                      >📞 {{ o.shipping_address.phone }}</a>
+                    </td>
+                    <td class="admin-table__sub">{{ o.shipping_address?.address_line1 ?? '—' }}</td>
+                    <td>{{ formatDate(o.created_at) }}</td>
+                    <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
+                    <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+                    <td class="admin-table__action">
+                      <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Détail →</RouterLink>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -309,6 +348,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
+import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 
@@ -348,6 +388,65 @@ function toggleZone(zone) {
   else openZones.value.add(zone)
   // Force réactivité (Set)
   openZones.value = new Set(openZones.value)
+}
+
+// Export CSV d'une commune (feuille de tournée pour le livreur).
+function exportCommuneCSV(zoneGroup, communeGroup) {
+  const escape = (v) => {
+    const s = String(v ?? '').replace(/"/g, '""')
+    return /[",;\n]/.test(s) ? `"${s}"` : s
+  }
+  const sep = ';' // Excel FR friendly
+  const header = ['N°', 'Client', 'Téléphone', 'Adresse', 'Total', 'Statut', 'Date']
+  const rows = communeGroup.orders.map(o => [
+    o.number,
+    o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}`.trim(),
+    o.shipping_address?.phone ?? '',
+    o.shipping_address?.address_line1 ?? '',
+    o.total ?? '',
+    statusLabel(o.status),
+    formatDate(o.created_at),
+  ])
+  // BOM UTF-8 pour qu'Excel ouvre les accents correctement
+  const csv = '﻿' + [header, ...rows].map(r => r.map(escape).join(sep)).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  const safe = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_')
+  a.href = url
+  a.download = `tournee_${safe(zoneGroup.zone)}_${safe(communeGroup.commune)}_${new Date().toISOString().slice(0,10)}.csv`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+// Sous-groupage par commune dans une zone (aide le livreur à organiser la tournée).
+// Trie alphabétique des communes, "—" en dernier pour les adresses sans commune.
+function communeGroupsOf(zoneGroup) {
+  const buckets = new Map()
+  for (const o of zoneGroup.orders) {
+    const commune = (o.shipping_address?.commune || o.shipping_address?.city || '—').trim()
+    if (!buckets.has(commune)) buckets.set(commune, [])
+    buckets.get(commune).push(o)
+  }
+  return [...buckets.entries()]
+    .map(([commune, orders]) => ({ commune, orders }))
+    .sort((a, b) => {
+      if (a.commune === '—') return 1
+      if (b.commune === '—') return -1
+      return a.commune.localeCompare(b.commune, 'fr')
+    })
+}
+
+// ── Modal itinéraire ─────────────────────────────────────────────────────────
+const routeMap = ref(null) // { title, orders } | null
+
+function openRouteMap(zoneGroup, communeGroup) {
+  routeMap.value = {
+    title:  `${zoneGroup.zone} · ${communeGroup.commune}`,
+    orders: communeGroup.orders,
+  }
 }
 
 async function fetchByZone() {
@@ -687,6 +786,62 @@ onMounted(fetchOrders)
   background: #fff;
 }
 .zone-group__body .admin-table { width: 100%; }
+
+.commune-group {
+  border-top: 1px dashed var(--cream-200);
+  padding: var(--space-2) 0;
+}
+.commune-group:first-child { border-top: none; }
+.commune-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 6px var(--space-2);
+  margin-bottom: 4px;
+}
+.commune-group__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gray-700);
+}
+.commune-group__count {
+  font-size: 0.6875rem;
+  color: var(--gray-500);
+  background: var(--cream-100);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.commune-group__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.commune-group__export {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--rose-600);
+  background: #fff;
+  border: 1px solid var(--rose-200);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.commune-group__export:hover {
+  background: var(--rose-50);
+  border-color: var(--rose-400);
+}
+
+.admin-table__phone {
+  font-size: 0.75rem;
+  color: var(--rose-600);
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 2px;
+}
+.admin-table__phone:hover { text-decoration: underline; }
 
 /* ── Export panel ── */
 .export-panel {
