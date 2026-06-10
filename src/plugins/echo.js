@@ -36,13 +36,38 @@ export function createEcho() {
         scheme:          import.meta.env.VITE_REVERB_SCHEME    ?? 'http',
         forceTLS:       (import.meta.env.VITE_REVERB_SCHEME    ?? 'http') === 'https',
         enabledTransports: ['ws', 'wss'],
-        authEndpoint:    '/broadcasting/auth',
-        auth: {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('auth_token') ?? ''}`,
-                Accept: 'application/json',
+        // Authorizer custom : on (re-)lit le token à CHAQUE handshake d'auth,
+        // pas seulement à l'init. Sinon, un login après chargement de la page
+        // garde l'ancien token (souvent vide) → 401 sur /broadcasting/auth.
+        authorizer: (channel) => ({
+            authorize: (socketId, callback) => {
+                const token = localStorage.getItem('auth_token') ?? '';
+                fetch('/broadcasting/auth', {
+                    method:  'POST',
+                    headers: {
+                        'Content-Type':  'application/json',
+                        'Accept':        'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        socket_id:    socketId,
+                        channel_name: channel.name,
+                    }),
+                })
+                    .then(async (res) => {
+                        if (!res.ok) {
+                            const body = await res.text();
+                            throw new Error(`broadcasting/auth ${res.status}: ${body}`);
+                        }
+                        return res.json();
+                    })
+                    .then((data) => callback(null, data))
+                    .catch((err) => {
+                        console.warn('[Echo] auth failed:', err.message);
+                        callback(err, null);
+                    });
             },
-        },
+        }),
     });
 
     return echoInstance;

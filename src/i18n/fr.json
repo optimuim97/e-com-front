@@ -65,6 +65,7 @@
   },
 
   "hero": {
+    "madeInCI": "Made In Côte d'Ivoire",
     "defaultEyebrow": "Nouveau · Collection Eau de Rose",
     "defaultTitle": "La beauté naturelle révélée",
     "titleNatural": "naturelle",
