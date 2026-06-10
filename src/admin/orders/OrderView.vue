@@ -136,7 +136,34 @@
             </div>
           </div>
           <div v-else class="zone-block zone-block--unknown">
-            <span>Zone non identifiée — frais saisis manuellement.</span>
+            <span>Zone non identifiée — saisir les frais manuellement ci-dessous.</span>
+          </div>
+
+          <!-- Saisie frais livraison hors zone -->
+          <div v-if="!order.shipping_zone" class="shipping-cost-block">
+            <label class="label">Frais de livraison (hors zone)</label>
+            <div class="shipping-cost-row">
+              <input
+                v-model.number="editForm.shipping_cost"
+                type="number"
+                min="0"
+                step="100"
+                class="input"
+                placeholder="Ex. 2000"
+              />
+              <button
+                type="button"
+                class="btn-primary shipping-cost-save"
+                :disabled="savingShipping || editForm.shipping_cost === '' || editForm.shipping_cost === null"
+                @click="saveShippingCost"
+              >
+                {{ savingShipping ? '…' : 'Enregistrer' }}
+              </button>
+            </div>
+            <p v-if="shippingMsg" class="shipping-cost-msg">{{ shippingMsg }}</p>
+            <p class="shipping-cost-hint">
+              Sous-total {{ formatPrice(order.subtotal) }} · Nouveau total : {{ formatPrice(estimatedTotal) }}
+            </p>
           </div>
         </div>
       </div>
@@ -167,9 +194,15 @@
         <div class="card p-5">
           <h2 class="font-semibold text-gray-800 mb-2">Paiement</h2>
           <p class="text-sm text-gray-600">{{ paymentLabel(order.payment_method) }}</p>
-          <span :class="order.payment_status === 'paid' ? 'badge badge-success' : 'badge badge-warning'" class="mt-2">
-            {{ order.payment_status === 'paid' ? 'Payé' : 'En attente' }}
+          <span :class="order.is_paid ? 'badge badge-success' : 'badge badge-warning'" class="mt-2">
+            {{ order.is_paid ? 'Payé' : 'En attente' }}
           </span>
+          <p v-if="order.payment_reference" class="text-xs text-gray-400 mt-2 font-mono break-all">
+            Ref : {{ order.payment_reference }}
+          </p>
+          <p v-if="order.paid_at" class="text-xs text-gray-400 mt-1">
+            Payé le {{ formatDate(order.paid_at) }}
+          </p>
         </div>
 
         <!-- Update status -->
@@ -223,6 +256,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+// computed déjà importé — utilisé pour estimatedTotal
 import { useRoute, RouterLink } from 'vue-router'
 import api from '@/api'
 import { buildClientMessage, buildWaLink } from '@/utils/whatsapp'
@@ -240,6 +274,18 @@ const generatingTracking = ref(false)
 const editForm = reactive({
   status: '',
   tracking_number: '',
+  shipping_cost: '',
+})
+
+const savingShipping = ref(false)
+const shippingMsg    = ref('')
+
+const estimatedTotal = computed(() => {
+  if (!order.value) return 0
+  const s = Number(editForm.shipping_cost) || 0
+  const sub = Number(order.value.subtotal) || 0
+  const disc = Number(order.value.discount_amount) || 0
+  return Math.max(0, sub - disc + s)
 })
 
 const orderStatusOptions = [
@@ -262,6 +308,7 @@ async function fetchOrder() {
     settings.value = settingsRes.data
     editForm.status          = order.value.status
     editForm.tracking_number = order.value.tracking_number ?? ''
+    editForm.shipping_cost   = order.value.shipping_cost ?? ''
   } catch {
     order.value = null
   } finally {
@@ -297,6 +344,24 @@ async function downloadInvoice() {
     // silent — user can retry
   } finally {
     downloadingPdf.value = false
+  }
+}
+
+async function saveShippingCost() {
+  savingShipping.value = true
+  shippingMsg.value = ''
+  try {
+    const { data } = await api.patch(`/admin/orders/${route.params.id}`, {
+      shipping_cost: Number(editForm.shipping_cost) || 0,
+    })
+    order.value = data.data ?? data
+    editForm.shipping_cost = order.value.shipping_cost ?? ''
+    shippingMsg.value = '✓ Frais enregistrés. Total mis à jour.'
+    setTimeout(() => { shippingMsg.value = '' }, 3000)
+  } catch (e) {
+    shippingMsg.value = e.response?.data?.message ?? 'Erreur.'
+  } finally {
+    savingShipping.value = false
   }
 }
 
@@ -496,4 +561,35 @@ onMounted(fetchOrder)
   background: var(--rose-50);
 }
 .tracking-gen-btn:disabled { opacity: 0.6; cursor: default; }
+
+.shipping-cost-block {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: var(--cream-50);
+  border: 1px solid var(--cream-300);
+  border-radius: 10px;
+}
+.shipping-cost-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 6px;
+}
+.shipping-cost-row .input { flex: 1; min-width: 0; }
+.shipping-cost-save {
+  white-space: nowrap;
+  padding: 8px 12px;
+  font-size: 0.8125rem;
+  border-radius: var(--radius-md);
+}
+.shipping-cost-hint {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: 6px;
+}
+.shipping-cost-msg {
+  font-size: 0.8125rem;
+  color: #15803d;
+  margin-top: 6px;
+}
 </style>

@@ -89,6 +89,16 @@
         class="input filters-bar__search"
         placeholder="Rechercher par numéro, client…"
       />
+      <!-- View mode toggle -->
+      <div class="view-mode-toggle">
+        <button :class="{ active: viewMode === 'list' }" @click="setViewMode('list')">
+          📋 Liste
+        </button>
+        <button :class="{ active: viewMode === 'zone' }" @click="setViewMode('zone')">
+          📍 Par zone
+        </button>
+      </div>
+
       <!-- Export button -->
       <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -154,8 +164,63 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <div class="card">
+    <!-- ── Vue "Par zone" ── -->
+    <div v-if="viewMode === 'zone'" class="card">
+      <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
+      <div v-else-if="!zoneGroups.length" class="empty-state">Aucune commande à grouper.</div>
+      <div v-else class="zone-groups">
+        <div
+          v-for="g in zoneGroups"
+          :key="g.zone"
+          class="zone-group"
+          :class="{ 'zone-group--off': g.zone === 'Hors zone' }"
+        >
+          <button class="zone-group__head" @click="toggleZone(g.zone)">
+            <span class="zone-group__title">
+              <strong>{{ g.zone }}</strong>
+              <span class="zone-group__sub">{{ g.group }}</span>
+            </span>
+            <span class="zone-group__meta">
+              <span class="badge badge-gray">{{ g.count }} cmd</span>
+              <span class="zone-group__total">{{ formatPrice(g.total) }}</span>
+              <span class="zone-group__chevron" :class="{ open: openZones.has(g.zone) }">▾</span>
+            </span>
+          </button>
+          <div v-if="openZones.has(g.zone)" class="zone-group__body">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Client</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Statut</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="o in g.orders" :key="o.id">
+                  <td class="admin-table__mono">{{ o.number }}</td>
+                  <td>
+                    <div class="admin-table__client">{{ o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}` }}</div>
+                    <div class="admin-table__sub">{{ o.shipping_address?.phone ?? '' }}</div>
+                  </td>
+                  <td>{{ formatDate(o.created_at) }}</td>
+                  <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
+                  <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+                  <td class="admin-table__action">
+                    <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Détail →</RouterLink>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Vue Liste ── -->
+    <div v-else class="card">
       <div v-if="loading" class="loader-wrap">
         <div class="loader"></div>
       </div>
@@ -224,7 +289,7 @@
         </table>
       </div>
 
-      <!-- Pagination unifiée -->
+      <!-- Pagination unifiée (mode liste uniquement) -->
       <AdminPagination
         :current-page="pagination.current_page"
         :last-page="pagination.last_page"
@@ -265,6 +330,39 @@ function onOrderUpdated(updated) {
 const orders = ref([])
 const loading = ref(true)
 const pagination = ref({})
+
+// ── Mode d'affichage : liste paginée ou groupée par zone ──
+const viewMode  = ref('list')          // 'list' | 'zone'
+const zoneGroups = ref([])
+const openZones  = ref(new Set())
+
+function setViewMode(mode) {
+  if (viewMode.value === mode) return
+  viewMode.value = mode
+  if (mode === 'zone') fetchByZone()
+  else fetchOrders()
+}
+
+function toggleZone(zone) {
+  if (openZones.value.has(zone)) openZones.value.delete(zone)
+  else openZones.value.add(zone)
+  // Force réactivité (Set)
+  openZones.value = new Set(openZones.value)
+}
+
+async function fetchByZone() {
+  loading.value = true
+  try {
+    const params = {}
+    if (filters.status) params.status = filters.status
+    const { data } = await api.get('/admin/orders/by-zone', { params })
+    zoneGroups.value = data.data ?? []
+    // Ouvrir le premier groupe par défaut
+    if (zoneGroups.value.length) openZones.value = new Set([zoneGroups.value[0].zone])
+  } finally {
+    loading.value = false
+  }
+}
 
 const filters = reactive({
   status: '',
@@ -353,7 +451,8 @@ function debouncedFetch() {
 function setStatus(val) {
   filters.status = val
   filters.page = 1
-  fetchOrders()
+  if (viewMode.value === 'zone') fetchByZone()
+  else fetchOrders()
 }
 
 function changePage(page) {
@@ -379,7 +478,8 @@ function onPerPageUpdate(n) {
 function setStatusFilter(status) {
   filters.status = status
   filters.page = 1
-  fetchOrders()
+  if (viewMode.value === 'zone') fetchByZone()
+  else fetchOrders()
 }
 
 function fmt(v) {
@@ -498,6 +598,95 @@ onMounted(fetchOrders)
   color: var(--rose-600);
   background: var(--rose-50);
 }
+
+/* ── Toggle Vue Liste / Par zone ── */
+.view-mode-toggle {
+  display: inline-flex;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-full);
+  background: #fff;
+  overflow: hidden;
+}
+.view-mode-toggle button {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.view-mode-toggle button:hover { color: var(--rose-600); }
+.view-mode-toggle button.active {
+  background: var(--rose-500);
+  color: #fff;
+}
+
+/* ── Groupes par zone ── */
+.zone-groups {
+  display: flex;
+  flex-direction: column;
+}
+.zone-group {
+  border-bottom: 1px solid var(--cream-200);
+}
+.zone-group:last-child { border-bottom: none; }
+.zone-group--off .zone-group__title strong { color: var(--gold-600, #b45309); }
+
+.zone-group__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--cream-50);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition-fast);
+}
+.zone-group__head:hover { background: var(--cream-100); }
+.zone-group__title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.zone-group__title strong {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  color: var(--gray-800);
+}
+.zone-group__sub {
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+}
+.zone-group__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.zone-group__total {
+  font-weight: 700;
+  color: var(--rose-600);
+  font-size: 0.9375rem;
+}
+.zone-group__chevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+  color: var(--gray-400);
+}
+.zone-group__chevron.open { transform: rotate(180deg); }
+
+.zone-group__body {
+  padding: 0 var(--space-4) var(--space-3);
+  background: #fff;
+}
+.zone-group__body .admin-table { width: 100%; }
 
 /* ── Export panel ── */
 .export-panel {
