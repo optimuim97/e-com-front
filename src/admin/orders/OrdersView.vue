@@ -89,15 +89,17 @@
         class="input filters-bar__search"
         placeholder="Rechercher par numéro, client…"
       />
-      <!-- View mode toggle -->
-      <div class="view-mode-toggle">
-        <button :class="{ active: viewMode === 'list' }" @click="setViewMode('list')">
-          📋 Liste
-        </button>
-        <button :class="{ active: viewMode === 'zone' }" @click="setViewMode('zone')">
-          📍 Par zone
-        </button>
-      </div>
+      <!-- Group-by selector -->
+      <label class="group-by">
+        <span>Grouper par</span>
+        <select v-model="groupBy" @change="onGroupByChange" class="group-by__select">
+          <option value="">Aucun (liste)</option>
+          <option value="zone">Zone</option>
+          <option value="commune">Commune</option>
+          <option value="address">Adresse</option>
+          <option value="status">Statut</option>
+        </select>
+      </label>
 
       <!-- Export button -->
       <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
@@ -172,87 +174,74 @@
       @close="routeMap = null"
     />
 
-    <!-- ── Vue "Par zone" ── -->
-    <div v-if="viewMode === 'zone'" class="card">
+    <!-- ── Vue groupée (groupBy ≠ '') ── -->
+    <div v-if="groupBy" class="card">
       <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
-      <div v-else-if="!zoneGroups.length" class="empty-state">Aucune commande à grouper.</div>
+      <div v-else-if="!groupedOrders.length" class="empty-state">Aucune commande à grouper.</div>
       <div v-else class="zone-groups">
         <div
-          v-for="g in zoneGroups"
-          :key="g.zone"
+          v-for="g in groupedOrders"
+          :key="g.key"
           class="zone-group"
-          :class="{ 'zone-group--off': g.zone === 'Hors zone' }"
+          :class="{ 'zone-group--off': g.isOther }"
         >
-          <button class="zone-group__head" @click="toggleZone(g.zone)">
+          <button class="zone-group__head" @click="toggleGroup(g.key)">
             <span class="zone-group__title">
-              <strong>{{ g.zone }}</strong>
-              <span class="zone-group__sub">{{ g.group }}</span>
+              <strong>{{ groupIcon }} {{ g.label }}</strong>
+              <span v-if="g.sublabel" class="zone-group__sub">{{ g.sublabel }}</span>
             </span>
             <span class="zone-group__meta">
-              <span class="badge badge-gray">{{ g.count }} cmd</span>
+              <span class="badge badge-gray">{{ g.orders.length }} cmd</span>
               <span class="zone-group__total">{{ formatPrice(g.total) }}</span>
-              <span class="zone-group__chevron" :class="{ open: openZones.has(g.zone) }">▾</span>
+              <button
+                type="button"
+                class="commune-group__export"
+                @click.stop="openRouteMapForGroup(g)"
+                title="Voir l'itinéraire de tournée"
+              >🗺️</button>
+              <button
+                type="button"
+                class="commune-group__export"
+                @click.stop="exportGroupCSV(g)"
+                title="Exporter en CSV"
+              >⬇ CSV</button>
+              <span class="zone-group__chevron" :class="{ open: openGroups.has(g.key) }">▾</span>
             </span>
           </button>
-          <div v-if="openZones.has(g.zone)" class="zone-group__body">
-            <!-- Sous-groupes par commune pour faciliter la tournée du livreur -->
-            <div v-for="cg in communeGroupsOf(g)" :key="cg.commune" class="commune-group">
-              <div class="commune-group__head">
-                <span class="commune-group__name">📍 {{ cg.commune }}</span>
-                <div class="commune-group__actions">
-                  <span class="commune-group__count">{{ cg.orders.length }} cmd</span>
-                  <button
-                    type="button"
-                    class="commune-group__export"
-                    @click="openRouteMap(g, cg)"
-                    title="Voir l'itinéraire de tournée pour cette commune"
-                  >
-                    🗺️ Itinéraire
-                  </button>
-                  <button
-                    type="button"
-                    class="commune-group__export"
-                    @click="exportCommuneCSV(g, cg)"
-                    title="Exporter cette commune en CSV (pour le livreur)"
-                  >
-                    ⬇ CSV
-                  </button>
-                </div>
-              </div>
-              <table class="admin-table">
-                <thead>
-                  <tr>
-                    <th>N°</th>
-                    <th>Client</th>
-                    <th>Adresse</th>
-                    <th>Date</th>
-                    <th>Total</th>
-                    <th>Statut</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="o in cg.orders" :key="o.id">
-                    <td class="admin-table__mono">{{ o.number }}</td>
-                    <td>
-                      <div class="admin-table__client">{{ o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}` }}</div>
-                      <a
-                        v-if="o.shipping_address?.phone"
-                        :href="`tel:${o.shipping_address.phone}`"
-                        class="admin-table__phone"
-                      >📞 {{ o.shipping_address.phone }}</a>
-                    </td>
-                    <td class="admin-table__sub">{{ o.shipping_address?.address_line1 ?? '—' }}</td>
-                    <td>{{ formatDate(o.created_at) }}</td>
-                    <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
-                    <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
-                    <td class="admin-table__action">
-                      <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Détail →</RouterLink>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div v-if="openGroups.has(g.key)" class="zone-group__body">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>N°</th>
+                  <th>Client</th>
+                  <th>Adresse</th>
+                  <th>Date</th>
+                  <th>Total</th>
+                  <th>Statut</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="o in g.orders" :key="o.id">
+                  <td class="admin-table__mono">{{ o.number }}</td>
+                  <td>
+                    <div class="admin-table__client">{{ o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}` }}</div>
+                    <a
+                      v-if="o.shipping_address?.phone"
+                      :href="`tel:${o.shipping_address.phone}`"
+                      class="admin-table__phone"
+                    >📞 {{ o.shipping_address.phone }}</a>
+                  </td>
+                  <td class="admin-table__sub">{{ o.shipping_address?.address_line1 ?? '—' }}</td>
+                  <td>{{ formatDate(o.created_at) }}</td>
+                  <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
+                  <td><span :class="statusBadge(o.status)">{{ statusLabel(o.status) }}</span></td>
+                  <td class="admin-table__action">
+                    <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Détail →</RouterLink>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -330,6 +319,7 @@
 
       <!-- Pagination unifiée (mode liste uniquement) -->
       <AdminPagination
+        v-if="!groupBy"
         :current-page="pagination.current_page"
         :last-page="pagination.last_page"
         :total="pagination.total"
@@ -371,96 +361,153 @@ const orders = ref([])
 const loading = ref(true)
 const pagination = ref({})
 
-// ── Mode d'affichage : liste paginée ou groupée par zone ──
-const viewMode  = ref('list')          // 'list' | 'zone'
-const zoneGroups = ref([])
-const openZones  = ref(new Set())
+// ── Mode d'affichage : liste paginée ou groupée selon une dimension ──
+// groupBy: '' = liste paginée | 'zone' | 'commune' | 'address' | 'status'
+const groupBy    = ref('')
+const allOrders  = ref([])             // commandes brutes pour le regroupement client-side
+const openGroups = ref(new Set())
 
-function setViewMode(mode) {
-  if (viewMode.value === mode) return
-  viewMode.value = mode
-  if (mode === 'zone') fetchByZone()
+const groupIcon = computed(() => ({
+  zone:    '📍',
+  commune: '🏘️',
+  address: '🏠',
+  status:  '🏷️',
+}[groupBy.value] ?? ''))
+
+// Calcule les groupes selon la dimension choisie. Dérivé de allOrders.
+const groupedOrders = computed(() => {
+  if (!groupBy.value) return []
+  const buckets = new Map()
+
+  for (const o of allOrders.value) {
+    let key, label, sublabel = '', isOther = false
+    const a = o.shipping_address || {}
+
+    switch (groupBy.value) {
+      case 'zone': {
+        const z = o.shipping_zone
+        key      = z?.name || '__off__'
+        label    = z?.name || 'Hors zone'
+        sublabel = z?.group || ''
+        isOther  = !z
+        break
+      }
+      case 'commune': {
+        const c = (a.commune || a.city || '').trim()
+        key      = c || '__none__'
+        label    = c || 'Sans commune'
+        sublabel = a.country || ''
+        isOther  = !c
+        break
+      }
+      case 'address': {
+        // Normalisation : lowercase, accents retirés, espaces collapsés.
+        const raw  = (a.address_line1 || '').trim()
+        const norm = raw.toLowerCase()
+          .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+          .replace(/\s+/g, ' ')
+        key      = norm || '__none__'
+        label    = raw || 'Sans adresse'
+        sublabel = [a.commune, a.city].filter(Boolean).join(', ')
+        isOther  = !raw
+        break
+      }
+      case 'status': {
+        key      = o.status
+        label    = statusLabel(o.status)
+        break
+      }
+    }
+
+    if (!buckets.has(key)) {
+      buckets.set(key, { key, label, sublabel, isOther, orders: [], total: 0 })
+    }
+    const b = buckets.get(key)
+    b.orders.push(o)
+    b.total += Number(o.total) || 0
+  }
+
+  // Tri : groupes "Autre" (hors zone, sans commune, sans adresse) en dernier.
+  return [...buckets.values()].sort((a, b) => {
+    if (a.isOther && !b.isOther) return 1
+    if (b.isOther && !a.isOther) return -1
+    return a.label.localeCompare(b.label, 'fr')
+  })
+})
+
+function onGroupByChange() {
+  if (groupBy.value) fetchAllForGrouping()
   else fetchOrders()
 }
 
-function toggleZone(zone) {
-  if (openZones.value.has(zone)) openZones.value.delete(zone)
-  else openZones.value.add(zone)
-  // Force réactivité (Set)
-  openZones.value = new Set(openZones.value)
+function toggleGroup(key) {
+  if (openGroups.value.has(key)) openGroups.value.delete(key)
+  else openGroups.value.add(key)
+  openGroups.value = new Set(openGroups.value)
 }
 
-// Export CSV d'une commune (feuille de tournée pour le livreur).
-function exportCommuneCSV(zoneGroup, communeGroup) {
+// Récupère toutes les commandes (limit 500) pour regroupement client-side.
+async function fetchAllForGrouping() {
+  loading.value = true
+  try {
+    const params = { limit: 500 }
+    if (filters.status) params.status = filters.status
+    const { data } = await api.get('/admin/orders/by-zone', { params })
+    // Aplatir les zones du backend en liste plate de commandes (shipping_zone est dans chaque commande)
+    allOrders.value = (data.data ?? []).flatMap(g =>
+      g.orders.map(o => ({
+        ...o,
+        // Le backend ne réinjecte pas shipping_zone dans chaque commande individuelle :
+        // on le reconstruit à partir du groupe parent.
+        shipping_zone: g.zone === 'Hors zone' ? null : { name: g.zone, group: g.group },
+      }))
+    )
+    openGroups.value = new Set()
+    if (groupedOrders.value.length) openGroups.value = new Set([groupedOrders.value[0].key])
+  } finally {
+    loading.value = false
+  }
+}
+
+// Export CSV d'un groupe (feuille de tournée).
+function exportGroupCSV(group) {
   const escape = (v) => {
     const s = String(v ?? '').replace(/"/g, '""')
     return /[",;\n]/.test(s) ? `"${s}"` : s
   }
-  const sep = ';' // Excel FR friendly
-  const header = ['N°', 'Client', 'Téléphone', 'Adresse', 'Total', 'Statut', 'Date']
-  const rows = communeGroup.orders.map(o => [
-    o.number,
-    o.user?.name ?? `${o.shipping_address?.first_name ?? ''} ${o.shipping_address?.last_name ?? ''}`.trim(),
-    o.shipping_address?.phone ?? '',
-    o.shipping_address?.address_line1 ?? '',
-    o.total ?? '',
-    statusLabel(o.status),
-    formatDate(o.created_at),
-  ])
-  // BOM UTF-8 pour qu'Excel ouvre les accents correctement
-  const csv = '﻿' + [header, ...rows].map(r => r.map(escape).join(sep)).join('\n')
+  const sep    = ';'
+  const header = ['N°', 'Client', 'Téléphone', 'Adresse', 'Commune', 'Total', 'Statut', 'Date']
+  const rows   = group.orders.map(o => {
+    const a = o.shipping_address || {}
+    return [
+      o.number,
+      o.user?.name ?? `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim(),
+      a.phone ?? '',
+      a.address_line1 ?? '',
+      a.commune ?? a.city ?? '',
+      o.total ?? '',
+      statusLabel(o.status),
+      formatDate(o.created_at),
+    ]
+  })
+  const csv  = '﻿' + [header, ...rows].map(r => r.map(escape).join(sep)).join('\n')
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const url  = URL.createObjectURL(blob)
-  const a    = document.createElement('a')
   const safe = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_')
-  a.href = url
-  a.download = `tournee_${safe(zoneGroup.zone)}_${safe(communeGroup.commune)}_${new Date().toISOString().slice(0,10)}.csv`
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `tournee_${groupBy.value}_${safe(group.label)}_${new Date().toISOString().slice(0,10)}.csv`
   document.body.appendChild(a)
   a.click()
   a.remove()
   URL.revokeObjectURL(url)
 }
 
-// Sous-groupage par commune dans une zone (aide le livreur à organiser la tournée).
-// Trie alphabétique des communes, "—" en dernier pour les adresses sans commune.
-function communeGroupsOf(zoneGroup) {
-  const buckets = new Map()
-  for (const o of zoneGroup.orders) {
-    const commune = (o.shipping_address?.commune || o.shipping_address?.city || '—').trim()
-    if (!buckets.has(commune)) buckets.set(commune, [])
-    buckets.get(commune).push(o)
-  }
-  return [...buckets.entries()]
-    .map(([commune, orders]) => ({ commune, orders }))
-    .sort((a, b) => {
-      if (a.commune === '—') return 1
-      if (b.commune === '—') return -1
-      return a.commune.localeCompare(b.commune, 'fr')
-    })
-}
-
 // ── Modal itinéraire ─────────────────────────────────────────────────────────
 const routeMap = ref(null) // { title, orders } | null
 
-function openRouteMap(zoneGroup, communeGroup) {
-  routeMap.value = {
-    title:  `${zoneGroup.zone} · ${communeGroup.commune}`,
-    orders: communeGroup.orders,
-  }
-}
-
-async function fetchByZone() {
-  loading.value = true
-  try {
-    const params = {}
-    if (filters.status) params.status = filters.status
-    const { data } = await api.get('/admin/orders/by-zone', { params })
-    zoneGroups.value = data.data ?? []
-    // Ouvrir le premier groupe par défaut
-    if (zoneGroups.value.length) openZones.value = new Set([zoneGroups.value[0].zone])
-  } finally {
-    loading.value = false
-  }
+function openRouteMapForGroup(group) {
+  routeMap.value = { title: group.label, orders: group.orders }
 }
 
 const filters = reactive({
@@ -550,7 +597,7 @@ function debouncedFetch() {
 function setStatus(val) {
   filters.status = val
   filters.page = 1
-  if (viewMode.value === 'zone') fetchByZone()
+  if (groupBy.value) fetchAllForGrouping()
   else fetchOrders()
 }
 
@@ -577,7 +624,7 @@ function onPerPageUpdate(n) {
 function setStatusFilter(status) {
   filters.status = status
   filters.page = 1
-  if (viewMode.value === 'zone') fetchByZone()
+  if (groupBy.value) fetchAllForGrouping()
   else fetchOrders()
 }
 
@@ -698,28 +745,39 @@ onMounted(fetchOrders)
   background: var(--rose-50);
 }
 
-/* ── Toggle Vue Liste / Par zone ── */
-.view-mode-toggle {
+/* ── Sélecteur "Grouper par" ── */
+.group-by {
   display: inline-flex;
-  border: 1.5px solid var(--cream-300);
-  border-radius: var(--radius-full);
-  background: #fff;
-  overflow: hidden;
-}
-.view-mode-toggle button {
-  padding: 6px 14px;
-  background: transparent;
-  border: none;
-  font-size: 0.8125rem;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--gray-500);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
-.view-mode-toggle button:hover { color: var(--rose-600); }
-.view-mode-toggle button.active {
-  background: var(--rose-500);
-  color: #fff;
+.group-by__select {
+  padding: 6px 28px 6px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none' stroke='%23999' stroke-width='1.8' stroke-linecap='round'%3E%3Cpolyline points='1 1 5 5 9 1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: all var(--transition-fast);
+  letter-spacing: normal;
+  text-transform: none;
+}
+.group-by__select:hover,
+.group-by__select:focus {
+  border-color: var(--rose-400);
+  color: var(--rose-600);
+  outline: none;
 }
 
 /* ── Groupes par zone ── */
