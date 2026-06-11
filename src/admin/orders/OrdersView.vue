@@ -334,7 +334,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
@@ -363,7 +363,7 @@ const pagination = ref({})
 
 // ── Mode d'affichage : liste paginée ou groupée selon une dimension ──
 // groupBy: '' = liste paginée | 'zone' | 'commune' | 'address' | 'status'
-const groupBy    = ref('')
+const groupBy    = ref('')             // défaut : aucun groupement (liste paginée)
 const allOrders  = ref([])             // commandes brutes pour le regroupement client-side
 const openGroups = ref(new Set())
 
@@ -691,7 +691,10 @@ function paymentLabel(method) {
   return map[method] ?? method
 }
 
-onMounted(fetchOrders)
+onMounted(() => {
+  if (groupBy.value) fetchAllForGrouping()
+  else fetchOrders()
+})
 </script>
 
 <style scoped>
