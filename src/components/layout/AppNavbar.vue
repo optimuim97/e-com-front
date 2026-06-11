@@ -1,7 +1,7 @@
 <template>
   <header class="navbar" :class="{ 'navbar--scrolled': isScrolled, 'navbar--open': mobileMenuOpen }">
     <!-- Bande d'annonce -->
-    <div class="navbar__announce" v-if="!announceDismissed">
+    <div class="navbar__announce" v-if="settings.announceEnabled && !announceDismissed">
       <div class="navbar__announce-inner container">
         <span>{{ settings.announceText }}</span>
         <button class="navbar__announce-close" @click="announceDismissed = true" :aria-label="$t('common.close')">

@@ -335,6 +335,16 @@
             <input v-model="form.home_promo_banner" type="text" class="input" placeholder="🌹 -20% sur tout · Code ROSA20" maxlength="120" />
             <p class="hint">Apparaît au-dessus de la navbar. Laissez vide pour masquer.</p>
           </div>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('announce_bar_enabled')" class="toggle" :class="{ 'toggle--on': form.announce_bar_enabled === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Afficher la bande d'annonce</strong>
+              <span>Active ou désactive la barre rose en haut du site (livraison offerte, paiements sécurisés, bandeau promo…).</span>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -507,6 +517,7 @@ const form = ref({
   home_hero_images:     '',
   home_flash_label:     'Ventes flash',
   home_promo_banner:    '',
+  announce_bar_enabled: 'true',
   // WhatsApp
   whatsapp_admin_number:    '',
   whatsapp_notify_customer: 'false',

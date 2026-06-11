@@ -91,6 +91,14 @@ export const useSettingsStore = defineStore('settings', () => {
     return list
   })
 
+  /* Annonce barre (navbar) — active/désactivable via admin (défaut: activée) */
+  const announceEnabled = computed(() => {
+    const v = data.value.announce_bar_enabled
+    // Si la clé n'existe pas encore en DB, défaut = activée (rétrocompat)
+    if (v === undefined || v === null || v === '') return true
+    return v === true || v === 'true' || v === '1' || v === 1
+  })
+
   /* Annonce barre (navbar) — override par home_promo_banner si défini */
   const announceText = computed(() => {
     if (data.value.home_promo_banner) return data.value.home_promo_banner
@@ -181,7 +189,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // Hero
     heroImageUrl, heroImages,
     // Announce
-    announceText,
+    announceText, announceEnabled,
     // Réseaux sociaux
     socialFacebook, socialInstagram, socialTikTok,
     socialYouTube, socialTwitter, socialPinterest,
