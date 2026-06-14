@@ -121,6 +121,7 @@ import { ref, computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
+import { useCurrencyStore } from '@/stores/currency';
 
 
 const props = defineProps({
@@ -128,6 +129,7 @@ const props = defineProps({
 });
 
 const { t } = useI18n();
+const currency = useCurrencyStore();
 const emit = defineEmits(['add-to-cart', 'toggle-wishlist']);
 
 const hovered    = ref(false);
@@ -146,9 +148,7 @@ const discountPercent = computed(() => {
 });
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency', currency: 'XOF', minimumFractionDigits: 0,
-  }).format(val);
+  return currency.format(val);
 }
 
 function addToCart() {
