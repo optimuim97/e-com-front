@@ -1,82 +1,39 @@
 # ══════════════════════════════════════════════════════════════════════
-# Rosa Beauty — Déploiement automatique sur push
+# Déploiement automatique sur push (frontend)
 #
-# Déclenche `deploy.sh` sur le VPS via SSH dès qu'on push sur main.
-# Le script pull les 2 sous-repos (commerce + commerce-front),
+# Déclenche deploy.sh sur le VPS via SSH. Le script pull les 2 sous-repos,
 # rebuild les images Docker, redémarre les containers, joue les migrations.
 #
-# Secrets requis dans GitHub → Settings → Secrets → Actions :
-#   - VPS_HOST   : ex. vps120941.softara.tech (ou IP)
-#   - VPS_USER   : ex. root
-#   - VPS_SSH_KEY: clé privée OpenSSH (cat ~/.ssh/id_ed25519)
-#   - VPS_PORT   : optionnel, défaut 22
-#   - DEPLOY_PATH: optionnel, défaut /var/www/rosabeauty
+# Secrets requis (Settings → Secrets and variables → Actions) :
+#   VPS_HOST    ex. vps120941.softara.tech (ou IP)
+#   VPS_USER    ex. root
+#   VPS_SSH_KEY clé privée OpenSSH complète (contenu de ~/.ssh/id_ed25519)
+#   VPS_PORT    optionnel, défaut 22
 # ══════════════════════════════════════════════════════════════════════
 name: Deploy to production
 
 on:
   push:
     branches: [main]
-  workflow_dispatch:        # permet de déclencher manuellement depuis l'UI GitHub
+  workflow_dispatch:
 
 concurrency:
-  group: prod-deploy        # évite 2 déploiements en parallèle
+  group: prod-deploy
   cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
-      - name: Setup SSH
-        env:
-          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
-          VPS_HOST:    ${{ secrets.VPS_HOST }}
-          VPS_PORT:    ${{ secrets.VPS_PORT || '22' }}
-        run: |
-          set +e   # ne pas casser si ssh-keyscan retourne non-zero
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-
-          # Vérifie que les secrets sont définis (sans logger leur valeur)
-          [ -z "$VPS_HOST" ]    && { echo "::error::Secret VPS_HOST manquant";    exit 1; }
-          [ -z "$VPS_SSH_KEY" ] && { echo "::error::Secret VPS_SSH_KEY manquant"; exit 1; }
-
-          # Écrit la clé via printf pour préserver les newlines (echo peut tronquer)
-          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-
-          # Sanity check format clé (sans afficher son contenu)
-          if ! grep -q "BEGIN .* PRIVATE KEY" ~/.ssh/id_ed25519; then
-            echo "::error::VPS_SSH_KEY n'a pas l'air d'une clé privée OpenSSH (manque l'en-tête BEGIN)"
-            exit 1
-          fi
-          ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null 2>&1 \
-            || { echo "::error::VPS_SSH_KEY invalide (impossible d'extraire la pubkey)"; exit 1; }
-
-          # ssh-keyscan — non bloquant ; en cas d'échec on désactive StrictHostKeyChecking.
-          # NB : on n'utilise pas de heredoc (incompatible avec l'indentation YAML).
-          ssh-keyscan -p "$VPS_PORT" -T 10 "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          if [ ! -s ~/.ssh/known_hosts ]; then
-            echo "::warning::ssh-keyscan vide — on désactive StrictHostKeyChecking pour ce run"
-            printf 'Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null\n' > ~/.ssh/config
-            chmod 600 ~/.ssh/config
-          fi
-
-          echo "SSH setup OK"
-
       - name: Deploy on VPS
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/rosabeauty' }}
-        run: |
-          # Commande inline (pas de heredoc) : DEPLOY_PATH est résolu côté runner.
-          ssh -p "$VPS_PORT" -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
-            "set -e; cd '$DEPLOY_PATH'; echo '[CI] frontend push — running deploy.sh'; bash deploy.sh"
-
-      - name: Cleanup SSH
-        if: always()
-        run: rm -f ~/.ssh/id_ed25519
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd /var/www/rosabeauty
+            echo "[CI] frontend push — running deploy.sh"
+            bash deploy.sh
