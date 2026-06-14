@@ -55,15 +55,12 @@ jobs:
           ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null 2>&1 \
             || { echo "::error::VPS_SSH_KEY invalide (impossible d'extraire la pubkey)"; exit 1; }
 
-          # ssh-keyscan — non bloquant ; en cas d'échec on ajoute juste StrictHostKeyChecking=no
+          # ssh-keyscan — non bloquant ; en cas d'échec on désactive StrictHostKeyChecking.
+          # NB : on n'utilise pas de heredoc (incompatible avec l'indentation YAML).
           ssh-keyscan -p "$VPS_PORT" -T 10 "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
           if [ ! -s ~/.ssh/known_hosts ]; then
             echo "::warning::ssh-keyscan vide — on désactive StrictHostKeyChecking pour ce run"
-            cat > ~/.ssh/config <<EOF
-Host *
-  StrictHostKeyChecking no
-  UserKnownHostsFile=/dev/null
-EOF
+            printf 'Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null\n' > ~/.ssh/config
             chmod 600 ~/.ssh/config
           fi
 
@@ -76,12 +73,9 @@ EOF
           VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/rosabeauty' }}
         run: |
-          ssh -p "$VPS_PORT" -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" bash -se <<'EOF'
-            set -e
-            cd "${DEPLOY_PATH:-/var/www/rosabeauty}"
-            echo "[CI] Triggered by frontend push — running deploy.sh"
-            bash deploy.sh
-          EOF
+          # Commande inline (pas de heredoc) : DEPLOY_PATH est résolu côté runner.
+          ssh -p "$VPS_PORT" -i ~/.ssh/id_ed25519 "$VPS_USER@$VPS_HOST" \
+            "set -e; cd '$DEPLOY_PATH'; echo '[CI] frontend push — running deploy.sh'; bash deploy.sh"
 
       - name: Cleanup SSH
         if: always()
