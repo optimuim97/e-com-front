@@ -113,6 +113,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { RouterLink } from 'vue-router'
 import { useWishlistStore } from '@/features/wishlist/wishlist.store'
 import { useCartStore } from '@/features/cart/cart.store'
@@ -129,7 +130,7 @@ function formatDate(val) {
 }
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 
 async function addToCart(item) {

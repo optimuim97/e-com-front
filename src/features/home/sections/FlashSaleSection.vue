@@ -110,16 +110,10 @@ onBeforeUnmount(() => clearInterval(timer))
 <style scoped>
 .flash-section {
   padding: var(--space-12) 0;
-  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 50%, #fee2e2 100%);
+  /* Rose poudré doux, cohérent avec l'identité — fini le dégradé orange criard */
+  background: linear-gradient(180deg, var(--rose-50, #fdeef2) 0%, var(--cream-50, #fdf8f4) 100%);
   position: relative;
   overflow: hidden;
-}
-.flash-section::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, transparent, var(--rose-500), #f59e0b, var(--rose-500), transparent);
 }
 
 .flash-header {
@@ -135,11 +129,12 @@ onBeforeUnmount(() => clearInterval(timer))
 
 .flash-eyebrow {
   display: inline-block;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #c2410c;
+  color: var(--rose-600, #c0386b);
   margin-bottom: var(--space-2);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .flash-title {
@@ -153,10 +148,10 @@ onBeforeUnmount(() => clearInterval(timer))
 /* Countdown */
 .flash-countdown {
   background: white;
-  border: 2px solid #f59e0b;
-  border-radius: var(--radius-xl);
+  border: 1px solid var(--rose-200, #fbd7e1);
+  border-radius: var(--radius-lg);
   padding: var(--space-3) var(--space-5);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.2);
+  box-shadow: 0 6px 20px rgba(232, 51, 109, 0.08);
   text-align: center;
 }
 .flash-countdown__label {
@@ -174,7 +169,7 @@ onBeforeUnmount(() => clearInterval(timer))
   justify-content: center;
   gap: 4px;
   font-family: var(--font-display);
-  color: #c2410c;
+  color: var(--rose-600, #c0386b);
 }
 .flash-cell {
   display: inline-flex;
@@ -244,14 +239,14 @@ onBeforeUnmount(() => clearInterval(timer))
 .flash-card__badge {
   position: absolute;
   top: 12px; left: 12px;
-  background: linear-gradient(135deg, #ef4444, #c2410c);
+  background: var(--rose-500, #e8336d);
   color: white;
-  font-size: 0.875rem;
-  font-weight: 700;
-  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 5px 12px;
   border-radius: var(--radius-full);
   letter-spacing: 0.02em;
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(232, 51, 109, 0.25);
 }
 
 .flash-card__body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }

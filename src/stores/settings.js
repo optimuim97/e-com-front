@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api'
+import { useCurrencyStore } from '@/stores/currency'
 
 /* ─── Icônes SVG des réseaux sociaux ──────────────────────────────────────── */
 const SOCIAL_ICONS = {
@@ -47,6 +48,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const shopCountry  = get('shop_country',  '')
   const shopLogoUrl  = get('shop_logo_url', '')
   const shopCurrency = get('shop_currency', 'XOF')
+  const shopCurrencyIsActive = get('shop_currency_is_active', false)
 
   /* ── Livraison ────────────────────────────────────────────────────────── */
   const shippingDefaultCost   = computed(() => Number(data.value.shipping_default_cost   || 0))
@@ -155,22 +157,23 @@ export const useSettingsStore = defineStore('settings', () => {
   const homeHeroSubtitle = get('home_hero_subtitle', '')
   const homeFlashLabel   = get('home_flash_label',   'Ventes flash')
   const homePromoBanner  = get('home_promo_banner',  '')
+  // Variante visuelle du hero : '1' plein écran · '2' split · '3' classique
+  const homeHeroVariant  = get('home_hero_variant',  '1')
 
-  /* ── Formatage prix selon la devise ──────────────────────────────────── */
+  /* Met à jour une clé localement (sans refetch) — utilisé par le switcher admin */
+  function setLocal(key, value) {
+    data.value = { ...data.value, [key]: value }
+  }
+
+  /* ── Formatage prix : délègue au store de devise (multi-devises XOF/EUR) ─
+     Le montant reçu est exprimé dans la devise de base (shop_currency) ;
+     le store de devise le convertit/formate selon le choix du visiteur. */
   function formatPrice(amount) {
-    const currency = shopCurrency.value || 'XOF'
-    const locale   = currency === 'EUR' ? 'fr-FR'
-                   : currency === 'USD' ? 'en-US'
-                   : 'fr-FR'
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: currency === 'XOF' ? 0 : 2,
-    }).format(amount ?? 0)
+    return useCurrencyStore().format(amount ?? 0)
   }
 
   return {
-    data, ready, fetch,
+    data, ready, fetch, setLocal,
     // Boutique
     shopName, shopTagline, shopEmail, shopPhone,
     shopAddress, shopCity, shopCountry, shopLogoUrl, shopCurrency,
@@ -200,6 +203,7 @@ export const useSettingsStore = defineStore('settings', () => {
     seoMetaTitle, seoMetaDescription, seoOgImage,
     // Home
     homeHeroEyebrow, homeHeroTitle, homeHeroSubtitle, homeFlashLabel, homePromoBanner,
+    homeHeroVariant,
     // Helpers
     formatPrice,
   }

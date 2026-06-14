@@ -129,6 +129,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
@@ -275,7 +276,7 @@ function goToProfile() {
 }
 
 function fmtPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 </script>
 

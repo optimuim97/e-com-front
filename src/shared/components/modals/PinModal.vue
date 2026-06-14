@@ -44,7 +44,12 @@
       <button v-if="hasPin" @click="$emit('change-pin')" class="pin-modal__change">
         {{ $t('pin.changePin') }}
       </button>
+      <button v-if="hasPin" type="button" class="pin-modal__forgot" @click="showForgot = true">
+        Code PIN oublié ?
+      </button>
     </div>
+
+    <ForgotSecretModal v-if="showForgot" mode="pin" @close="showForgot = false" @reset="onForgotReset" />
   </div>
 </template>
 
@@ -53,6 +58,7 @@ import { ref, computed, nextTick, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePinStore } from '@/stores/pin'
 import { useAuthStore } from '@/features/auth/auth.store'
+import ForgotSecretModal from '@/features/auth/ForgotSecretModal.vue'
 
 const { t } = useI18n()
 const emit = defineEmits(['verified', 'change-pin'])
@@ -62,10 +68,18 @@ const authStore = useAuthStore()
 
 const hasPin = computed(() => authStore.user?.has_pin ?? true)
 
-const digits  = ref(['', '', '', ''])
-const inputs  = ref([])
-const loading = ref(false)
-const error   = ref('')
+const digits      = ref(['', '', '', ''])
+const inputs      = ref([])
+const loading     = ref(false)
+const error       = ref('')
+const showForgot  = ref(false)
+
+function onForgotReset() {
+  // PIN remis à zéro côté backend → reset l'input, l'utilisateur saisit son nouveau PIN
+  digits.value = ['', '', '', '']
+  error.value  = 'Code PIN réinitialisé. Saisissez le nouveau.'
+  nextTick(() => inputs.value[0]?.focus())
+}
 
 const pin = computed(() => digits.value.join(''))
 
@@ -232,4 +246,15 @@ async function submit() {
   transition: color var(--transition-fast);
 }
 .pin-modal__change:hover { color: var(--rose-500); }
+
+.pin-modal__forgot {
+  margin-top: var(--space-2);
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  color: var(--rose-600);
+  cursor: pointer;
+  padding: 0;
+}
+.pin-modal__forgot:hover { text-decoration: underline; }
 </style>

@@ -256,12 +256,25 @@
           >{{ $t('reviews.next') }}</button>
         </div>
       </section>
+
+      <!-- ─── Produits similaires ─────────────────────────────────── -->
+      <section v-if="related.length" class="related-section">
+        <h2 class="related-section__title">Vous aimerez aussi</h2>
+        <div class="related-grid">
+          <ProductCard
+            v-for="p in related"
+            :key="p.id"
+            :product="p"
+          />
+        </div>
+      </section>
     </div>
   </main>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
@@ -271,6 +284,7 @@ import { useAuthStore } from '@/features/auth/auth.store'
 import StarRating from '@/features/reviews/StarRating.vue'
 import { reviewApi } from '@/features/reviews/review.api'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
+import ProductCard from '@/components/shop/ProductCard.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -286,6 +300,18 @@ const selectedVariant = ref(null)
 const qty = ref(1)
 const cartLoading = ref(false)
 const cartSuccess = ref(false)
+
+// ─── Produits similaires ──────────────────────────────────────────
+const related = ref([])
+
+async function loadRelated() {
+  try {
+    const { data } = await api.get(`/products/${route.params.slug}/related`)
+    related.value = data.data ?? data
+  } catch {
+    related.value = []
+  }
+}
 
 // ─── Reviews state ────────────────────────────────────────────────
 const reviews        = ref([])
@@ -384,10 +410,10 @@ async function addToCart() {
 }
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 
-onMounted(() => { fetchProduct(); loadReviews() })
+onMounted(() => { fetchProduct(); loadReviews(); loadRelated() })
 watch(() => route.params.slug, () => {
   fetchProduct()
   reviewsPage.value = 1
@@ -395,6 +421,9 @@ watch(() => route.params.slug, () => {
   reviewAlreadyExists.value = false
   reviewForm.value = { rating: 0, title: '', comment: '' }
   loadReviews()
+  loadRelated()
+  // Remonte en haut pour ne pas rester scrollé sur les avis du produit précédent
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 })
 </script>
 
@@ -875,4 +904,25 @@ watch(() => route.params.slug, () => {
   font-size: 0.875rem;
   color: var(--gray-500);
 }
+
+/* ── Produits similaires ── */
+.related-section {
+  margin-top: var(--space-16);
+  padding-top: var(--space-10);
+  border-top: 2px solid var(--cream-200);
+}
+.related-section__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: var(--space-8);
+}
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+@media (max-width: 1024px) { .related-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px)  { .related-grid { grid-template-columns: 1fr; } }
 </style>

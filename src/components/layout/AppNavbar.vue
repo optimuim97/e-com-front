@@ -109,6 +109,9 @@
 
       <!-- Actions droite -->
       <div class="navbar__actions">
+        <!-- Devise -->
+        <CurrencySwitcher class="hide-mobile" v-if="shopCurrencyIsActive"/>
+
         <!-- Language switcher -->
         <LanguageSwitcher />
 
@@ -209,6 +212,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { useHomeStore }     from '@/features/home/home.store'
 import api from '@/api'
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher.vue'
+import CurrencySwitcher from '@/components/ui/CurrencySwitcher.vue'
 
 const props = defineProps({
   cartCount:     { type: Number, default: 0 },
@@ -242,9 +246,10 @@ const navLinks = computed(() => [
 ])
 
 const spacerHeight = computed(() => {
-  const base     = 96   // hauteur réelle de navbar__main
-  const announce = announceDismissed.value ? 0 : 40
-  return base + announce
+  const base = 96   // hauteur réelle de navbar__main
+  // La bande compte seulement si activée côté admin ET pas fermée par le visiteur
+  const announceVisible = settings.announceEnabled && !announceDismissed.value
+  return base + (announceVisible ? 40 : 0)
 })
 
 // Expose la hauteur totale comme variable CSS → tous les sticky en dessous s'ajustent

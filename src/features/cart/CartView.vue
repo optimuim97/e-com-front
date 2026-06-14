@@ -123,6 +123,7 @@
 
 <script setup>
 import {onMounted, ref} from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
 import { RouterLink } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { XMarkIcon, PlusIcon, MinusIcon } from '@heroicons/vue/24/outline';
@@ -169,7 +170,7 @@ async function removeCoupon() {
 }
 
 function formatPrice(price) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price ?? 0);
+  return useCurrencyStore().format(price ?? 0);
 }
 
 async function applyCoupon() {

@@ -447,6 +447,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCartStore }     from '@/features/cart/cart.store'
@@ -822,7 +823,7 @@ function onPinRevealed() {
 }
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 </script>
 

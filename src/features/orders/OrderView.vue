@@ -215,6 +215,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
@@ -334,7 +335,7 @@ function formatDate(val) {
 }
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 
 function statusLabel(status) {

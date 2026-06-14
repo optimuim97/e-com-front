@@ -259,6 +259,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useCurrencyStore } from '@/stores/currency'
 import { useRouter, RouterLink } from 'vue-router'
 import api from '@/api'
 import { useAuthStore } from '@/features/auth/auth.store'
@@ -408,7 +409,7 @@ const STATUS_LABELS = {
 function statusLabel(s) { return STATUS_LABELS[s] ?? s }
 
 function fmt(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  return useCurrencyStore().format(val ?? 0)
 }
 
 // Icône œil ouvert / barré pour les champs mot de passe

@@ -1,5 +1,8 @@
 <template>
-  <div class="rosa-player-wrap">
+  <div
+    class="rosa-player-wrap"
+    :style="{ aspectRatio: aspectRatio, maxHeight: maxHeight }"
+  >
     <video
       ref="videoEl"
       class="video-js vjs-rosa-theme"
@@ -23,6 +26,10 @@ import 'video.js/dist/video-js.css'
 const props = defineProps({
   src:    { type: String, required: true },
   poster: { type: String, default: '' },
+  // Cadre maîtrisé : la vidéo remplit ce conteneur (letterbox, jamais rognée),
+  // au lieu de prendre la hauteur native de la source (souvent portrait → trop haut).
+  aspectRatio: { type: String, default: '4 / 5' },
+  maxHeight:   { type: String, default: '70vh' },
 })
 
 const videoEl = ref(null)
@@ -31,7 +38,7 @@ let player    = null
 onMounted(() => {
   player = videojs(videoEl.value, {
     controls:    true,
-    fluid:       true,          // responsive — suit la largeur du conteneur
+    fill:        true,          // remplit le conteneur (taille maîtrisée via CSS)
     playbackRates: [0.75, 1, 1.25, 1.5],
     controlBar: {
       children: [
@@ -63,19 +70,28 @@ onBeforeUnmount(() => {
  * Toutes les règles sont NON-scoped (video.js injecte dans le body).
  */
 
-/* Conteneur fluid */
+/* Conteneur à cadre maîtrisé (aspect-ratio + max-height pilotés par les props) */
 .rosa-player-wrap {
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 12px 48px rgba(232, 51, 109, 0.18), 0 4px 16px rgba(0,0,0,0.10);
   background: #141213;
   position: relative;
+  width: 100%;
+  margin-inline: auto;
 }
 
-/* Wrapper video.js */
+/* Wrapper video.js — remplit le conteneur (mode fill) */
 .vjs-rosa-theme {
   border-radius: 20px;
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* La vidéo elle-même : visible en entier, centrée, jamais rognée */
+.vjs-rosa-theme video {
+  object-fit: contain !important;
 }
 
 /* ── Gros bouton play central ── */

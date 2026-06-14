@@ -81,7 +81,7 @@ import {
   Squares2X2Icon, ShoppingBagIcon, TagIcon, TicketIcon,
   UsersIcon, ArrowLeftOnRectangleIcon, FolderIcon, Cog6ToothIcon,
   NewspaperIcon, SparklesIcon, StarIcon, ChatBubbleLeftRightIcon,
-  EnvelopeIcon, TruckIcon,
+  EnvelopeIcon, TruckIcon, CalculatorIcon, PaperAirplaneIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
@@ -115,6 +115,7 @@ const nav = [
   { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon    },
   { to: '/admin/product-lines', label: 'Gammes',      icon: SparklesIcon  },
   { to: '/admin/orders',        label: 'Commandes',   icon: TagIcon       },
+  { to: '/admin/pos',           label: 'Caisse / POS', icon: CalculatorIcon },
   { to: '/admin/deliveries',    label: 'Livraisons',  icon: TruckIcon     },
   { to: '/admin/delivery-zones',label: 'Zones livr.', icon: TruckIcon     },
   { to: '/admin/coupons',       label: 'Coupons',     icon: TicketIcon    },
@@ -122,6 +123,7 @@ const nav = [
   { to: '/admin/programme',    label: 'Club fidélité',icon: StarIcon                   },
   { to: '/admin/reviews',          label: 'Avis clients',    icon: ChatBubbleLeftRightIcon },
   { to: '/admin/abandoned-carts',  label: 'Paniers abandonnés', icon: EnvelopeIcon        },
+  { to: '/admin/newsletter',       label: 'Newsletter',  icon: PaperAirplaneIcon          },
   { to: '/admin/users',        label: 'Clients',     icon: UsersIcon                   },
   { to: '/admin/settings',   label: 'Paramètres',   icon: Cog6ToothIcon   },
 ];
@@ -131,6 +133,8 @@ const titles = {
   'admin.products':   'Produits',
   'admin.categories': 'Catégories',
   'admin.orders':     'Commandes',
+  'admin.pos':        'Caisse / POS',
+  'admin.newsletter': 'Newsletter',
   'admin.order':      'Détail commande',
   'admin.deliveries': 'Gestion des livraisons',
   'admin.delivery-zones': 'Zones de livraison',

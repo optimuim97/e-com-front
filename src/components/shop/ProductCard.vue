@@ -55,8 +55,8 @@
           </span>
         </div>
         <div v-if="product.stock > 0 && product.stock <= 5"
-          class="text-xs text-amber-600 font-medium shrink-0">
-          Plus que {{ product.stock }} !
+          class="product-card__stock-hint shrink-0">
+          Plus que {{ product.stock }}
         </div>
       </div>
     </div>
@@ -67,14 +67,16 @@
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
+import { useCurrencyStore } from '@/stores/currency'
 
 const props = defineProps({ product: { type: Object, required: true } })
 
 const imgError = ref(false)
 const cover    = computed(() => props.product.images?.[0]?.url ?? null)
+const currency = useCurrencyStore()
 
 function formatPrice(price) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(price)
+  return currency.format(price)
 }
 </script>
 
@@ -90,5 +92,15 @@ function formatPrice(price) {
 .product-card__img-wrap {
   display: block;
   text-decoration: none;
+}
+
+/* Rappel stock : chip discrète plutôt qu'un avertissement criard */
+.product-card__stock-hint {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--rose-600, #c0386b);
+  background: var(--rose-50, #fdeef2);
+  padding: 3px 8px;
+  border-radius: 999px;
 }
 </style>

@@ -301,6 +301,26 @@
         </div>
 
         <div class="settings-section__body">
+          <!-- Style du hero (3 variantes) -->
+          <div class="field">
+            <label class="label">Style du hero d'accueil</label>
+            <p class="hint">Choisissez la mise en page de la bannière d'accueil. Modifiable aussi en direct depuis la page d'accueil (connecté en admin).</p>
+            <div class="hero-variant-grid">
+              <button
+                v-for="v in heroVariants"
+                :key="v.value"
+                type="button"
+                class="hero-variant"
+                :class="{ 'hero-variant--active': form.home_hero_variant === v.value }"
+                @click="form.home_hero_variant = v.value"
+              >
+                <span class="hero-variant__preview" v-html="v.preview"></span>
+                <span class="hero-variant__name">{{ v.label }}</span>
+                <span class="hero-variant__desc">{{ v.desc }}</span>
+              </button>
+            </div>
+          </div>
+
           <div class="field">
             <label class="label">Eyebrow du hero <span class="hint">(badge au-dessus du titre)</span></label>
             <input v-model="form.home_hero_eyebrow" type="text" class="input" placeholder="Nouveau · Collection Eau de Rose" maxlength="60" />
@@ -518,10 +538,44 @@ const form = ref({
   home_flash_label:     'Ventes flash',
   home_promo_banner:    '',
   announce_bar_enabled: 'true',
+  home_hero_variant:    '1',
   // WhatsApp
   whatsapp_admin_number:    '',
   whatsapp_notify_customer: 'false',
 })
+
+const heroVariants = [
+  {
+    value: '1',
+    label: 'Plein écran',
+    desc: 'Photo immersive, texte clair par-dessus',
+    preview: `<svg viewBox="0 0 80 48" fill="none"><rect width="80" height="48" rx="4" fill="#2a161e"/><rect x="8" y="20" width="34" height="5" rx="2.5" fill="#fff"/><rect x="8" y="29" width="22" height="4" rx="2" fill="#ffd9e4"/><rect x="8" y="37" width="16" height="4" rx="2" fill="#e8336d"/></svg>`,
+  },
+  {
+    value: '2',
+    label: 'Split',
+    desc: 'Texte à gauche, visuel en arche à droite',
+    preview: `<svg viewBox="0 0 80 48" fill="none"><rect width="80" height="48" rx="4" fill="#fdeef2"/><rect x="8" y="14" width="26" height="4" rx="2" fill="#c0386b"/><rect x="8" y="22" width="20" height="4" rx="2" fill="#2a1f24"/><rect x="8" y="32" width="14" height="4" rx="2" fill="#e8336d"/><path d="M50 12c8 0 14 6 14 14v10H50V12z" fill="#f8a8b8"/></svg>`,
+  },
+  {
+    value: '3',
+    label: 'Classique',
+    desc: 'Bannière centrée + bande de réassurance',
+    preview: `<svg viewBox="0 0 80 48" fill="none"><rect width="80" height="40" rx="4" fill="#2a161e"/><rect x="24" y="12" width="32" height="5" rx="2.5" fill="#fff"/><rect x="30" y="21" width="20" height="4" rx="2" fill="#ffd9e4"/><rect x="32" y="40" width="80" height="8" fill="#e8336d"/><rect y="40" width="80" height="8" fill="#e8336d"/></svg>`,
+  },
+  {
+    value: '4',
+    label: 'Best-sellers',
+    desc: 'Texte + photo + 2 produits phares à droite',
+    preview: `<svg viewBox="0 0 80 48" fill="none"><rect width="80" height="48" rx="4" fill="#fdeef2"/><rect x="6" y="14" width="20" height="4" rx="2" fill="#2a1f24"/><rect x="6" y="22" width="14" height="3" rx="1.5" fill="#e8336d"/><rect x="34" y="10" width="16" height="28" rx="6" fill="#f8a8b8"/><rect x="56" y="12" width="20" height="9" rx="2" fill="#fff"/><rect x="56" y="26" width="20" height="9" rx="2" fill="#fff"/></svg>`,
+  },
+  {
+    value: '5',
+    label: 'Vitrine',
+    desc: 'Texte + icônes de réassurance + grande photo',
+    preview: `<svg viewBox="0 0 80 48" fill="none"><rect width="80" height="40" rx="4" fill="#fff"/><rect x="6" y="10" width="22" height="4" rx="2" fill="#2a1f24"/><circle cx="9" cy="22" r="3" fill="#ffd6e7"/><circle cx="17" cy="22" r="3" fill="#ffd6e7"/><circle cx="25" cy="22" r="3" fill="#ffd6e7"/><rect x="42" y="8" width="32" height="26" rx="3" fill="#f8a8b8"/><rect y="40" width="80" height="8" fill="#fff0f5"/></svg>`,
+  },
+]
 
 const paymentMethods = [
   { key: 'payment_wave_enabled',         label: 'Wave',                  desc: 'Paiement mobile Wave',           bg: '#e0f2fe', color: '#0369a1', icon: '🌊' },
@@ -765,4 +819,49 @@ onMounted(fetchSettings)
   display: inline-block;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Sélecteur de style hero ── */
+.hero-variant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 8px;
+}
+.hero-variant {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1.5px solid var(--cream-300, #e7e0db);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.hero-variant:hover { border-color: var(--rose-300, #f8a8b8); }
+.hero-variant--active {
+  border-color: var(--rose-500, #e8336d);
+  box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.12);
+}
+.hero-variant__preview {
+  display: block;
+  border-radius: 6px;
+  overflow: hidden;
+  line-height: 0;
+}
+.hero-variant__preview :deep(svg) { width: 100%; height: auto; display: block; }
+.hero-variant__name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gray-800, #2a1f24);
+}
+.hero-variant__desc {
+  font-size: 0.6875rem;
+  color: var(--gray-500, #78716c);
+  line-height: 1.4;
+}
+@media (max-width: 640px) {
+  .hero-variant-grid { grid-template-columns: 1fr; }
+}
 </style>

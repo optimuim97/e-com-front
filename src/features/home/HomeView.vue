@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- 1. Accroche émotionnelle plein écran -->
     <HeroSection
       :heroProduct="heroProduct"
       :flashProduct="flashProduct"
@@ -13,7 +14,20 @@
       @add-to-cart="addToCart"
     />
 
-    <!-- Vente flash -->
+    <!-- 2. Bande de réassurance — rassure dès le 1er scroll (naturel, livraison…) -->
+    <BenefitsSection :items="benefits" />
+
+    <!-- 3. Best-sellers — intention d'achat + preuve sociale immédiate -->
+    <BestSellersSection
+      :products="featured"
+      :loading="loadingProducts"
+      @add-to-cart="addToCart"
+    />
+
+    <!-- 4. Univers / catégories — naviguer par besoin -->
+    <CategoriesSection :categories="categories" :loading="loadingCats" />
+
+    <!-- 5. Vente flash — urgence / promo, au cœur de la page (pas avant la marque) -->
     <FlashSaleSection
       v-if="homeStats.flash_sales && homeStats.flash_sales.length"
       :products="homeStats.flash_sales"
@@ -21,23 +35,14 @@
       @add-to-cart="addToCart"
     />
 
-    <BenefitsSection :items="benefits" />
-
-    <CategoriesSection :categories="categories" :loading="loadingCats" />
-
-    <!-- Nouvelle collection -->
+    <!-- 6. Nouveautés -->
     <NewCollectionSection
       v-if="homeStats.new_collection && homeStats.new_collection.length"
       :products="homeStats.new_collection"
       @add-to-cart="addToCart"
     />
 
-    <BestSellersSection
-      :products="featured"
-      :loading="loadingProducts"
-      @add-to-cart="addToCart"
-    />
-
+    <!-- 7. Notre histoire — connexion émotionnelle à la marque -->
     <AboutSection
       :shopName="settings.shopName"
       :tagline="settings.shopTagline || FALLBACK_TAGLINE"
@@ -45,12 +50,14 @@
       :stats="dynamicStats"
     />
 
-    <!-- Teasers : Histoire / Club / Blog -->
-    <ExploreSection />
-
+    <!-- 8. Galerie lifestyle -->
     <GallerySection />
 
+    <!-- 9. Avis clients — dernière preuve sociale avant le footer -->
     <TestimonialsSection :items="testimonials" />
+
+    <!-- 10. Teasers : Histoire / Club / Blog — invitation à poursuivre -->
+    <ExploreSection />
   </div>
 </template>
 

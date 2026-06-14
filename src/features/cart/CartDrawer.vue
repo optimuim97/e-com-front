@@ -400,6 +400,7 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue';
+import { useCurrencyStore } from '@/stores/currency';
 import CitySelect      from '@/components/shop/CitySelect.vue';
 import CityFree        from '@/components/shop/CityFree.vue';
 import QuickOrderModal from '@/features/checkout/QuickOrderModal.vue';
@@ -853,7 +854,7 @@ async function changeQty(item, delta) {
 }
 
 function fmt(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(val ?? 0));
+  return useCurrencyStore().format(Number(val ?? 0));
 }
 </script>
 

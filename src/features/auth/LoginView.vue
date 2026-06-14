@@ -13,7 +13,12 @@
         <input v-model="form.email" type="email" class="input" :placeholder="$t('auth.emailPlaceholder')" required />
       </div>
       <div>
-        <label class="label">{{ $t('auth.password') }}</label>
+        <div class="auth-row">
+          <label class="label">{{ $t('auth.password') }}</label>
+          <button type="button" class="auth-forgot-link" @click="showForgot = true">
+            Mot de passe oublié ?
+          </button>
+        </div>
         <input v-model="form.password" type="password" class="input" :placeholder="$t('auth.passwordPlaceholder')" required />
       </div>
 
@@ -28,6 +33,8 @@
       <div class="auth-divider"><span>ou</span></div>
       <FacebookButton @success="onSocial" @error="onSocialError" />
     </form>
+
+    <ForgotSecretModal v-if="showForgot" mode="password" @close="showForgot = false" />
   </AuthShell>
 </template>
 
@@ -38,6 +45,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/features/auth/auth.store';
 import AuthShell from '@/components/auth/AuthShell.vue';
 import FacebookButton from '@/features/auth/FacebookButton.vue';
+import ForgotSecretModal from '@/features/auth/ForgotSecretModal.vue';
 
 const { t } = useI18n();
 const auth   = useAuthStore();
@@ -47,6 +55,7 @@ const route  = useRoute();
 const form    = ref({ email: '', password: '' });
 const error   = ref('');
 const loading = ref(false);
+const showForgot = ref(false);
 
 function onSocial(data) {
   const redirect = route.query.redirect || (data?.user && auth.isAdmin ? '/admin' : '/');
@@ -110,4 +119,20 @@ async function handleSubmit() {
   height: 1px;
   background: var(--cream-300, #e5e7eb);
 }
+
+.auth-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.auth-forgot-link {
+  background: none;
+  border: none;
+  color: var(--rose-600);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+.auth-forgot-link:hover { text-decoration: underline; }
 </style>

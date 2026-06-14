@@ -121,8 +121,8 @@ function placeholderStyle(cat) {
   transition: transform var(--transition-normal), box-shadow var(--transition-normal);
 }
 .category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(168, 50, 80, 0.12);
 }
 
 .category-card__img-wrap {
@@ -144,24 +144,24 @@ function placeholderStyle(cat) {
   height: 100%;
 }
 
-/* Overlay : léger vignettage permanent + assombrissement au survol */
+/* Overlay : vignettage doux teinté rose, juste assez pour lire le nom */
 .category-card__overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to bottom,
-    rgba(0,0,0,0.04) 0%,
-    rgba(0,0,0,0.10) 40%,
-    rgba(0,0,0,0.52) 100%
+    transparent 0%,
+    rgba(42, 22, 30, 0.04) 45%,
+    rgba(42, 22, 30, 0.42) 100%
   );
   transition: background 0.35s ease;
 }
 .category-card:hover .category-card__overlay {
   background: linear-gradient(
     to bottom,
-    rgba(0,0,0,0.06) 0%,
-    rgba(0,0,0,0.18) 30%,
-    rgba(0,0,0,0.68) 100%
+    transparent 0%,
+    rgba(42, 22, 30, 0.08) 40%,
+    rgba(42, 22, 30, 0.5) 100%
   );
 }
 

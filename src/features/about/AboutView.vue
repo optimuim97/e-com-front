@@ -40,7 +40,12 @@
     <section class="ap-founder">
       <div class="container ap-founder__inner">
         <div class="ap-founder__video-wrap">
-          <RosaVideoPlayer :src="videoSrc" poster="/image_site/FLS_8142.jpeg" />
+          <RosaVideoPlayer
+            :src="videoSrc"
+            poster="/image_site/FLS_8142.jpeg"
+            aspect-ratio="4 / 5"
+            max-height="540px"
+          />
           <div class="ap-founder__video-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
             Mot de la fondatrice
@@ -615,12 +620,14 @@ const values = [
 }
 .ap-founder__inner {
   display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  grid-template-columns: 0.85fr 1.15fr;
   gap: var(--space-16);
   align-items: center;
 }
 .ap-founder__video-wrap {
   position: relative;
+  max-width: 420px;
+  width: 100%;
 }
 .ap-founder__video-label {
   position: absolute;
@@ -782,6 +789,7 @@ const values = [
   .ap-hero__img-deco    { display: none; }
   .ap-hero__img         { height: 320px; }
   .ap-founder__inner    { grid-template-columns: 1fr; }
+  .ap-founder__video-wrap { margin-inline: auto; }
   .ap-rose__inner       { grid-template-columns: 1fr; }
   .ap-rose__img         { height: 320px; }
   .ap-mission__inner    { grid-template-columns: 1fr; }

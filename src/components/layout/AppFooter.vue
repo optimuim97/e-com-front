@@ -121,16 +121,24 @@ import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
+import api from '@/api'
 
 const { t } = useI18n()
 const email      = ref('')
 const subscribed = ref(false)
 const settings   = useSettingsStore()
 
-function subscribeNewsletter() {
+async function subscribeNewsletter() {
   if (!email.value) return
-  subscribed.value = true
-  email.value = ''
+  try {
+    await api.post('/newsletter/subscribe', { email: email.value, source: 'footer' })
+    subscribed.value = true
+    email.value = ''
+  } catch {
+    // Affiche quand même le retour positif (anti-énumération, UX)
+    subscribed.value = true
+    email.value = ''
+  }
 }
 
 const currentYear = new Date().getFullYear()
