@@ -69,10 +69,14 @@ const pending     = ref(false)
 onMounted(async () => {
   if (!orderNumber) { checking.value = false; return }
 
+  // Annulation explicite (ex: Stripe Checkout abandonné) → échec immédiat,
+  // pas la peine d'interroger le backend.
+  if (route.query.status === 'cancelled') { checking.value = false; return }
+
   // Interroger le backend pour le statut (max 3 tentatives, 2s entre chaque).
-  // On essaie GeniusPay d'abord, puis CinetPay en repli.
+  // Les endpoints /status renvoient tous le statut de la commande.
   async function fetchStatus() {
-    for (const provider of ['geniuspay', 'cinetpay']) {
+    for (const provider of ['stripe', 'geniuspay', 'cinetpay']) {
       try {
         const { data } = await api.get(`/payment/${provider}/status/${orderNumber}`)
         return data

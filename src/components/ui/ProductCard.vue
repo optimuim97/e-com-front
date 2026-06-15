@@ -1,6 +1,8 @@
 <template>
-  <article class="product-card" :class="{ 'product-card--featured': product.is_featured }">
-
+  <article
+    class="product-card"
+    :class="{ 'product-card--featured': product.is_featured }"
+  >
     <!-- ── Zone image ── -->
     <div
       class="product-card__img-wrap"
@@ -9,9 +11,15 @@
     >
       <!-- Badges top-left -->
       <div class="product-card__badges">
-        <span v-if="product.stock === 0"   class="badge badge-dark">{{ $t('product.soldOut') }}</span>
-        <span v-if="product.is_featured"   class="badge badge-rose">{{ $t('product.featured') }}</span>
-        <span v-if="discountPercent"       class="badge badge-gold">-{{ discountPercent }}%</span>
+        <span v-if="product.stock === 0" class="badge badge-dark">{{
+          $t("product.soldOut")
+        }}</span>
+        <span v-if="product.is_featured" class="badge badge-rose">{{
+          $t("product.featured")
+        }}</span>
+        <span v-if="discountPercent" class="badge badge-gold"
+          >-{{ discountPercent }}%</span
+        >
       </div>
 
       <!-- Wishlist -->
@@ -27,7 +35,7 @@
           :alt="product.name"
           class="product-card__img"
           :class="{
-            'product-card__img--zoom':    hovered && coverAlt,
+            'product-card__img--zoom': hovered && coverAlt,
             'product-card__img--grayscale': product.stock === 0,
           }"
           loading="lazy"
@@ -52,13 +60,20 @@
         :class="{ 'product-card__quick-add--visible': hovered }"
       >
         <button class="product-card__add-btn" @click.prevent="addToCart">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
           </svg>
-          {{ $t('product.addToCart') }}
+          {{ $t("product.addToCart") }}
         </button>
       </div>
     </div>
@@ -71,7 +86,11 @@
           v-if="product.product_line"
           :to="`/gammes/${product.product_line.slug}`"
           class="product-card__line"
-          :style="{ color: product.product_line.color_hex, borderColor: product.product_line.color_hex + '44', background: product.product_line.color_hex + '12' }"
+          :style="{
+            color: product.product_line.color_hex,
+            borderColor: product.product_line.color_hex + '44',
+            background: product.product_line.color_hex + '12',
+          }"
           @click.stop
         >
           {{ product.product_line.name }}
@@ -88,26 +107,49 @@
           <span v-if="product.compare_price" class="product-card__price-old">
             {{ formatPrice(product.compare_price) }}
           </span>
-          <span class="product-card__price-current">{{ formatPrice(product.price) }}</span>
+          <span class="product-card__price-current">{{
+            formatPrice(product.price)
+          }}</span>
         </div>
 
         <button
           class="product-card__cart-btn"
-          :class="{ 'product-card__cart-btn--added': added, 'product-card__cart-btn--out': product.stock === 0 }"
+          :class="{
+            'product-card__cart-btn--added': added,
+            'product-card__cart-btn--out': product.stock === 0,
+          }"
           :disabled="product.stock === 0"
           @click.prevent="addToCart"
           :aria-label="$t('product.addToCart') + ' ' + product.name"
         >
           <Transition name="swap" mode="out-in">
-            <svg v-if="!added" key="bag" width="17" height="17" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-              <line x1="3" y1="6" x2="21" y2="6"/>
-              <path d="M16 10a4 4 0 0 1-8 0"/>
+            <svg
+              v-if="!added"
+              key="bag"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+            >
+              <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
-            <svg v-else key="check" width="17" height="17" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <polyline points="20 6 9 17 4 12"/>
+            <svg
+              v-else
+              key="check"
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
             </svg>
           </Transition>
         </button>
@@ -117,27 +159,26 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { RouterLink } from 'vue-router';
-import { useI18n } from 'vue-i18n';
-import WishlistButton from '@/features/wishlist/WishlistButton.vue'
-import { useCurrencyStore } from '@/stores/currency';
-
+import { ref, computed } from "vue";
+import { RouterLink } from "vue-router";
+import { useI18n } from "vue-i18n";
+import WishlistButton from "@/features/wishlist/WishlistButton.vue";
+import { useCurrencyStore } from "@/stores/currency";
 
 const props = defineProps({
-  product:  { type: Object,  required: true },
+  product: { type: Object, required: true },
 });
 
 const { t } = useI18n();
 const currency = useCurrencyStore();
-const emit = defineEmits(['add-to-cart', 'toggle-wishlist']);
+const emit = defineEmits(["add-to-cart", "toggle-wishlist"]);
 
-const hovered    = ref(false);
+const hovered = ref(false);
 const wishlisted = ref(props.product.wishlisted ?? false);
-const added      = ref(false);
+const added = ref(false);
 
 /* Images */
-const cover    = computed(() => props.product.images?.[0]?.url ?? null);
+const cover = computed(() => props.product.images?.[0]?.url ?? null);
 const coverAlt = computed(() => props.product.images?.[1]?.url ?? null);
 
 /* Remise calculée depuis compare_price */
@@ -153,14 +194,16 @@ function formatPrice(val) {
 
 function addToCart() {
   if (props.product.stock === 0) return;
-  emit('add-to-cart', props.product);
+  emit("add-to-cart", props.product);
   added.value = true;
-  setTimeout(() => { added.value = false; }, 1800);
+  setTimeout(() => {
+    added.value = false;
+  }, 1800);
 }
 
 function toggleWishlist() {
   wishlisted.value = !wishlisted.value;
-  emit('toggle-wishlist', { product: props.product, wishlisted: wishlisted.value });
+  emit("toggle-wishlist", { product: props.product, wishlisted: wishlisted.value });
 }
 </script>
 
@@ -204,15 +247,22 @@ function toggleWishlist() {
   object-fit: cover;
   transition: all var(--transition-slow);
 }
-.product-card__img--zoom    { transform: scale(1.06); }
-.product-card__img--grayscale { opacity: 0.5; filter: grayscale(1); }
+.product-card__img--zoom {
+  transform: scale(1.06);
+}
+.product-card__img--grayscale {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
 .product-card__img--hover {
   position: absolute;
   inset: 0;
   opacity: 0;
   transition: opacity var(--transition-normal);
 }
-.product-card__img--visible { opacity: 1; }
+.product-card__img--visible {
+  opacity: 1;
+}
 .product-card__img-placeholder {
   width: 100%;
   height: 100%;
@@ -242,7 +292,7 @@ function toggleWishlist() {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--gray-400);
   display: flex;
   align-items: center;
@@ -251,24 +301,37 @@ function toggleWishlist() {
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--cream-200);
 }
-.product-card__wish:hover { background: #fff; color: var(--rose-400); transform: scale(1.1); }
-.product-card__wish--active { color: var(--rose-500); background: var(--rose-50); border-color: var(--rose-200); }
+.product-card__wish:hover {
+  background: #fff;
+  color: var(--rose-400);
+  transform: scale(1.1);
+}
+.product-card__wish--active {
+  color: var(--rose-500);
+  background: var(--rose-50);
+  border-color: var(--rose-200);
+}
 
 /* ── Ajout rapide ── */
 .product-card__quick-add {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: var(--space-3);
-  background: linear-gradient(to top, rgba(0,0,0,0.38), transparent);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.38), transparent);
   opacity: 0;
   transform: translateY(8px);
   transition: all var(--transition-normal);
 }
-.product-card__quick-add--visible { opacity: 1; transform: translateY(0); }
+.product-card__quick-add--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 .product-card__add-btn {
   width: 100%;
   padding: 10px;
-  background: rgba(255,255,255,0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-full);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -279,7 +342,10 @@ function toggleWishlist() {
   gap: var(--space-2);
   transition: all var(--transition-fast);
 }
-.product-card__add-btn:hover { background: var(--rose-500); color: #fff; }
+.product-card__add-btn:hover {
+  background: var(--rose-500);
+  color: #fff;
+}
 
 /* ── Infos ── */
 .product-card__info {
@@ -315,8 +381,12 @@ function toggleWishlist() {
   transition: opacity var(--transition-fast);
   line-height: 1.7;
 }
-.product-card__line:hover { opacity: 0.7; }
-.product-card__name-link { display: block; }
+.product-card__line:hover {
+  opacity: 0.7;
+}
+.product-card__name-link {
+  display: block;
+}
 /* Nom : vedette principale de la carte */
 .product-card__name {
   font-family: var(--font-display);
@@ -327,7 +397,9 @@ function toggleWishlist() {
   letter-spacing: -0.01em;
   transition: color var(--transition-fast);
 }
-.product-card__name-link:hover .product-card__name { color: var(--color-primary); }
+.product-card__name-link:hover .product-card__name {
+  color: var(--color-primary);
+}
 
 /* ── Footer ── */
 .product-card__footer {
@@ -389,9 +461,18 @@ function toggleWishlist() {
 }
 
 /* ── Transition icône panier ↔ check ── */
-.swap-enter-active, .swap-leave-active { transition: all 0.18s; }
-.swap-enter-from { opacity: 0; transform: scale(0.5) rotate(20deg); }
-.swap-leave-to   { opacity: 0; transform: scale(0.5) rotate(-20deg); }
+.swap-enter-active,
+.swap-leave-active {
+  transition: all 0.18s;
+}
+.swap-enter-from {
+  opacity: 0;
+  transform: scale(0.5) rotate(20deg);
+}
+.swap-leave-to {
+  opacity: 0;
+  transform: scale(0.5) rotate(-20deg);
+}
 
 /* ── Mobile : ne garder que l'essentiel ── */
 @media (max-width: 767px) {
@@ -428,6 +509,9 @@ function toggleWishlist() {
     height: 34px;
   }
   /* Badges + wishlist : un peu plus compacts */
-  .product-card__badges { top: var(--space-2); left: var(--space-2); }
+  .product-card__badges {
+    top: var(--space-2);
+    left: var(--space-2);
+  }
 }
 </style>

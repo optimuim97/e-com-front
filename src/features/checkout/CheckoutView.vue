@@ -621,7 +621,7 @@ const ICON_TRUCK  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
 const paymentMethods = computed(() => [
   { value: 'wave',         label: 'Wave',              icon: ICON_MOBILE, desc: 'Paiement mobile rapide' },
   { value: 'orange_money', label: 'Orange Money',      icon: ICON_MOBILE, desc: 'Mobile Money Orange' },
-  { value: 'cinetpay',     label: 'Carte bancaire',    icon: ICON_CARD,   desc: 'Visa, Mastercard — sécurisé' },
+  { value: 'card',         label: 'Carte bancaire',    icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé Stripe' },
   { value: 'cod',          label: 'À la livraison',    icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' },
 ])
 
