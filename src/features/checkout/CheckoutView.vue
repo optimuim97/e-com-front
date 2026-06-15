@@ -552,40 +552,47 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
   confirmedOrderNumber.value = orderNumber
   confirmedOrderTotal.value  = orderTotal
 
-  if (method === 'wave') {
-    const number = settings.paymentWaveNumber.value || settings.paymentMobileNumber.value
-    paymentInstructions.value = {
-      title:        'Paiement Wave',
-      icon:         '📱',
-      number,
-      instructions: settings.paymentWaveInstructions.value
-        || `1. Ouvrez l'application Wave.\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
-    }
-  } else if (method === 'orange_money') {
-    const number = settings.paymentOrangeMoneyNumber.value || settings.paymentMobileNumber.value
-    paymentInstructions.value = {
-      title:        'Paiement Orange Money',
-      icon:         '🟠',
-      number,
-      instructions: settings.paymentOrangeMoneyInstructions.value
-        || `1. Composez #144# (ou ouvrez Orange Money).\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
-    }
-  } else if (method === 'mtn') {
-    const number = settings.paymentMtnNumber.value || settings.paymentMobileNumber.value
-    paymentInstructions.value = {
-      title:        'Paiement MTN MoMo',
-      icon:         '🟡',
-      number,
-      instructions: settings.paymentMtnInstructions.value
-        || `1. Composez *133# (MTN Mobile Money).\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
-    }
-  } else {
-    paymentInstructions.value = null
+  // Lecture robuste des settings bruts (insensible au déballage Pinia)
+  const s = (settings.data?.value ?? settings.data ?? {})
+  const sget = (k) => (s[k] ?? '').toString().trim()
+  const fallbackNumber = sget('payment_mobile_number')
+
+  const CONFIGS = {
+    wave: {
+      title: 'Paiement Wave', icon: '📱',
+      number: sget('payment_wave_number') || fallbackNumber,
+      instructions: sget('payment_wave_instructions'),
+      ussd: "Ouvrez l'application Wave",
+    },
+    orange_money: {
+      title: 'Paiement Orange Money', icon: '🟠',
+      number: sget('payment_orange_money_number') || fallbackNumber,
+      instructions: sget('payment_orange_money_instructions'),
+      ussd: 'Composez #144# (ou ouvrez Orange Money)',
+    },
+    mtn: {
+      title: 'Paiement MTN MoMo', icon: '🟡',
+      number: sget('payment_mtn_number') || fallbackNumber,
+      instructions: sget('payment_mtn_instructions'),
+      ussd: 'Composez *133# (MTN Mobile Money)',
+    },
+  }
+
+  const cfg = CONFIGS[method]
+  if (!cfg) { paymentInstructions.value = null; return }
+
+  paymentInstructions.value = {
+    title:  cfg.title,
+    icon:   cfg.icon,
+    number: cfg.number,
+    instructions: cfg.instructions
+      || `1. ${cfg.ussd}.\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${cfg.number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
   }
 }
 
 const adminWhatsappLink = computed(() => {
-  const phone = settings.whatsappNumber.value
+  const s = (settings.data?.value ?? settings.data ?? {})
+  const phone = (s.whatsapp_admin_number ?? '').toString().trim()
   if (!phone || !confirmedOrderNumber.value) return null
   const msg = encodeURIComponent(
     `Bonjour ! J'ai effectué un paiement pour ma commande N° ${confirmedOrderNumber.value}. Montant : ${formatPrice(confirmedOrderTotal.value)}.`
