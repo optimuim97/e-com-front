@@ -514,18 +514,22 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
   confirmedOrderTotal.value  = orderTotal
 
   if (method === 'wave') {
+    const number = settings.paymentWaveNumber.value || settings.paymentMobileNumber.value
     paymentInstructions.value = {
       title:        'Paiement Wave',
       icon:         '📱',
-      number:       settings.paymentWaveNumber.value || settings.paymentMobileNumber.value,
-      instructions: settings.paymentWaveInstructions.value,
+      number,
+      instructions: settings.paymentWaveInstructions.value
+        || `1. Ouvrez l'application Wave.\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
     }
   } else if (method === 'orange_money') {
+    const number = settings.paymentOrangeMoneyNumber.value || settings.paymentMobileNumber.value
     paymentInstructions.value = {
       title:        'Paiement Orange Money',
       icon:         '🟠',
-      number:       settings.paymentOrangeMoneyNumber.value || settings.paymentMobileNumber.value,
-      instructions: settings.paymentOrangeMoneyInstructions.value,
+      number,
+      instructions: settings.paymentOrangeMoneyInstructions.value
+        || `1. Composez #144# (ou ouvrez Orange Money).\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
     }
   } else {
     paymentInstructions.value = null
