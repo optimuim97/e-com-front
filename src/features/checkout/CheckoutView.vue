@@ -857,6 +857,13 @@ async function placeOrder(payload) {
       return
     }
 
+    // Carte (Stripe) : un payment_url est attendu. Absent → l'initialisation a échoué.
+    if (['card', 'stripe'].includes(payload.payment_method)) {
+      submitError.value = data.payment_error
+        || "Le paiement par carte n'a pas pu démarrer. Réessayez ou choisissez un autre moyen de paiement."
+      return
+    }
+
     // Autres méthodes → page commande
     router.push({ name: 'order', params: { number: data.number } })
   } catch (e) {

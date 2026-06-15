@@ -32,11 +32,11 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /* ── Helpers ─────────────────────────────────────────────────────────── */
   const get = (key, fallback = '') => computed(() => data.value[key] || fallback)
-  const bool = (key, defaultTrue = false) => computed(() =>
-    data.value[key] === undefined
-      ? defaultTrue
-      : data.value[key] === 'true'
-  )
+  const bool = (key, defaultTrue = false) => computed(() => {
+    const v = data.value[key]
+    if (v === undefined || v === null || v === '') return defaultTrue
+    return v === true || v === 'true' || v === '1' || v === 1
+  })
 
   /* ── Boutique ─────────────────────────────────────────────────────────── */
   const shopName     = get('shop_name',     'Rosa Beauty')
