@@ -671,12 +671,18 @@ const ICON_CARD   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
 const ICON_TRUCK  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
 const paymentMethods = computed(() => {
+  // Accès robuste aux settings bruts, que Pinia déballe le ref ou non.
+  const s = (settings.data?.value ?? settings.data ?? {})
+  const isOn  = (v) => v === true || v === 'true' || v === '1' || v === 1
+  const isOff = (v) => v === false || v === 'false' || v === '0' || v === 0
+
   const list = []
-  if (settings.paymentWaveEnabled.value)        list.push({ value: 'wave',         label: 'Wave',           icon: ICON_MOBILE, desc: 'Paiement mobile rapide' })
-  if (settings.paymentOrangeMoneyEnabled.value) list.push({ value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE, desc: 'Mobile Money Orange' })
-  if (settings.paymentMtnEnabled.value)         list.push({ value: 'mtn',          label: 'MTN MoMo',       icon: ICON_MOBILE, desc: 'MTN Mobile Money' })
+  // Wave / Orange / Livraison : visibles par défaut, masqués seulement si explicitement désactivés.
+  if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',           icon: ICON_MOBILE, desc: 'Paiement mobile rapide' })
+  if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE, desc: 'Mobile Money Orange' })
+  if (isOn(s.payment_mtn_enabled))            list.push({ value: 'mtn',          label: 'MTN MoMo',       icon: ICON_MOBILE, desc: 'MTN Mobile Money' })
   list.push({ value: 'card', label: 'Carte bancaire', icon: ICON_CARD, desc: 'Visa, Mastercard — paiement sécurisé Stripe' })
-  if (settings.paymentDeliveryEnabled.value)    list.push({ value: 'cod',          label: 'À la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' })
+  if (!isOff(s.payment_delivery_enabled))     list.push({ value: 'cod',          label: 'À la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' })
   return list
 })
 
