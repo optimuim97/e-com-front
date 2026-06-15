@@ -34,16 +34,18 @@
     <!-- ── Champ numéro ── -->
     <input
       ref="inputRef"
-      v-model="localNumber"
+      :value="localNumber"
       type="tel"
+      inputmode="numeric"
       class="phone-field"
-      :placeholder="placeholder"
+      :placeholder="dynamicPlaceholder"
       :required="required"
       :disabled="disabled"
       :autocomplete="autocomplete"
       @focus="onFocus"
       @blur="onBlur"
-      @input="emitValue"
+      @keypress="onKeypress"
+      @input="onInput"
     />
 
     <!-- ── Dropdown pays ── -->
@@ -102,30 +104,31 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 // ── Données pays ──────────────────────────────────────────────────────────────
+// `len` = nombre de chiffres nationaux attendus (sert de masque/limite).
 const COUNTRIES = [
-  { code: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮', dial: '+225' },
-  { code: 'SN', name: 'Sénégal',       flag: '🇸🇳', dial: '+221' },
-  { code: 'ML', name: 'Mali',          flag: '🇲🇱', dial: '+223' },
-  { code: 'BF', name: 'Burkina Faso',  flag: '🇧🇫', dial: '+226' },
-  { code: 'GN', name: 'Guinée',        flag: '🇬🇳', dial: '+224' },
-  { code: 'TG', name: 'Togo',          flag: '🇹🇬', dial: '+228' },
-  { code: 'BJ', name: 'Bénin',         flag: '🇧🇯', dial: '+229' },
-  { code: 'GH', name: 'Ghana',         flag: '🇬🇭', dial: '+233' },
-  { code: 'NG', name: 'Nigeria',       flag: '🇳🇬', dial: '+234' },
-  { code: 'CM', name: 'Cameroun',      flag: '🇨🇲', dial: '+237' },
-  { code: 'MA', name: 'Maroc',         flag: '🇲🇦', dial: '+212' },
-  { code: 'DZ', name: 'Algérie',       flag: '🇩🇿', dial: '+213' },
-  { code: 'TN', name: 'Tunisie',       flag: '🇹🇳', dial: '+216' },
-  { code: 'FR', name: 'France',        flag: '🇫🇷', dial: '+33'  },
-  { code: 'BE', name: 'Belgique',      flag: '🇧🇪', dial: '+32'  },
-  { code: 'CH', name: 'Suisse',        flag: '🇨🇭', dial: '+41'  },
-  { code: 'DE', name: 'Allemagne',     flag: '🇩🇪', dial: '+49'  },
-  { code: 'GB', name: 'Royaume-Uni',   flag: '🇬🇧', dial: '+44'  },
-  { code: 'ES', name: 'Espagne',       flag: '🇪🇸', dial: '+34'  },
-  { code: 'IT', name: 'Italie',        flag: '🇮🇹', dial: '+39'  },
-  { code: 'PT', name: 'Portugal',      flag: '🇵🇹', dial: '+351' },
-  { code: 'CA', name: 'Canada',        flag: '🇨🇦', dial: '+1'   },
-  { code: 'US', name: 'États-Unis',    flag: '🇺🇸', dial: '+1'   },
+  { code: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮', dial: '+225', len: 10 },
+  { code: 'SN', name: 'Sénégal',       flag: '🇸🇳', dial: '+221', len: 9  },
+  { code: 'ML', name: 'Mali',          flag: '🇲🇱', dial: '+223', len: 8  },
+  { code: 'BF', name: 'Burkina Faso',  flag: '🇧🇫', dial: '+226', len: 8  },
+  { code: 'GN', name: 'Guinée',        flag: '🇬🇳', dial: '+224', len: 9  },
+  { code: 'TG', name: 'Togo',          flag: '🇹🇬', dial: '+228', len: 8  },
+  { code: 'BJ', name: 'Bénin',         flag: '🇧🇯', dial: '+229', len: 10 },
+  { code: 'GH', name: 'Ghana',         flag: '🇬🇭', dial: '+233', len: 9  },
+  { code: 'NG', name: 'Nigeria',       flag: '🇳🇬', dial: '+234', len: 10 },
+  { code: 'CM', name: 'Cameroun',      flag: '🇨🇲', dial: '+237', len: 9  },
+  { code: 'MA', name: 'Maroc',         flag: '🇲🇦', dial: '+212', len: 9  },
+  { code: 'DZ', name: 'Algérie',       flag: '🇩🇿', dial: '+213', len: 9  },
+  { code: 'TN', name: 'Tunisie',       flag: '🇹🇳', dial: '+216', len: 8  },
+  { code: 'FR', name: 'France',        flag: '🇫🇷', dial: '+33',  len: 9  },
+  { code: 'BE', name: 'Belgique',      flag: '🇧🇪', dial: '+32',  len: 9  },
+  { code: 'CH', name: 'Suisse',        flag: '🇨🇭', dial: '+41',  len: 9  },
+  { code: 'DE', name: 'Allemagne',     flag: '🇩🇪', dial: '+49',  len: 11 },
+  { code: 'GB', name: 'Royaume-Uni',   flag: '🇬🇧', dial: '+44',  len: 10 },
+  { code: 'ES', name: 'Espagne',       flag: '🇪🇸', dial: '+34',  len: 9  },
+  { code: 'IT', name: 'Italie',        flag: '🇮🇹', dial: '+39',  len: 10 },
+  { code: 'PT', name: 'Portugal',      flag: '🇵🇹', dial: '+351', len: 9  },
+  { code: 'CA', name: 'Canada',        flag: '🇨🇦', dial: '+1',   len: 10 },
+  { code: 'US', name: 'États-Unis',    flag: '🇺🇸', dial: '+1',   len: 10 },
 ]
 
 // ── État interne ──────────────────────────────────────────────────────────────
@@ -141,28 +144,48 @@ const selected = ref(
 )
 const localNumber = ref('')
 
+// ── Formatage / masque ────────────────────────────────────────────────────────
+/** Chiffres bruts saisis (sans espaces ni indicatif). */
+const digits = () => localNumber.value.replace(/\D/g, '')
+
+/** Espace tous les 2 chiffres pour la lisibilité (ex. 07 00 00 00 00). */
+function formatDisplay(d) {
+  return d.replace(/(\d{2})(?=\d)/g, '$1 ').trim()
+}
+
+/** Placeholder dynamique reflétant la longueur attendue du pays. */
+const dynamicPlaceholder = computed(() => {
+  const len = selected.value.len ?? 0
+  return len ? formatDisplay('0'.repeat(len)) : props.placeholder
+})
+
+/** Valeur émise : "indicatif chiffres" (sans espaces). */
+function currentEmit() {
+  const d = digits()
+  return d ? `${selected.value.dial} ${d}` : ''
+}
+
 // ── Initialisation à partir de modelValue ─────────────────────────────────────
 function parseValue(val) {
-  if (!val) return
+  if (!val) { localNumber.value = ''; return }
 
   // Chercher l'indicatif le plus long en premier
   const sorted = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length)
   for (const c of sorted) {
     if (val.startsWith(c.dial)) {
-      selected.value   = c
-      localNumber.value = val.slice(c.dial.length).trimStart()
+      selected.value    = c
+      localNumber.value = formatDisplay(val.slice(c.dial.length).replace(/\D/g, '').slice(0, c.len ?? 15))
       return
     }
   }
-  // Aucun indicatif reconnu → mettre le tout dans localNumber
-  localNumber.value = val
+  // Aucun indicatif reconnu → ne garder que les chiffres
+  localNumber.value = formatDisplay(val.replace(/\D/g, ''))
 }
 
 onMounted(() => parseValue(props.modelValue))
 
 watch(() => props.modelValue, (v) => {
-  const current = (selected.value.dial + ' ' + localNumber.value).trim()
-  if (v !== current) parseValue(v)
+  if (v !== currentEmit()) parseValue(v)
 })
 
 // ── Filtre pays ───────────────────────────────────────────────────────────────
@@ -177,9 +200,17 @@ const filtered = computed(() => {
 })
 
 // ── Actions ───────────────────────────────────────────────────────────────────
-function emitValue() {
-  const num = localNumber.value.trim()
-  emit('update:modelValue', num ? `${selected.value.dial} ${num}` : '')
+/** Bloque toute touche non numérique (lettres, symboles). */
+function onKeypress(e) {
+  if (e.key && !/[0-9]/.test(e.key)) e.preventDefault()
+}
+
+/** Sanitize + limite à la longueur du pays + reformate. */
+function onInput(e) {
+  const max = selected.value.len ?? 15
+  const d   = e.target.value.replace(/\D/g, '').slice(0, max)
+  localNumber.value = formatDisplay(d)
+  emit('update:modelValue', currentEmit())
 }
 
 async function toggleDropdown() {
@@ -193,9 +224,11 @@ async function toggleDropdown() {
 
 async function selectCountry(c) {
   selected.value = c
+  // Re-limiter le numéro à la longueur du nouveau pays
+  localNumber.value = formatDisplay(digits().slice(0, c.len ?? 15))
   open.value     = false
   search.value   = ''
-  emitValue()
+  emit('update:modelValue', currentEmit())
   await nextTick()
   inputRef.value?.focus()
 }

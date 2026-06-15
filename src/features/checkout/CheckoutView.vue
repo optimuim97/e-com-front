@@ -106,26 +106,48 @@
               </div>
             </header>
             <div class="co-section__body">
-              <!-- Numéro de paiement -->
-              <div v-if="paymentInstructions.number" class="pay-instr__number-box">
-                <p class="pay-instr__label">Numéro à créditer</p>
-                <div class="pay-instr__number">{{ paymentInstructions.number }}</div>
-                <p class="pay-instr__copy-hint">Appuyez pour copier</p>
+              <!-- Montant à payer — mis en évidence -->
+              <div class="pay-instr__amount-hero">
+                <span class="pay-instr__amount-hero-label">Montant exact à envoyer</span>
+                <strong class="pay-instr__amount-hero-value">{{ formatPrice(confirmedOrderTotal) }}</strong>
               </div>
 
-              <!-- Montant -->
-              <div class="pay-instr__amount-row">
-                <span>Montant exact à envoyer</span>
-                <strong class="pay-instr__amount">{{ formatPrice(confirmedOrderTotal) }}</strong>
-              </div>
+              <!-- Numéro de paiement — copiable -->
+              <button
+                v-if="paymentInstructions.number"
+                type="button"
+                class="pay-instr__copy-card"
+                @click="copyValue(paymentInstructions.number, 'number')"
+              >
+                <div class="pay-instr__copy-info">
+                  <span class="pay-instr__copy-label">Numéro à créditer</span>
+                  <span class="pay-instr__copy-value">{{ paymentInstructions.number }}</span>
+                </div>
+                <span class="pay-instr__copy-action">
+                  <svg v-if="copied === 'number'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  {{ copied === 'number' ? 'Copié' : 'Copier' }}
+                </span>
+              </button>
 
-              <!-- Référence -->
-              <div class="pay-instr__ref-row">
-                <span>Référence commande</span>
-                <strong>{{ confirmedOrderNumber }}</strong>
-              </div>
+              <!-- Référence commande — copiable -->
+              <button
+                type="button"
+                class="pay-instr__copy-card pay-instr__copy-card--sm"
+                @click="copyValue(confirmedOrderNumber, 'ref')"
+              >
+                <div class="pay-instr__copy-info">
+                  <span class="pay-instr__copy-label">Référence commande</span>
+                  <span class="pay-instr__copy-value pay-instr__copy-value--sm">{{ confirmedOrderNumber }}</span>
+                </div>
+                <span class="pay-instr__copy-action">
+                  <svg v-if="copied === 'ref'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  {{ copied === 'ref' ? 'Copié' : 'Copier' }}
+                </span>
+              </button>
 
-              <!-- Instructions -->
+              <!-- Instructions étape par étape -->
               <div class="pay-instr__steps">
                 <p class="pay-instr__steps-title">Comment procéder :</p>
                 <p class="pay-instr__steps-text">{{ paymentInstructions.instructions }}</p>
@@ -508,6 +530,23 @@ function onAuthenticated() {}
 const paymentInstructions = ref(null)   // { title, icon, number, instructions }
 const confirmedOrderNumber = ref(null)
 const confirmedOrderTotal  = ref(0)
+const copied               = ref(null)  // 'number' | 'ref' | null
+
+async function copyValue(text, key) {
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(String(text))
+  } catch {
+    const ta = document.createElement('textarea')
+    ta.value = String(text)
+    document.body.appendChild(ta)
+    ta.select()
+    try { document.execCommand('copy') } catch { /* noop */ }
+    document.body.removeChild(ta)
+  }
+  copied.value = key
+  setTimeout(() => { if (copied.value === key) copied.value = null }, 1800)
+}
 
 function buildPaymentInstructions(method, orderNumber, orderTotal) {
   confirmedOrderNumber.value = orderNumber
@@ -530,6 +569,15 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
       number,
       instructions: settings.paymentOrangeMoneyInstructions.value
         || `1. Composez #144# (ou ouvrez Orange Money).\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
+    }
+  } else if (method === 'mtn') {
+    const number = settings.paymentMtnNumber.value || settings.paymentMobileNumber.value
+    paymentInstructions.value = {
+      title:        'Paiement MTN MoMo',
+      icon:         '🟡',
+      number,
+      instructions: settings.paymentMtnInstructions.value
+        || `1. Composez *133# (MTN Mobile Money).\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
     }
   } else {
     paymentInstructions.value = null
@@ -622,12 +670,15 @@ const ICON_MOBILE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"
 const ICON_CARD   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>'
 const ICON_TRUCK  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
-const paymentMethods = computed(() => [
-  { value: 'wave',         label: 'Wave',              icon: ICON_MOBILE, desc: 'Paiement mobile rapide' },
-  { value: 'orange_money', label: 'Orange Money',      icon: ICON_MOBILE, desc: 'Mobile Money Orange' },
-  { value: 'card',         label: 'Carte bancaire',    icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé Stripe' },
-  { value: 'cod',          label: 'À la livraison',    icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' },
-])
+const paymentMethods = computed(() => {
+  const list = []
+  if (settings.paymentWaveEnabled.value)        list.push({ value: 'wave',         label: 'Wave',           icon: ICON_MOBILE, desc: 'Paiement mobile rapide' })
+  if (settings.paymentOrangeMoneyEnabled.value) list.push({ value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE, desc: 'Mobile Money Orange' })
+  if (settings.paymentMtnEnabled.value)         list.push({ value: 'mtn',          label: 'MTN MoMo',       icon: ICON_MOBILE, desc: 'MTN Mobile Money' })
+  list.push({ value: 'card', label: 'Carte bancaire', icon: ICON_CARD, desc: 'Visa, Mastercard — paiement sécurisé Stripe' })
+  if (settings.paymentDeliveryEnabled.value)    list.push({ value: 'cod',          label: 'À la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' })
+  return list
+})
 
 // ── Coupon ────────────────────────────────────────────────────────────────────
 const couponCode     = ref('')
@@ -800,8 +851,8 @@ async function placeOrder(payload) {
       return
     }
 
-    // Paiement manuel Wave / Orange Money → instructions
-    if (['wave', 'orange_money'].includes(payload.payment_method)) {
+    // Paiement manuel Wave / Orange Money / MTN → instructions
+    if (['wave', 'orange_money', 'mtn'].includes(payload.payment_method)) {
       buildPaymentInstructions(payload.payment_method, data.number, data.total ?? orderTotal.value)
       return
     }
@@ -1474,7 +1525,70 @@ function formatPrice(val) {
   border: 1px solid var(--cream-200);
 }
 .pay-instr__steps-title { font-size: 0.75rem; font-weight: 600; color: var(--gray-600); margin-bottom: 6px; }
-.pay-instr__steps-text { font-size: 0.8125rem; color: var(--gray-500); line-height: 1.6; }
+.pay-instr__steps-text { font-size: 0.8125rem; color: var(--gray-500); line-height: 1.7; white-space: pre-line; }
+
+/* ── Montant en évidence ── */
+.pay-instr__amount-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-5) var(--space-4);
+  background: linear-gradient(135deg, var(--rose-500), var(--rose-400));
+  border-radius: var(--radius-lg);
+  color: #fff;
+  text-align: center;
+}
+.pay-instr__amount-hero-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.9;
+}
+.pay-instr__amount-hero-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+/* ── Cartes copiables (numéro / référence) ── */
+.pay-instr__copy-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  background: var(--cream-50);
+  border: 1.5px solid var(--rose-200);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.pay-instr__copy-card:hover { border-color: var(--rose-400); background: var(--rose-50); }
+.pay-instr__copy-card--sm { border-style: dashed; }
+.pay-instr__copy-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pay-instr__copy-label { font-size: 0.6875rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.04em; }
+.pay-instr__copy-value {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--rose-600);
+  letter-spacing: 0.04em;
+  word-break: break-all;
+}
+.pay-instr__copy-value--sm { font-size: 1rem; color: var(--gray-800); }
+.pay-instr__copy-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rose-600);
+}
 .pay-instr__wa {
   display: flex;
   align-items: center;

@@ -67,6 +67,9 @@ export const useSettingsStore = defineStore('settings', () => {
   const paymentWaveInstructions         = get('payment_wave_instructions', 'Envoyez le montant exact sur ce numéro Wave, puis communiquez votre référence de commande.')
   const paymentOrangeMoneyNumber        = get('payment_orange_money_number', '')
   const paymentOrangeMoneyInstructions  = get('payment_orange_money_instructions', 'Composez #144# sur votre téléphone Orange, puis envoyez le montant exact avec votre référence.')
+  const paymentMtnEnabled               = bool('payment_mtn_enabled', false)
+  const paymentMtnNumber                = get('payment_mtn_number', '')
+  const paymentMtnInstructions          = get('payment_mtn_instructions', 'Composez *133# (MTN MoMo), puis envoyez le montant exact avec votre référence de commande.')
   const paymentGeniuspayEnabled         = bool('payment_geniuspay_enabled', false)
 
   /* ── Tunnel de commande ───────────────────────────────────────────────── */
@@ -186,6 +189,7 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentMobileNumber, activePayments,
     paymentWaveNumber, paymentWaveInstructions,
     paymentOrangeMoneyNumber, paymentOrangeMoneyInstructions,
+    paymentMtnEnabled, paymentMtnNumber, paymentMtnInstructions,
     paymentGeniuspayEnabled,
     // Tunnel
     enableQuickOrder,
