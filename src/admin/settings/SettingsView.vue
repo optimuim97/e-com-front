@@ -15,8 +15,25 @@
 
     <form v-else @submit.prevent="save" class="settings-form">
 
+      <!-- Navigation par catégories -->
+      <aside class="settings-nav">
+        <button
+          v-for="tab in tabs"
+          :key="tab.id"
+          type="button"
+          class="settings-nav__item"
+          :class="{ 'settings-nav__item--active': activeTab === tab.id }"
+          @click="activeTab = tab.id"
+        >
+          <span class="settings-nav__icon" v-html="tab.icon"></span>
+          <span class="settings-nav__label">{{ tab.label }}</span>
+        </button>
+      </aside>
+
+      <div class="settings-content">
+
       <!-- ── 1. Boutique ─────────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'shop'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#fce7f3;color:#be185d">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -93,7 +110,7 @@
       </section>
 
       <!-- ── 2. Légal ────────────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'legal'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#eff6ff;color:#1d4ed8">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -143,7 +160,7 @@
       </section>
 
       <!-- ── 3. Livraison ───────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'shipping'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#fef3c7;color:#b45309">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -209,7 +226,7 @@
       </section>
 
       <!-- ── 4. Paiement ───────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'payment'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#f0fdf4;color:#15803d">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -239,9 +256,39 @@
           </div>
 
           <div class="field">
-            <label class="label">Numéro Wave / OM pour l'affichage</label>
+            <label class="label">Numéro mobile par défaut</label>
             <input v-model="form.payment_mobile_number" type="text" class="input" placeholder="07 00 00 00 00" />
-            <p class="hint">Affiché aux clients lors du paiement mobile manuel.</p>
+            <p class="hint">Utilisé si aucun numéro spécifique n'est renseigné ci-dessous.</p>
+          </div>
+
+          <div class="settings-grid-2">
+            <div class="field">
+              <label class="label">Numéro Wave</label>
+              <input v-model="form.payment_wave_number" type="text" class="input" placeholder="07 00 00 00 00" />
+            </div>
+            <div class="field">
+              <label class="label">Numéro Orange Money</label>
+              <input v-model="form.payment_orange_money_number" type="text" class="input" placeholder="07 00 00 00 00" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">Numéro MTN MoMo</label>
+            <input v-model="form.payment_mtn_number" type="text" class="input" placeholder="05 00 00 00 00" />
+            <p class="hint">Affiché si MTN MoMo est activé ci-dessus.</p>
+          </div>
+
+          <div class="field">
+            <label class="label">Instructions Wave <span class="hint">(affichées au client)</span></label>
+            <textarea v-model="form.payment_wave_instructions" class="input textarea" rows="2" placeholder="Ouvrez Wave, envoyez le montant exact au numéro indiqué, puis confirmez via WhatsApp."></textarea>
+          </div>
+          <div class="field">
+            <label class="label">Instructions Orange Money</label>
+            <textarea v-model="form.payment_orange_money_instructions" class="input textarea" rows="2" placeholder="Composez #144#, envoyez le montant exact au numéro indiqué, puis confirmez via WhatsApp."></textarea>
+          </div>
+          <div class="field">
+            <label class="label">Instructions MTN MoMo</label>
+            <textarea v-model="form.payment_mtn_instructions" class="input textarea" rows="2" placeholder="Composez *133#, envoyez le montant exact au numéro indiqué, puis confirmez via WhatsApp."></textarea>
           </div>
 
           <label class="settings-toggle">
@@ -257,7 +304,7 @@
       </section>
 
       <!-- ── 5. Réseaux sociaux ─────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'social'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#fdf2f8;color:#9d174d">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -286,7 +333,7 @@
       </section>
 
       <!-- ── Page d'accueil ────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'home'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#fce8f0;color:#e8336d">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -369,7 +416,7 @@
       </section>
 
       <!-- ── 6. SEO ─────────────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'seo'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#f5f3ff;color:#6d28d9">
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
@@ -425,7 +472,7 @@
       </section>
 
       <!-- ── 7. WhatsApp ───────────────────────────────────────── -->
-      <section class="settings-section card">
+      <section v-show="activeTab === 'whatsapp'" class="settings-section card">
         <div class="settings-section__head">
           <div class="settings-section__icon" style="background:#dcfce7;color:#16a34a">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -472,6 +519,7 @@
         <p v-if="success" class="msg msg--success">✓ Paramètres enregistrés avec succès.</p>
         <p v-if="errorMsg" class="msg msg--error">{{ errorMsg }}</p>
       </div>
+      </div><!-- /.settings-content -->
     </form>
   </div>
 </template>
@@ -485,6 +533,19 @@ const saving   = ref(false)
 const success  = ref(false)
 const errorMsg = ref('')
 const logoError = ref(false)
+
+// ── Navigation par catégories ──────────────────────────────────────────────
+const activeTab = ref('shop')
+const tabs = [
+  { id: 'shop',     label: 'Boutique',  icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline stroke-linecap="round" points="9 22 9 12 15 12 15 22"/></svg>' },
+  { id: 'legal',    label: 'Légal',     icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>' },
+  { id: 'shipping', label: 'Livraison', icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="1" y="3" width="15" height="13" rx="1"/><path stroke-linecap="round" d="M16 8h4l3 5v4h-7V8z"/></svg>' },
+  { id: 'payment',  label: 'Paiement',  icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><path stroke-linecap="round" d="M1 10h22"/></svg>' },
+  { id: 'social',   label: 'Réseaux',   icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path stroke-linecap="round" d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>' },
+  { id: 'home',     label: 'Accueil',   icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5L12 3l9 6.5V21a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>' },
+  { id: 'seo',      label: 'SEO',       icon: '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>' },
+  { id: 'whatsapp', label: 'WhatsApp',  icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.587-5.945C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 018.413 3.488 11.824 11.824 0 013.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 01-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 001.51 5.26l-.999 3.648 3.739-.981z"/></svg>' },
+]
 
 const form = ref({
   // Boutique
@@ -513,9 +574,16 @@ const form = ref({
   // Paiement
   payment_wave_enabled:          'true',
   payment_orange_money_enabled:  'true',
+  payment_mtn_enabled:           'false',
   payment_delivery_enabled:      'true',
   payment_stripe_enabled:        'false',
   payment_mobile_number:         '',
+  payment_wave_number:           '',
+  payment_orange_money_number:   '',
+  payment_mtn_number:            '',
+  payment_wave_instructions:         '',
+  payment_orange_money_instructions: '',
+  payment_mtn_instructions:          '',
   payment_geniuspay_enabled:     'false',
   // Tunnel de commande
   enable_quick_order:            'true',
@@ -580,8 +648,9 @@ const heroVariants = [
 const paymentMethods = [
   { key: 'payment_wave_enabled',         label: 'Wave',                  desc: 'Paiement mobile Wave',           bg: '#e0f2fe', color: '#0369a1', icon: '🌊' },
   { key: 'payment_orange_money_enabled', label: 'Orange Money',          desc: 'Paiement mobile Orange',         bg: '#fff7ed', color: '#c2410c', icon: '🍊' },
+  { key: 'payment_mtn_enabled',          label: 'MTN MoMo',              desc: 'MTN Mobile Money',               bg: '#fefce8', color: '#a16207', icon: '🟡' },
   { key: 'payment_delivery_enabled',     label: 'Paiement à la livraison', desc: 'Le client paie à la réception', bg: '#f0fdf4', color: '#15803d', icon: '🏠' },
-  { key: 'payment_stripe_enabled',       label: 'Stripe / Carte bancaire', desc: 'Visa, Mastercard, CB',         bg: '#f5f3ff', color: '#6d28d9', icon: '💳' },
+  { key: 'payment_stripe_enabled',       label: 'Carte bancaire (Stripe)', desc: 'Visa, Mastercard — sécurisé',  bg: '#f5f3ff', color: '#6d28d9', icon: '💳' },
 ]
 
 const socialNetworks = [
@@ -673,8 +742,52 @@ onMounted(fetchSettings)
 </script>
 
 <style scoped>
-.settings-page { display: flex; flex-direction: column; gap: var(--space-5); max-width: 780px; }
-.settings-form { display: flex; flex-direction: column; gap: var(--space-5); }
+.settings-page { display: flex; flex-direction: column; gap: var(--space-5); max-width: 1040px; }
+.settings-form { display: grid; grid-template-columns: 220px 1fr; gap: var(--space-6); align-items: start; }
+.settings-content { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+
+/* ── Navigation par catégories ── */
+.settings-nav {
+  position: sticky;
+  top: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--cream-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2);
+}
+.settings-nav__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  text-align: left;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.settings-nav__item:hover { background: var(--cream-50); color: var(--gray-800); }
+.settings-nav__item--active { background: var(--rose-50); color: var(--rose-600); font-weight: 600; }
+.settings-nav__icon { display: inline-flex; flex-shrink: 0; }
+.settings-nav__icon :deep(svg) { display: block; }
+
+@media (max-width: 860px) {
+  .settings-form { grid-template-columns: 1fr; }
+  .settings-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .settings-nav__item { white-space: nowrap; }
+}
 
 /* Section */
 .settings-section { padding: 0; overflow: hidden; }
