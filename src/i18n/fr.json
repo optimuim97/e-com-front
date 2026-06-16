@@ -51,7 +51,6 @@
     "yes": "Oui",
     "no": "Non"
   },
-
   "nav": {
     "announceClose": "Fermer",
     "searchLabel": "Rechercher",
@@ -63,7 +62,6 @@
     "cartLabel": "Mon panier",
     "menuLabel": "Menu"
   },
-
   "hero": {
     "madeInCI": "Made In Côte d'Ivoire",
     "defaultEyebrow": "Nouveau · Collection Eau de Rose",
@@ -86,7 +84,6 @@
     "defaultProductName": "Huile de Rose Musquée Pure",
     "defaultReview": "Ma peau est transformée en 2 semaines !"
   },
-
   "benefits": {
     "naturalFormulas": "Formules 100 % naturelles",
     "naturalDesc": "Actifs d'origine naturelle, sans parabènes ni perturbateurs endocriniens.",
@@ -98,20 +95,17 @@
     "deliveryDescFree": "Livraison offerte dès {threshold} {currency}. Commandes expédiées rapidement avec suivi.",
     "deliveryDesc": "Commandes expédiées sous 24h avec suivi en temps réel jusqu'à votre porte."
   },
-
   "categories": {
     "eyebrow": "Collections",
     "title": "Nos Catégories de soins",
     "desc": "Chaque produit, une promesse de douceur et d'éclat"
   },
-
   "bestSellers": {
     "eyebrow": "Coups de cœur",
     "title": "Nos best-sellers",
     "desc": "Les favoris de nos clientes",
     "seeAll": "Voir toute la gamme"
   },
-
   "newCollection": {
     "eyebrow": "✨ Vient d'arriver",
     "title": "Nouvelle collection",
@@ -119,7 +113,6 @@
     "badge": "Nouveau",
     "seeAll": "Voir toute la collection"
   },
-
   "flashSale": {
     "eyebrow": "⚡ Offres limitées",
     "defaultLabel": "Ventes flash",
@@ -129,13 +122,11 @@
     "minShort": "m",
     "secShort": "s"
   },
-
   "testimonials": {
     "eyebrow": "Témoignages",
     "title": "Ce que disent nos clientes",
     "desc": "Des résultats visibles, des femmes épanouies"
   },
-
   "about": {
     "eyebrow": "Notre histoire",
     "title": "{shopName} née en Côte d'Ivoire",
@@ -151,7 +142,6 @@
     },
     "defaultTagline": "Rosa Beauty Facial Care est née d'une conviction simple : la rose est l'un des ingrédients les plus puissants pour la beauté naturelle. Nous formulons chaque produit avec des actifs d'origine naturelle pour offrir des soins efficaces, doux et respectueux de votre peau."
   },
-
   "footer": {
     "newsletter": "Newsletter",
     "nlTitle": "Restez dans la fleur",
@@ -179,7 +169,6 @@
     "cookies": "Cookies",
     "legal": "Mentions légales"
   },
-
   "auth": {
     "loginEyebrow": "Connexion",
     "loginTitle": "Bon retour",
@@ -205,7 +194,6 @@
     "phonePlaceholder": "+225 07 00 00 00",
     "passwordMinPlaceholder": "8 caractères minimum"
   },
-
   "cart": {
     "eyebrow": "Mon panier",
     "title": "Votre sélection",
@@ -222,7 +210,6 @@
     "decrease": "Diminuer",
     "increase": "Augmenter"
   },
-
   "checkout": {
     "eyebrow": "Finaliser ma commande",
     "title": "Plus qu'une étape",
@@ -289,9 +276,22 @@
       "BE": "Belgique",
       "CA": "Canada",
       "OTHER": "Autre"
-    }
+    },
+    "howToCallYou": "Comment doit-on vous appeler ?",
+    "emptyCartHint": "Ajoutez au moins un article pour finaliser une commande.",
+    "discoverProducts": "Découvrir les produits",
+    "backToProducts": "Retour aux produits",
+    "viewMyOrder": "Voir ma commande",
+    "confirmWhatsapp": "Confirmer via WhatsApp",
+    "payNumberLabel": "Numéro à créditer",
+    "tapToCopy": "Appuyez pour copier",
+    "exactAmount": "Montant exact à envoyer",
+    "orderReference": "Référence commande",
+    "howToProceed": "Comment procéder :",
+    "chooseMethod": "Choisissez votre méthode préférée",
+    "whereDeliver": "Où souhaitez-vous recevoir votre commande ?",
+    "landmark": "Point de repère"
   },
-
   "product": {
     "notFound": "Produit introuvable",
     "notFoundDesc": "La fleur que vous cherchez s'est envolée…",
@@ -315,7 +315,6 @@
     "featured": "Vedette",
     "soldOut": "Épuisé"
   },
-
   "reviews": {
     "title": "Avis clients",
     "outOf5": "sur 5",
@@ -336,7 +335,6 @@
     "previous": "← Précédent",
     "next": "Suivant →"
   },
-
   "filters": {
     "title": "Filtres",
     "category": "Catégorie",
@@ -346,7 +344,6 @@
     "max": "Max",
     "clearAll": "Effacer tous les filtres"
   },
-
   "products": {
     "eyebrow": "Notre gamme",
     "title": "Soins à l'eau de rose pure",
@@ -361,7 +358,6 @@
     "product": "produit | produits",
     "mostRecent": "Plus récents"
   },
-
   "orders": {
     "eyebrow": "Mon compte",
     "title": "Mes commandes",
@@ -393,7 +389,6 @@
       "refunded": "Remboursée"
     }
   },
-
   "wishlist": {
     "eyebrow": "Mon compte",
     "title": "Mes favoris",
@@ -403,7 +398,6 @@
     "addedOn": "Ajouté le {date}",
     "removeLabel": "Retirer des favoris"
   },
-
   "pin": {
     "security": "Sécurité",
     "enterPin": "Entrez votre code PIN",
@@ -425,7 +419,6 @@
     "revealHint": "Vous pourrez modifier ce code depuis la page de votre commande.",
     "revealConfirm": "J'ai noté mon code PIN"
   },
-
   "blog": {
     "eyebrow": "Rosa Beauty",
     "title": "Blog Beauté",
@@ -447,7 +440,6 @@
     "recentPosts": "Articles récents",
     "noPosts": "Aucun article pour l'instant."
   },
-
   "drawer": {
     "prevStep": "Étape précédente",
     "stepCart": "Panier",
@@ -509,7 +501,6 @@
     "confirmOrder": "Confirmer la commande",
     "submitError": "Une erreur est survenue."
   },
-
   "notFound": {
     "eyebrow": "Égarée dans le jardin",
     "title": "Cette page est",
@@ -519,6 +510,5 @@
     "backHome": "Retour à l'accueil",
     "viewShop": "Voir la boutique"
   },
-
   "serverError": "Un souci technique vient de se produire. Pas d'inquiétude — réessayez dans un instant, notre équipe est déjà informée."
 }
