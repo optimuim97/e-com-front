@@ -77,8 +77,8 @@
               <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="#0E74F5"/><text x="18" y="24" text-anchor="middle" font-size="16" font-weight="bold" fill="white">W</text></svg>
             </div>
             <div class="order-wave-banner__body">
-              <strong>Paiement Wave requis</strong>
-              <p>Veuillez envoyer <strong>{{ formatPrice(order.total) }}</strong> sur le numéro Wave :</p>
+              <strong>Paiement mobile requis</strong>
+              <p>Veuillez envoyer <strong>{{ formatPrice(order.total) }}</strong> sur le numéro :</p>
               <div class="order-wave-banner__number-wrapper">
                 <p class="order-wave-banner__number">{{ settings.payment_mobile_number }}</p>
                 <CopyButton
@@ -237,13 +237,24 @@ const downloadingPdf     = ref(false)
 const copied   = ref(false)
 const paying   = ref(false)
 
-// Bouton "Payer maintenant" : commande en ligne, non réglée, pas annulée
-const showPayNow = computed(() =>
-  order.value
-  && !order.value.is_paid
-  && order.value.is_online_payment
-  && !['cancelled', 'refunded'].includes(order.value.status)
+// Moyen de paiement de la commande
+const orderProvider = computed(() =>
+  order.value?.payment_method ?? order.value?.payments?.[0]?.provider ?? ''
 )
+// GeniusPay (Wave/OM en ligne) activé dans l'admin ?
+const geniuspayEnabled = computed(() => settings.value.payment_geniuspay_enabled === 'true')
+
+// Bouton "Payer maintenant" (paiement en ligne) : seulement si une passerelle
+// en ligne est réellement disponible — carte (cinetpay) toujours, Wave/OM
+// uniquement si GeniusPay est activé. Sinon → instructions manuelles.
+const showPayNow = computed(() => {
+  if (!order.value || order.value.is_paid) return false
+  if (['cancelled', 'refunded'].includes(order.value.status)) return false
+  const p = orderProvider.value
+  if (p === 'cinetpay') return true
+  if (['wave', 'orange_money'].includes(p)) return geniuspayEnabled.value
+  return false
+})
 
 const paidPayment = computed(() =>
   order.value?.payments?.find(p => p.status === 'completed') ?? null
@@ -317,9 +328,11 @@ async function fetchOrder() {
   }
 }
 
+// Instructions de paiement mobile manuel : Wave/OM quand le paiement en ligne
+// (GeniusPay) est désactivé et que la commande n'est pas encore réglée.
 const isWavePayment = computed(() => {
-  const provider = order.value?.payment_method ?? order.value?.payments?.[0]?.provider ?? ''
-  return provider === 'wave'
+  if (!order.value || order.value.is_paid) return false
+  return ['wave', 'orange_money'].includes(orderProvider.value) && !geniuspayEnabled.value
 })
 
 const waLink = computed(() => {

@@ -90,10 +90,21 @@
               <AppSelect v-model="form.shop_country" :options="countryOptions" placeholder="Sélectionner…" />
             </div>
             <div class="field">
-              <label class="label">Devise</label>
+              <label class="label">Devise de base</label>
               <AppSelect v-model="form.shop_currency" :options="currencyOptions" />
             </div>
           </div>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('shop_currency_is_active')" class="toggle"
+              :class="{ 'toggle--on': form.shop_currency_is_active === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Afficher le sélecteur de devise (XOF / EUR)</strong>
+              <span>Permet au client de basculer l'affichage des prix entre Franc CFA et Euro (parité fixe). Désactivé : la boutique reste dans la devise de base.</span>
+            </div>
+          </label>
 
           <div class="field">
             <label class="label">URL du logo</label>
@@ -509,12 +520,14 @@
 
       <!-- ── Actions ───────────────────────────────────────────── -->
       <div class="settings-actions">
-        <button type="submit" :disabled="saving" class="btn btn-primary">
+        <button type="submit" :disabled="saving" class="btn btn-primary settings-save-btn">
           <span v-if="saving" class="spinner"></span>
-          <span v-else>
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="margin-right:6px"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-            Enregistrer les paramètres
-          </span>
+          <template v-else>
+            <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span>Enregistrer les paramètres</span>
+          </template>
         </button>
         <p v-if="success" class="msg msg--success">✓ Paramètres enregistrés avec succès.</p>
         <p v-if="errorMsg" class="msg msg--error">{{ errorMsg }}</p>
@@ -558,6 +571,7 @@ const form = ref({
   shop_country:     '',
   shop_logo_url:    '',
   shop_currency:    'XOF',
+  shop_currency_is_active: 'false',
   // Légal
   legal_company_name: '',
   legal_form:         '',
@@ -977,4 +991,13 @@ onMounted(fetchSettings)
 @media (max-width: 640px) {
   .hero-variant-grid { grid-template-columns: 1fr; }
 }
+
+/* Bouton enregistrer : icône + texte alignés et centrés */
+.settings-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.settings-save-btn svg { flex-shrink: 0; }
 </style>

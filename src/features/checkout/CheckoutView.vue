@@ -1631,7 +1631,21 @@ function formatPrice(val) {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
-.pay-instr__foot .btn { flex: 1; justify-content: center; min-width: 0; }
+.pay-instr__foot .btn {
+  flex: 1 1 0;
+  min-width: 0;            /* autorise le rétrécissement */
+  justify-content: center;
+  text-align: center;
+  white-space: normal;     /* le texte peut passer à la ligne au lieu de déborder */
+  padding-inline: var(--space-3);
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+/* Sur petit écran : empile les boutons en pleine largeur */
+@media (max-width: 480px) {
+  .pay-instr__foot { flex-direction: column; }
+  .pay-instr__foot .btn { width: 100%; flex: none; }
+}
 
 .co-empty__body {
   padding: var(--space-8) var(--space-6);

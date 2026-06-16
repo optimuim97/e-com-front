@@ -48,7 +48,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const shopCountry  = get('shop_country',  '')
   const shopLogoUrl  = get('shop_logo_url', '')
   const shopCurrency = get('shop_currency', 'XOF')
-  const shopCurrencyIsActive = get('shop_currency_is_active', false)
+  // Affichage du sélecteur de devise (multi-devises) — activé depuis l'admin
+  const shopCurrencyIsActive = bool('shop_currency_is_active', false)
 
   /* ── Livraison ────────────────────────────────────────────────────────── */
   const shippingDefaultCost   = computed(() => Number(data.value.shipping_default_cost   || 0))
@@ -180,6 +181,7 @@ export const useSettingsStore = defineStore('settings', () => {
     // Boutique
     shopName, shopTagline, shopEmail, shopPhone,
     shopAddress, shopCity, shopCountry, shopLogoUrl, shopCurrency,
+    shopCurrencyIsActive,
     // Livraison
     shippingDefaultCost, shippingFreeThreshold, shippingDelay,
     shippingZones, shippingPickupEnabled,

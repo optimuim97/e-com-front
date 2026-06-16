@@ -110,7 +110,7 @@
       <!-- Actions droite -->
       <div class="navbar__actions">
         <!-- Devise -->
-        <CurrencySwitcher class="hide-mobile" v-if="!shopCurrencyIsActive"/>
+        <CurrencySwitcher class="hide-mobile" v-if="settings.shopCurrencyIsActive" />
 
         <!-- Language switcher -->
         <LanguageSwitcher />
