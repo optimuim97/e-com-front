@@ -3,3 +3,6 @@ public/*.mov
 public/*.mp4
 public/*.avi
 .env
+
+# Config de déploiement (ne pas committer)
+.env.docker
