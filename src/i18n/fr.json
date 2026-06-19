@@ -107,7 +107,7 @@
     "seeAll": "Voir toute la gamme"
   },
   "newCollection": {
-    "eyebrow": "✨ Vient d'arriver",
+    "eyebrow": " Vient d'arriver",
     "title": "Nouvelle collection",
     "subtitle": "Les dernières créations Rosa Beauty pour sublimer votre rituel beauté.",
     "badge": "Nouveau",
@@ -290,7 +290,14 @@
     "howToProceed": "Comment procéder :",
     "chooseMethod": "Choisissez votre méthode préférée",
     "whereDeliver": "Où souhaitez-vous recevoir votre commande ?",
-    "landmark": "Point de repère"
+    "landmark": "Point de repère",
+    "continue": "Continuer",
+    "shippingNoticeTitle": "Frais de livraison à confirmer",
+    "shippingNoticeText": "Cette destination n'est pas dans nos zones tarifées. Nos agents vous contacteront pour vous communiquer les frais après validation de votre commande.",
+    "shippingFree": "Offerte",
+    "shippingToConfirm": "À confirmer par nos agents",
+    "shippingToFill": "À renseigner",
+    "landmarkPlaceholder": "Ex. Face à la pharmacie, immeuble bleu…"
   },
   "product": {
     "notFound": "Produit introuvable",

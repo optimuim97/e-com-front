@@ -31,7 +31,8 @@
 
       <!-- Séparateur + connexion sociale -->
       <div class="auth-divider"><span>ou</span></div>
-      <FacebookButton @success="onSocial" @error="onSocialError" />
+      <FacebookButton />
+      <GoogleButton />
     </form>
 
     <ForgotSecretModal v-if="showForgot" mode="password" @close="showForgot = false" />
@@ -45,6 +46,7 @@ import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/features/auth/auth.store';
 import AuthShell from '@/components/auth/AuthShell.vue';
 import FacebookButton from '@/features/auth/FacebookButton.vue';
+import GoogleButton from '@/features/auth/GoogleButton.vue';
 import ForgotSecretModal from '@/features/auth/ForgotSecretModal.vue';
 
 const { t } = useI18n();
@@ -56,14 +58,6 @@ const form    = ref({ email: '', password: '' });
 const error   = ref('');
 const loading = ref(false);
 const showForgot = ref(false);
-
-function onSocial(data) {
-  const redirect = route.query.redirect || (data?.user && auth.isAdmin ? '/admin' : '/');
-  router.push(redirect);
-}
-function onSocialError(msg) {
-  error.value = msg || t('auth.loginError');
-}
 
 async function handleSubmit() {
   error.value   = '';
@@ -86,14 +80,14 @@ async function handleSubmit() {
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: clamp(8px, 1.8vh, 16px);
 }
 
 .auth-error {
   background: #fee2e2;
   color: #b91c1c;
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 8px 12px;
   font-size: 0.8125rem;
 }
 
@@ -101,7 +95,8 @@ async function handleSubmit() {
   width: 100%;
   justify-content: center;
   gap: var(--space-2);
-  margin-top: var(--space-2);
+  padding-top: clamp(9px, 1.5vh, 13px);
+  padding-bottom: clamp(9px, 1.5vh, 13px);
 }
 
 .auth-divider {
@@ -110,7 +105,7 @@ async function handleSubmit() {
   gap: var(--space-3);
   color: var(--gray-400);
   font-size: 0.75rem;
-  margin: var(--space-1) 0;
+  margin: 0;
 }
 .auth-divider::before,
 .auth-divider::after {

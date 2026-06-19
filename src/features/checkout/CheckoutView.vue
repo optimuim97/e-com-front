@@ -221,7 +221,7 @@
                 :disabled="!step1Valid"
                 class="btn btn-primary co-next-btn"
               >
-                Continuer
+                {{ $t("checkout.continue") }}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
@@ -237,7 +237,7 @@
               </span>
               <div>
                 <h2 class="co-section__title">{{ ('checkout.shippingAddress') }}</h2>
-                <p class="co-section__hint">Où souhaitez-vous recevoir votre commande ?</p>
+                <p class="co-section__hint">{{ $t("checkout.whereDeliver") }}</p>
               </div>
             </header>
             <div class="co-section__body">
@@ -273,29 +273,29 @@
               <CheckoutField :def="FIELDS.shipping_address_line1" :error="fe('shipping_address_line1')" optional>
                 <input v-model="form.shipping_address_line1" type="text" class="input" :placeholder="$t('checkout.addressPlaceholder')" />
               </CheckoutField>
-              <CheckoutField :def="{ label: 'Point de repère' }" optional>
-                <input v-model="form.customer_note" type="text" class="input" placeholder="Ex. Face à la pharmacie, immeuble bleu…" />
+              <CheckoutField :def="{ label: $t('checkout.landmark') }" optional>
+                <input v-model="form.customer_note" type="text" class="input" :placeholder="$t('checkout.landmarkPlaceholder')" />
               </CheckoutField>
 
               <!-- Hors zone : frais communiqués manuellement -->
               <div v-if="shippingManual" class="co-shipping-notice">
                 <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
                 <div>
-                  <strong>Frais de livraison à confirmer</strong>
-                  <p>Cette destination n'est pas dans nos zones tarifées. Nos agents vous contacteront pour vous communiquer les frais après validation de votre commande.</p>
+                  <strong>{{ $t("checkout.shippingNoticeTitle") }}</strong>
+                  <p>{{ $t("checkout.shippingNoticeText") }}</p>
                 </div>
               </div>
             </div>
             <div class="co-section__foot">
               <button @click="currentStep = 1" class="btn btn-outline co-back-btn">
-                ← Retour
+                ← {{ $t("common.back") }}
               </button>
               <button
                 @click="goStep(3)"
                 :disabled="!step2Valid"
                 class="btn btn-primary co-next-btn"
               >
-                Continuer
+                {{ $t("checkout.continue") }}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
             </div>
@@ -311,7 +311,7 @@
               </span>
               <div>
                 <h2 class="co-section__title">{{ ('checkout.paymentMethod') }}</h2>
-                <p class="co-section__hint">Choisissez votre méthode préférée</p>
+                <p class="co-section__hint">{{ $t("checkout.chooseMethod") }}</p>
               </div>
             </header>
             <div class="co-section__body">
@@ -336,7 +336,7 @@
             </div>
             <div class="co-section__foot">
               <button @click="currentStep = 2" class="btn btn-outline co-back-btn">
-                ← Retour
+                ← {{ $t("common.back") }}
               </button>
             </div>
           </section>
@@ -366,7 +366,7 @@
           <!-- Totaux -->
           <ul class="co-summary__lines">
             <li>
-              <span>Sous-total</span>
+              <span>{{ $t("common.subtotal") }}</span>
               <span>{{ formatPrice(Number(cartStore.subtotal)) }}</span>
             </li>
             <li v-if="couponApplied" class="co-summary__discount">
@@ -392,7 +392,7 @@
                 v-model="couponCode"
                 type="text"
                 class="input co-promo__input"
-                placeholder="Code promo"
+                :placeholder="$t('checkout.promoCode')"
                 :disabled="couponApplied"
               />
               <button
@@ -423,7 +423,7 @@
           </Transition>
 
           <p class="co-summary__legal">
-            Paiement 100% sécurisé · Satisfait ou remboursé
+            {{ $t("checkout.legal") }}
           </p>
         </aside>
 

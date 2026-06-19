@@ -290,7 +290,14 @@
     "howToProceed": "How to proceed:",
     "chooseMethod": "Choose your preferred method",
     "whereDeliver": "Where should we deliver your order?",
-    "landmark": "Landmark"
+    "landmark": "Landmark",
+    "continue": "Continue",
+    "shippingNoticeTitle": "Shipping fees to confirm",
+    "shippingNoticeText": "This destination isn't in our priced zones. Our team will contact you with the shipping fees after your order is confirmed.",
+    "shippingFree": "Free",
+    "shippingToConfirm": "To be confirmed by our team",
+    "shippingToFill": "To be provided",
+    "landmarkPlaceholder": "E.g. Across from the pharmacy, blue building…"
   },
   "product": {
     "notFound": "Product not found",

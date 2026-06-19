@@ -140,8 +140,12 @@ async function fetchPosts(page = 1) {
 }
 
 async function fetchCategories() {
-  const { data } = await api.get('/blog/categories')
-  categories.value = data.data ?? data
+  try {
+    const { data } = await api.get('/blog/categories')
+    categories.value = data.data ?? data
+  } catch {
+    // catégories non critiques — le blog reste fonctionnel sans elles
+  }
 }
 
 function selectCategory(slug) {

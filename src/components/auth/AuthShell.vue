@@ -58,21 +58,24 @@ defineProps({
 </script>
 
 <style scoped>
+/* ── Page : exactement 1 viewport, jamais de scroll ── */
 .auth-page {
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-8) var(--space-4);
+  padding: clamp(8px, 2vh, 32px) var(--space-4);
   background: linear-gradient(160deg, var(--cream-50) 0%, var(--rose-50) 60%, var(--cream-100) 100%);
   position: relative;
-  overflow: hidden;
 }
 
 /* Lien retour accueil */
 .auth-back {
   position: absolute;
-  top: var(--space-5);
+  top: clamp(8px, 1.5vh, 20px);
   left: var(--space-5);
   display: flex;
   align-items: center;
@@ -81,7 +84,7 @@ defineProps({
   font-weight: 500;
   color: var(--gray-500);
   text-decoration: none;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-full);
   border: 1.5px solid var(--cream-300);
   background: rgba(255,255,255,0.7);
@@ -96,7 +99,7 @@ defineProps({
   transform: translateX(-2px);
 }
 
-.auth-bg { position: absolute; inset: 0; pointer-events: none; }
+.auth-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .auth-bg__blob {
   position: absolute;
   border-radius: 50%;
@@ -133,15 +136,16 @@ defineProps({
 
 .auth-header {
   text-align: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: clamp(8px, 1.5vh, 24px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
+  gap: clamp(2px, 0.5vh, 8px);
 }
 
+/* Logo : scale entre 55px (très petit écran) et 120px (grand écran) */
 .auth-logo__img {
-  height: 150px;
+  height: clamp(55px, 13vh, 120px);
   width: auto;
   object-fit: contain;
   display: block;
@@ -152,7 +156,7 @@ defineProps({
   justify-content: center;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-4);
+  margin-bottom: clamp(4px, 1vh, 16px);
 }
 .auth-logo__text {
   display: flex;
@@ -174,18 +178,24 @@ defineProps({
   color: var(--color-primary);
 }
 
-.auth-title { color: var(--gray-800); }
+/* Titre : scale entre 1.25rem et 1.75rem selon hauteur */
+.auth-title {
+  color: var(--gray-800);
+  font-size: clamp(1.125rem, 3vh, 1.75rem) !important;
+  line-height: 1.2;
+}
 :deep(.auth-title em) { font-style: italic; color: var(--color-primary); }
 
 .auth-desc {
   color: var(--gray-500);
-  font-size: 0.9375rem;
+  font-size: clamp(0.8125rem, 1.8vh, 0.9375rem);
   max-width: 380px;
   text-align: center;
 }
 
+/* Card : padding réduit sur petits écrans */
 .auth-card {
-  padding: var(--space-8);
+  padding: clamp(16px, 3vh, 32px) clamp(16px, 4vw, 32px);
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow-md);
@@ -196,7 +206,7 @@ defineProps({
   text-align: center;
   font-size: 0.875rem;
   color: var(--gray-500);
-  margin-top: var(--space-6);
+  margin-top: clamp(8px, 1.5vh, 24px);
 }
 .auth-footer a {
   color: var(--rose-500);
