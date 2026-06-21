@@ -142,7 +142,7 @@
                 </span>
                 <div class="drawer__choice-card__body">
                   <strong>Se connecter</strong>
-                  <span>Vous avez déjà un compte Rosa Beauty</span>
+                  <span>Vous avez déjà un compte Rosa Beauty Facial Care</span>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -154,7 +154,7 @@
                 </span>
                 <div class="drawer__choice-card__body">
                   <strong>Créer un compte</strong>
-                  <span>Nouveau chez Rosa Beauty ? Inscrivez-vous</span>
+                  <span>Nouveau chez Rosa Beauty Facial Care ? Inscrivez-vous</span>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -212,7 +212,7 @@
             <!-- CGV -->
             <label class="drawer__cgv">
               <input type="checkbox" v-model="form.cgv" />
-              <span>J'accepte les <a href="#">conditions générales de vente</a> de Rosa Beauty.</span>
+              <span>J'accepte les <a href="#">conditions générales de vente</a> de Rosa Beauty Facial Care.</span>
             </label>
           </div>
 

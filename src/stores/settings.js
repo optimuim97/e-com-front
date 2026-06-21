@@ -39,7 +39,7 @@ export const useSettingsStore = defineStore('settings', () => {
   })
 
   /* ── Boutique ─────────────────────────────────────────────────────────── */
-  const shopName     = get('shop_name',     'Rosa Beauty')
+  const shopName     = get('shop_name',     'Rosa Beauty Facial Care')
   const shopTagline  = get('shop_tagline',  'La beauté naturelle au quotidien')
   const shopEmail    = get('shop_email',    '')
   const shopPhone    = get('shop_phone',    '')

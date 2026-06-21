@@ -13,10 +13,10 @@
     <!-- Navbar principale -->
     <nav class="navbar__main container">
       <!-- Logo -->
-      <RouterLink to="/" class="navbar__logo" :aria-label="'Rosa Beauty - ' + $t('common.home')">
+      <RouterLink to="/" class="navbar__logo" :aria-label="'Rosa Beauty Facial Care - ' + $t('common.home')">
         <img
           src="/logos/rosa-logo-readable-600.png"
-          alt="Rosa Beauty Facial Care"
+          alt="Rosa Beauty Facial Care Facial Care"
           class="navbar__logo-img"
           width="180" height="180"
         />

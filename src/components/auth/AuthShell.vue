@@ -18,10 +18,10 @@
 
     <div class="auth-inner">
       <header class="auth-header">
-        <RouterLink to="/" class="auth-logo" aria-label="Rosa Beauty - Accueil">
+        <RouterLink to="/" class="auth-logo" aria-label="Rosa Beauty Facial Care - Accueil">
           <img
             src="/logos/rosa-logo-readable-600.png"
-            alt="Rosa Beauty Facial Care"
+            alt="Rosa Beauty Facial Care Facial Care"
             class="auth-logo__img"
             width="200" height="200"
           />

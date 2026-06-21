@@ -3,10 +3,10 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <!-- Logo -->
-      <RouterLink to="/" class="admin-sidebar__logo" aria-label="Rosa Beauty — Accueil">
+      <RouterLink to="/" class="admin-sidebar__logo" aria-label="Rosa Beauty Facial Care — Accueil">
         <img
           src="/logos/rosa-logo-readable-400.png"
-          alt="Rosa Beauty"
+          alt="Rosa Beauty Facial Care"
           class="admin-sidebar__logo-img"
         />
         <div class="admin-sidebar__logo-text">
@@ -149,7 +149,7 @@ const titles = {
   'admin.product-lines':         'Gammes de produits',
   'admin.product-lines.create':  'Nouvelle gamme',
   'admin.product-lines.edit':    'Modifier la gamme',
-  'admin.program':               'Rosa Beauty Club — Fidélité',
+  'admin.program':               'Rosa Beauty Facial Care Club — Fidélité',
   'admin.reviews':               'Avis & Modération',
   'admin.abandoned-carts':       'Relances — Paniers abandonnés',
 };

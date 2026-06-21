@@ -5,7 +5,7 @@
     <div class="co-header">
       <div class="container co-header__inner">
         <RouterLink to="/" class="co-header__logo">
-          <img src="/logos/rosa-logo-readable-600.png" alt="Rosa Beauty" class="co-header__logo-img" />
+          <img src="/logos/rosa-logo-readable-600.png" alt="Rosa Beauty Facial Care" class="co-header__logo-img" />
         </RouterLink>
 
         <div class="co-steps">
@@ -269,13 +269,41 @@
                 />
               </template>
 
-              <!-- Adresse + Point de repère -->
+              <!-- Adresse -->
               <CheckoutField :def="FIELDS.shipping_address_line1" :error="fe('shipping_address_line1')" optional>
                 <input v-model="form.shipping_address_line1" type="text" class="input" :placeholder="$t('checkout.addressPlaceholder')" />
               </CheckoutField>
-              <CheckoutField :def="{ label: $t('checkout.landmark') }" optional>
-                <input v-model="form.customer_note" type="text" class="input" :placeholder="$t('checkout.landmarkPlaceholder')" />
+
+              <!-- Point de repère (petit textarea) -->
+              <CheckoutField :def="FIELDS.landmark" optional>
+                <textarea
+                  v-model="form.landmark"
+                  class="input co-landmark"
+                  rows="2"
+                  :placeholder="$t('checkout.landmarkPlaceholder')"
+                />
               </CheckoutField>
+
+              <!-- Numéro du receveur -->
+              <div class="co-receiver">
+                <label class="co-receiver__toggle">
+                  <input type="checkbox" v-model="form.receiver_different" class="co-receiver__cb" />
+                  <span>Le receveur est différent de moi</span>
+                </label>
+                <Transition name="fade">
+                  <CheckoutField
+                    v-if="form.receiver_different"
+                    :def="FIELDS.receiver_phone"
+                    :error="fe('receiver_phone')"
+                    class="co-receiver__field"
+                  >
+                    <PhoneInput
+                      v-model="form.receiver_phone"
+                      placeholder="07 00 00 00"
+                    />
+                  </CheckoutField>
+                </Transition>
+              </div>
 
               <!-- Hors zone : frais communiqués manuellement -->
               <div v-if="shippingManual" class="co-shipping-notice">
@@ -813,22 +841,28 @@ async function applyCoupon() {
 
 function buildPayload() {
   const shipping_address = {
-    first_name:    form.value.first_name,
-    last_name:     form.value.last_name,
-    phone:         form.value.phone,
-    email:         form.value.email,
-    address_line1: form.value.shipping_address_line1 || form.value.shipping_city,
-    city:          form.value.shipping_city,
-    commune:       form.value.shipping_commune || undefined,
-    region:        form.value.shipping_region  || undefined,
-    country:       form.value.shipping_country,
+    first_name:     form.value.first_name,
+    last_name:      form.value.last_name,
+    phone:          form.value.phone,
+    email:          form.value.email,
+    address_line1:  form.value.shipping_address_line1 || form.value.shipping_city,
+    city:           form.value.shipping_city,
+    commune:        form.value.shipping_commune  || undefined,
+    region:         form.value.shipping_region   || undefined,
+    country:        form.value.shipping_country,
+    landmark:       form.value.landmark?.trim()  || undefined,
+    receiver_phone: form.value.receiver_different && form.value.receiver_phone?.trim()
+                      ? form.value.receiver_phone.trim()
+                      : undefined,
   }
   return {
     shipping_address,
-    billing_address: { ...shipping_address },
-    payment_method:  form.value.payment_method,
-    coupon_code:     couponApplied.value ? couponCode.value : null,
-    customer_note:   form.value.customer_note || null,
+    billing_address:  { ...shipping_address },
+    payment_method:   form.value.payment_method,
+    coupon_code:      couponApplied.value ? couponCode.value : null,
+    customer_note:    form.value.customer_note || null,
+    shipping_cost:    shippingFound.value ? shippingCost.value : null,
+    shipping_unknown: shippingManual.value || false,
     items: cartStore.items.map(item => ({
       product_id: item.product_id,
       variant_id: item.variant_id ?? null,
@@ -1212,6 +1246,40 @@ function formatPrice(val) {
   color: var(--gray-600);
 }
 .co-summary__free { color: #15803d; font-weight: 500; }
+
+/* ── Point de repère ── */
+.co-landmark {
+  resize: none;
+  min-height: 52px;
+  line-height: 1.5;
+  font-size: 0.875rem;
+}
+
+/* ── Receveur différent ── */
+.co-receiver {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.co-receiver__toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  user-select: none;
+}
+.co-receiver__cb {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--rose-500);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.co-receiver__field {
+  margin-top: var(--space-1);
+}
 
 .co-shipping-notice {
   display: flex;

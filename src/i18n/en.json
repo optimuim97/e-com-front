@@ -109,7 +109,7 @@
   "newCollection": {
     "eyebrow": "✨ Just arrived",
     "title": "New collection",
-    "subtitle": "The latest Rosa Beauty creations to enhance your beauty routine.",
+    "subtitle": "The latest Rosa Beauty Facial Care creations to enhance your beauty routine.",
     "badge": "New",
     "seeAll": "View the full collection"
   },
@@ -140,7 +140,7 @@
       "cruelfree": "Cruelty-free, nature-friendly",
       "madeInCI": "Proudly made in Côte d'Ivoire"
     },
-    "defaultTagline": "Rosa Beauty Facial Care was born from a simple conviction: the rose is one of the most powerful ingredients for natural beauty. We formulate each product with natural active ingredients to provide effective, gentle care that respects your skin."
+    "defaultTagline": "Rosa Beauty Facial Care Facial Care was born from a simple conviction: the rose is one of the most powerful ingredients for natural beauty. We formulate each product with natural active ingredients to provide effective, gentle care that respects your skin."
   },
   "footer": {
     "newsletter": "Newsletter",
@@ -368,7 +368,7 @@
   "orders": {
     "eyebrow": "My Account",
     "title": "My orders",
-    "desc": "Find the history of all your Rosa Beauty care products.",
+    "desc": "Find the history of all your Rosa Beauty Facial Care care products.",
     "empty": "No orders yet",
     "emptyDesc": "Discover our collection and treat yourself to a signature care product.",
     "viewDetail": "View details",
@@ -427,9 +427,9 @@
     "revealConfirm": "I have noted my PIN code"
   },
   "blog": {
-    "eyebrow": "Rosa Beauty",
+    "eyebrow": "Rosa Beauty Facial Care",
     "title": "Beauty Blog",
-    "desc": "Tips, skincare and news from Rosa Beauty",
+    "desc": "Tips, skincare and news from Rosa Beauty Facial Care",
     "categories": "Categories",
     "allPosts": "All articles",
     "searchPlaceholder": "Search an article…",
@@ -488,7 +488,7 @@
     "codDesc": "Pay when you receive your parcel",
     "cgv": "I accept the",
     "cgvLink": "terms and conditions",
-    "cgvSuffix": "of Rosa Beauty Facial Care.",
+    "cgvSuffix": "of Rosa Beauty Facial Care Facial Care.",
     "shipping": "Shipping",
     "continue": "Continue",
     "lastStep": "Last step",

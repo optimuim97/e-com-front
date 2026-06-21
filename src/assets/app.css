@@ -1,7 +1,7 @@
 @import 'tailwindcss';
 
 /* ═══════════════════════════════════════════════
-   Rosa Beauty - Tailwind theme bridge
+   Rosa Beauty Facial Care - Tailwind theme bridge
    Pont entre Tailwind v4 et le design-system rosa.
    Garde la compat des classes existantes
    (.btn-primary, .card, .input, .label, .badge-*)
@@ -522,7 +522,7 @@ textarea.input {
 }
 
 /* ══════════════════════════════════════════════════════════════
-   Checkbox & Radio — style Rosa Beauty
+   Checkbox & Radio — style Rosa Beauty Facial Care
    Remplacement complet du rendu natif navigateur
    ══════════════════════════════════════════════════════════════ */
 

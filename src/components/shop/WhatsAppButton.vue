@@ -33,7 +33,7 @@ const props = defineProps({
   },
   message: {
     type: String,
-    default: "Bonjour Rosa Beauty ! J'ai besoin d'aide.",
+    default: "Bonjour Rosa Beauty Facial Care ! J'ai besoin d'aide.",
   },
   label: {
     type: String,

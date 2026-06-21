@@ -1,14 +1,14 @@
 <template>
   <section class="gallery-section">
     <div class="container">
-      <SectionHeader eyebrow="Univers Rosa Beauty">
+      <SectionHeader eyebrow="Univers Rosa Beauty Facial Care">
         Dans les coulisses de la beauté
       </SectionHeader>
 
       <div class="gallery-grid">
         <!-- Grande image gauche -->
         <div class="gallery-item gallery-item--large" @click="openLightbox(0)">
-          <img src="/image_site/FLS_8032.jpeg" alt="Produits Rosa Beauty — Collection" loading="lazy" />
+          <img src="/image_site/FLS_8032.jpeg" alt="Produits Rosa Beauty Facial Care — Collection" loading="lazy" />
           <div class="gallery-overlay">
             <span class="gallery-zoom">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -31,7 +31,7 @@
             </div>
           </div>
           <div class="gallery-item" @click="openLightbox(2)">
-            <img src="/image_site/FLS_8130.jpeg" alt="Formulation Rosa Beauty" loading="lazy" />
+            <img src="/image_site/FLS_8130.jpeg" alt="Formulation Rosa Beauty Facial Care" loading="lazy" />
             <div class="gallery-overlay">
               <span class="gallery-zoom">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -46,7 +46,7 @@
       <!-- Rangée basse -->
       <div class="gallery-row">
         <div class="gallery-item gallery-item--wide" @click="openLightbox(3)">
-          <img src="/image_site/FLS_8142.jpeg" alt="Atelier Rosa Beauty" loading="lazy" />
+          <img src="/image_site/FLS_8142.jpeg" alt="Atelier Rosa Beauty Facial Care" loading="lazy" />
           <div class="gallery-overlay">
             <span class="gallery-zoom">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -56,7 +56,7 @@
           </div>
         </div>
         <div class="gallery-item gallery-item--wide" @click="openLightbox(4)">
-          <img src="/image_site/DSC_7542.jpeg" alt="Ingrédients naturels Rosa Beauty" loading="lazy" />
+          <img src="/image_site/DSC_7542.jpeg" alt="Ingrédients naturels Rosa Beauty Facial Care" loading="lazy" />
           <div class="gallery-overlay">
             <span class="gallery-zoom">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -66,7 +66,7 @@
           </div>
         </div>
         <div class="gallery-item gallery-item--wide" @click="openLightbox(5)">
-          <img src="/image_site/DSC_7553.jpeg" alt="Soins Rosa Beauty" loading="lazy" />
+          <img src="/image_site/DSC_7553.jpeg" alt="Soins Rosa Beauty Facial Care" loading="lazy" />
           <div class="gallery-overlay">
             <span class="gallery-zoom">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">

@@ -42,7 +42,7 @@ export function buildAdminMessage(order, settings = {}) {
     }
 
     return [
-        `🌹 Nouvelle commande Rosa Beauty`,
+        `🌹 Nouvelle commande Rosa Beauty Facial Care`,
         `N°: ${order.number}`,
         `Client: ${name || 'Inconnu'}`,
         addr.phone ? `Tél: ${addr.phone}` : null,

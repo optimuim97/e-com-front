@@ -50,7 +50,7 @@
           <div class="settings-grid-2">
             <div class="field">
               <label class="label">Nom de la boutique</label>
-              <input v-model="form.shop_name" type="text" class="input" placeholder="Rosa Beauty" />
+              <input v-model="form.shop_name" type="text" class="input" placeholder="Rosa Beauty Facial Care" />
             </div>
             <div class="field">
               <label class="label">Slogan</label>
@@ -138,7 +138,7 @@
           <div class="settings-grid-2">
             <div class="field">
               <label class="label">Raison sociale</label>
-              <input v-model="form.legal_company_name" type="text" class="input" placeholder="Rosa Beauty SARL" />
+              <input v-model="form.legal_company_name" type="text" class="input" placeholder="Rosa Beauty Facial Care SARL" />
             </div>
             <div class="field">
               <label class="label">Forme juridique</label>
@@ -443,7 +443,7 @@
         <div class="settings-section__body">
           <div class="field">
             <label class="label">Méta-titre par défaut</label>
-            <input v-model="form.seo_meta_title" type="text" class="input" placeholder="Rosa Beauty — Soins naturels à la rose pure" maxlength="60" />
+            <input v-model="form.seo_meta_title" type="text" class="input" placeholder="Rosa Beauty Facial Care — Soins naturels à la rose pure" maxlength="60" />
             <div class="char-count">
               <div class="char-bar">
                 <div class="char-bar__fill" :class="seoTitleClass" :style="{ width: Math.min(form.seo_meta_title?.length / 60 * 100, 100) + '%' }"></div>
@@ -455,7 +455,7 @@
           <div class="field">
             <label class="label">Méta-description par défaut</label>
             <textarea v-model="form.seo_meta_description" class="input textarea" rows="3"
-              placeholder="Découvrez Rosa Beauty, votre boutique de soins naturels à base d'eau de rose pure. Livraison rapide en Côte d'Ivoire." maxlength="160"></textarea>
+              placeholder="Découvrez Rosa Beauty Facial Care, votre boutique de soins naturels à base d'eau de rose pure. Livraison rapide en Côte d'Ivoire." maxlength="160"></textarea>
             <div class="char-count">
               <div class="char-bar">
                 <div class="char-bar__fill" :class="seoDescClass" :style="{ width: Math.min(form.seo_meta_description?.length / 160 * 100, 100) + '%' }"></div>
@@ -475,7 +475,7 @@
             <p class="seo-preview__label">Aperçu Google</p>
             <div class="seo-preview__box">
               <p class="seo-preview__url">rosabeauty.ci › boutique</p>
-              <p class="seo-preview__title">{{ form.seo_meta_title || form.shop_name || 'Rosa Beauty' }}</p>
+              <p class="seo-preview__title">{{ form.seo_meta_title || form.shop_name || 'Rosa Beauty Facial Care' }}</p>
               <p class="seo-preview__desc">{{ form.seo_meta_description || '…' }}</p>
             </div>
           </div>

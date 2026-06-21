@@ -34,12 +34,12 @@
           <div class="program-hero__orb orb-2"></div>
           <div class="program-hero__card-stack">
             <div class="loyalty-card loyalty-card--gold">
-              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty</span>
+              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty Facial Care</span>
               <span class="loyalty-card__tier">Club Or</span>
               <span class="loyalty-card__pts">2 500 pts</span>
             </div>
             <div class="loyalty-card loyalty-card--silver">
-              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty</span>
+              <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty Facial Care</span>
               <span class="loyalty-card__tier">Club Argent</span>
               <span class="loyalty-card__pts">1 200 pts</span>
             </div>
@@ -237,7 +237,7 @@
             <span class="eyebrow">Accompagnement personnalisé</span>
             <h2 class="program-section__title">Votre conseillère beauté</h2>
             <p class="advisor-section__desc">
-              Nos expertes Rosa Beauty sont là pour vous guider dans le choix de vos soins, créer votre routine idéale et répondre à toutes vos questions — en WhatsApp, vidéo ou en boutique.
+              Nos expertes Rosa Beauty Facial Care sont là pour vous guider dans le choix de vos soins, créer votre routine idéale et répondre à toutes vos questions — en WhatsApp, vidéo ou en boutique.
             </p>
             <ul class="advisor-section__features">
               <li>Consultation WhatsApp sous 24h</li>
@@ -272,7 +272,7 @@
             <div class="advisor-card">
               <div class="advisor-card__avatar"><FlowerMark /></div>
               <div>
-                <p class="advisor-card__name">Équipe Rosa Beauty</p>
+                <p class="advisor-card__name">Équipe Rosa Beauty Facial Care</p>
                 <p class="advisor-card__role">Conseillers beauté certifiés</p>
                 <p class="advisor-card__status">
                   <span class="status-dot"></span> Disponible maintenant

@@ -425,7 +425,7 @@ const clientWaLink = computed(() => {
   if (!order.value) return null;
   const phone = order.value.shipping_address?.phone;
   if (!phone) return null;
-  const shopName = settings.value.shop_name || "Rosa Beauty";
+  const shopName = settings.value.shop_name || "Rosa Beauty Facial Care";
   const message = buildClientMessage(order.value, shopName);
   return buildWaLink(phone, message);
 });

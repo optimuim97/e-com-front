@@ -44,7 +44,7 @@
           <RouterLink to="/" class="footer__logo">
             <img
               src="/logos/rosa-logo-readable-600.png"
-              alt="Rosa Beauty Facial Care"
+              alt="Rosa Beauty Facial Care Facial Care"
               class="footer__logo-img"
               width="220" height="220"
             />

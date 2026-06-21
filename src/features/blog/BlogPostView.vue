@@ -46,7 +46,7 @@
                 <div class="post-author__avatar">{{ post.author.name?.[0]?.toUpperCase() }}</div>
                 <div>
                   <p class="post-author__name">{{ post.author.name }}</p>
-                  <p class="post-author__role">Rosa Beauty</p>
+                  <p class="post-author__role">Rosa Beauty Facial Care</p>
                 </div>
               </div>
             </header>

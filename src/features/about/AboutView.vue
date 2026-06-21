@@ -19,7 +19,7 @@
             <div class="ap-hero__founder-avatar">M</div>
             <div>
               <p class="ap-hero__founder-name">Maïmouna Diabagate</p>
-              <p class="ap-hero__founder-role">Fondatrice, Rosa Beauty</p>
+              <p class="ap-hero__founder-role">Fondatrice, Rosa Beauty Facial Care</p>
             </div>
           </div>
           <RouterLink to="/products" class="btn btn-primary">
@@ -30,7 +30,7 @@
           </RouterLink>
         </div>
         <div class="ap-hero__img-wrap">
-          <img src="/image_site/DSC_7629.jpeg" alt="Rosa Beauty — Fondatrice" class="ap-hero__img" />
+          <img src="/image_site/DSC_7629.jpeg" alt="Rosa Beauty Facial Care — Fondatrice" class="ap-hero__img" />
           <div class="ap-hero__img-deco"></div>
         </div>
       </div>
@@ -91,7 +91,7 @@
           <span class="eyebrow">L'ingrédient phare</span>
           <h2 class="display-md">La <em>Rose de Damas</em></h2>
           <p class="ap-rose__desc">
-            Au cœur de Rosa Beauty, il y a la rose de Damas — un ingrédient précieux reconnu depuis
+            Au cœur de Rosa Beauty Facial Care, il y a la rose de Damas — un ingrédient précieux reconnu depuis
             des siècles pour ses vertus exceptionnelles sur la peau. Nous en faisons le fil conducteur
             de toute notre gamme.
           </p>
@@ -120,7 +120,7 @@
           </div>
         </div>
         <div class="ap-rose__img-wrap">
-          <img src="/image_site/FLS_8032.jpeg" alt="Rose de Damas — Rosa Beauty" class="ap-rose__img" />
+          <img src="/image_site/FLS_8032.jpeg" alt="Rose de Damas — Rosa Beauty Facial Care" class="ap-rose__img" />
           <div class="ap-rose__img-badge">Rose de Damas</div>
         </div>
       </div>
@@ -131,7 +131,7 @@
       <div class="container ap-mission__inner">
         <div class="ap-mission__img-col">
           <div class="ap-mission__img-stack">
-            <img src="/image_site/FLS_8111.jpeg" alt="Produits Rosa Beauty" class="ap-mission__img ap-mission__img--back" />
+            <img src="/image_site/FLS_8111.jpeg" alt="Produits Rosa Beauty Facial Care" class="ap-mission__img ap-mission__img--back" />
             <img src="/image_site/FLS_8130.jpeg" alt="Ingrédients naturels" class="ap-mission__img ap-mission__img--front" />
           </div>
         </div>
@@ -229,7 +229,7 @@
           <RouterLink to="/products" class="btn btn-primary">Voir nos produits</RouterLink>
           <RouterLink to="/contact"  class="btn btn-outline">Nous contacter</RouterLink>
         </div>
-        <p class="ap-cta__attr">— Maïmouna Diabagate, fondatrice de Rosa Beauty</p>
+        <p class="ap-cta__attr">— Maïmouna Diabagate, fondatrice de Rosa Beauty Facial Care</p>
       </div>
     </section>
 
@@ -298,7 +298,7 @@ const values = [
   {
     icon:  SVG('<path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>'),
     title: 'Accessibilité',
-    desc:  'Une beauté de qualité ne devrait pas être réservée à quelques-unes. Rosa Beauty est pour toutes.',
+    desc:  'Une beauté de qualité ne devrait pas être réservée à quelques-unes. Rosa Beauty Facial Care est pour toutes.',
   },
   {
     icon:  SVG('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'),

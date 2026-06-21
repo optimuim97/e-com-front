@@ -3,124 +3,125 @@
     <div class="qo-overlay" @click.self="$emit('close')">
       <div class="qo-card">
 
-        <!-- ── Confirmation post-commande ────────────────────────────── -->
-        <div v-if="confirmed" class="qo-confirmed">
-          <div class="qo-confirmed__icon"><FlowerMark /></div>
-          <h2 class="qo-confirmed__title">Commande confirmée !</h2>
-          <p class="qo-confirmed__number">N° <strong>{{ confirmedOrder.number }}</strong></p>
+        <!-- ── Zone scrollable ── -->
+        <div class="qo-body">
 
-          <!-- PIN généré -->
-          <div v-if="confirmedOrder.generated_pin" class="qo-pin-box">
-            <p class="qo-pin-box__label">Votre code PIN de sécurité</p>
-            <div class="qo-pin-box__digits">
-              <span v-for="d in confirmedOrder.generated_pin.split('')" :key="d" class="qo-pin-box__digit">{{ d }}</span>
-            </div>
-            <p class="qo-pin-box__hint">Notez-le précieusement. Il vous servira à accéder à vos commandes.</p>
-          </div>
+          <!-- ── Confirmation post-commande ────────────────────────────── -->
+          <div v-if="confirmed" class="qo-confirmed">
+            <div class="qo-confirmed__icon"><FlowerMark /></div>
+            <h2 class="qo-confirmed__title">Commande confirmée !</h2>
+            <p class="qo-confirmed__number">N° <strong>{{ confirmedOrder.number }}</strong></p>
 
-          <!-- Wave : instructions de paiement -->
-          <div v-if="isWavePayment && waveNumber" class="qo-wave-box">
-            <p class="qo-wave-box__label">Paiement Wave</p>
-            <p class="qo-wave-box__number">{{ waveNumber }}</p>
-            <p class="qo-wave-box__total">Montant à envoyer : <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
-            <p class="qo-wave-box__ref">Référence : <strong>{{ confirmedOrder.number }}</strong></p>
-          </div>
-
-          <!-- WhatsApp admin — notifier de la commande -->
-          <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
-            class="btn btn-whatsapp qo-wa-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-            Envoyer ma commande via WhatsApp
-          </a>
-
-          <div class="qo-confirmed__actions">
-            <button class="btn btn-primary" @click="viewOrder">Voir ma commande</button>
-            <button class="btn btn-outline btn-sm" @click="goToProfile">Sécuriser mon compte</button>
-          </div>
-        </div>
-
-        <!-- ── Formulaire commande rapide ────────────────────────────── -->
-        <template v-else>
-          <button class="qo-close" @click="$emit('close')" aria-label="Fermer">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          </button>
-
-          <div class="qo-header">
-            <span class="eyebrow">Commande rapide</span>
-            <h2 class="qo-title">En <em>2 minutes</em> chrono</h2>
-            <p class="qo-subtitle">Seulement les infos essentielles pour vous livrer.</p>
-          </div>
-
-          <!-- Items résumé -->
-          <div class="qo-items-summary">
-            <span v-for="item in cartItems" :key="item.id" class="qo-item-chip">
-              {{ item.product?.name ?? 'Produit' }} ×{{ item.quantity }}
-            </span>
-          </div>
-
-          <form @submit.prevent="submit" class="qo-form">
-            <!-- Nom -->
-            <div class="qo-field">
-              <label class="label">Nom complet *</label>
-              <input v-model="form.name" type="text" class="input" placeholder="Ex. Fatou Konaté" required />
-            </div>
-
-            <!-- Téléphone -->
-            <div class="qo-field">
-              <label class="label">Téléphone *</label>
-              <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" />
-            </div>
-
-            <!-- Email (optionnel, pour recevoir la facture) -->
-            <div class="qo-field">
-              <label class="label">
-                E-mail <span class="qo-optional">(optionnel — pour recevoir la facture PDF)</span>
-              </label>
-              <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" />
-            </div>
-
-            <!-- Commune -->
-            <div class="qo-field">
-              <label class="label">Commune / Quartier (Abidjan) *</label>
-              <select v-model="form.commune" class="input qo-select" required>
-                <option value="" disabled>Choisir votre commune…</option>
-                <option v-for="c in COMMUNES" :key="c" :value="c">{{ c }}</option>
-              </select>
-            </div>
-
-            <!-- Paiement -->
-            <div class="qo-field">
-              <label class="label">Mode de paiement *</label>
-              <div class="qo-payments">
-                <label v-for="pm in paymentMethods" :key="pm.value"
-                  class="qo-payment" :class="{ 'qo-payment--active': form.payment === pm.value }">
-                  <input type="radio" :value="pm.value" v-model="form.payment" required />
-                  <span class="qo-payment__icon" v-html="pm.icon"></span>
-                  <span class="qo-payment__label">{{ pm.label }}</span>
-                </label>
+            <div v-if="confirmedOrder.generated_pin" class="qo-pin-box">
+              <p class="qo-pin-box__label">Votre code PIN de sécurité</p>
+              <div class="qo-pin-box__digits">
+                <span v-for="d in confirmedOrder.generated_pin.split('')" :key="d" class="qo-pin-box__digit">{{ d }}</span>
               </div>
+              <p class="qo-pin-box__hint">Notez-le précieusement. Il vous servira à accéder à vos commandes.</p>
             </div>
 
-            <!-- Note optionnelle -->
-            <div class="qo-field">
-              <label class="label">Note pour le livreur <span class="qo-optional">(optionnel)</span></label>
-              <input v-model="form.note" type="text" class="input" placeholder="Ex. Appeler en arrivant" />
+            <div v-if="isWavePayment && waveNumber" class="qo-wave-box">
+              <p class="qo-wave-box__label">Paiement Wave</p>
+              <p class="qo-wave-box__number">{{ waveNumber }}</p>
+              <p class="qo-wave-box__total">Montant à envoyer : <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
+              <p class="qo-wave-box__ref">Référence : <strong>{{ confirmedOrder.number }}</strong></p>
             </div>
 
-            <p v-if="error" class="qo-error">{{ error }}</p>
+            <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
+              class="btn btn-whatsapp qo-wa-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Envoyer ma commande via WhatsApp
+            </a>
 
-            <!-- Récap prix -->
-            <div class="qo-total">
-              <span>Total</span>
-              <strong>{{ fmtPrice(cartTotal) }}</strong>
+            <div class="qo-confirmed__actions">
+              <button class="btn btn-primary" @click="viewOrder">Voir ma commande</button>
+              <button class="btn btn-outline btn-sm" @click="goToProfile">Sécuriser mon compte</button>
             </div>
+          </div>
 
-            <button type="submit" class="btn btn-primary btn-lg qo-submit" :disabled="submitting">
-              <span v-if="submitting" class="qo-spinner"></span>
-              <span v-else>Commander maintenant</span>
+          <!-- ── Formulaire commande rapide ────────────────────────────── -->
+          <template v-else>
+            <button class="qo-close" @click="$emit('close')" aria-label="Fermer">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
-          </form>
-        </template>
+
+            <div class="qo-header">
+              <span class="eyebrow">Commande Rapide</span>
+              <h2 class="qo-title">En <em>2 minutes</em> chrono</h2>
+            </div>
+
+            <div class="qo-items-summary">
+              <span v-for="item in cartItems" :key="item.id" class="qo-item-chip">
+                {{ item.product?.name ?? 'Produit' }} ×{{ item.quantity }}
+              </span>
+            </div>
+
+            <form id="qo-form" @submit.prevent="submit" class="qo-form">
+              <div class="qo-field">
+                <label class="label">Nom complet *</label>
+                <input v-model="form.name" type="text" class="input" placeholder="Ex. Fatou Konaté" required />
+              </div>
+
+              <div class="qo-field">
+                <label class="label">Téléphone *</label>
+                <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" />
+              </div>
+
+              <div class="qo-field">
+                <label class="label">
+                  E-mail <span class="qo-optional">(optionnel — pour recevoir la facture PDF)</span>
+                </label>
+                <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" />
+              </div>
+
+              <div class="qo-field">
+                <label class="label">Commune / Quartier (Abidjan) *</label>
+                <select v-model="form.commune" class="input qo-select" required>
+                  <option value="" disabled>Choisir votre commune…</option>
+                  <option v-for="c in COMMUNES" :key="c" :value="c">{{ c }}</option>
+                </select>
+              </div>
+
+              <div class="qo-field">
+                <label class="label">Mode de paiement *</label>
+                <div class="qo-payments">
+                  <label v-for="pm in paymentMethods" :key="pm.value"
+                    class="qo-payment" :class="{ 'qo-payment--active': form.payment === pm.value }">
+                    <input type="radio" :value="pm.value" v-model="form.payment" required />
+                    <span class="qo-payment__icon" v-html="pm.icon"></span>
+                    <span class="qo-payment__label">{{ pm.label }}</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="qo-field">
+                <label class="label">Note pour le livreur <span class="qo-optional">(optionnel)</span></label>
+                <input v-model="form.note" type="text" class="input" placeholder="Ex. Appeler en arrivant" />
+              </div>
+
+              <p v-if="error" class="qo-error">{{ error }}</p>
+            </form>
+          </template>
+
+        </div>
+        <!-- fin .qo-body -->
+
+        <!-- ── Footer fixe : total + bouton (formulaire uniquement) ── -->
+        <div v-if="!confirmed" class="qo-footer">
+          <div class="qo-total">
+            <span>Total</span>
+            <strong>{{ fmtPrice(cartTotal) }}</strong>
+          </div>
+          <button
+            type="submit"
+            form="qo-form"
+            class="btn btn-primary btn-lg qo-submit"
+            :disabled="submitting"
+          >
+            <span v-if="submitting" class="qo-spinner"></span>
+            <span v-else>Commander maintenant</span>
+          </button>
+        </div>
 
       </div>
     </div>
@@ -136,6 +137,7 @@ import { useCartStore } from '@/features/cart/cart.store'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
+import FlowerMark from '@/components/ui/FlowerMark.vue'
 
 const emit   = defineEmits(['close'])
 const router = useRouter()
@@ -148,7 +150,6 @@ const cartItems  = computed(() => cartStore.items)
 const cartTotal  = computed(() => cartStore.total)
 const waveNumber = computed(() => settingsStore.paymentMobileNumber.value)
 
-// WhatsApp admin notification link
 const adminWhatsappLink = computed(() => {
   const order = confirmedOrder.value
   if (!order) return null
@@ -161,7 +162,7 @@ const adminWhatsappLink = computed(() => {
   const pin = order.generated_pin ?? '—'
 
   const msg = [
-    `🌹 Nouvelle commande Rosa Beauty`,
+    `🌹 Nouvelle commande Rosa Beauty Facial Care`,
     `N°: ${order.number}`,
     `Client: ${form.value.name} (${phone})`,
     `Commune: ${form.value.commune}`,
@@ -203,9 +204,9 @@ const form = ref({
   note: '',
 })
 
-const submitting    = ref(false)
-const error         = ref('')
-const confirmed     = ref(false)
+const submitting     = ref(false)
+const error          = ref('')
+const confirmed      = ref(false)
 const confirmedOrder = ref(null)
 
 const isWavePayment = computed(() =>
@@ -241,7 +242,6 @@ async function submit() {
       items,
     })
 
-    // Stocke le token pour permettre l'accès à la commande
     if (data.access_token) {
       localStorage.setItem('auth_token', data.access_token)
       await authStore.fetchUser()
@@ -249,7 +249,6 @@ async function submit() {
 
     cartStore.clear()
 
-    // Paiement en ligne (GeniusPay) : rediriger vers la page de paiement
     if (data.payment_url) {
       window.location.href = data.payment_url
       return
@@ -294,18 +293,42 @@ function fmtPrice(val) {
   padding: var(--space-4);
 }
 
+/* ── Card : flex column, overflow hidden ── */
 .qo-card {
   background: #fff;
   border-radius: var(--radius-2xl, 20px);
   width: 100%;
   max-width: 440px;
   max-height: 90vh;
-  overflow-y: auto;
-  padding: var(--space-7) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   position: relative;
   box-shadow: 0 24px 64px rgba(0,0,0,.18);
 }
 
+/* ── Zone scrollable : tout sauf le footer ── */
+.qo-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-7) var(--space-6) var(--space-4);
+}
+
+/* ── Footer collé en bas : total + bouton ── */
+.qo-footer {
+  flex-shrink: 0;
+  padding: var(--space-3) var(--space-6) var(--space-5);
+  border-top: 1px solid var(--cream-200);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Ombre vers le haut pour signaler que ça scrolle */
+  box-shadow: 0 -6px 16px rgba(0,0,0,.06);
+}
+
+/* ── Bouton fermer ── */
 .qo-close {
   position: absolute;
   top: var(--space-4);
@@ -319,6 +342,7 @@ function fmtPrice(val) {
   justify-content: center;
   color: var(--gray-400);
   transition: all var(--transition-fast);
+  z-index: 2;
 }
 .qo-close:hover { background: var(--rose-100); color: var(--rose-500); }
 
@@ -352,11 +376,8 @@ function fmtPrice(val) {
 
 /* ── Formulaire ── */
 .qo-form { display: flex; flex-direction: column; gap: var(--space-4); }
-
 .qo-field { display: flex; flex-direction: column; gap: var(--space-1); }
-
 .qo-optional { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
-
 .qo-select { appearance: none; cursor: pointer; }
 
 /* ── Paiement ── */
@@ -380,18 +401,15 @@ function fmtPrice(val) {
 .qo-payment input { display: none; }
 .qo-payment__icon { font-size: 1.5rem; }
 .qo-payment__label { font-size: 0.7rem; font-weight: 500; color: var(--gray-600); }
-.qo-payment--active {
-  border-color: var(--rose-400);
-  background: var(--rose-50);
-}
+.qo-payment--active { border-color: var(--rose-400); background: var(--rose-50); }
 .qo-payment--active .qo-payment__label { color: var(--rose-600); }
 
-/* ── Total ── */
+/* ── Total (dans le footer) ── */
 .qo-total {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   background: var(--cream-50);
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
@@ -480,28 +498,25 @@ function fmtPrice(val) {
 .qo-wave-box__total { font-size: 0.875rem; color: #1d4ed8; margin-top: var(--space-2); }
 .qo-wave-box__ref { font-size: 0.8125rem; color: #3b82f6; }
 
-.qo-wa-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  width: 100%;
-  background: #25d366;
-  color: #fff;
-  border-radius: var(--radius-md);
-  padding: 12px 16px;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background var(--transition-fast);
-}
-.qo-wa-btn:hover { background: #1ebe5d; }
+/* ── WhatsApp ── */
+.qo-wa-btn { width: 100%; justify-content: center; gap: var(--space-2); }
 
+/* ── Actions confirmation ── */
 .qo-confirmed__actions {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-3);
   width: 100%;
 }
-.qo-confirmed__actions .btn { justify-content: center; }
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .qo-overlay { padding: 0; align-items: flex-end; }
+  .qo-card {
+    max-width: 100%;
+    max-height: 95vh;
+    border-radius: var(--radius-2xl, 20px) var(--radius-2xl, 20px) 0 0;
+  }
+  .qo-footer { padding-bottom: max(var(--space-5), env(safe-area-inset-bottom)); }
+}
 </style>

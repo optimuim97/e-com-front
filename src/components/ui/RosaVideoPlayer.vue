@@ -65,7 +65,7 @@ onBeforeUnmount(() => {
 
 <style>
 /*
- * ── Rosa Beauty — Video.js theme override ──
+ * ── Rosa Beauty Facial Care — Video.js theme override ──
  * Couleurs : rose #e8336d, crème #fdfaf7, gris foncé #211f1f
  * Toutes les règles sont NON-scoped (video.js injecte dans le body).
  */

@@ -21,7 +21,7 @@
           :to="`/products?category=${cat.slug}`"
           class="category-card"
         >
-          <!-- Image (admin) ou photo produit Rosa Beauty correspondante -->
+          <!-- Image (admin) ou photo produit Rosa Beauty Facial Care correspondante -->
           <div class="category-card__img-wrap">
             <img
               v-if="cat.image || categoryFallbackImage(cat)"
@@ -51,7 +51,7 @@ defineProps({
   loading:    { type: Boolean, default: false },
 })
 
-// ── Fallback images : photos produit Rosa Beauty par catégorie ─────────────
+// ── Fallback images : photos produit Rosa Beauty Facial Care par catégorie ─────────────
 // Priorité : image admin > fallback par nom > dégradé générique
 const CATEGORY_IMAGE_MAP = [
   {

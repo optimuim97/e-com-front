@@ -297,7 +297,7 @@ const waReceiptLink = computed(() => {
   if (!phone) return null
   const lines = cart.value.map(i => `• ${i.name} ×${i.quantity} — ${fmt(i.price * i.quantity)}`).join('\n')
   const payState = paymentStatus.value === 'paid' ? '✅ Payée' : '⏳ À régler'
-  const msg = `🌹 *Rosa Beauty* — Reçu commande\n\nN° : *${created.value.number}*\n\n${lines}\n\n` +
+  const msg = `🌹 *Rosa Beauty Facial Care* — Reçu commande\n\nN° : *${created.value.number}*\n\n${lines}\n\n` +
     (Number(shippingCost.value) ? `Livraison : ${fmt(shippingCost.value)}\n` : '') +
     (Number(discount.value) ? `Remise : -${fmt(discount.value)}\n` : '') +
     `*Total : ${fmt(total.value)}*\nStatut : ${payState}\n\nMerci de votre confiance 🌹`

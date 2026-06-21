@@ -94,7 +94,7 @@
 
         <!-- ── Image ── -->
         <div class="cp-hero__img-wrap">
-          <img src="/image_site/FLS_8111.jpeg" alt="Rosa Beauty" class="cp-hero__img" />
+          <img src="/image_site/FLS_8111.jpeg" alt="Rosa Beauty Facial Care" class="cp-hero__img" />
           <div class="cp-hero__img-overlay"></div>
           <div class="cp-hero__img-badge">
             <span><FlowerMark /></span>

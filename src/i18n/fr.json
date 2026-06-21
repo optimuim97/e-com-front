@@ -109,7 +109,7 @@
   "newCollection": {
     "eyebrow": " Vient d'arriver",
     "title": "Nouvelle collection",
-    "subtitle": "Les dernières créations Rosa Beauty pour sublimer votre rituel beauté.",
+    "subtitle": "Les dernières créations Rosa Beauty Facial Care pour sublimer votre rituel beauté.",
     "badge": "Nouveau",
     "seeAll": "Voir toute la collection"
   },
@@ -140,7 +140,7 @@
       "cruelfree": "Sans cruauté, respectueux de la nature",
       "madeInCI": "Fabriqué en Côte d'Ivoire avec fierté"
     },
-    "defaultTagline": "Rosa Beauty Facial Care est née d'une conviction simple : la rose est l'un des ingrédients les plus puissants pour la beauté naturelle. Nous formulons chaque produit avec des actifs d'origine naturelle pour offrir des soins efficaces, doux et respectueux de votre peau."
+    "defaultTagline": "Rosa Beauty Facial Care Facial Care est née d'une conviction simple : la rose est l'un des ingrédients les plus puissants pour la beauté naturelle. Nous formulons chaque produit avec des actifs d'origine naturelle pour offrir des soins efficaces, doux et respectueux de votre peau."
   },
   "footer": {
     "newsletter": "Newsletter",
@@ -368,7 +368,7 @@
   "orders": {
     "eyebrow": "Mon compte",
     "title": "Mes commandes",
-    "desc": "Retrouvez l'historique de tous vos soins Rosa Beauty.",
+    "desc": "Retrouvez l'historique de tous vos soins Rosa Beauty Facial Care.",
     "empty": "Aucune commande pour le moment",
     "emptyDesc": "Découvrez notre collection et offrez-vous un soin signature.",
     "viewDetail": "Voir le détail",
@@ -427,9 +427,9 @@
     "revealConfirm": "J'ai noté mon code PIN"
   },
   "blog": {
-    "eyebrow": "Rosa Beauty",
+    "eyebrow": "Rosa Beauty Facial Care",
     "title": "Blog Beauté",
-    "desc": "Conseils, soins et actualités de la maison Rosa Beauty",
+    "desc": "Conseils, soins et actualités de la maison Rosa Beauty Facial Care",
     "categories": "Catégories",
     "allPosts": "Tous les articles",
     "searchPlaceholder": "Rechercher un article…",
@@ -488,7 +488,7 @@
     "codDesc": "Payez en recevant votre colis",
     "cgv": "J'accepte les",
     "cgvLink": "conditions générales de vente",
-    "cgvSuffix": "de Rosa Beauty Facial Care.",
+    "cgvSuffix": "de Rosa Beauty Facial Care Facial Care.",
     "shipping": "Livraison",
     "continue": "Continuer",
     "lastStep": "Dernière étape",

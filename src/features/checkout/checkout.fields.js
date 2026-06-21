@@ -36,6 +36,10 @@ export const FIELDS = {
   billing_postal_code:    { api: 'billing_postal_code',    label: 'Code postal',       type: 'text',   required: false },
   billing_country:        { api: 'billing_country',        label: 'Pays',              type: 'select', required: false },
 
+  // ── Livraison : infos complémentaires ────────────────────────────────
+  landmark:               { api: 'landmark',               label: 'Point de repère',   type: 'textarea', required: false },
+  receiver_phone:         { api: 'receiver_phone',         label: 'Tél. du receveur',  type: 'tel',      required: false },
+
   // ── Paiement & livraison ───────────────────────────────────────────────
   payment_method:         { api: 'payment_method',         label: 'Mode de paiement',  type: 'radio',  required: true  },
   shipping_method:        { api: 'shipping_method',        label: 'Mode de livraison', type: 'radio',  required: true  },
@@ -54,6 +58,7 @@ export function makeForm(overrides = {}) {
     billing_city: '', billing_postal_code: '', billing_country: 'CI',
     payment_method: 'wave', shipping_method: 'standard',
     coupon_code: null, customer_note: '',
+    landmark: '', receiver_phone: '', receiver_different: false,
   }
   return { ...defaults, ...overrides }
 }
