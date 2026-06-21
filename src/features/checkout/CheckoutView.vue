@@ -259,6 +259,7 @@
                 <CitySelect
                   v-model:city="form.shipping_city"
                   v-model:commune="form.shipping_commune"
+                  @geo-fill="onGeoFill"
                 />
               </template>
               <template v-else-if="form.shipping_country">
@@ -553,6 +554,13 @@ watch(
 
 // Gardé pour rétrocompatibilité (Facebook OAuth, etc.)
 function onAuthenticated() {}
+
+// ── Géolocalisation : pré-remplir la rue depuis CitySelect ───────────────────
+function onGeoFill({ road } = {}) {
+  if (road && !form.value.shipping_address_line1) {
+    form.value.shipping_address_line1 = road
+  }
+}
 
 // ── Instructions de paiement manuel (post-commande) ──────────────────────────
 const paymentInstructions = ref(null)   // { title, icon, number, instructions }

@@ -1,6 +1,45 @@
 <template>
   <div class="city-select">
 
+    <!-- ── Bouton géolocalisation ── -->
+    <div class="cs-geo-row">
+      <button
+        type="button"
+        class="cs-geo-btn"
+        :class="`cs-geo-btn--${geoState}`"
+        :disabled="geoState === 'loading'"
+        @click="doGeo"
+        :title="geoState === 'outside-ci' ? 'Position détectée hors de Côte d\'Ivoire' : 'Détecter ma position'"
+      >
+        <!-- Spinner loading -->
+        <span v-if="geoState === 'loading'" class="cs-geo-spin"></span>
+
+        <!-- Icône localisation (idle / error) -->
+        <svg v-else-if="geoState !== 'success'" width="13" height="13" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <path d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="8" stroke-width="1.5"/>
+        </svg>
+
+        <!-- Checkmark success -->
+        <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+
+        <span class="cs-geo-label">{{ geoLabel }}</span>
+      </button>
+    </div>
+
+    <!-- Message d'état géo -->
+    <Transition name="cs-geo-msg">
+      <p v-if="geoMessage" class="cs-geo-message" :class="`cs-geo-message--${geoState}`">
+        {{ geoMessage }}
+      </p>
+    </Transition>
+
     <!-- ── Ville ── -->
     <div class="cs-field">
       <label class="label">Ville *</label>
@@ -137,6 +176,7 @@
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
 import { citiesCI } from '@/data/cities-ci.js'
+import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composables/useGeolocation.js'
 
 // ── Props / Emits ────────────────────────────────────────────────────────────
 const props = defineProps({
@@ -144,7 +184,7 @@ const props = defineProps({
   commune: { type: String, default: '' },
 })
 
-const emit = defineEmits(['update:city', 'update:commune'])
+const emit = defineEmits(['update:city', 'update:commune', 'geo-fill'])
 
 // ── State ────────────────────────────────────────────────────────────────────
 const cityInput    = ref(null)
@@ -165,6 +205,73 @@ const communeHighlight = ref(-1)
 // Debounce timers
 let cityTimer    = null
 let communeTimer = null
+
+// ── Géolocalisation ──────────────────────────────────────────────────────────
+// 'idle' | 'loading' | 'success' | 'partial' | 'outside-ci' | 'error'
+const geoState   = ref('idle')
+const geoMessage = ref('')
+
+const geoLabel = computed(() => {
+  const map = {
+    idle:       'Ma position',
+    loading:    'Localisation…',
+    success:    'Position trouvée',
+    partial:    'Position partielle',
+    'outside-ci': 'Hors Côte d\'Ivoire',
+    error:      'Réessayer',
+  }
+  return map[geoState.value] ?? 'Ma position'
+})
+
+async function doGeo() {
+  geoState.value   = 'loading'
+  geoMessage.value = ''
+
+  try {
+    const pos    = await getCurrentPosition()
+    const result = await reverseGeocodeCI(pos.coords.latitude, pos.coords.longitude)
+
+    if (!result.inCI) {
+      geoState.value   = 'outside-ci'
+      geoMessage.value = 'Votre position est en dehors de la Côte d\'Ivoire. Sélectionnez votre zone de livraison manuellement.'
+      // Fill street anyway if outside CI (useful for non-CI checkout)
+      if (result.road) emit('geo-fill', { road: result.road })
+      return
+    }
+
+    if (result.city) {
+      selectCity(result.city)
+    }
+    if (result.commune) {
+      await nextTick()
+      selectCommune(result.commune)
+    }
+
+    if (result.road) {
+      emit('geo-fill', { road: result.road })
+    }
+
+    if (result.city && result.commune) {
+      geoState.value   = 'success'
+      geoMessage.value = `Zone détectée : ${result.city.name} – ${result.commune}`
+    } else if (result.city) {
+      geoState.value   = 'partial'
+      geoMessage.value = `Ville détectée : ${result.city.name}. Sélectionnez votre commune.`
+    } else {
+      geoState.value   = 'partial'
+      geoMessage.value = 'Zone non reconnue. Sélectionnez votre ville et commune manuellement.'
+    }
+
+    // Reset message après 6s sur succès
+    if (geoState.value === 'success') {
+      setTimeout(() => { geoMessage.value = '' }, 6000)
+    }
+
+  } catch (err) {
+    geoState.value   = 'error'
+    geoMessage.value = geoErrorMessage(err.code)
+  }
+}
 
 // ── Filtered lists ───────────────────────────────────────────────────────────
 const filteredCities = computed(() => {
@@ -188,14 +295,12 @@ function openCity() {
 
 function closeCity() {
   cityOpen.value = false
-  // Restaurer le texte du champ si rien de sélectionné
   if (!selectedCity.value) cityQuery.value = ''
 }
 
 function handleCityBlur() {
   setTimeout(() => {
     closeCity()
-    // Si le texte ne correspond plus à la sélection, reset
     if (selectedCity.value && cityQuery.value && cityQuery.value !== selectedCity.value.name) {
       cityQuery.value = selectedCity.value.name
     }
@@ -216,13 +321,11 @@ function selectCity(city) {
   cityOpen.value       = false
   cityHighlight.value  = -1
 
-  // Reset commune
   selectedCommune.value = ''
   communeQuery.value    = ''
   emit('update:city', city.name)
   emit('update:commune', '')
 
-  // Auto-sélection si commune unique
   if (city.communes.length === 1) {
     selectCommune(city.communes[0])
   } else {
@@ -308,12 +411,8 @@ function selectHighlightedCommune() {
 }
 
 // ── Sync depuis l'extérieur ──────────────────────────────────────────────────
-// IMPORTANT : ne PAS appeler clearCity() ici, sinon le champ ville reçoit
-// un .focus() au montage du composant, ce qui fait scroller la page vers
-// le haut quand on arrive à l'étape 2 du checkout.
 watch(() => props.city, (val) => {
   if (!val) {
-    // Reset silencieux (pas de focus, pas d'emit — l'extérieur a déjà la valeur vide)
     selectedCity.value    = null
     cityQuery.value       = ''
     selectedCommune.value = ''
@@ -341,6 +440,83 @@ watch(() => props.commune, (val) => {
   flex-direction: column;
   gap: var(--space-4, 1rem);
 }
+
+/* ── Ligne bouton géolocalisation ── */
+.cs-geo-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: calc(-1 * var(--space-2, 0.5rem));
+}
+
+.cs-geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 4px 10px 4px 8px;
+  border-radius: var(--radius-full, 999px);
+  border: 1.5px solid var(--rose-200, #fecdd3);
+  background: var(--rose-50, #fff1f2);
+  color: var(--rose-600, #e11d48);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  line-height: 1;
+}
+.cs-geo-btn:hover:not(:disabled) {
+  background: var(--rose-100, #ffe4e6);
+  border-color: var(--rose-300, #fda4af);
+}
+.cs-geo-btn:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+.cs-geo-btn--success {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #15803d;
+}
+.cs-geo-btn--outside-ci,
+.cs-geo-btn--partial {
+  background: #fef9c3;
+  border-color: #fde047;
+  color: #854d0e;
+}
+.cs-geo-btn--error {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.cs-geo-label { font-size: 0.75rem; }
+
+.cs-geo-spin {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: csgeo-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes csgeo-spin { to { transform: rotate(360deg); } }
+
+/* Message état géo */
+.cs-geo-message {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  margin-top: calc(-1 * var(--space-2, 0.5rem));
+  line-height: 1.45;
+}
+.cs-geo-message--success    { background: #dcfce7; color: #15803d; }
+.cs-geo-message--partial    { background: #fef9c3; color: #854d0e; }
+.cs-geo-message--outside-ci { background: #fef9c3; color: #854d0e; }
+.cs-geo-message--error      { background: #fef2f2; color: #dc2626; }
+
+.cs-geo-msg-enter-active, .cs-geo-msg-leave-active { transition: opacity 0.2s, transform 0.2s; }
+.cs-geo-msg-enter-from, .cs-geo-msg-leave-to { opacity: 0; transform: translateY(-4px); }
 
 /* ── Field wrapper ── */
 .cs-field {

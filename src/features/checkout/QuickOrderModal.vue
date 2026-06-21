@@ -75,11 +75,29 @@
               </div>
 
               <div class="qo-field">
-                <label class="label">Commune / Quartier (Abidjan) *</label>
+                <div class="qo-field-head">
+                  <label class="label">Commune / Quartier (Abidjan) *</label>
+                  <button
+                    type="button"
+                    class="qo-geo-btn"
+                    :class="`qo-geo-btn--${qoGeoState}`"
+                    :disabled="qoGeoState === 'loading'"
+                    @click="doQoGeo"
+                  >
+                    <span v-if="qoGeoState === 'loading'" class="qo-geo-spin"></span>
+                    <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="3"/>
+                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+                    </svg>
+                    <span>{{ qoGeoLabel }}</span>
+                  </button>
+                </div>
                 <select v-model="form.commune" class="input qo-select" required>
                   <option value="" disabled>Choisir votre commune…</option>
                   <option v-for="c in COMMUNES" :key="c" :value="c">{{ c }}</option>
                 </select>
+                <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
               <div class="qo-field">
@@ -134,6 +152,7 @@ import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
+import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composables/useGeolocation.js'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
@@ -185,6 +204,63 @@ const COMMUNES = [
   'Songon', 'Treichville', 'Yopougon',
   'Autres / Hors Abidjan',
 ]
+
+// ── Géolocalisation (commande rapide) ────────────────────────────────────────
+// 'idle' | 'loading' | 'success' | 'error' | 'outside'
+const qoGeoState = ref('idle')
+const qoGeoMsg   = ref('')
+
+const qoGeoLabel = computed(() => ({
+  idle:    'Ma position',
+  loading: 'Localisation…',
+  success: 'Trouvée',
+  error:   'Réessayer',
+  outside: 'Hors Abidjan',
+}[qoGeoState.value] ?? 'Ma position'))
+
+function normQo(s) {
+  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[-\s]/g, '').trim()
+}
+
+async function doQoGeo() {
+  qoGeoState.value = 'loading'
+  qoGeoMsg.value   = ''
+  try {
+    const pos    = await getCurrentPosition()
+    const result = await reverseGeocodeCI(pos.coords.latitude, pos.coords.longitude)
+
+    if (!result.inCI) {
+      qoGeoState.value = 'outside'
+      qoGeoMsg.value   = 'Position hors CI. Sélectionnez votre commune manuellement.'
+      form.value.commune = 'Autres / Hors Abidjan'
+      return
+    }
+
+    // Cherche le match dans notre liste de communes (sans accents)
+    const candidates = [result.commune, result.city?.name].filter(Boolean)
+    let matched = null
+
+    for (const cand of candidates) {
+      const n = normQo(cand)
+      matched = COMMUNES.find(c => normQo(c) === n)
+        ?? COMMUNES.find(c => normQo(c).includes(n) || n.includes(normQo(c)))
+      if (matched && matched !== 'Autres / Hors Abidjan') break
+    }
+
+    if (matched) {
+      form.value.commune = matched
+      qoGeoState.value   = 'success'
+      qoGeoMsg.value     = `Zone détectée : ${matched}`
+      setTimeout(() => { qoGeoMsg.value = '' }, 5000)
+    } else {
+      qoGeoState.value = 'outside'
+      qoGeoMsg.value   = 'Zone non reconnue dans notre liste. Sélectionnez manuellement.'
+    }
+  } catch (err) {
+    qoGeoState.value = 'error'
+    qoGeoMsg.value   = geoErrorMessage(err.code)
+  }
+}
 
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
@@ -379,6 +455,58 @@ function fmtPrice(val) {
 .qo-field { display: flex; flex-direction: column; gap: var(--space-1); }
 .qo-optional { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
 .qo-select { appearance: none; cursor: pointer; }
+
+/* ── Géo dans QO ── */
+.qo-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.qo-geo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 3px 8px 3px 6px;
+  border-radius: var(--radius-full, 999px);
+  border: 1.5px solid var(--rose-200);
+  background: var(--rose-50);
+  color: var(--rose-600);
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+  white-space: nowrap;
+}
+.qo-geo-btn:hover:not(:disabled) {
+  background: var(--rose-100);
+  border-color: var(--rose-300);
+}
+.qo-geo-btn:disabled { opacity: 0.6; cursor: default; }
+.qo-geo-btn--success { background: #dcfce7; border-color: #86efac; color: #15803d; }
+.qo-geo-btn--outside { background: #fef9c3; border-color: #fde047; color: #854d0e; }
+.qo-geo-btn--error   { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
+
+.qo-geo-spin {
+  display: inline-block;
+  width: 10px; height: 10px;
+  border: 1.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: qogeo-spin 0.65s linear infinite;
+}
+@keyframes qogeo-spin { to { transform: rotate(360deg); } }
+
+.qo-geo-msg {
+  font-size: 0.7rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  margin-top: 2px;
+}
+.qo-geo-msg--success { background: #dcfce7; color: #15803d; }
+.qo-geo-msg--outside { background: #fef9c3; color: #854d0e; }
+.qo-geo-msg--error   { background: #fef2f2; color: #dc2626; }
 
 /* ── Paiement ── */
 .qo-payments {
