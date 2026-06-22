@@ -22,9 +22,8 @@
         <span v-if="eyebrow" class="hero__eyebrow">{{ eyebrow }}</span>
         <h1 class="hero__title">
           <template v-if="title">{{ title }}</template>
-          <template v-else>
-            La rose n'est pas ordinaire.<br>
-            <em>Votre peau non plus.</em>
+          <template v-else>Plus qu’une Rose,<br>
+            <em> une Promesse de Beauté.</em>
           </template>
         </h1>
         <div class="hero__ctas">
