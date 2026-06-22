@@ -17,7 +17,7 @@
       <!-- Nav -->
       <nav class="admin-sidebar__nav">
         <RouterLink
-          v-for="item in nav"
+          v-for="item in visibleNav"
           :key="item.to"
           :to="item.to"
           class="admin-nav-link"
@@ -82,6 +82,7 @@ import {
   UsersIcon, ArrowLeftOnRectangleIcon, FolderIcon, Cog6ToothIcon,
   NewspaperIcon, SparklesIcon, StarIcon, ChatBubbleLeftRightIcon,
   EnvelopeIcon, TruckIcon, CalculatorIcon, PaperAirplaneIcon,
+  ShieldCheckIcon, KeyIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
@@ -124,7 +125,9 @@ const nav = [
   { to: '/admin/reviews',          label: 'Avis clients',    icon: ChatBubbleLeftRightIcon },
   { to: '/admin/abandoned-carts',  label: 'Paniers abandonnés', icon: EnvelopeIcon        },
   { to: '/admin/newsletter',       label: 'Newsletter',  icon: PaperAirplaneIcon          },
-  { to: '/admin/users',        label: 'Clients',     icon: UsersIcon                   },
+  { to: '/admin/users',        label: 'Utilisateurs', icon: UsersIcon                   },
+  { to: '/admin/roles',        label: 'Rôles',        icon: ShieldCheckIcon, adminOnly: true },
+  { to: '/admin/permissions',  label: 'Permissions',  icon: KeyIcon,         adminOnly: true },
   { to: '/admin/settings',   label: 'Paramètres',   icon: Cog6ToothIcon   },
 ];
 
@@ -139,7 +142,9 @@ const titles = {
   'admin.deliveries': 'Gestion des livraisons',
   'admin.delivery-zones': 'Zones de livraison',
   'admin.coupons':    'Coupons & promotions',
-  'admin.users':      'Clientes & clients',
+  'admin.users':       'Utilisateurs',
+  'admin.roles':       'Rôles',
+  'admin.permissions': 'Permissions',
   'admin.settings':   'Paramètres boutique',
   'admin.products.create': 'Nouveau produit',
   'admin.products.edit':   'Modifier le produit',
@@ -153,6 +158,8 @@ const titles = {
   'admin.reviews':               'Avis & Modération',
   'admin.abandoned-carts':       'Relances — Paniers abandonnés',
 };
+
+const visibleNav = computed(() => nav.filter(item => !item.adminOnly || auth.isAdmin));
 
 const currentTitle = computed(() => titles[route.name] ?? 'Admin');
 const isActive = (path) => route.path === path || (path !== '/admin' && route.path.startsWith(path));

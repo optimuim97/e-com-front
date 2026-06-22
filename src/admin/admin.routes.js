@@ -13,6 +13,8 @@ export default {
     { path: 'orders/:id',                   name: 'admin.order',                  component: () => import('./orders/OrderView.vue') },
     { path: 'coupons',                      name: 'admin.coupons',                component: () => import('./coupons/CouponsView.vue') },
     { path: 'users',                        name: 'admin.users',                  component: () => import('./users/UsersView.vue') },
+    { path: 'roles',                        name: 'admin.roles',                  component: () => import('./roles/RolesView.vue') },
+    { path: 'permissions',                  name: 'admin.permissions',            component: () => import('./permissions/PermissionsView.vue') },
     { path: 'settings',                     name: 'admin.settings',               component: () => import('./settings/SettingsView.vue') },
     { path: 'blog',                         name: 'admin.blog',                   component: () => import('./blog/BlogView.vue') },
     { path: 'blog/create',                  name: 'admin.blog.create',            component: () => import('./blog/BlogFormView.vue') },

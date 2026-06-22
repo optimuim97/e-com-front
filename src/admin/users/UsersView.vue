@@ -4,12 +4,18 @@
     <header class="page-header">
       <div>
         <span class="eyebrow">Communauté</span>
-        <h1 class="page-header__title">Clientes & clients</h1>
+        <h1 class="page-header__title">Utilisateurs</h1>
       </div>
-      <span class="badge badge-gray">{{ pagination.total ?? 0 }} client(s)</span>
+      <div class="header-actions">
+        <span class="badge badge-gray">{{ pagination.total ?? 0 }} utilisateur(s)</span>
+        <button v-if="auth.isAdmin" @click="openCreate" class="btn btn-primary">
+          <PlusIcon class="w-4 h-4" />
+          Nouvel utilisateur
+        </button>
+      </div>
     </header>
 
-    <!-- Search + Export -->
+    <!-- Filters -->
     <div class="card filters-bar">
       <input
         v-model="search"
@@ -18,69 +24,21 @@
         class="input filters-bar__search"
         placeholder="Rechercher par nom ou email…"
       />
-      <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
-        </svg>
-        Exporter
-      </button>
-    </div>
-
-    <!-- Export panel -->
-    <div v-if="showExport" class="card export-panel">
-      <h3 class="export-panel__title">
-        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
-        </svg>
-        Exporter les clients
-      </h3>
-
-      <div class="export-filters">
-        <div class="export-field">
-          <label class="export-label">Inscription du</label>
-          <input v-model="exportFilters.date_from" type="date" class="input export-input" />
-        </div>
-        <div class="export-field">
-          <label class="export-label">Au</label>
-          <input v-model="exportFilters.date_to" type="date" class="input export-input" />
-        </div>
-        <div class="export-field">
-          <label class="export-label">Pays (commandes)</label>
-          <AppSelect v-model="exportFilters.country" :options="countryOptions" placeholder="Tous" />
-        </div>
-      </div>
-
-      <div class="export-actions">
-        <p class="export-hint">
-          <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01" stroke-linecap="round"/></svg>
-          Les administrateurs sont exclus de l'export.
-        </p>
-        <div class="export-btns">
-          <button @click="downloadExport('xlsx')" :disabled="exporting" class="btn btn-primary btn-sm">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/>
-            </svg>
-            {{ exporting ? 'Génération…' : 'Télécharger Excel (.xlsx)' }}
-          </button>
-          <button @click="downloadExport('csv')" :disabled="exporting" class="btn btn-outline btn-sm">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            {{ exporting ? 'Génération…' : 'Télécharger CSV' }}
-          </button>
-        </div>
-      </div>
+      <select v-model="roleFilter" @change="() => { page = 1; fetchUsers() }" class="input filters-bar__select">
+        <option value="">Tous les rôles</option>
+        <option value="admin">Admin</option>
+        <option value="staff">Staff</option>
+        <option value="customer">Client</option>
+      </select>
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="loader-wrap">
-      <div class="loader"></div>
-    </div>
+    <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
 
     <!-- Empty -->
     <div v-else-if="users.length === 0" class="card empty-state">
-      <div class="empty-state__icon">🌸</div>
-      <p>Aucun client trouvé.</p>
+      <div class="empty-state__icon">👤</div>
+      <p>Aucun utilisateur trouvé.</p>
     </div>
 
     <!-- Table -->
@@ -89,13 +47,14 @@
         <table class="admin-table">
           <thead>
             <tr>
-              <th>Client</th>
-              <th>Numéro</th>
+              <th>Utilisateur</th>
+              <th>Téléphone</th>
               <th>Email</th>
               <th>Rôle</th>
               <th>Commandes</th>
               <th>Total dépensé</th>
               <th>Inscrit le</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -106,16 +65,27 @@
                   <span class="admin-table__client">{{ user.name }}</span>
                 </div>
               </td>
-              <td>{{ user.phone }}</td>
-              <td>{{ user.email }}</td>
+              <td>{{ user.phone || '—' }}</td>
+              <td>{{ user.email || '—' }}</td>
               <td>
-                <span :class="user.role === 'admin' ? 'badge badge-primary' : 'badge badge-gray'">
-                  {{ user.role === 'admin' ? 'Admin' : 'Client' }}
-                </span>
+                <span :class="roleBadgeClass(user.role)">{{ roleLabel(user.role) }}</span>
               </td>
-              <td class="user-cell__count">{{ user.orders_count ?? 0 }}</td>
+              <td class="text-center">{{ user.orders_count ?? 0 }}</td>
               <td class="admin-table__total">{{ formatPrice(user.orders_sum_total ?? 0) }}</td>
               <td class="user-cell__date">{{ formatDate(user.created_at) }}</td>
+              <td class="admin-table__action-cell">
+                <button @click="openEdit(user)" class="icon-btn icon-btn--edit" aria-label="Modifier">
+                  <PencilIcon class="w-4 h-4" />
+                </button>
+                <button
+                  v-if="auth.isAdmin && user.id !== auth.user?.id"
+                  @click="confirmDelete(user)"
+                  class="icon-btn icon-btn--delete"
+                  aria-label="Supprimer"
+                >
+                  <TrashIcon class="w-4 h-4" />
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -126,106 +96,268 @@
         :last-page="pagination.last_page"
         :total="pagination.total"
         :show-per-page="false"
-        item-singular="client"
-        item-plural="clients"
+        item-singular="utilisateur"
+        item-plural="utilisateurs"
         @update:page="changePage"
       />
     </div>
+
+    <!-- Create / Edit Modal -->
+    <Teleport to="body">
+      <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
+        <div class="modal">
+          <header class="modal__header">
+            <h2>{{ editingUser ? 'Modifier l\'utilisateur' : 'Nouvel utilisateur' }}</h2>
+            <button @click="closeModal" class="modal__close" aria-label="Fermer">
+              <XMarkIcon class="w-5 h-5" />
+            </button>
+          </header>
+
+          <form @submit.prevent="saveUser" class="modal__body">
+            <div class="modal__grid">
+              <div>
+                <label class="label">Nom *</label>
+                <input v-model="form.name" type="text" class="input" required placeholder="Jean Dupont" />
+              </div>
+              <div>
+                <label class="label">Email *</label>
+                <input v-model="form.email" type="email" class="input" required placeholder="jean@exemple.com" />
+              </div>
+              <div>
+                <label class="label">Téléphone</label>
+                <input v-model="form.phone" type="text" class="input" placeholder="+225 07 00 00 00 00" />
+              </div>
+              <div>
+                <label class="label">Rôle *</label>
+                <select v-model="form.role" class="input" required>
+                  <option value="customer">Client</option>
+                  <option value="staff">Staff</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div class="modal__full">
+                <label class="label">
+                  {{ editingUser ? 'Nouveau mot de passe (laisser vide = inchangé)' : 'Mot de passe *' }}
+                </label>
+                <input
+                  v-model="form.password"
+                  type="password"
+                  class="input"
+                  :required="!editingUser"
+                  placeholder="••••••••"
+                  autocomplete="new-password"
+                />
+              </div>
+
+              <!-- Permissions directes (admin only, edition) -->
+              <div v-if="auth.isAdmin && editingUser && allPermissions.length" class="modal__full">
+                <label class="label">Permissions directes (en plus du rôle)</label>
+                <div class="perm-groups">
+                  <div v-for="group in groupedPermissions" :key="group.group" class="perm-group">
+                    <p class="perm-group__title">{{ group.group }}</p>
+                    <div class="perm-group__items">
+                      <label v-for="p in group.items" :key="p" class="perm-check">
+                        <input type="checkbox" :value="p" v-model="form.permissions" class="perm-check__input" />
+                        <span>{{ p }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p v-if="formError" class="form-error">{{ formError }}</p>
+
+            <footer class="modal__footer">
+              <button type="button" @click="closeModal" class="btn btn-outline">Annuler</button>
+              <button type="submit" class="btn btn-primary" :disabled="saving">
+                {{ saving ? 'Enregistrement…' : (editingUser ? 'Enregistrer' : 'Créer') }}
+              </button>
+            </footer>
+          </form>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Delete confirm modal -->
+    <Teleport to="body">
+      <div v-if="deleteTarget" class="modal-overlay" @click.self="deleteTarget = null">
+        <div class="modal modal--sm">
+          <header class="modal__header">
+            <h2>Supprimer l'utilisateur</h2>
+            <button @click="deleteTarget = null" class="modal__close"><XMarkIcon class="w-5 h-5" /></button>
+          </header>
+          <div class="modal__body">
+            <p class="delete-confirm__text">
+              Êtes-vous sûr de vouloir supprimer <strong>{{ deleteTarget.name }}</strong> ?
+              Cette action est irréversible.
+            </p>
+            <footer class="modal__footer">
+              <button @click="deleteTarget = null" class="btn btn-outline">Annuler</button>
+              <button @click="doDelete" class="btn btn-danger" :disabled="saving">
+                {{ saving ? 'Suppression…' : 'Supprimer' }}
+              </button>
+            </footer>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
+import { useAuthStore } from '@/features/auth/auth.store'
 
-const users = ref([])
-const loading = ref(true)
-const search = ref('')
+const auth = useAuthStore()
+
+const users      = ref([])
+const loading    = ref(true)
+const search     = ref('')
+const roleFilter = ref('')
 const pagination = ref({})
-const page = ref(1)
+const page       = ref(1)
 
-const countryOptions = [
-  { value: 'CI', label: "Côte d'Ivoire" },
-  { value: 'SN', label: 'Sénégal' },
-  { value: 'ML', label: 'Mali' },
-  { value: 'BF', label: 'Burkina Faso' },
-  { value: 'GN', label: 'Guinée' },
-  { value: 'CM', label: 'Cameroun' },
-  { value: 'FR', label: 'France' },
-]
+/* ── Modal state ── */
+const showModal   = ref(false)
+const editingUser = ref(null)
+const saving      = ref(false)
+const formError   = ref('')
+const deleteTarget = ref(null)
 
-/* ── Export ── */
-const showExport    = ref(false)
-const exporting     = ref(false)
-const exportFilters = reactive({
-  date_from: '',
-  date_to:   '',
-  country:   '',
+const form = reactive({
+  name: '', email: '', phone: '', role: 'customer', password: '', permissions: [],
 })
 
-async function downloadExport(format) {
-  exporting.value = true
+/* ── Permissions (for direct assignment) ── */
+const allPermissions    = ref([])
+const groupedPermissions = ref([])
+
+async function loadPermissions() {
+  if (!auth.isAdmin) return
   try {
-    const params = { format }
-    if (exportFilters.date_from) params.date_from = exportFilters.date_from
-    if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
-    if (exportFilters.country)   params.country    = exportFilters.country
-
-    const response = await api.get('/admin/users/export', {
-      params,
-      responseType: 'blob',
-    })
-
-    const ext      = format === 'csv' ? 'csv' : 'xlsx'
-    const date     = new Date().toISOString().slice(0, 10)
-    const filename = `clients-${date}.${ext}`
-    const url      = URL.createObjectURL(new Blob([response.data]))
-    const link     = document.createElement('a')
-    link.href      = url
-    link.download  = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-  } catch (e) {
-    console.error('Export failed', e)
-  } finally {
-    exporting.value = false
-  }
+    const { data } = await api.get('/admin/permissions')
+    allPermissions.value    = data.list
+    groupedPermissions.value = data.grouped
+  } catch {}
 }
 
+/* ── Fetch ── */
 let debounceTimer = null
 function debouncedFetch() {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => { page.value = 1; fetchUsers() }, 400)
 }
 
-function changePage(p) {
-  page.value = p
-  fetchUsers()
-}
+function changePage(p) { page.value = p; fetchUsers() }
 
 async function fetchUsers() {
   loading.value = true
   try {
     const params = { page: page.value }
-    if (search.value) params.search = search.value
+    if (search.value)     params.search = search.value
+    if (roleFilter.value) params.role   = roleFilter.value
     const { data } = await api.get('/admin/users', { params })
     users.value = data.data
     pagination.value = {
       current_page: data.current_page,
-      last_page: data.last_page,
-      total: data.total,
+      last_page:    data.last_page,
+      total:        data.total,
     }
   } finally {
     loading.value = false
   }
 }
 
+/* ── Modal ── */
+function openCreate() {
+  editingUser.value = null
+  Object.assign(form, { name: '', email: '', phone: '', role: 'customer', password: '', permissions: [] })
+  formError.value = ''
+  showModal.value = true
+}
+
+function openEdit(user) {
+  editingUser.value = user
+  Object.assign(form, {
+    name:        user.name,
+    email:       user.email || '',
+    phone:       user.phone || '',
+    role:        user.role || 'customer',
+    password:    '',
+    permissions: [...(user.permissions || [])],
+  })
+  formError.value = ''
+  showModal.value = true
+}
+
+function closeModal() { showModal.value = false; editingUser.value = null }
+
+async function saveUser() {
+  saving.value = true
+  formError.value = ''
+  try {
+    const payload = {
+      name:  form.name,
+      email: form.email,
+      phone: form.phone || null,
+      role:  form.role,
+    }
+    if (form.password) payload.password = form.password
+    if (editingUser.value && auth.isAdmin) payload.permissions = form.permissions
+
+    if (editingUser.value) {
+      await api.put(`/admin/users/${editingUser.value.id}`, payload)
+    } else {
+      payload.password = form.password
+      await api.post('/admin/users', payload)
+    }
+    closeModal()
+    fetchUsers()
+  } catch (e) {
+    formError.value = e.response?.data?.message
+      || Object.values(e.response?.data?.errors || {})[0]?.[0]
+      || 'Une erreur est survenue.'
+  } finally {
+    saving.value = false
+  }
+}
+
+/* ── Delete ── */
+function confirmDelete(user) { deleteTarget.value = user }
+
+async function doDelete() {
+  saving.value = true
+  try {
+    await api.delete(`/admin/users/${deleteTarget.value.id}`)
+    deleteTarget.value = null
+    fetchUsers()
+  } catch (e) {
+    alert(e.response?.data?.message || 'Erreur lors de la suppression.')
+  } finally {
+    saving.value = false
+  }
+}
+
+/* ── Helpers ── */
 function initials(name) {
   if (!name) return '?'
   return name.split(' ').slice(0, 2).map(n => n[0].toUpperCase()).join('')
+}
+
+function roleLabel(role) {
+  return { admin: 'Admin', staff: 'Staff', customer: 'Client' }[role] ?? role
+}
+
+function roleBadgeClass(role) {
+  return {
+    admin:    'badge badge-primary',
+    staff:    'badge badge-warning',
+    customer: 'badge badge-gray',
+  }[role] ?? 'badge badge-gray'
 }
 
 function formatDate(val) {
@@ -237,11 +369,13 @@ function formatPrice(val) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
 }
 
-onMounted(fetchUsers)
+onMounted(() => { fetchUsers(); loadPermissions() })
 </script>
 
 <style scoped>
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.header-actions { display: flex; align-items: center; gap: var(--space-3); }
 
 .filters-bar {
   padding: var(--space-4);
@@ -251,105 +385,42 @@ onMounted(fetchUsers)
   align-items: center;
 }
 .filters-bar__search { flex: 1; min-width: 220px; }
-
-/* ── Export ── */
-.export-toggle-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--cream-300);
-  background: #fff;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--gray-600);
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-.export-toggle-btn:hover,
-.export-toggle-btn.active { border-color: var(--rose-400); color: var(--rose-600); background: var(--rose-50); }
-
-.export-panel {
-  padding: var(--space-5);
-  border: 1.5px solid var(--rose-100);
-  background: var(--rose-50);
-}
-.export-panel__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--gray-800);
-  margin-bottom: var(--space-4);
-}
-.export-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-.export-field { display: flex; flex-direction: column; gap: 4px; }
-.export-label { font-size: 0.75rem; font-weight: 500; color: var(--gray-500); letter-spacing: 0.04em; }
-.export-input { min-width: 160px; padding: 8px 12px; font-size: 0.8125rem; background: #fff; }
-.export-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--rose-100);
-}
-.export-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-1);
-  font-size: 0.75rem;
-  color: var(--gray-400);
-  max-width: 360px;
-  line-height: 1.4;
-}
-.export-btns { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.filters-bar__select { width: 160px; }
 
 .table-scroll { overflow-x: auto; }
 
-/* ── Table modifiers ── */
-.admin-table__client { font-weight: 500; color: var(--gray-800); }
-.admin-table__total { font-weight: 600; color: var(--rose-600) !important; }
-
-.user-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
+.user-cell { display: flex; align-items: center; gap: var(--space-3); }
 .user-cell__avatar {
   width: 36px; height: 36px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--rose-200), var(--rose-400));
   color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.8125rem;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.8125rem; flex-shrink: 0;
 }
-.user-cell__count { text-align: center; }
-.user-cell__date {
-  font-size: 0.75rem;
-  color: var(--gray-400);
-}
+.user-cell__date { font-size: 0.75rem; color: var(--gray-400); }
+.admin-table__total { font-weight: 600; color: var(--rose-600) !important; }
+.text-center { text-align: center; }
 
-.pagination {
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--cream-200);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+/* ── Permissions grid ── */
+.perm-groups { display: flex; flex-direction: column; gap: var(--space-4); }
+.perm-group__title {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--gray-500); margin-bottom: var(--space-2);
 }
-.pagination p { font-size: 0.8125rem; color: var(--gray-400); }
-.pagination__actions { display: flex; gap: var(--space-2); }
-.pagination__actions .btn { padding: 6px 12px; }
+.perm-group__items { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.perm-check {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.8125rem; color: var(--gray-700); cursor: pointer;
+}
+.perm-check__input { accent-color: var(--rose-500); width: 14px; height: 14px; cursor: pointer; }
+
+.delete-confirm__text { font-size: 0.9375rem; color: var(--gray-700); line-height: 1.6; margin-bottom: var(--space-5); }
+.btn-danger {
+  background: #ef4444; color: #fff; border: none; padding: 10px 20px;
+  border-radius: var(--radius-full); font-size: 0.875rem; font-weight: 600;
+  cursor: pointer; transition: background var(--transition-fast);
+}
+.btn-danger:hover { background: #dc2626; }
+.btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
