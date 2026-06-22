@@ -8,34 +8,39 @@
 
           <!-- ── Confirmation post-commande ────────────────────────────── -->
           <div v-if="confirmed" class="qo-confirmed">
-            <div class="qo-confirmed__icon"><FlowerMark /></div>
-            <h2 class="qo-confirmed__title">Commande confirmée !</h2>
-            <p class="qo-confirmed__number">N° <strong>{{ confirmedOrder.number }}</strong></p>
+            <div class="qo-confirmed__checkmark">
+              <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                <circle cx="28" cy="28" r="28" fill="#dcfce7"/>
+                <path d="M18 28l8 8 12-14" stroke="#15803d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h2 class="qo-confirmed__title">{{ $t('quickOrder.confirmedTitle') }}</h2>
+            <p class="qo-confirmed__number">{{ $t('quickOrder.confirmedNumber') }} <strong>{{ confirmedOrder.number }}</strong></p>
 
             <div v-if="confirmedOrder.generated_pin" class="qo-pin-box">
-              <p class="qo-pin-box__label">Votre code PIN de sécurité</p>
+              <p class="qo-pin-box__label">{{ $t('quickOrder.pinLabel') }}</p>
               <div class="qo-pin-box__digits">
                 <span v-for="d in confirmedOrder.generated_pin.split('')" :key="d" class="qo-pin-box__digit">{{ d }}</span>
               </div>
-              <p class="qo-pin-box__hint">Notez-le précieusement. Il vous servira à accéder à vos commandes.</p>
+              <p class="qo-pin-box__hint">{{ $t('quickOrder.pinHint') }}</p>
             </div>
 
             <div v-if="isWavePayment && waveNumber" class="qo-wave-box">
-              <p class="qo-wave-box__label">Paiement Wave</p>
+              <p class="qo-wave-box__label">{{ $t('quickOrder.wavePayLabel') }}</p>
               <p class="qo-wave-box__number">{{ waveNumber }}</p>
-              <p class="qo-wave-box__total">Montant à envoyer : <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
-              <p class="qo-wave-box__ref">Référence : <strong>{{ confirmedOrder.number }}</strong></p>
+              <p class="qo-wave-box__total">{{ $t('quickOrder.waveAmount') }} <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
+              <p class="qo-wave-box__ref">{{ $t('quickOrder.waveRef') }} <strong>{{ confirmedOrder.number }}</strong></p>
             </div>
 
             <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
               class="btn btn-whatsapp qo-wa-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              Envoyer ma commande via WhatsApp
+              {{ $t('quickOrder.whatsapp') }}
             </a>
 
             <div class="qo-confirmed__actions">
-              <button class="btn btn-primary" @click="viewOrder">Voir ma commande</button>
-              <button class="btn btn-outline btn-sm" @click="goToProfile">Sécuriser mon compte</button>
+              <button class="btn btn-primary" @click="viewOrder">{{ $t('quickOrder.viewOrder') }}</button>
+              <button class="btn btn-outline btn-sm" @click="goToProfile">{{ $t('quickOrder.secureAccount') }}</button>
             </div>
           </div>
 
@@ -46,8 +51,8 @@
             </button>
 
             <div class="qo-header">
-              <span class="eyebrow">Commande Rapide</span>
-              <h2 class="qo-title">En <em>2 minutes</em> chrono</h2>
+              <span class="eyebrow">{{ $t('quickOrder.title') }}</span>
+              <h2 class="qo-title">{{ $t('quickOrder.subtitle') }} <em>{{ $t('quickOrder.subtitleEm') }}</em> {{ $t('quickOrder.subtitleSuffix') }}</h2>
             </div>
 
             <div class="qo-items-summary">
@@ -58,25 +63,25 @@
 
             <form id="qo-form" @submit.prevent="submit" class="qo-form">
               <div class="qo-field">
-                <label class="label">Nom complet *</label>
-                <input v-model="form.name" type="text" class="input" placeholder="Ex. Fatou Konaté" required />
+                <label class="label">{{ $t('quickOrder.name') }} *</label>
+                <input v-model="form.name" type="text" class="input" :placeholder="$t('quickOrder.namePlaceholder')" required />
               </div>
 
               <div class="qo-field">
-                <label class="label">Téléphone *</label>
+                <label class="label">{{ $t('quickOrder.phone') }} *</label>
                 <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" />
               </div>
 
               <div class="qo-field">
                 <label class="label">
-                  E-mail <span class="qo-optional">(optionnel — pour recevoir la facture PDF)</span>
+                  {{ $t('quickOrder.email') }} <span class="qo-optional">({{ $t('quickOrder.emailOptional') }})</span>
                 </label>
-                <input v-model="form.email" type="email" class="input" placeholder="vous@exemple.com" />
+                <input v-model="form.email" type="email" class="input" :placeholder="$t('quickOrder.emailPlaceholder')" />
               </div>
 
               <div class="qo-field">
                 <div class="qo-field-head">
-                  <label class="label">Commune / Quartier (Abidjan) *</label>
+                  <label class="label">{{ $t('quickOrder.commune') }} *</label>
                   <button
                     type="button"
                     class="qo-geo-btn"
@@ -94,14 +99,14 @@
                   </button>
                 </div>
                 <select v-model="form.commune" class="input qo-select" required>
-                  <option value="" disabled>Choisir votre commune…</option>
+                  <option value="" disabled>{{ $t('quickOrder.communePlaceholder') }}</option>
                   <option v-for="c in COMMUNES" :key="c" :value="c">{{ c }}</option>
                 </select>
                 <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
               <div class="qo-field">
-                <label class="label">Mode de paiement *</label>
+                <label class="label">{{ $t('quickOrder.payment') }} *</label>
                 <div class="qo-payments">
                   <label v-for="pm in paymentMethods" :key="pm.value"
                     class="qo-payment" :class="{ 'qo-payment--active': form.payment === pm.value }">
@@ -113,8 +118,8 @@
               </div>
 
               <div class="qo-field">
-                <label class="label">Note pour le livreur <span class="qo-optional">(optionnel)</span></label>
-                <input v-model="form.note" type="text" class="input" placeholder="Ex. Appeler en arrivant" />
+                <label class="label">{{ $t('quickOrder.note') }} <span class="qo-optional">({{ $t('quickOrder.noteOptional') }})</span></label>
+                <input v-model="form.note" type="text" class="input" :placeholder="$t('quickOrder.notePlaceholder')" />
               </div>
 
               <p v-if="error" class="qo-error">{{ error }}</p>
@@ -137,7 +142,7 @@
             :disabled="submitting"
           >
             <span v-if="submitting" class="qo-spinner"></span>
-            <span v-else>Commander maintenant</span>
+            <span v-else>{{ $t('quickOrder.submit') }}</span>
           </button>
         </div>
 
@@ -148,6 +153,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
@@ -156,10 +162,11 @@ import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composa
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
-import FlowerMark from '@/components/ui/FlowerMark.vue'
 
 const emit   = defineEmits(['close'])
 const router = useRouter()
+
+const { t } = useI18n()
 
 const cartStore     = useCartStore()
 const authStore     = useAuthStore()
@@ -211,12 +218,12 @@ const qoGeoState = ref('idle')
 const qoGeoMsg   = ref('')
 
 const qoGeoLabel = computed(() => ({
-  idle:    'Ma position',
-  loading: 'Localisation…',
-  success: 'Trouvée',
-  error:   'Réessayer',
-  outside: 'Hors Abidjan',
-}[qoGeoState.value] ?? 'Ma position'))
+  idle:    t('geo.btnIdle'),
+  loading: t('geo.btnLoading'),
+  success: t('geo.btnSuccess'),
+  error:   t('geo.btnError'),
+  outside: t('geo.btnOutsideCI'),
+}[qoGeoState.value] ?? t('geo.btnIdle')))
 
 function normQo(s) {
   return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[-\s]/g, '').trim()
@@ -231,7 +238,7 @@ async function doQoGeo() {
 
     if (!result.inCI) {
       qoGeoState.value = 'outside'
-      qoGeoMsg.value   = 'Position hors CI. Sélectionnez votre commune manuellement.'
+      qoGeoMsg.value   = t('geo.outsideAbidjanMsg')
       form.value.commune = 'Autres / Hors Abidjan'
       return
     }
@@ -250,11 +257,11 @@ async function doQoGeo() {
     if (matched) {
       form.value.commune = matched
       qoGeoState.value   = 'success'
-      qoGeoMsg.value     = `Zone détectée : ${matched}`
+      qoGeoMsg.value     = t('geo.communeFound', { commune: matched })
       setTimeout(() => { qoGeoMsg.value = '' }, 5000)
     } else {
       qoGeoState.value = 'outside'
-      qoGeoMsg.value   = 'Zone non reconnue dans notre liste. Sélectionnez manuellement.'
+      qoGeoMsg.value   = t('geo.communeNotFound')
     }
   } catch (err) {
     qoGeoState.value = 'error'
@@ -265,11 +272,11 @@ async function doQoGeo() {
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
-const paymentMethods = [
-  { value: 'wave',         label: 'Wave',           icon: ICON_MOBILE },
-  { value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE },
-  { value: 'delivery',     label: 'À la livraison', icon: ICON_TRUCK },
-]
+const paymentMethods = computed(() => [
+  { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
+  { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
+  { value: 'delivery',     label: t('quickOrder.payDelivery'),    icon: ICON_TRUCK },
+])
 
 const form = ref({
   name: '',
@@ -302,7 +309,7 @@ async function submit() {
   }))
 
   if (!items.length) {
-    error.value = 'Votre panier est vide.'
+    error.value = t('quickOrder.emptyCart')
     submitting.value = false
     return
   }
@@ -334,7 +341,7 @@ async function submit() {
     confirmed.value = true
 
   } catch (e) {
-    error.value = e.response?.data?.message ?? 'Une erreur est survenue. Réessayez.'
+    error.value = e.response?.data?.message ?? t('quickOrder.errorOccurred')
   } finally {
     submitting.value = false
   }
@@ -578,7 +585,7 @@ function fmtPrice(val) {
   gap: var(--space-4);
   padding: var(--space-4) 0;
 }
-.qo-confirmed__icon { font-size: 3.5rem; }
+.qo-confirmed__checkmark { display: flex; justify-content: center; }
 .qo-confirmed__title {
   font-family: var(--font-display);
   font-size: 1.5rem;

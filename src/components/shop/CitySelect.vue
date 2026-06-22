@@ -175,8 +175,11 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { citiesCI } from '@/data/cities-ci.js'
 import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composables/useGeolocation.js'
+
+const { t } = useI18n()
 
 // ── Props / Emits ────────────────────────────────────────────────────────────
 const props = defineProps({
@@ -211,17 +214,15 @@ let communeTimer = null
 const geoState   = ref('idle')
 const geoMessage = ref('')
 
-const geoLabel = computed(() => {
-  const map = {
-    idle:       'Ma position',
-    loading:    'Localisation…',
-    success:    'Position trouvée',
-    partial:    'Position partielle',
-    'outside-ci': 'Hors Côte d\'Ivoire',
-    error:      'Réessayer',
-  }
-  return map[geoState.value] ?? 'Ma position'
-})
+const GEO_LABEL_KEYS = {
+  idle:         'geo.btnIdle',
+  loading:      'geo.btnLoading',
+  success:      'geo.btnSuccess',
+  partial:      'geo.btnPartial',
+  'outside-ci': 'geo.btnOutsideCI',
+  error:        'geo.btnError',
+}
+const geoLabel = computed(() => t(GEO_LABEL_KEYS[geoState.value] ?? 'geo.btnIdle'))
 
 async function doGeo() {
   geoState.value   = 'loading'
@@ -233,7 +234,7 @@ async function doGeo() {
 
     if (!result.inCI) {
       geoState.value   = 'outside-ci'
-      geoMessage.value = 'Votre position est en dehors de la Côte d\'Ivoire. Sélectionnez votre zone de livraison manuellement.'
+      geoMessage.value = t('geo.outsideCIMsg')
       // Fill street anyway if outside CI (useful for non-CI checkout)
       if (result.road) emit('geo-fill', { road: result.road })
       return
@@ -253,13 +254,13 @@ async function doGeo() {
 
     if (result.city && result.commune) {
       geoState.value   = 'success'
-      geoMessage.value = `Zone détectée : ${result.city.name} – ${result.commune}`
+      geoMessage.value = t('geo.successMsg', { city: result.city.name, commune: result.commune })
     } else if (result.city) {
       geoState.value   = 'partial'
-      geoMessage.value = `Ville détectée : ${result.city.name}. Sélectionnez votre commune.`
+      geoMessage.value = t('geo.partialCityMsg', { city: result.city.name })
     } else {
       geoState.value   = 'partial'
-      geoMessage.value = 'Zone non reconnue. Sélectionnez votre ville et commune manuellement.'
+      geoMessage.value = t('geo.notFoundMsg')
     }
 
     // Reset message après 6s sur succès

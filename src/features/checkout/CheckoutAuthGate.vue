@@ -3,10 +3,14 @@
 
     <!-- ── En-tête ── -->
     <div class="gate__head">
-      <div class="gate__icon">🌹</div>
+      <div class="gate__icon" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--rose-400)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V4l-8-2-8 2v8c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
       <div class="gate__head-text">
-        <h2 class="gate__title">Finalisez votre commande</h2>
-        <p class="gate__hint">Choisissez la méthode qui vous convient</p>
+        <h2 class="gate__title">{{ $t('authGate.title') }}</h2>
+        <p class="gate__hint">{{ $t('authGate.hint') }}</p>
       </div>
       <button class="gate__close" @click="$emit('close')" type="button" aria-label="Fermer">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -28,79 +32,79 @@
           </svg>
         </div>
         <div>
-          <strong class="gate__quick-hero__title">Commande rapide</strong>
-          <p class="gate__quick-hero__desc">Juste votre nom et téléphone — livré en 24h</p>
+          <strong class="gate__quick-hero__title">{{ $t('authGate.quickTitle') }}</strong>
+          <p class="gate__quick-hero__desc">{{ $t('authGate.quickDesc') }}</p>
         </div>
       </div>
       <button type="button" class="btn gate__quick-hero__btn" @click="$emit('quick-order')">
-        Commander maintenant
+        {{ $t('authGate.quickCta') }}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
     </div>
 
     <!-- ── Séparateur ── -->
     <div class="gate__sep">
-      <span>{{ quickOrderEnabled ? 'ou connectez-vous' : 'Connexion' }}</span>
+      <span>{{ quickOrderEnabled ? $t('authGate.orLogin') : $t('authGate.tabLogin') }}</span>
     </div>
 
     <!-- ── Facebook ── -->
     <div class="gate__social">
       <FacebookButton
-        label="Continuer avec Facebook"
+        :label="$t('authGate.continueWithFacebook')"
         @success="onFacebookSuccess"
         @error="socialError = $event"
       />
       <p v-if="socialError" class="gate__error">{{ socialError }}</p>
     </div>
 
-    <div class="gate__sep gate__sep--sm"><span>ou par e-mail</span></div>
+    <div class="gate__sep gate__sep--sm"><span>{{ $t('authGate.orEmail') }}</span></div>
 
     <!-- ── Tabs ── -->
     <div class="gate__tabs">
-      <button class="gate__tab" :class="{ 'gate__tab--active': tab === 'login' }"    @click="tab = 'login'">Connexion</button>
-      <button class="gate__tab" :class="{ 'gate__tab--active': tab === 'register' }" @click="tab = 'register'">Créer un compte</button>
+      <button class="gate__tab" :class="{ 'gate__tab--active': tab === 'login' }"    @click="tab = 'login'">{{ $t('authGate.tabLogin') }}</button>
+      <button class="gate__tab" :class="{ 'gate__tab--active': tab === 'register' }" @click="tab = 'register'">{{ $t('authGate.tabRegister') }}</button>
     </div>
 
     <!-- ── Formulaire connexion ── -->
     <Transition name="fade" mode="out-in">
     <form v-if="tab === 'login'" key="login" @submit.prevent="doLogin" class="gate__form">
       <div class="gate__field">
-        <label class="label">Email</label>
+        <label class="label">{{ $t('auth.email') }}</label>
         <input v-model="loginForm.email" type="email" class="input" placeholder="vous@exemple.com" required autocomplete="email" />
       </div>
       <div class="gate__field">
-        <label class="label">Mot de passe</label>
+        <label class="label">{{ $t('auth.password') }}</label>
         <input v-model="loginForm.password" type="password" class="input" placeholder="••••••••" required autocomplete="current-password" />
       </div>
       <p v-if="loginError" class="gate__error">{{ loginError }}</p>
       <button type="submit" :disabled="loginLoading" class="btn btn-outline gate__submit">
         <span v-if="loginLoading" class="gate__spinner"></span>
-        <span v-else>Se connecter et continuer →</span>
+        <span v-else>{{ $t('authGate.loginCta') }}</span>
       </button>
     </form>
 
     <!-- ── Formulaire inscription ── -->
     <form v-else key="register" @submit.prevent="doRegister" class="gate__form">
       <div class="gate__field">
-        <label class="label">Nom complet</label>
+        <label class="label">{{ $t('auth.name') }}</label>
         <input v-model="regForm.name" type="text" class="input" placeholder="Fatou Konaté" required autocomplete="name" />
       </div>
       <div class="gate__field">
-        <label class="label">Téléphone</label>
+        <label class="label">{{ $t('auth.phone') }}</label>
         <input v-model="regForm.phone" type="tel" class="input" placeholder="+225 07 00 00 00 00" required autocomplete="tel" />
       </div>
       <div class="gate__field">
-        <label class="label">Email</label>
+        <label class="label">{{ $t('auth.email') }}</label>
         <input v-model="regForm.email" type="email" class="input" placeholder="vous@exemple.com" required autocomplete="email" />
       </div>
       <div class="gate__field">
-        <label class="label">Mot de passe</label>
+        <label class="label">{{ $t('auth.password') }}</label>
         <input v-model="regForm.password" type="password" class="input" placeholder="8 caractères min." required autocomplete="new-password" minlength="8" />
       </div>
       <p v-if="regError" class="gate__error">{{ regError }}</p>
       <button type="submit" :disabled="regLoading" class="btn btn-outline gate__submit">
         <span v-if="regLoading" class="gate__spinner"></span>
-        <span v-else>Créer mon compte et continuer →</span>
+        <span v-else>{{ $t('authGate.registerCta') }}</span>
       </button>
     </form>
     </Transition>
@@ -110,12 +114,15 @@
 
 <script setup>
 import { nextTick, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import { useCartStore }     from '@/features/cart/cart.store'
 import FacebookButton       from '@/features/auth/FacebookButton.vue'
 
 const emit = defineEmits(['authenticated', 'quick-order', 'close'])
+
+const { t } = useI18n()
 
 const auth     = useAuthStore()
 const settings = useSettingsStore()
@@ -222,7 +229,7 @@ async function onFacebookSuccess() {
 /* ══ Commande rapide hero — bien mise en évidence ══ */
 .gate__quick-hero {
   margin: var(--space-5) var(--space-5) 0;
-  background: linear-gradient(135deg, #fff0f6 0%, #fce7f0 100%);
+  background: #fff;
   border: 2px solid var(--rose-300);
   border-radius: var(--radius-lg);
   padding: var(--space-4) var(--space-5);
@@ -231,15 +238,6 @@ async function onFacebookSuccess() {
   gap: var(--space-3);
   position: relative;
   overflow: hidden;
-}
-/* Accent strip gauche */
-.gate__quick-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--rose-400), var(--rose-600));
-  border-radius: 4px 0 0 4px;
 }
 
 .gate__quick-hero__badge {
@@ -266,14 +264,11 @@ async function onFacebookSuccess() {
 .gate__quick-hero__icon {
   width: 46px;
   height: 46px;
-  border-radius: var(--radius-md);
-  background: var(--rose-500);
-  color: #fff;
+  color: var(--rose-500);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(232, 51, 109, 0.35);
 }
 .gate__quick-hero__title {
   display: block;
@@ -298,19 +293,16 @@ async function onFacebookSuccess() {
   padding: 13px var(--space-5);
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
-  box-shadow: 0 4px 14px rgba(232, 51, 109, 0.3);
+  transition: background var(--transition-fast);
   display: flex;
   align-items: center;
 }
 .gate__quick-hero__btn:hover {
   background: var(--rose-600);
-  box-shadow: 0 6px 18px rgba(232, 51, 109, 0.4);
-  transform: translateY(-1px);
 }
-.gate__quick-hero__btn:active { transform: translateY(0); }
+.gate__quick-hero__btn:active { opacity: 0.9; }
 
 /* ── Séparateurs ── */
 .gate__sep {
