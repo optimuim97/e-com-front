@@ -13,7 +13,7 @@
 <script setup>
 defineProps({
   items: { type: Array, required: true },
-})
+});
 </script>
 
 <style scoped>
@@ -62,6 +62,8 @@ defineProps({
 }
 
 @media (max-width: 1024px) {
-  .benefits-grid { grid-template-columns: repeat(2, 1fr); }
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 </style>

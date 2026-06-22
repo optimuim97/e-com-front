@@ -279,8 +279,8 @@
               <span class="cp-info-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
               <div class="cp-info-card__body">
                 <p class="cp-info-card__label">Horaires</p>
-                <p class="cp-info-card__val">Lun — Sam</p>
-                <span class="cp-info-card__sub">8h00 – 18h00</span>
+                <p class="cp-info-card__val">Lundi — Vendredi</p>
+                <span class="cp-info-card__sub">8h00 – 21h00</span>
               </div>
             </div>
 
@@ -361,7 +361,7 @@ const faqs = [
   },
   {
     q: 'Puis-je retourner un produit ?',
-    a: 'Oui, nous acceptons les retours dans les 7 jours suivant la réception si le produit est intact et non ouvert.',
+    a: "Nous n'acceptons pas de retour après livraison. Nous vous invitons à vérifier votre commande dès la réception, en présence du livreur, afin de signaler tout problème immédiatement.",
   },
   {
     q: 'Vos produits sont-ils testés sur les peaux noires ?',
