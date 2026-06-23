@@ -212,8 +212,7 @@ onMounted(fetchPermissions)
   font-family: var(--font-mono, monospace);
   font-size: 0.8125rem; color: var(--gray-700);
 }
-.perm-row__actions { display: flex; gap: var(--space-1); opacity: 0; transition: opacity var(--transition-fast); }
-.perm-row:hover .perm-row__actions { opacity: 1; }
+.perm-row__actions { display: flex; gap: var(--space-1); }
 
 .input-hint { font-size: 0.75rem; color: var(--gray-400); margin-top: 4px; }
 .input-hint code {
