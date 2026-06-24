@@ -119,6 +119,10 @@ onBeforeUnmount(() => {
   font-size: 2.2rem !important;
   line-height: 72px !important;
 }
+/* Cacher le bouton play central dès que la vidéo a démarré */
+.vjs-rosa-theme.vjs-has-started .vjs-big-play-button {
+  display: none !important;
+}
 
 /* ── Barre de contrôle ── */
 .vjs-rosa-theme .vjs-control-bar {
