@@ -19,7 +19,9 @@
 
     <!-- Empty -->
     <div v-else-if="lines.length === 0" class="card empty-state">
-      <div class="empty-state__icon">🌹</div>
+      <div class="empty-state__icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      </div>
       <p>Aucune gamme créée.</p>
       <RouterLink to="/admin/product-lines/create" class="btn btn-primary btn-sm">Créer la première gamme</RouterLink>
     </div>

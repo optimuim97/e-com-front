@@ -96,10 +96,27 @@
           <option value="">Aucun (liste)</option>
           <option value="zone">Zone</option>
           <option value="commune">Commune</option>
-          <option value="address">Adresse</option>
+          <option value="address">Adresse exacte</option>
+          <option value="fuzzy_address">Adresse similaire</option>
           <option value="status">Statut</option>
         </select>
       </label>
+
+      <!-- Threshold slider (visible only for fuzzy_address) -->
+      <div v-if="groupBy === 'fuzzy_address'" class="fuzzy-control">
+        <label class="fuzzy-control__label">
+          Tolérance
+          <span class="fuzzy-control__badge" :class="`fuzzy-control__badge--${fuzzyThresholdLabel.toLowerCase()}`">
+            {{ fuzzyThresholdLabel }}
+          </span>
+        </label>
+        <input
+          v-model.number="fuzzyThreshold"
+          type="range" min="0.50" max="0.95" step="0.05"
+          class="fuzzy-control__slider"
+        />
+        <span class="fuzzy-control__val">{{ Math.round(fuzzyThreshold * 100) }}%</span>
+      </div>
 
       <!-- Export button -->
       <button @click="showExport = !showExport" class="export-toggle-btn" :class="{ active: showExport }">
@@ -162,6 +179,13 @@
             </svg>
             {{ exporting ? 'Génération…' : 'Télécharger CSV' }}
           </button>
+          <button @click="downloadByZoneExport" :disabled="exportingZone" class="btn btn-outline btn-sm export-zone-btn">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            {{ exportingZone ? 'Génération…' : 'PDF par zone de livraison' }}
+          </button>
         </div>
       </div>
     </div>
@@ -171,6 +195,7 @@
       v-if="routeMap"
       :title="routeMap.title"
       :orders="routeMap.orders"
+      :start-address="routeMap.startAddress"
       @close="routeMap = null"
     />
 
@@ -198,14 +223,32 @@
                 class="commune-group__export"
                 @click.stop="openRouteMapForGroup(g)"
                 title="Voir l'itinéraire de tournée"
-              >🗺️</button>
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Carte
+              </button>
+              <button
+                type="button"
+                class="commune-group__export commune-group__export--pdf"
+                @click.stop="exportGroupPDF(g)"
+                :disabled="exportingGroupPDF === g.key"
+                title="Exporter en PDF (format livraison)"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/></svg>
+                {{ exportingGroupPDF === g.key ? '…' : 'PDF' }}
+              </button>
               <button
                 type="button"
                 class="commune-group__export"
                 @click.stop="exportGroupCSV(g)"
                 title="Exporter en CSV"
-              >⬇ CSV</button>
-              <span class="zone-group__chevron" :class="{ open: openGroups.has(g.key) }">▾</span>
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                CSV
+              </button>
+              <span class="zone-group__chevron" :class="{ open: openGroups.has(g.key) }">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
             </span>
           </button>
           <div v-if="openGroups.has(g.key)" class="zone-group__body">
@@ -230,7 +273,7 @@
                       v-if="o.shipping_address?.phone"
                       :href="`tel:${o.shipping_address.phone}`"
                       class="admin-table__phone"
-                    >📞 {{ o.shipping_address.phone }}</a>
+                    >{{ o.shipping_address.phone }}</a>
                   </td>
                   <td class="admin-table__sub">{{ o.shipping_address?.address_line1 ?? '—' }}</td>
                   <td>{{ formatDate(o.created_at) }}</td>
@@ -276,7 +319,7 @@
                 <td class="admin-table__mono">
                   {{ order.number }}
                   <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
-                    📦 {{ order.tracking_number }}
+                    {{ order.tracking_number }}
                   </div>
                 </td>
                 <td>
@@ -294,7 +337,7 @@
                       @click="toggleQuickAction(order)"
                       :title="expandedId === order.id ? 'Replier' : 'Traitement rapide'"
                     >
-                      {{ expandedId === order.id ? '▾ Fermer' : '⚡ Traiter' }}
+                      {{ expandedId === order.id ? 'Fermer' : 'Traiter' }}
                     </button>
                     <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
                       Détail →
@@ -341,8 +384,25 @@ import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
+import { useSettingsStore } from '@/stores/settings'
 
 const orderStats = useOrderStatsStore()
+const settings   = useSettingsStore()
+
+// Adresse de départ par défaut pour l'itinéraire (adresse boutique)
+const pickupAddress = computed(() => {
+  const addr = settings.shopAddress
+  const city = settings.shopCity
+  return [addr, city].filter(Boolean).join(', ')
+})
+
+// Seuil de similarité pour le regroupement par adresse floue (0.50–0.95)
+const fuzzyThreshold = ref(0.72)
+const fuzzyThresholdLabel = computed(() => {
+  if (fuzzyThreshold.value < 0.6)  return 'Permissive'
+  if (fuzzyThreshold.value <= 0.8) return 'Équilibrée'
+  return 'Stricte'
+})
 const expandedId = ref(null)
 
 function toggleQuickAction(order) {
@@ -367,16 +427,17 @@ const groupBy    = ref('')             // défaut : aucun groupement (liste pagi
 const allOrders  = ref([])             // commandes brutes pour le regroupement client-side
 const openGroups = ref(new Set())
 
-const groupIcon = computed(() => ({
-  zone:    '📍',
-  commune: '🏘️',
-  address: '🏠',
-  status:  '🏷️',
-}[groupBy.value] ?? ''))
+const groupIcon = computed(() => '')
 
 // Calcule les groupes selon la dimension choisie. Dérivé de allOrders.
 const groupedOrders = computed(() => {
   if (!groupBy.value) return []
+
+  // Regroupement par adresse similaire (Levenshtein)
+  if (groupBy.value === 'fuzzy_address') {
+    return buildFuzzyGroups(allOrders.value, fuzzyThreshold.value)
+  }
+
   const buckets = new Map()
 
   for (const o of allOrders.value) {
@@ -434,6 +495,88 @@ const groupedOrders = computed(() => {
     return a.label.localeCompare(b.label, 'fr')
   })
 })
+
+// ── Fuzzy address matching ────────────────────────────────────────────────────
+
+function normalizeForFuzzy(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+    .replace(/[-,.']/g, ' ')
+    .replace(/\b(rue|av|avenue|bd|boulevard|cite|quartier|lot|batiment|bat|immeuble|appt|appartement|villa|n°|no|bp)\b/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length
+  const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0))
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1])
+  return dp[m][n]
+}
+
+function addrSimilarity(a, b) {
+  if (!a && !b) return 1
+  if (!a || !b) return 0
+  const na = normalizeForFuzzy(a), nb = normalizeForFuzzy(b)
+  if (na === nb) return 1
+  const maxLen = Math.max(na.length, nb.length)
+  if (maxLen === 0) return 1
+  return 1 - levenshtein(na, nb) / maxLen
+}
+
+function buildFuzzyGroups(orders, threshold) {
+  const groups  = []   // [{ label, orders, total, representative }]
+  const assigned = new Set()
+
+  for (let i = 0; i < orders.length; i++) {
+    if (assigned.has(i)) continue
+    const o = orders[i]
+    const a = o.shipping_address || {}
+    const rawAddr = (a.address_line1 || '').trim()
+    const rawCity = (a.commune || a.city || '').trim()
+    const repr = [rawAddr, rawCity].filter(Boolean).join(', ') || 'Sans adresse'
+
+    const cluster = [o]
+    assigned.add(i)
+
+    for (let j = i + 1; j < orders.length; j++) {
+      if (assigned.has(j)) continue
+      const oa = orders[j]
+      const aa = oa.shipping_address || {}
+      const cmpAddr = (aa.address_line1 || '').trim()
+      const cmpCity = (aa.commune || aa.city || '').trim()
+
+      // Comparer adresse_line1 + commune vs référence
+      const simAddr = addrSimilarity(rawAddr, cmpAddr)
+      const simCity = addrSimilarity(rawCity, cmpCity)
+      // La ville / commune compte autant que l'adresse, moyenne pondérée
+      const sim = rawAddr ? (simAddr * 0.7 + simCity * 0.3) : simCity
+
+      if (sim >= threshold) {
+        cluster.push(oa)
+        assigned.add(j)
+      }
+    }
+
+    groups.push({
+      key:     `fuzzy_${i}`,
+      label:   repr,
+      sublabel: cluster.length > 1 ? `${cluster.length} adresses similaires` : '',
+      isOther: !rawAddr,
+      orders:  cluster,
+      total:   cluster.reduce((s, x) => s + (Number(x.total) || 0), 0),
+    })
+  }
+
+  return groups.sort((a, b) => {
+    if (a.isOther && !b.isOther) return 1
+    if (b.isOther && !a.isOther) return -1
+    return b.orders.length - a.orders.length || a.label.localeCompare(b.label, 'fr')
+  })
+}
 
 function onGroupByChange() {
   if (groupBy.value) fetchAllForGrouping()
@@ -503,11 +646,45 @@ function exportGroupCSV(group) {
   URL.revokeObjectURL(url)
 }
 
+// ── Export PDF d'un groupe ────────────────────────────────────────────────────
+const exportingGroupPDF = ref(null) // clé du groupe en cours d'export
+
+async function exportGroupPDF(group) {
+  if (exportingGroupPDF.value) return
+  exportingGroupPDF.value = group.key
+  try {
+    const ids = group.orders.map(o => o.id)
+    const params = new URLSearchParams()
+    ids.forEach(id => params.append('order_ids[]', id))
+    params.append('label', group.label)
+
+    const response = await api.get('/admin/orders/export-by-zone?' + params.toString(), {
+      responseType: 'blob',
+    })
+
+    const safe     = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_').slice(0, 50)
+    const date     = new Date().toISOString().slice(0, 10)
+    const filename = `livraison_${safe(group.label)}_${date}.pdf`
+    const url      = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    const link     = document.createElement('a')
+    link.href      = url
+    link.download  = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export PDF groupe failed', e)
+  } finally {
+    exportingGroupPDF.value = null
+  }
+}
+
 // ── Modal itinéraire ─────────────────────────────────────────────────────────
-const routeMap = ref(null) // { title, orders } | null
+const routeMap = ref(null) // { title, orders, startAddress } | null
 
 function openRouteMapForGroup(group) {
-  routeMap.value = { title: group.label, orders: group.orders }
+  routeMap.value = { title: group.label, orders: group.orders, startAddress: pickupAddress.value }
 }
 
 const filters = reactive({
@@ -539,13 +716,44 @@ const exportCountryOptions = [
 
 /* ── Export ── */
 const showExport = ref(false)
-const exporting  = ref(false)
+const exporting      = ref(false)
+const exportingZone  = ref(false)
 const exportFilters = reactive({
   date_from: '',
   date_to:   '',
   status:    '',
   country:   '',
 })
+
+async function downloadByZoneExport() {
+  exportingZone.value = true
+  try {
+    const params = {}
+    if (exportFilters.date_from) params.date_from = exportFilters.date_from
+    if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
+    if (exportFilters.status)    params.status     = exportFilters.status
+
+    const response = await api.get('/admin/orders/export-by-zone', {
+      params,
+      responseType: 'blob',
+    })
+
+    const date     = new Date().toISOString().slice(0, 10)
+    const filename = `livraisons-par-zone-${date}.pdf`
+    const url      = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    const link     = document.createElement('a')
+    link.href      = url
+    link.download  = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    console.error('Export by zone failed', e)
+  } finally {
+    exportingZone.value = false
+  }
+}
 
 async function downloadExport(format) {
   exporting.value = true
@@ -692,6 +900,7 @@ function paymentLabel(method) {
 }
 
 onMounted(() => {
+  settings.fetch()
   if (groupBy.value) fetchAllForGrouping()
   else fetchOrders()
 })
@@ -879,6 +1088,9 @@ onMounted(() => {
   gap: var(--space-2);
 }
 .commune-group__export {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.6875rem;
   font-weight: 600;
   color: var(--rose-600);
@@ -892,6 +1104,77 @@ onMounted(() => {
 .commune-group__export:hover {
   background: var(--rose-50);
   border-color: var(--rose-400);
+}
+.commune-group__export--pdf {
+  background: var(--rose-50);
+  border-color: var(--rose-300);
+  color: var(--rose-700);
+}
+.commune-group__export--pdf:hover:not(:disabled) {
+  background: var(--rose-500);
+  border-color: var(--rose-500);
+  color: #fff;
+}
+.commune-group__export--pdf:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Fuzzy threshold control ── */
+.fuzzy-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: #fff;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+}
+.fuzzy-control__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.fuzzy-control__badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.fuzzy-control__badge--permissive { background: #fef9c3; color: #854d0e; }
+.fuzzy-control__badge--équilibrée { background: #dcfce7; color: #166534; }
+.fuzzy-control__badge--stricte    { background: #fee2e2; color: #991b1b; }
+.fuzzy-control__slider {
+  -webkit-appearance: none;
+  width: 90px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--rose-400) 0%, var(--rose-400) calc((var(--val, 0.72) - 0.50) / 0.45 * 100%), var(--cream-200) calc((var(--val, 0.72) - 0.50) / 0.45 * 100%));
+  outline: none;
+  cursor: pointer;
+}
+.fuzzy-control__slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--rose-500);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.fuzzy-control__val {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  min-width: 32px;
+  text-align: right;
 }
 
 .admin-table__phone {
@@ -960,6 +1243,16 @@ onMounted(() => {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+}
+
+.export-zone-btn {
+  border-color: #e8336d;
+  color: #e8336d;
+}
+.export-zone-btn:hover:not(:disabled) {
+  background: #fff5f8;
+  border-color: #c4205a;
+  color: #c4205a;
 }
 
 .table-scroll { overflow-x: auto; }

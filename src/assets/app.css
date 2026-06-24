@@ -263,7 +263,7 @@
     gap: var(--space-3);
     color: var(--gray-400);
   }
-  .empty-state__icon { font-size: 2.5rem; opacity: 0.5; }
+  .empty-state__icon { display: flex; justify-content: center; font-size: 2rem; line-height: 1; }
   .empty-state p { font-size: 0.9375rem; }
 
   /* ── Icon buttons (tables admin) ── */
@@ -304,76 +304,137 @@
   }
   .toggle--on .toggle__dot { transform: translateX(20px); }
 
-  /* ── Admin table (densité compacte par défaut) ── */
+  /* ── Admin table ── */
   .admin-table {
     width: 100%;
-    border-collapse: separate; /* requis pour sticky thead sans gap */
+    border-collapse: separate;
     border-spacing: 0;
     font-size: 0.8125rem;
   }
-  /* Conteneur scrollable autour de la table : permet le sticky thead */
+  /* Conteneur scrollable — sticky thead reste visible lors du scroll */
   .table-scroll {
-    max-height: calc(100vh - 320px); /* place pour topbar + page-header + filtres + pagination */
+    max-height: calc(100vh - 200px);
     overflow-y: auto;
     overflow-x: auto;
-  }
-  .admin-table thead {
-    background: var(--cream-100);
-    border-bottom: 1px solid var(--cream-200);
+    scrollbar-width: thin;
+    scrollbar-color: #ede9e4 transparent;
   }
   .admin-table thead th {
     text-align: left;
-    padding: 8px var(--space-3);
+    padding: 9px 14px;
     font-size: 0.625rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--gray-500);
-    /* En-tête figé pendant le scroll vertical */
+    color: #9e9490;
     position: sticky;
     top: 0;
-    background: var(--cream-100);
+    background: #faf8f6;
     z-index: 2;
-    box-shadow: inset 0 -1px 0 var(--cream-200);
+    border-bottom: 1px solid #ede9e4;
+    white-space: nowrap;
   }
-  .admin-table tbody tr { transition: background var(--transition-fast); }
-  .admin-table tbody tr:hover { background: var(--rose-50); }
+  .admin-table tbody tr { transition: background 0.1s; }
+  .admin-table tbody tr:hover { background: #fff5f8; }
   .admin-table tbody td {
-    padding: 8px var(--space-3);
-    border-bottom: 1px solid var(--cream-100);
-    color: var(--gray-600);
-    line-height: 1.35;
+    padding: 11px 14px;
+    border-bottom: 1px solid #f3efeb;
+    color: #5a5250;
+    line-height: 1.4;
+    vertical-align: middle;
   }
-  .admin-table__bold  { font-weight: 500; color: var(--gray-800); }
-  .admin-table__mono  { font-family: ui-monospace, monospace; font-size: 0.75rem; color: var(--gray-400); }
-  .admin-table__actions { display: flex; gap: var(--space-2); justify-content: flex-end; }
+  .admin-table tbody tr:last-child td { border-bottom: none; }
 
-  /* Row "détails inline" (panneau d'action en-dessous d'une ligne) */
+  .admin-table__bold   { font-weight: 600; color: #2d2a28; }
+  .admin-table__mono   { font-family: ui-monospace, 'Cascadia Code', monospace; font-size: 0.75rem; color: #8a8280; letter-spacing: 0.02em; }
+  .admin-table__actions { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+
+  /* Row "détails inline" */
   .admin-table tbody tr.admin-table__row--expanded > td {
     border-bottom: none;
-    background: var(--rose-50);
+    background: #fff5f8;
   }
   .admin-table tbody tr.admin-table__detail-row > td {
     padding: 0;
-    background: var(--cream-50);
-    border-bottom: 1px solid var(--cream-200);
+    background: #fdfaf7;
+    border-bottom: 1px solid #ede9e4;
   }
 
-  /* ── Admin page header (titre plus compact) ── */
+  /* ── Boutons taille compacte (tables) ── */
+  .btn-xs {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.4;
+    transition: all 0.12s;
+  }
+  .btn-xs.btn-primary {
+    background: var(--rose-500, #e8336d);
+    color: #fff;
+    border: 1px solid var(--rose-500, #e8336d);
+    padding: 4px 10px;
+    border-radius: 6px;
+    box-shadow: none;
+  }
+  .btn-xs.btn-primary:hover { background: var(--rose-600, #c9185a); border-color: var(--rose-600, #c9185a); transform: none; box-shadow: none; }
+  .btn-xs.btn-outline {
+    background: transparent;
+    color: var(--rose-600, #c9185a);
+    border: 1px solid var(--rose-200, #ffd6e7);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .btn-xs.btn-outline:hover { background: #fff5f8; border-color: var(--rose-400, #f9518a); transform: none; }
+  .btn-xs.btn-ghost {
+    background: transparent;
+    color: #6b6560;
+    border: 1px solid #ede9e4;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .btn-xs.btn-ghost:hover { background: #f5f4f2; color: #2d2a28; transform: none; }
+
+  .btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.4;
+    transition: all 0.12s;
+  }
+  .btn-sm.btn-primary { padding: 7px 14px; border-radius: 8px; box-shadow: none; }
+  .btn-sm.btn-primary:hover { transform: none; box-shadow: none; }
+  .btn-sm.btn-outline { padding: 7px 14px; border-radius: 8px; }
+  .btn-sm.btn-outline:hover { transform: none; }
+
+  /* ── Admin page header ── */
   .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     flex-wrap: wrap;
-    gap: var(--space-3);
-    margin-bottom: var(--space-3);
+    gap: 12px;
+    margin-bottom: 16px;
   }
   .page-header__title {
     font-family: var(--font-display);
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     font-weight: 500;
-    color: var(--gray-800);
-    margin-top: 2px;
+    color: #2d2a28;
+    margin: 0;
   }
 
   /* ── Pagination admin (compacte) ── */

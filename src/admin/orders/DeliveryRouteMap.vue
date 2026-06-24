@@ -7,7 +7,21 @@
           <h3>{{ title }}</h3>
           <p class="route-modal__sub">{{ orders.length }} arrêt(s)</p>
         </div>
-        <button class="route-modal__close" @click="$emit('close')" aria-label="Fermer">✕</button>
+        <div class="route-modal__head-right">
+          <div class="pickup-field" v-if="pickupEditable !== null">
+            <label class="pickup-label">🏠 Départ</label>
+            <input
+              v-model="pickupEditable"
+              class="pickup-input"
+              placeholder="Adresse de départ…"
+              @keydown.enter="resetAndRebuild"
+            />
+            <button class="btn btn-outline btn-sm" @click="resetAndRebuild" :disabled="rebuilding" title="Appliquer le point de départ">
+              {{ rebuilding ? '…' : '✓' }}
+            </button>
+          </div>
+          <button class="route-modal__close" @click="$emit('close')" aria-label="Fermer">✕</button>
+        </div>
       </header>
 
       <div class="route-modal__body">
@@ -33,8 +47,11 @@
           </div>
 
           <ol class="route-stops">
-            <li v-for="(s, i) in stops" :key="s.id" class="route-stop" :class="{ 'route-stop--missing': !s.coords }">
-              <span class="route-stop__num">{{ i + 1 }}</span>
+            <li v-for="(s, i) in stops" :key="s.id" class="route-stop"
+              :class="{ 'route-stop--missing': !s.coords, 'route-stop--start': s.isStart }">
+              <span class="route-stop__num" :class="{ 'route-stop__num--start': s.isStart }">
+                {{ s.isStart ? '🏠' : i }}
+              </span>
               <div class="route-stop__body">
                 <strong>{{ s.client }}</strong>
                 <span class="route-stop__addr">{{ s.address }}</span>
@@ -75,15 +92,18 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
-  title:  { type: String, required: true },
-  orders: { type: Array,  required: true },
+  title:        { type: String,  required: true },
+  orders:       { type: Array,   required: true },
+  startAddress: { type: String,  default: '' },
 });
 defineEmits(['close']);
 
-const mapEl    = ref(null);
-const loading  = ref(true);
-const error    = ref('');
-const geocoded = ref(0);
+const mapEl          = ref(null);
+const loading        = ref(true);
+const error          = ref('');
+const geocoded       = ref(0);
+const rebuilding     = ref(false);
+const pickupEditable = ref(props.startAddress ?? null);
 const stops    = ref([]);
 const distance = ref(0); // mètres
 const duration = ref(0); // secondes
@@ -125,6 +145,22 @@ onMounted(async () => {
   await buildStops();
   await drawRoute();
 });
+
+async function resetAndRebuild() {
+  if (rebuilding.value) return
+  rebuilding.value = true
+  // Clear map and rebuild from scratch with new pickup address
+  markers.forEach(m => m.remove()); markers = []
+  routeLayer?.remove(); routeLayer = null
+  stops.value = []
+  geocoded.value = 0
+  loading.value = true
+  distance.value = 0; duration.value = 0
+  optimized.value = false
+  await buildStops()
+  await drawRoute()
+  rebuilding.value = false
+}
 
 onBeforeUnmount(() => {
   leafletMap?.remove();
@@ -169,6 +205,36 @@ async function buildStops() {
   const { default: L } = await import('leaflet');
   const allStops = [];
 
+  // Géocode le point de départ en premier si défini
+  if (pickupEditable.value?.trim()) {
+    const coords = await geocode(pickupEditable.value.trim());
+    const startStop = {
+      id:      'pickup',
+      number:  '',
+      client:  'Point de départ',
+      phone:   null,
+      address: pickupEditable.value.trim(),
+      coords,
+      isStart: true,
+    };
+    allStops.push(startStop);
+    stops.value = [...allStops];
+
+    if (coords) {
+      const icon = L.divIcon({
+        className: 'route-marker route-marker--start',
+        html: `<span>🏠</span>`,
+        iconSize:   [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const m = L.marker([coords.lat, coords.lng], { icon })
+        .addTo(leafletMap)
+        .bindPopup(`<strong>Point de départ</strong><br>${startStop.address}`);
+      markers.push(m);
+    }
+    await new Promise(r => setTimeout(r, 1100));
+  }
+
   for (const o of props.orders) {
     const a = o.shipping_address || {};
     const address = buildAddressString(o);
@@ -183,13 +249,14 @@ async function buildStops() {
       phone:   a.phone,
       address: a.address_line1 || a.commune || a.city || '—',
       coords,
+      isStart: false,
     };
     allStops.push(stop);
     stops.value = [...allStops];
 
     if (coords) {
-      // Marqueur numéroté
-      const num = allStops.filter(s => s.coords).length;
+      // Marqueur numéroté (seulement les arrêts de livraison)
+      const num = allStops.filter(s => s.coords && !s.isStart).length;
       const icon = L.divIcon({
         className: 'route-marker',
         html: `<span>${num}</span>`,
@@ -307,13 +374,23 @@ async function rebuildMap(geometry = null) {
   let num = 0;
   for (const s of stops.value) {
     if (!s.coords) continue;
-    num++;
-    const icon = L.divIcon({
-      className: 'route-marker',
-      html: `<span>${num}</span>`,
-      iconSize:   [28, 28],
-      iconAnchor: [14, 14],
-    });
+    let icon;
+    if (s.isStart) {
+      icon = L.divIcon({
+        className: 'route-marker route-marker--start',
+        html: `<span>🏠</span>`,
+        iconSize:   [32, 32],
+        iconAnchor: [16, 16],
+      });
+    } else {
+      num++;
+      icon = L.divIcon({
+        className: 'route-marker',
+        html: `<span>${num}</span>`,
+        iconSize:   [28, 28],
+        iconAnchor: [14, 14],
+      });
+    }
     const m = L.marker([s.coords.lat, s.coords.lng], { icon })
       .addTo(leafletMap)
       .bindPopup(`<strong>${s.client}</strong><br>${s.address}<br><a href="tel:${s.phone}">${s.phone || ''}</a>`);
@@ -382,7 +459,38 @@ function formatDuration(s) {
   align-items: flex-start;
   padding: var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--cream-200);
+  gap: var(--space-4);
 }
+.route-modal__head-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+.pickup-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--cream-50);
+  border: 1px solid var(--cream-300);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+}
+.pickup-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.pickup-input {
+  border: none;
+  background: transparent;
+  font-size: 0.8125rem;
+  color: var(--gray-800);
+  width: 220px;
+  outline: none;
+}
+.pickup-input::placeholder { color: var(--gray-400); }
 .route-modal__head h3 {
   font-family: var(--font-display);
   font-size: 1.125rem;
@@ -476,6 +584,14 @@ function formatDuration(s) {
   border: 1px solid var(--cream-200);
 }
 .route-stop--missing { background: var(--cream-100); opacity: 0.7; }
+.route-stop--start {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+.route-stop__num--start {
+  background: #16a34a !important;
+  font-size: 0.875rem;
+}
 .route-stop__num {
   width: 24px; height: 24px;
   border-radius: 50%;
@@ -534,5 +650,9 @@ function formatDuration(s) {
   justify-content: center;
   font-weight: 700;
   font-size: 0.75rem;
+}
+.route-marker--start {
+  background: #16a34a;
+  font-size: 1rem;
 }
 </style>

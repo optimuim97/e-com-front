@@ -20,7 +20,7 @@
 
       <!-- Recherche produit -->
       <div class="card pos-card">
-        <h3 class="pos-card__title">🔍 Ajouter un produit</h3>
+        <h3 class="pos-card__title">Ajouter un produit</h3>
         <input
           v-model="search"
           @input="debouncedSearch"

@@ -4,7 +4,7 @@
     <!-- Header -->
     <div class="program-admin__header">
       <div>
-        <h1 class="page-title">🌹 Rosa Beauty Facial Care Club</h1>
+        <h1 class="page-title">Rosa Beauty Club</h1>
         <p class="page-subtitle">Gestion du programme de fidélité</p>
       </div>
     </div>

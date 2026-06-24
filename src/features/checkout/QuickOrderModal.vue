@@ -106,6 +106,18 @@
               </div>
 
               <div class="qo-field">
+                <label class="label">
+                  {{ $t('quickOrder.indication') }} <span class="qo-optional">({{ $t('quickOrder.indicationOptional') }})</span>
+                </label>
+                <textarea
+                  v-model="form.indication"
+                  class="input qo-indication"
+                  rows="2"
+                  :placeholder="$t('quickOrder.indicationPlaceholder')"
+                />
+              </div>
+
+              <div class="qo-field">
                 <label class="label">{{ $t('quickOrder.payment') }} *</label>
                 <div class="qo-payments">
                   <label v-for="pm in paymentMethods" :key="pm.value"
@@ -192,6 +204,7 @@ const adminWhatsappLink = computed(() => {
     `N°: ${order.number}`,
     `Client: ${form.value.name} (${phone})`,
     `Commune: ${form.value.commune}`,
+    form.value.indication?.trim() ? `📍 Indication: ${form.value.indication.trim()}` : null,
     `Paiement: ${method}`,
     `Total: ${fmtPrice(order.total)}`,
     ``,
@@ -283,6 +296,7 @@ const form = ref({
   phone: '',
   email: '',
   commune: '',
+  indication: '',
   payment: 'wave',
   note: '',
 })
@@ -320,6 +334,7 @@ async function submit() {
       phone:          form.value.phone,
       email:          form.value.email?.trim() || null,
       commune:        form.value.commune,
+      landmark:       form.value.indication?.trim() || null,
       payment_method: form.value.payment,
       note:           form.value.note || null,
       items,
@@ -462,6 +477,7 @@ function fmtPrice(val) {
 .qo-field { display: flex; flex-direction: column; gap: var(--space-1); }
 .qo-optional { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
 .qo-select { appearance: none; cursor: pointer; }
+.qo-indication { resize: none; min-height: 52px; line-height: 1.5; }
 
 /* ── Géo dans QO ── */
 .qo-field-head {

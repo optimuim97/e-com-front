@@ -177,6 +177,10 @@
               <br /><span class="text-gray-400">Email :</span>
               {{ order.shipping_address.email }}
             </template>
+            <template v-if="order.shipping_address?.landmark">
+              <br /><span class="text-gray-400">Indication :</span>
+              {{ order.shipping_address.landmark }}
+            </template>
           </address>
 
           <!-- Zone de livraison résolue -->

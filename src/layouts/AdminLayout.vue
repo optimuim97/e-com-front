@@ -3,34 +3,35 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <!-- Logo -->
-      <RouterLink to="/" class="admin-sidebar__logo" aria-label="Rosa Beauty Facial Care — Accueil">
+      <RouterLink to="/" class="admin-sidebar__logo" aria-label="Rosa Beauty — Accueil">
         <img
           src="/logos/rosa-logo-readable-400.png"
           alt="Rosa Beauty Facial Care"
           class="admin-sidebar__logo-img"
         />
-        <div class="admin-sidebar__logo-text">
-          <span class="admin-sidebar__logo-sub">Administration</span>
-        </div>
+        <span class="admin-sidebar__logo-badge">Administration</span>
       </RouterLink>
 
-      <!-- Nav -->
-      <nav class="admin-sidebar__nav">
-        <RouterLink
-          v-for="item in visibleNav"
-          :key="item.to"
-          :to="item.to"
-          class="admin-nav-link"
-          :class="{ 'admin-nav-link--active': isActive(item.to) }"
-        >
-          <component :is="item.icon" class="admin-nav-link__icon" />
-          <span>{{ item.label }}</span>
-          <span
-            v-if="badgeFor(item.to)"
-            class="admin-nav-link__badge"
-            :title="`${badgeFor(item.to)} en attente`"
-          >{{ badgeFor(item.to) }}</span>
-        </RouterLink>
+      <!-- Nav groupé -->
+      <nav class="admin-sidebar__nav" aria-label="Navigation admin">
+        <template v-for="group in visibleGroups" :key="group.key">
+          <span class="nav-group__label">{{ group.label }}</span>
+          <RouterLink
+            v-for="item in group.items"
+            :key="item.to"
+            :to="item.to"
+            class="admin-nav-link"
+            :class="{ 'admin-nav-link--active': isActive(item.to) }"
+          >
+            <component :is="item.icon" class="admin-nav-link__icon" />
+            <span class="admin-nav-link__text">{{ item.label }}</span>
+            <span
+              v-if="badgeFor(item.to)"
+              class="admin-nav-link__badge"
+              :title="`${badgeFor(item.to)} en attente`"
+            >{{ badgeFor(item.to) }}</span>
+          </RouterLink>
+        </template>
       </nav>
 
       <!-- User -->
@@ -42,27 +43,27 @@
           <p>{{ auth.user?.name }}</p>
           <span>{{ auth.user?.email }}</span>
         </div>
-        <button @click="handleLogout" class="admin-sidebar__logout" aria-label="Se déconnecter">
+        <button @click="handleLogout" class="admin-sidebar__logout" title="Se déconnecter">
           <ArrowLeftOnRectangleIcon class="w-4 h-4" />
         </button>
       </div>
     </aside>
 
-    <!-- Content -->
+    <!-- Contenu principal -->
     <div class="admin-main">
       <!-- Topbar -->
       <header class="admin-topbar">
-        <div>
-          <span class="eyebrow">Espace admin</span>
+        <div class="admin-topbar__left">
           <h1 class="admin-topbar__title">{{ currentTitle }}</h1>
         </div>
         <div class="admin-topbar__right">
           <NotificationBell />
           <RouterLink to="/" class="admin-topbar__shop-link">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <path d="M19 12H5M12 5l-7 7 7 7" transform="rotate(180 12 12)"/>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
-            Voir la boutique
+            Boutique
           </RouterLink>
         </div>
       </header>
@@ -78,20 +79,35 @@
 import { computed, onMounted, onBeforeUnmount } from 'vue';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import {
-  Squares2X2Icon, ShoppingBagIcon, TagIcon, TicketIcon,
-  UsersIcon, ArrowLeftOnRectangleIcon, FolderIcon, Cog6ToothIcon,
-  NewspaperIcon, SparklesIcon, StarIcon, ChatBubbleLeftRightIcon,
-  EnvelopeIcon, TruckIcon, CalculatorIcon, PaperAirplaneIcon,
-  ShieldCheckIcon, KeyIcon,
+  Squares2X2Icon,
+  ShoppingBagIcon,
+  TagIcon,
+  TicketIcon,
+  UsersIcon,
+  ArrowLeftOnRectangleIcon,
+  FolderIcon,
+  Cog6ToothIcon,
+  NewspaperIcon,
+  StarIcon,
+  ChatBubbleLeftRightIcon,
+  EnvelopeIcon,
+  TruckIcon,
+  CalculatorIcon,
+  ShieldCheckIcon,
+  KeyIcon,
+  MapPinIcon,
+  ClipboardDocumentListIcon,
+  ShoppingCartIcon,
+  SwatchIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store';
 import NotificationBell from '@/admin/components/NotificationBell.vue';
 
-const auth    = useAuthStore();
-const route   = useRoute();
-const router  = useRouter();
+const auth       = useAuthStore();
+const route      = useRoute();
+const router     = useRouter();
 const notifStore = useAdminNotificationsStore();
 const orderStats = useOrderStatsStore();
 
@@ -104,65 +120,106 @@ onBeforeUnmount(() => {
   orderStats.stop();
 });
 
-// Mapping nav.to -> count à afficher en badge
 function badgeFor(to) {
   if (to === '/admin/orders') return orderStats.pending || null;
   return null;
 }
 
-const nav = [
-  { to: '/admin',            label: 'Dashboard',    icon: Squares2X2Icon  },
-  { to: '/admin/products',   label: 'Produits',     icon: ShoppingBagIcon },
-  { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon    },
-  { to: '/admin/product-lines', label: 'Gammes',      icon: SparklesIcon  },
-  { to: '/admin/orders',        label: 'Commandes',   icon: TagIcon       },
-  { to: '/admin/pos',           label: 'Caisse / POS', icon: CalculatorIcon },
-  { to: '/admin/deliveries',    label: 'Livraisons',  icon: TruckIcon     },
-  { to: '/admin/delivery-zones',label: 'Zones livr.', icon: TruckIcon     },
-  { to: '/admin/coupons',       label: 'Coupons',     icon: TicketIcon    },
-  { to: '/admin/blog',          label: 'Blog',        icon: NewspaperIcon },
-  { to: '/admin/programme',    label: 'Club fidélité',icon: StarIcon                   },
-  { to: '/admin/reviews',          label: 'Avis clients',    icon: ChatBubbleLeftRightIcon },
-  { to: '/admin/abandoned-carts',  label: 'Paniers abandonnés', icon: EnvelopeIcon        },
-  { to: '/admin/newsletter',       label: 'Newsletter',  icon: PaperAirplaneIcon          },
-  { to: '/admin/users',        label: 'Utilisateurs', icon: UsersIcon                   },
-  { to: '/admin/roles',        label: 'Rôles',        icon: ShieldCheckIcon, adminOnly: true },
-  { to: '/admin/permissions',  label: 'Permissions',  icon: KeyIcon,         adminOnly: true },
-  { to: '/admin/settings',   label: 'Paramètres',   icon: Cog6ToothIcon   },
+const NAV_GROUPS = [
+  {
+    key: 'ops',
+    label: 'Opérations',
+    items: [
+      { to: '/admin',        label: 'Dashboard',    icon: Squares2X2Icon          },
+      { to: '/admin/orders', label: 'Commandes',    icon: ClipboardDocumentListIcon },
+      { to: '/admin/pos',    label: 'Caisse / POS', icon: CalculatorIcon          },
+    ],
+  },
+  {
+    key: 'delivery',
+    label: 'Livraison',
+    items: [
+      { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon  },
+      { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon },
+    ],
+  },
+  {
+    key: 'catalog',
+    label: 'Catalogue',
+    items: [
+      { to: '/admin/products',      label: 'Produits',    icon: ShoppingBagIcon },
+      { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon      },
+      { to: '/admin/product-lines', label: 'Gammes',      icon: SwatchIcon      },
+    ],
+  },
+  {
+    key: 'marketing',
+    label: 'Marketing',
+    items: [
+      { to: '/admin/coupons',         label: 'Coupons',            icon: TicketIcon             },
+      { to: '/admin/programme',       label: 'Club fidélité',      icon: StarIcon               },
+      { to: '/admin/reviews',         label: 'Avis clients',       icon: ChatBubbleLeftRightIcon },
+      { to: '/admin/blog',            label: 'Blog',               icon: NewspaperIcon          },
+      { to: '/admin/newsletter',      label: 'Newsletter',         icon: EnvelopeIcon           },
+      { to: '/admin/abandoned-carts', label: 'Paniers abandonnés', icon: ShoppingCartIcon       },
+    ],
+  },
+  {
+    key: 'team',
+    label: 'Équipe',
+    items: [
+      { to: '/admin/users',       label: 'Utilisateurs', icon: UsersIcon       },
+      { to: '/admin/roles',       label: 'Rôles',        icon: ShieldCheckIcon, adminOnly: true },
+      { to: '/admin/permissions', label: 'Permissions',  icon: KeyIcon,         adminOnly: true },
+    ],
+  },
+  {
+    key: 'system',
+    label: 'Système',
+    items: [
+      { to: '/admin/settings', label: 'Paramètres', icon: Cog6ToothIcon },
+    ],
+  },
 ];
 
-const titles = {
-  'admin.dashboard':  'Vue d\'ensemble',
-  'admin.products':   'Produits',
-  'admin.categories': 'Catégories',
-  'admin.orders':     'Commandes',
-  'admin.pos':        'Caisse / POS',
-  'admin.newsletter': 'Newsletter',
-  'admin.order':      'Détail commande',
-  'admin.deliveries': 'Gestion des livraisons',
-  'admin.delivery-zones': 'Zones de livraison',
-  'admin.coupons':    'Coupons & promotions',
-  'admin.users':       'Utilisateurs',
-  'admin.roles':       'Rôles',
-  'admin.permissions': 'Permissions',
-  'admin.settings':   'Paramètres boutique',
-  'admin.products.create': 'Nouveau produit',
-  'admin.products.edit':   'Modifier le produit',
-  'admin.blog':                  'Blog & Actualités',
-  'admin.blog.create':           'Nouvel article',
-  'admin.blog.edit':             'Modifier l\'article',
-  'admin.product-lines':         'Gammes de produits',
-  'admin.product-lines.create':  'Nouvelle gamme',
-  'admin.product-lines.edit':    'Modifier la gamme',
-  'admin.program':               'Rosa Beauty Facial Care Club — Fidélité',
-  'admin.reviews':               'Avis & Modération',
-  'admin.abandoned-carts':       'Relances — Paniers abandonnés',
+const TITLES = {
+  'admin.dashboard':           'Vue d\'ensemble',
+  'admin.products':            'Produits',
+  'admin.products.create':     'Nouveau produit',
+  'admin.products.edit':       'Modifier le produit',
+  'admin.categories':          'Catégories',
+  'admin.orders':              'Commandes',
+  'admin.order':               'Détail commande',
+  'admin.pos':                 'Caisse / POS',
+  'admin.deliveries':          'Livraisons',
+  'admin.delivery-zones':      'Zones de livraison',
+  'admin.coupons':             'Coupons & promotions',
+  'admin.programme':           'Club fidélité',
+  'admin.reviews':             'Avis clients',
+  'admin.blog':                'Blog & Actualités',
+  'admin.blog.create':         'Nouvel article',
+  'admin.blog.edit':           'Modifier l\'article',
+  'admin.newsletter':          'Newsletter',
+  'admin.abandoned-carts':     'Paniers abandonnés',
+  'admin.users':               'Utilisateurs',
+  'admin.roles':               'Rôles',
+  'admin.permissions':         'Permissions',
+  'admin.settings':            'Paramètres boutique',
+  'admin.product-lines':       'Gammes de produits',
+  'admin.product-lines.create':'Nouvelle gamme',
+  'admin.product-lines.edit':  'Modifier la gamme',
 };
 
-const visibleNav = computed(() => nav.filter(item => !item.adminOnly || auth.isAdmin));
+const visibleGroups = computed(() =>
+  NAV_GROUPS.map(group => ({
+    ...group,
+    items: group.items.filter(item => !item.adminOnly || auth.isAdmin),
+  })).filter(group => group.items.length > 0)
+);
 
-const currentTitle = computed(() => titles[route.name] ?? 'Admin');
-const isActive = (path) => route.path === path || (path !== '/admin' && route.path.startsWith(path));
+const currentTitle = computed(() => TITLES[route.name] ?? 'Admin');
+const isActive = (path) =>
+  route.path === path || (path !== '/admin' && route.path.startsWith(path));
 
 async function handleLogout() {
   await auth.logout();
@@ -172,143 +229,168 @@ async function handleLogout() {
 
 <style scoped>
 .admin-shell {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
-  background: var(--cream-50);
+  overflow: hidden;
+  background: #f5f4f2;
 }
 
-/* ── Sidebar ── */
+/* ══ Sidebar ══ */
 .admin-sidebar {
-  width: 260px;
+  width: 232px;
   flex-shrink: 0;
   background: #fff;
-  border-right: 1px solid var(--cream-200);
+  border-right: 1px solid #ede9e4;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  position: sticky;
-  top: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
+/* ── Logo ── */
 .admin-sidebar__logo {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-3) var(--space-3);
-  border-bottom: 1px solid var(--cream-200);
+  gap: 5px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #ede9e4;
   text-decoration: none;
-  transition: opacity var(--transition-fast);
+  transition: opacity 0.15s;
+  flex-shrink: 0;
 }
-.admin-sidebar__logo:hover { opacity: 0.85; }
+.admin-sidebar__logo:hover { opacity: 0.8; }
 
 .admin-sidebar__logo-img {
   width: 100%;
-  max-width: 180px;
+  max-width: 130px;
   height: auto;
   display: block;
   object-fit: contain;
 }
-
-.admin-sidebar__logo-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: 1.1;
-}
-.admin-sidebar__logo-sub {
-  font-size: 0.625rem;
+.admin-sidebar__logo-badge {
+  font-size: 0.5rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-primary);
-  font-weight: 600;
+  color: var(--color-primary, #e8336d);
+  font-weight: 700;
+  background: #fff0f5;
+  border: 1px solid #ffd6e7;
+  border-radius: 999px;
+  padding: 2px 7px;
+  line-height: 1.6;
 }
 
+/* ── Nav ── */
 .admin-sidebar__nav {
   flex: 1;
-  padding: var(--space-4) var(--space-3);
+  padding: 6px 8px 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #ede9e4 transparent;
 }
+
+.nav-group__label {
+  display: block;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #c0b8b2;
+  padding: 10px 8px 3px;
+  user-select: none;
+  white-space: nowrap;
+}
+.nav-group__label:first-child { padding-top: 2px; }
 
 .admin-nav-link {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
+  gap: 9px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 0.8rem;
   font-weight: 500;
-  color: var(--gray-500);
-  transition: all var(--transition-fast);
+  color: #6b6560;
+  transition: background 0.12s, color 0.12s;
   position: relative;
+  text-decoration: none;
+  white-space: nowrap;
 }
 .admin-nav-link__icon {
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
+  opacity: 0.75;
 }
-.admin-nav-link > span:first-of-type { flex: 1; }
+.admin-nav-link__text { flex: 1; min-width: 0; }
+
 .admin-nav-link__badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 9999px;
-  background: var(--rose-500);
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--rose-500, #e8336d);
   color: #fff;
-  font-size: 0.6875rem;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
+  flex-shrink: 0;
 }
-.admin-nav-link--active .admin-nav-link__badge {
-  background: #fff;
-  color: var(--rose-600);
-}
+
 .admin-nav-link:hover {
-  background: var(--rose-50);
-  color: var(--rose-600);
+  background: #fff5f8;
+  color: #c9185a;
 }
+.admin-nav-link:hover .admin-nav-link__icon { opacity: 1; }
+
 .admin-nav-link--active {
-  background: var(--rose-50);
-  color: var(--rose-600);
+  background: #fff0f5;
+  color: #c9185a;
   font-weight: 600;
 }
+.admin-nav-link--active .admin-nav-link__icon { opacity: 1; }
 .admin-nav-link--active::before {
   content: '';
   position: absolute;
-  left: -12px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 6px;
+  bottom: 6px;
   width: 3px;
-  height: 22px;
-  background: var(--rose-500);
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: #e8336d;
+  border-radius: 0 3px 3px 0;
+}
+.admin-nav-link--active .admin-nav-link__badge {
+  background: #c9185a;
 }
 
+/* ── User ── */
 .admin-sidebar__user {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-top: 1px solid var(--cream-200);
+  gap: 8px;
+  padding: 9px 12px;
+  border-top: 1px solid #ede9e4;
+  flex-shrink: 0;
 }
 .admin-sidebar__avatar {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--rose-400), var(--rose-600));
+  background: linear-gradient(135deg, #f9518a, #c9185a);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: 700;
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 .admin-sidebar__user-info {
@@ -316,105 +398,116 @@ async function handleLogout() {
   min-width: 0;
 }
 .admin-sidebar__user-info p {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: var(--gray-800);
+  color: #3d3230;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 0;
 }
 .admin-sidebar__user-info span {
   font-size: 0.6875rem;
-  color: var(--gray-400);
+  color: #a09490;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
 }
 .admin-sidebar__logout {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: transparent;
-  color: var(--gray-400);
+  color: #b0a8a2;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all var(--transition-fast);
+  transition: all 0.15s;
+  flex-shrink: 0;
 }
 .admin-sidebar__logout:hover {
   background: #fee2e2;
   color: #ef4444;
 }
 
-/* ── Main ── */
+/* ══ Main ══ */
 .admin-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
+/* ── Topbar ── */
 .admin-topbar {
-  height: 80px;
-  background: rgba(255,255,255,0.92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--cream-200);
-  padding: 0 var(--space-8);
+  height: 52px;
+  background: rgba(255,255,255,0.97);
+  border-bottom: 1px solid #ede9e4;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  flex-shrink: 0;
+  z-index: 20;
 }
 .admin-topbar__title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 500;
-  color: var(--gray-800);
+  color: #1a1410;
   letter-spacing: -0.01em;
+  margin: 0;
 }
 .admin-topbar__right {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: 10px;
 }
-
 .admin-topbar__shop-link {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--cream-300);
-  background: #fff;
-  font-size: 0.8125rem;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #ede9e4;
+  background: #faf9f7;
+  font-size: 0.75rem;
   font-weight: 500;
-  color: var(--gray-600);
-  transition: all var(--transition-fast);
+  color: #6b6560;
+  transition: all 0.12s;
+  text-decoration: none;
 }
 .admin-topbar__shop-link:hover {
-  border-color: var(--rose-300);
-  color: var(--rose-500);
+  border-color: #ffd6e7;
+  background: #fff5f8;
+  color: #c9185a;
 }
 
+/* ── Content ── */
 .admin-content {
   flex: 1;
-  padding: var(--space-8);
-  overflow: auto;
+  padding: 20px 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-@media (max-width: 900px) {
-  .admin-sidebar { width: 80px; }
-  .admin-sidebar__logo-text,
+/* ══ Responsive ══ */
+@media (max-width: 960px) {
+  .admin-sidebar { width: 60px; }
+  .admin-sidebar__logo-img { max-width: 36px; }
+  .admin-sidebar__logo-badge,
   .admin-sidebar__user-info,
-  .admin-nav-link span { display: none; }
-  .admin-nav-link { justify-content: center; padding: 12px; }
-  .admin-sidebar__logo { justify-content: center; padding: var(--space-3); }
-  .admin-sidebar__logo-img { max-width: 64px; }
-  .admin-sidebar__user { justify-content: center; }
-  .admin-topbar { padding: 0 var(--space-4); }
-  .admin-content { padding: var(--space-4); }
+  .admin-nav-link__text,
+  .admin-nav-link__badge,
+  .nav-group__label { display: none; }
+  .admin-nav-link { justify-content: center; padding: 10px; }
+  .admin-nav-link__icon { width: 20px; height: 20px; opacity: 1; }
+  .admin-sidebar__logo { padding: 12px 8px; }
+  .admin-sidebar__user { justify-content: center; padding: 10px; }
+  .admin-topbar { padding: 0 16px; }
+  .admin-content { padding: 16px; }
 }
 </style>

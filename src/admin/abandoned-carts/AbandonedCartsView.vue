@@ -12,35 +12,45 @@
     <!-- Stats cards -->
     <div class="stats-grid" v-if="stats">
       <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--rose">🛒</div>
+        <div class="stat-card__icon stat-card__icon--rose">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.99-1.61L23 6H6"/></svg>
+        </div>
         <div class="stat-card__body">
           <p class="stat-card__value">{{ stats.total_abandoned }}</p>
           <p class="stat-card__label">Paniers abandonnés</p>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--amber">⏳</div>
+        <div class="stat-card__icon stat-card__icon--amber">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <div class="stat-card__body">
           <p class="stat-card__value">{{ stats.pending_j1 }}</p>
           <p class="stat-card__label">En attente J+1</p>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--blue">📧</div>
+        <div class="stat-card__icon stat-card__icon--blue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
         <div class="stat-card__body">
           <p class="stat-card__value">{{ stats.reminder_1_sent }}</p>
           <p class="stat-card__label">Relances J+1 envoyées</p>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-card__icon stat-card__icon--purple">🔁</div>
+        <div class="stat-card__icon stat-card__icon--purple">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 014-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+        </div>
         <div class="stat-card__body">
           <p class="stat-card__value">{{ stats.reminder_3_sent }}</p>
           <p class="stat-card__label">Relances J+3 envoyées</p>
         </div>
       </div>
       <div class="stat-card stat-card--wide">
-        <div class="stat-card__icon stat-card__icon--green">💰</div>
+        <div class="stat-card__icon stat-card__icon--green">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
         <div class="stat-card__body">
           <p class="stat-card__value">{{ formatPrice(stats.revenue_at_risk) }}</p>
           <p class="stat-card__label">Chiffre d'affaires à risque</p>
@@ -60,7 +70,9 @@
 
     <!-- Brevo config notice -->
     <div class="brevo-notice">
-      <span class="brevo-notice__icon">ℹ️</span>
+      <span class="brevo-notice__icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </span>
       <div>
         <strong>Configuration Brevo requise</strong> — Les relances s'envoient automatiquement toutes les heures via
         <code>php artisan cart:send-abandonment-reminders</code>.

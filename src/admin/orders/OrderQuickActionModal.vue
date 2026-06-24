@@ -100,7 +100,7 @@
             :disabled="!tracking.trim() || busy === 'tracking'"
             @click="saveTracking"
           >
-            {{ busy === 'tracking' ? 'Enregistrement…' : '📦 Confirmer + marquer expédiée' }}
+            {{ busy === 'tracking' ? 'Enregistrement…' : 'Confirmer + marquer expédiée' }}
           </button>
         </div>
         <p v-if="tracking.trim() && clientPhone" class="modal__hint">
