@@ -108,7 +108,7 @@
             <div class="co-section__body">
               <!-- Montant à payer — mis en évidence -->
               <div class="pay-instr__amount-hero">
-                <span class="pay-instr__amount-hero-label">{{ ('checkout.exactAmount') }}</span>
+                <span class="pay-instr__amount-hero-label">{{ $t('checkout.exactAmount') }}</span>
                 <strong class="pay-instr__amount-hero-value">{{ formatPrice(confirmedOrderTotal) }}</strong>
               </div>
 
@@ -120,7 +120,7 @@
                 @click="copyValue(paymentInstructions.number, 'number')"
               >
                 <div class="pay-instr__copy-info">
-                  <span class="pay-instr__copy-label">{{ ('checkout.payNumberLabel') }}</span>
+                  <span class="pay-instr__copy-label">{{ $t('checkout.payNumberLabel') }}</span>
                   <span class="pay-instr__copy-value">{{ paymentInstructions.number }}</span>
                 </div>
                 <span class="pay-instr__copy-action">
@@ -137,7 +137,7 @@
                 @click="copyValue(confirmedOrderNumber, 'ref')"
               >
                 <div class="pay-instr__copy-info">
-                  <span class="pay-instr__copy-label">{{ ('checkout.orderReference') }}</span>
+                  <span class="pay-instr__copy-label">{{ $t('checkout.orderReference') }}</span>
                   <span class="pay-instr__copy-value pay-instr__copy-value--sm">{{ confirmedOrderNumber }}</span>
                 </div>
                 <span class="pay-instr__copy-action">
@@ -164,7 +164,7 @@
             </div>
             <div class="co-section__foot pay-instr__foot">
               <button @click="goToProducts" class="btn btn-outline">
-                ← {{ ('checkout.backToProducts') }}
+                ← {{ $t('checkout.backToProducts') }}
               </button>
               <button @click="goToOrder" class="btn btn-primary">
                 {{ $t("checkout.viewMyOrder") }}
@@ -178,8 +178,8 @@
           <section v-if="authStore.isLoggedIn && !paymentInstructions && !cartStore.itemCount" key="empty-cart" class="card co-section co-empty">
             <div class="co-empty__body">
               <div class="co-empty__icon">🛒</div>
-              <h2 class="co-section__title">{{ ('checkout.emptyCart') }}</h2>
-              <p class="co-empty__hint">{{ ('checkout.emptyCartHint') }}</p>
+              <h2 class="co-section__title">{{ $t('checkout.emptyCart') }}</h2>
+              <p class="co-empty__hint">{{ $t('checkout.emptyCartHint') }}</p>
               <RouterLink :to="{ name: 'products' }" class="btn btn-primary co-empty__cta">
                 {{ $t("checkout.discoverProducts") }}
               </RouterLink>
@@ -339,7 +339,7 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>
               </span>
               <div>
-                <h2 class="co-section__title">{{ ('checkout.paymentMethod') }}</h2>
+                <h2 class="co-section__title">{{ $t('checkout.paymentMethod') }}</h2>
                 <p class="co-section__hint">{{ $t("checkout.chooseMethod") }}</p>
               </div>
             </header>
