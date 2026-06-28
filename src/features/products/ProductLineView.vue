@@ -227,7 +227,7 @@ onMounted(async () => {
 /* ── Hero ── */
 .line-hero {
   position: relative;
-  padding: var(--space-16) 0 var(--space-14);
+  padding: var(--space-20) 0 var(--space-16);
   overflow: hidden;
   min-height: 420px;
   display: flex;
