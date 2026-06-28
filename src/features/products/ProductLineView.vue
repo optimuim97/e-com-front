@@ -1,7 +1,7 @@
 <template>
-  <main v-if="line" class="line-page">
+  <main v-if="line" class="line-page" :style="heroStyle">
     <!-- ── Hero gamme ── -->
-    <section class="line-hero" :style="heroStyle">
+    <section class="line-hero">
       <!-- Cover image ou placeholder SVG -->
       <div class="line-hero__cover">
         <img
@@ -63,52 +63,62 @@
     </section>
 
     <!-- ── Composition de la gamme ── -->
-    <div v-if="compositionProducts.length" class="container line-composition">
-      <p class="kit-header">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
-        Cette gamme contient
-      </p>
+    <section v-if="compositionProducts.length" class="container line-composition">
+      <header class="kit-head">
+        <div class="kit-head__title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+          <h2>Cette gamme contient</h2>
+        </div>
+        <span class="kit-head__count">{{ compositionProducts.length }} soins</span>
+      </header>
 
-      <!-- Produits kit -->
-      <div class="kit-row">
-        <template v-for="(p, idx) in compositionProducts" :key="p.id">
-          <a
-            :href="`/products/${p.slug}`"
-            target="_blank"
-            rel="noopener"
-            class="kit-product"
-          >
-            <div class="kit-avatar" :style="avatarStyle(p)">
-              <img
-                v-if="p.images?.[0]?.url"
-                :src="p.images[0].url"
-                :alt="p.name"
-                class="kit-avatar__img"
-              />
-              <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            </div>
-            <div class="kit-product__info">
-              <span class="kit-product__name">{{ p.name }}</span>
-              <span v-if="p.price" class="kit-product__price">{{ formatPrice(p.price) }}</span>
-            </div>
-            <svg class="kit-product__ext" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </a>
-          <!-- Séparateur + entre produits -->
-          <span v-if="idx < compositionProducts.length - 1" class="kit-sep" aria-hidden="true">+</span>
-        </template>
+      <!-- Grille produits -->
+      <div class="kit-grid">
+        <a
+          v-for="(p, idx) in compositionProducts"
+          :key="p.id"
+          :href="`/products/${p.slug}`"
+          target="_blank"
+          rel="noopener"
+          class="kit-card"
+        >
+          <span class="kit-card__step">{{ idx + 1 }}</span>
+          <div class="kit-card__avatar" :style="avatarStyle(p)">
+            <img
+              v-if="p.images?.[0]?.url"
+              :src="p.images[0].url"
+              :alt="p.name"
+              class="kit-card__img"
+            />
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".6"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div class="kit-card__info">
+            <span class="kit-card__name">{{ p.name }}</span>
+            <span v-if="p.price" class="kit-card__price">{{ formatPrice(p.price) }}</span>
+          </div>
+          <svg class="kit-card__ext" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
       </div>
 
-      <!-- Total kit -->
-      <div v-if="line.price" class="kit-total">
-        <div class="kit-total__left">
-          <span class="kit-total__label">Total gamme</span>
-          <span v-if="savings > 0" class="kit-total__savings">
-            Économisez {{ formatPrice(savings) }} vs achat séparé
+      <!-- Récapitulatif gamme -->
+      <div v-if="line.price" class="kit-summary">
+        <div class="kit-summary__info">
+          <span class="kit-summary__count">{{ compositionProducts.length }} soins · rituel complet</span>
+          <span v-if="savings > 0" class="kit-summary__value">
+            Valeur à l'unité <s>{{ formatPrice(itemsTotal) }}</s>
           </span>
         </div>
-        <span class="kit-total__price">{{ formatPrice(line.price) }}</span>
+        <div class="kit-summary__price">
+          <div class="kit-summary__price-block">
+            <span class="kit-summary__price-label">Prix de la gamme</span>
+            <span class="kit-summary__price-val">{{ formatPrice(line.price) }}</span>
+          </div>
+          <span v-if="savings > 0" class="kit-summary__badge">
+            Économisez {{ formatPrice(savings) }}
+          </span>
+        </div>
       </div>
-    </div>
+    </section>
   </main>
 
   <div v-else-if="loading" class="loader-wrap"><div class="loader"></div></div>
@@ -251,6 +261,8 @@ onMounted(async () => {
   background: linear-gradient(to bottom, rgba(10,2,6,.35) 0%, rgba(10,2,6,.68) 100%);
 }
 
+/* Le bloc suit le container (aligné à gauche comme les sections en dessous) ;
+   seul le texte est contraint en largeur pour la lisibilité. */
 .line-hero__inner {
   position: relative;
   z-index: 1;
@@ -258,8 +270,6 @@ onMounted(async () => {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-3);
-  max-width: 680px;
-  width: 100%;
 }
 
 .line-breadcrumb {
@@ -292,19 +302,21 @@ onMounted(async () => {
   font-weight: 700;
   line-height: 1.1;
   color: #fff;
+  max-width: 680px;
 }
 
 .line-hero__tagline {
   font-size: 1.125rem;
   color: rgba(255,255,255,.85);
   font-style: italic;
+  max-width: 620px;
 }
 
 .line-hero__desc {
   font-size: 0.9375rem;
   color: rgba(255,255,255,.75);
   line-height: 1.65;
-  max-width: 560px;
+  max-width: 620px;
 }
 
 /* Actions */
@@ -380,76 +392,104 @@ onMounted(async () => {
 
 /* ── Composition ── */
 .line-composition {
-  padding: var(--space-10) var(--space-4) var(--space-10);
+  padding: var(--space-10) var(--space-4) var(--space-12);
 }
 
-.kit-header {
+/* En-tête */
+.kit-head {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--gray-400);
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: var(--space-5);
 }
-.kit-header svg { flex-shrink: 0; opacity: .6; }
-
-/* ── Rangée produits ── */
-.kit-row {
+.kit-head__title {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  gap: 9px;
+}
+.kit-head__title svg { flex-shrink: 0; color: var(--line-color, #E8336D); }
+.kit-head__title h2 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  line-height: 1;
+}
+.kit-head__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--line-color, #E8336D);
+  background: var(--rose-50, #fdf2f5);
+  background: color-mix(in srgb, var(--line-color, #E8336D) 10%, #fff);
+  border: 1px solid var(--rose-100, #fbe0e8);
+  border: 1px solid color-mix(in srgb, var(--line-color, #E8336D) 22%, #fff);
+  border-radius: var(--radius-full, 999px);
+  padding: 4px 12px;
+  white-space: nowrap;
 }
 
-.kit-sep {
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: var(--gray-300);
-  flex-shrink: 0;
-  line-height: 1;
-  user-select: none;
+/* ── Grille produits ── */
+.kit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: var(--space-3);
 }
 
 /* ── Carte produit ── */
-.kit-product {
+.kit-card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
   background: #fff;
   border: 1.5px solid var(--cream-200, #ede8e3);
-  border-radius: var(--radius-xl, 14px);
+  border-radius: var(--radius-xl, 16px);
   text-decoration: none;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
   min-width: 0;
 }
-.kit-product:hover {
+.kit-card:hover {
   border-color: var(--line-color, #E8336D);
-  box-shadow: 0 4px 16px rgba(0,0,0,.07);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.08);
+  transform: translateY(-2px);
 }
-.kit-product:active { transform: translateY(0); }
+.kit-card:active { transform: translateY(0); }
 
-.kit-avatar {
-  width: 48px; height: 48px;
-  border-radius: 10px;
+/* Numéro d'étape (rituel) */
+.kit-card__step {
+  position: absolute;
+  top: -8px; left: -8px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--line-color, #E8336D);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.18);
+  border: 2px solid #fff;
+}
+
+.kit-card__avatar {
+  width: 52px; height: 52px;
+  border-radius: 12px;
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   background: var(--cream-100, #f5f0ec);
 }
-.kit-avatar__img { width: 100%; height: 100%; object-fit: cover; }
+.kit-card__img { width: 100%; height: 100%; object-fit: cover; }
 
-.kit-product__info {
+.kit-card__info {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  flex: 1;
 }
-.kit-product__name {
+.kit-card__name {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--gray-800);
@@ -457,54 +497,87 @@ onMounted(async () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 160px;
 }
-.kit-product__price {
+.kit-card__price {
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--gray-500);
+  font-weight: 600;
+  color: var(--line-color, #E8336D);
 }
 
-.kit-product__ext {
+.kit-card__ext {
   flex-shrink: 0;
   color: var(--gray-300);
-  margin-left: var(--space-1);
-  transition: color 0.15s;
+  transition: color 0.15s, transform 0.15s;
 }
-.kit-product:hover .kit-product__ext { color: var(--line-color, #E8336D); }
+.kit-card:hover .kit-card__ext {
+  color: var(--line-color, #E8336D);
+  transform: translate(1px, -1px);
+}
 
-/* ── Total ── */
-.kit-total {
+/* ── Récapitulatif ── */
+.kit-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--cream-200, #ede8e3);
+  gap: var(--space-5);
   flex-wrap: wrap;
+  margin-top: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl, 18px);
+  background: var(--rose-50, #fdf2f5);
+  background: color-mix(in srgb, var(--line-color, #E8336D) 6%, #fff);
+  border: 1.5px solid var(--rose-100, #fbe0e8);
+  border: 1.5px solid color-mix(in srgb, var(--line-color, #E8336D) 16%, #fff);
 }
-.kit-total__left {
+.kit-summary__info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
-.kit-total__label {
-  font-size: 0.875rem;
+.kit-summary__count {
+  font-size: 0.9375rem;
   font-weight: 600;
-  color: var(--gray-700);
+  color: var(--gray-800);
 }
-.kit-total__savings {
-  font-size: 0.75rem;
-  color: #2d9b5e;
+.kit-summary__value {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+}
+.kit-summary__value s { color: var(--gray-400); }
+
+.kit-summary__price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.kit-summary__price-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.kit-summary__price-label {
+  font-size: 0.6875rem;
   font-weight: 500;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
-.kit-total__price {
+.kit-summary__price-val {
   font-family: var(--font-display);
-  font-size: 1.625rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--line-color, #E8336D);
   letter-spacing: -0.01em;
+  line-height: 1;
+}
+.kit-summary__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1f8a4c;
+  background: #e7f6ed;
+  border-radius: var(--radius-full, 999px);
+  padding: 5px 12px;
   white-space: nowrap;
 }
 
@@ -514,5 +587,9 @@ onMounted(async () => {
   .line-hero__actions { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
   .line-hero__price-wrap { width: 100%; }
   .btn-add-gamme { width: 100%; justify-content: center; }
+  .kit-grid { grid-template-columns: 1fr; }
+  .kit-summary { flex-direction: column; align-items: stretch; gap: var(--space-4); }
+  .kit-summary__price { justify-content: space-between; }
+  .kit-summary__price-block { align-items: flex-start; }
 }
 </style>
