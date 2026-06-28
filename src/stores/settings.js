@@ -75,6 +75,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   /* ── Tunnel de commande ───────────────────────────────────────────────── */
   const enableQuickOrder          = bool('enable_quick_order',           true)
+  const floatingCartEnabled       = bool('floating_cart_enabled',        true)
 
   /* ── Page d'accueil ───────────────────────────────────────────────────── */
   const heroImageUrl              = get('home_hero_image_url',           '')
@@ -194,7 +195,7 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentMtnEnabled, paymentMtnNumber, paymentMtnInstructions,
     paymentGeniuspayEnabled,
     // Tunnel
-    enableQuickOrder,
+    enableQuickOrder, floatingCartEnabled,
     // Hero
     heroImageUrl, heroImages,
     // Announce

@@ -42,7 +42,10 @@
       @add-to-cart="addToCart"
     />
 
-    <!-- 7. Notre histoire — connexion émotionnelle à la marque -->
+    <!-- 7. Stories blog — nouveautés / conseils beauté -->
+    <BlogStoriesSection />
+
+    <!-- 8. Notre histoire — connexion émotionnelle à la marque -->
     <AboutSection
       :shopName="settings.shopName"
       :tagline="settings.shopTagline || FALLBACK_TAGLINE"
@@ -50,13 +53,13 @@
       :stats="dynamicStats"
     />
 
-    <!-- 8. Galerie lifestyle -->
+    <!-- 9. Galerie lifestyle -->
     <GallerySection />
 
-    <!-- 9. Avis clients — dernière preuve sociale avant le footer -->
+    <!-- 10. Avis clients — dernière preuve sociale avant le footer -->
     <TestimonialsSection :items="testimonials" />
 
-    <!-- 10. Teasers : Histoire / Club / Blog — invitation à poursuivre -->
+    <!-- 11. Teasers : Histoire / Club / Blog — invitation à poursuivre -->
     <ExploreSection />
   </div>
 </template>
@@ -79,6 +82,7 @@ import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
 import AboutSection         from '@/features/home/sections/AboutSection.vue'
 import ExploreSection       from '@/features/home/sections/ExploreSection.vue'
 import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'
+import BlogStoriesSection   from '@/features/home/sections/BlogStoriesSection.vue'
 
 /* ── Stores ─────────────────────────────────────────────────────────────── */
 const { t }     = useI18n()

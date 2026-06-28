@@ -195,8 +195,8 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               </span>
               <div>
-                <h2 class="co-section__title">{{ ('checkout.personalInfo') }}</h2>
-                <p class="co-section__hint">{{ ('checkout.howToCallYou') }}</p>
+                <h2 class="co-section__title">{{ $t('checkout.personalInfo') }}</h2>
+                <p class="co-section__hint">{{ $t('checkout.howToCallYou') }}</p>
               </div>
             </header>
             <div class="co-section__body">
@@ -236,7 +236,7 @@
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
               </span>
               <div>
-                <h2 class="co-section__title">{{ ('checkout.shippingAddress') }}</h2>
+                <h2 class="co-section__title">{{ $t('checkout.shippingAddress') }}</h2>
                 <p class="co-section__hint">{{ $t("checkout.whereDeliver") }}</p>
               </div>
             </header>
@@ -375,7 +375,7 @@
 
         <!-- ── Sidebar récapitulatif ── -->
         <aside class="co-summary card" v-if="cartStore.itemCount">
-          <h3 class="co-summary__title">{{ ('checkout.summary') }}</h3>
+          <h3 class="co-summary__title">{{ $t('checkout.summary') }}</h3>
 
           <!-- Articles -->
           <ul class="co-summary__items">

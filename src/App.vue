@@ -4,6 +4,7 @@
     v-if="!isAdminRoute && settings.whatsappNumber"
     :phone="settings.whatsappNumber"
   />
+  <FloatingCart v-if="!isAdminRoute" />
 </template>
 
 <script setup>
@@ -12,6 +13,7 @@ import { RouterView, useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
 import { useI18n } from 'vue-i18n';
 import WhatsAppButton from '@/components/shop/WhatsAppButton.vue';
+import FloatingCart   from '@/components/shop/FloatingCart.vue';
 import { useSettingsStore } from '@/stores/settings';
 
 const { t } = useI18n();

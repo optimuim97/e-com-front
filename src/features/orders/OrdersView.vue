@@ -12,6 +12,19 @@
     </section>
 
     <div class="container orders-content">
+      <!-- Tabs -->
+      <div class="orders-tabs">
+        <button
+          v-for="tab in tabs"
+          :key="tab.value"
+          class="orders-tab"
+          :class="{ 'orders-tab--active': activeTab === tab.value }"
+          @click="selectTab(tab.value)"
+        >
+          {{ tab.label }}
+        </button>
+      </div>
+
       <!-- Loading -->
       <div v-if="loading" class="orders-loader">
         <div class="orders-loader__spinner"></div>
@@ -54,31 +67,73 @@
           </div>
         </div>
       </div>
+
+      <!-- Pagination -->
+      <div v-if="pagination && pagination.last_page > 1" class="orders-pagination">
+        <button
+          class="btn btn-outline btn-sm"
+          :disabled="pagination.current_page <= 1"
+          @click="goToPage(pagination.current_page - 1)"
+        >
+          {{ $t('orders.prev') }}
+        </button>
+        <span class="orders-pagination__info">
+          {{ pagination.current_page }} / {{ pagination.last_page }}
+        </span>
+        <button
+          class="btn btn-outline btn-sm"
+          :disabled="pagination.current_page >= pagination.last_page"
+          @click="goToPage(pagination.current_page + 1)"
+        >
+          {{ $t('orders.next') }}
+        </button>
+      </div>
     </div>
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCurrencyStore } from '@/stores/currency'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
 
 const { t } = useI18n()
-const orders = ref([])
-const loading = ref(true)
+const orders    = ref([])
+const loading   = ref(true)
+const activeTab = ref('')
+const pagination = ref(null)
 
-async function fetchOrders() {
+const STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] // 'refunded'
+
+const tabs = computed(() => [
+  { value: '', label: t('orders.tabAll') },
+  ...STATUSES.map(s => ({ value: s, label: t(`orders.status.${s}`) })),
+])
+
+async function fetchOrders(page = 1) {
   loading.value = true
   try {
-    const { data } = await api.get('/orders')
-    orders.value = data.data ?? data
+    const params = { page, per_page: 10 }
+    if (activeTab.value) params.status = activeTab.value
+    const { data } = await api.get('/orders', { params })
+    orders.value    = data.data ?? data
+    pagination.value = data.meta ?? null
   } catch {
     orders.value = []
   } finally {
     loading.value = false
   }
+}
+
+function selectTab(value) {
+  activeTab.value = value
+  fetchOrders(1)
+}
+
+function goToPage(page) {
+  fetchOrders(page)
 }
 
 function formatDate(val) {
@@ -96,17 +151,17 @@ function statusLabel(status) {
 
 function statusBadge(status) {
   const map = {
-    pending: 'badge badge-warning',
+    pending:    'badge badge-warning',
     processing: 'badge badge-primary',
-    shipped: 'badge badge-primary',
-    delivered: 'badge badge-success',
-    cancelled: 'badge badge-danger',
-    refunded: 'badge badge-gray',
+    shipped:    'badge badge-primary',
+    delivered:  'badge badge-success',
+    cancelled:  'badge badge-danger',
+    // refunded:   'badge badge-gray',
   }
   return map[status] ?? 'badge badge-gray'
 }
 
-onMounted(fetchOrders)
+onMounted(() => fetchOrders())
 </script>
 
 <style scoped>
@@ -129,6 +184,32 @@ onMounted(fetchOrders)
 .orders-content {
   padding: var(--space-10) var(--space-6) var(--space-16);
   max-width: 880px;
+}
+
+/* ── Tabs ── */
+.orders-tabs {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-6);
+}
+.orders-tab {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.orders-tab:hover { border-color: var(--rose-300); color: var(--rose-500); }
+.orders-tab--active {
+  background: var(--rose-500);
+  border-color: var(--rose-500);
+  color: #fff;
 }
 
 /* ── Loader ── */
@@ -217,6 +298,21 @@ onMounted(fetchOrders)
   transition: gap var(--transition-fast);
 }
 .order-row__link:hover { gap: var(--space-2); }
+
+/* ── Pagination ── */
+.orders-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.orders-pagination__info {
+  font-size: 0.875rem;
+  color: var(--gray-500);
+  min-width: 60px;
+  text-align: center;
+}
 
 @media (max-width: 540px) {
   .order-row__right { text-align: left; align-items: flex-start; }

@@ -173,8 +173,8 @@ function placeholderStyle(cat) {
   right: 0;
   padding: var(--space-4) var(--space-3) var(--space-3);
   font-family: var(--font-display);
-  font-size: 0.9375rem;
-  font-weight: 500;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #fff;
   letter-spacing: 0.015em;
   text-shadow: 0 1px 8px rgba(0,0,0,0.4);

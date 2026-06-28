@@ -233,6 +233,16 @@
               <span>Permet au client de passer commande avec juste nom + téléphone, sans créer de compte. Désactiver pour forcer la création de compte.</span>
             </div>
           </label>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('floating_cart_enabled')" class="toggle" :class="{ 'toggle--on': form.floating_cart_enabled === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Bouton flottant "Commander"</strong>
+              <span>Affiche le bouton fixe en bas à droite qui résume le panier et ouvre la commande rapide. Désactiver si vous préférez un tunnel classique uniquement.</span>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -601,6 +611,7 @@ const form = ref({
   payment_geniuspay_enabled:     'false',
   // Tunnel de commande
   enable_quick_order:            'true',
+  floating_cart_enabled:         'true',
   // Réseaux sociaux
   social_instagram: '',
   social_facebook:  '',

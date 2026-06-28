@@ -38,9 +38,41 @@
               {{ $t('quickOrder.whatsapp') }}
             </a>
 
+            <!-- ── Widget complétion profil ──────────────────────── -->
+            <div v-if="profileNudge" class="qo-nudge">
+              <p class="qo-nudge__title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+                {{ profileNudge.title }}
+              </p>
+              <p class="qo-nudge__desc">{{ profileNudge.desc }}</p>
+
+              <!-- Cas : compte rapide → ajouter email + mot de passe -->
+              <form v-if="profileNudge.type === 'setup'" @submit.prevent="doSetup" class="qo-nudge__form">
+                <input v-model="nudgeForm.email" type="email" class="input input--sm" placeholder="votre@email.com" required />
+                <input v-model="nudgeForm.password" type="password" class="input input--sm" placeholder="Mot de passe (8 car. min)" required minlength="8" />
+                <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
+                <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">
+                  <span v-if="nudgeSaving" class="qo-geo-spin"></span>
+                  <span v-else>Sécuriser →</span>
+                </button>
+                <p v-if="nudgeSuccess" class="qo-nudge__ok">✓ {{ nudgeSuccess }}</p>
+              </form>
+
+              <!-- Cas : pas de téléphone → ajouter le numéro -->
+              <form v-else-if="profileNudge.type === 'phone'" @submit.prevent="doSavePhone" class="qo-nudge__form">
+                <PhoneInput v-model="nudgeForm.phone" placeholder="07 00 00 00 00" />
+                <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
+                <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">
+                  <span v-if="nudgeSaving" class="qo-geo-spin"></span>
+                  <span v-else>Enregistrer →</span>
+                </button>
+                <p v-if="nudgeSuccess" class="qo-nudge__ok">✓ {{ nudgeSuccess }}</p>
+              </form>
+            </div>
+
             <div class="qo-confirmed__actions">
               <button class="btn btn-primary" @click="viewOrder">{{ $t('quickOrder.viewOrder') }}</button>
-              <button class="btn btn-outline btn-sm" @click="goToProfile">{{ $t('quickOrder.secureAccount') }}</button>
+              <button v-if="!profileNudge" class="btn btn-outline btn-sm" @click="goToProfile">{{ $t('quickOrder.secureAccount') }}</button>
             </div>
           </div>
 
@@ -63,20 +95,38 @@
 
             <form id="qo-form" @submit.prevent="submit" class="qo-form">
               <div class="qo-field">
-                <label class="label">{{ $t('quickOrder.name') }} *</label>
-                <input v-model="form.name" type="text" class="input" :placeholder="$t('quickOrder.namePlaceholder')" required />
+                <div class="qo-field-head">
+                  <label class="label">{{ $t('quickOrder.name') }} *</label>
+                  <span v-if="prefilled.name" class="qo-prefilled-badge">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Profil
+                  </span>
+                </div>
+                <input v-model="form.name" type="text" class="input" :class="{ 'input--prefilled': prefilled.name }" :placeholder="$t('quickOrder.namePlaceholder')" required />
               </div>
 
               <div class="qo-field">
-                <label class="label">{{ $t('quickOrder.phone') }} *</label>
-                <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" />
+                <div class="qo-field-head">
+                  <label class="label">{{ $t('quickOrder.phone') }} *</label>
+                  <span v-if="prefilled.phone" class="qo-prefilled-badge">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Profil
+                  </span>
+                </div>
+                <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" :class="{ 'input--prefilled': prefilled.phone }" />
               </div>
 
               <div class="qo-field">
-                <label class="label">
-                  {{ $t('quickOrder.email') }} <span class="qo-optional">({{ $t('quickOrder.emailOptional') }})</span>
-                </label>
-                <input v-model="form.email" type="email" class="input" :placeholder="$t('quickOrder.emailPlaceholder')" />
+                <div class="qo-field-head">
+                  <label class="label">
+                    {{ $t('quickOrder.email') }} <span class="qo-optional">({{ $t('quickOrder.emailOptional') }})</span>
+                  </label>
+                  <span v-if="prefilled.email" class="qo-prefilled-badge">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    Profil
+                  </span>
+                </div>
+                <input v-model="form.email" type="email" class="input" :class="{ 'input--prefilled': prefilled.email }" :placeholder="$t('quickOrder.emailPlaceholder')" />
               </div>
 
               <div class="qo-field">
@@ -98,10 +148,59 @@
                     <span>{{ qoGeoLabel }}</span>
                   </button>
                 </div>
-                <select v-model="form.commune" class="input qo-select" required>
-                  <option value="" disabled>{{ $t('quickOrder.communePlaceholder') }}</option>
-                  <option v-for="c in COMMUNES" :key="c" :value="c">{{ c }}</option>
-                </select>
+                <!-- Combobox searchable -->
+                <div class="qo-combobox" v-click-outside="closeCommune">
+                  <div class="qo-combobox__trigger" @click="openCommune">
+                    <span v-if="communeDisplay" class="qo-combobox__value">{{ communeDisplay }}</span>
+                    <span v-else class="qo-combobox__placeholder">{{ $t('quickOrder.communePlaceholder') }}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="qo-combobox__arrow" :class="{ 'qo-combobox__arrow--open': communeOpen }">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+
+                  <div v-if="communeOpen" class="qo-combobox__dropdown">
+                    <input
+                      ref="communeSearchInput"
+                      v-model="communeSearch"
+                      type="text"
+                      class="qo-combobox__search"
+                      placeholder="Rechercher..."
+                      @click.stop
+                      @keydown.enter.prevent="onCommuneEnter"
+                      @keydown.esc.prevent="closeCommune"
+                    />
+                    <ul class="qo-combobox__list">
+                      <li
+                        v-for="c in filteredCommunes"
+                        :key="c"
+                        class="qo-combobox__option"
+                        :class="{ 'qo-combobox__option--active': form.commune === c }"
+                        @click="selectCommune(c)"
+                      >{{ c }}</li>
+                      <li class="qo-combobox__option qo-combobox__option--other" @click="selectCommune('__autre__')">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Saisir manuellement
+                      </li>
+                      <li v-if="filteredCommunes.length === 0 && communeSearch" class="qo-combobox__empty">
+                        Aucun résultat
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Saisie manuelle si "Autre" -->
+                <input
+                  v-if="form.commune === '__autre__'"
+                  v-model="form.communeManuel"
+                  type="text"
+                  class="input qo-commune-manuel"
+                  placeholder="Ex : Koumassi extension, Songon Agban..."
+                  required
+                />
+
+                <!-- Champ caché pour la validation required -->
+                <input type="text" :value="effectiveCommune" required style="display:none" tabindex="-1" />
+
                 <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
@@ -156,6 +255,9 @@
             <span v-if="submitting" class="qo-spinner"></span>
             <span v-else>{{ $t('quickOrder.submit') }}</span>
           </button>
+          <RouterLink :to="{ name: 'checkout' }" class="qo-checkout-link" @click="$emit('close')">
+            Voir mon panier →
+          </RouterLink>
         </div>
 
       </div>
@@ -164,7 +266,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
@@ -203,7 +306,7 @@ const adminWhatsappLink = computed(() => {
     `🌹 Nouvelle commande Rosa Beauty Facial Care`,
     `N°: ${order.number}`,
     `Client: ${form.value.name} (${phone})`,
-    `Commune: ${form.value.commune}`,
+    `Commune: ${effectiveCommune.value}`,
     form.value.indication?.trim() ? `📍 Indication: ${form.value.indication.trim()}` : null,
     `Paiement: ${method}`,
     `Total: ${fmtPrice(order.total)}`,
@@ -222,8 +325,61 @@ const COMMUNES = [
   'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville',
   'Cocody', 'Koumassi', 'Marcory', 'Plateau', 'Port-Bouët',
   'Songon', 'Treichville', 'Yopougon',
-  'Autres / Hors Abidjan',
+  'Hors Abidjan',
 ]
+
+// ── Combobox commune ──────────────────────────────────────────────────────────
+const communeOpen        = ref(false)
+const communeSearch      = ref('')
+const communeSearchInput = ref(null)
+
+const filteredCommunes = computed(() => {
+  const q = communeSearch.value.trim().toLowerCase()
+  if (!q) return COMMUNES
+  return COMMUNES.filter(c => c.toLowerCase().includes(q))
+})
+
+const communeDisplay = computed(() => {
+  if (!form.value.commune) return ''
+  if (form.value.commune === '__autre__') return form.value.communeManuel || 'Saisie manuelle'
+  return form.value.commune
+})
+
+const effectiveCommune = computed(() =>
+  form.value.commune === '__autre__' ? form.value.communeManuel : form.value.commune
+)
+
+async function openCommune() {
+  communeOpen.value  = true
+  communeSearch.value = ''
+  await nextTick()
+  communeSearchInput.value?.focus()
+}
+function closeCommune() { communeOpen.value = false }
+function selectCommune(c) {
+  form.value.commune = c
+  if (c !== '__autre__') form.value.communeManuel = ''
+  communeOpen.value = false
+}
+
+// Entrée : sélectionne le 1er résultat, sinon bascule en saisie manuelle pré-remplie
+function onCommuneEnter() {
+  if (filteredCommunes.value.length) {
+    selectCommune(filteredCommunes.value[0])
+  } else if (communeSearch.value.trim()) {
+    form.value.communeManuel = communeSearch.value.trim()
+    selectCommune('__autre__')
+  }
+}
+
+// Directive v-click-outside (inline)
+const vClickOutside = {
+  mounted(el, binding) {
+    el._clickOutside = (e) => { if (!el.contains(e.target)) binding.value(e) }
+    document.addEventListener('mousedown', el._clickOutside)
+  },
+  unmounted(el) { document.removeEventListener('mousedown', el._clickOutside) },
+}
 
 // ── Géolocalisation (commande rapide) ────────────────────────────────────────
 // 'idle' | 'loading' | 'success' | 'error' | 'outside'
@@ -291,14 +447,26 @@ const paymentMethods = computed(() => [
   { value: 'delivery',     label: t('quickOrder.payDelivery'),    icon: ICON_TRUCK },
 ])
 
+const prefilled = ref({ name: false, phone: false, email: false })
+
 const form = ref({
   name: '',
   phone: '',
   email: '',
   commune: '',
+  communeManuel: '',
   indication: '',
   payment: 'wave',
   note: '',
+})
+
+// Pré-remplir depuis le profil si l'utilisateur est connecté
+onMounted(() => {
+  const u = authStore.user
+  if (!u) return
+  if (u.name) { form.value.name = u.name; prefilled.value.name = true }
+  if (u.phone) { form.value.phone = u.phone; prefilled.value.phone = true }
+  if (u.email && !u.is_generated_email) { form.value.email = u.email; prefilled.value.email = true }
 })
 
 const submitting     = ref(false)
@@ -306,12 +474,74 @@ const error          = ref('')
 const confirmed      = ref(false)
 const confirmedOrder = ref(null)
 
+// ── Nudge complétion profil (post-commande) ───────────────────────────────
+const nudgeForm    = ref({ email: '', password: '', phone: '' })
+const nudgeSaving  = ref(false)
+const nudgeError   = ref('')
+const nudgeSuccess = ref('')
+const nudgeDone    = ref(false)
+
+const profileNudge = computed(() => {
+  if (!confirmed.value || nudgeDone.value) return null
+  const u = authStore.user
+  if (!u) return null
+  if (u.is_generated_email) {
+    return {
+      type:  'setup',
+      title: 'Sécurisez votre compte',
+      desc:  'Ajoutez votre email et un mot de passe pour retrouver vos commandes depuis n\'importe quel appareil.',
+    }
+  }
+  if (!u.phone) {
+    return {
+      type:  'phone',
+      title: 'Ajoutez votre numéro',
+      desc:  'Enregistrez votre numéro pour un suivi de commande plus rapide.',
+    }
+  }
+  return null
+})
+
+async function doSetup() {
+  nudgeSaving.value = true
+  nudgeError.value  = ''
+  try {
+    await authStore.setupAccount({
+      email:                 nudgeForm.value.email,
+      password:              nudgeForm.value.password,
+      password_confirmation: nudgeForm.value.password,
+    })
+    nudgeSuccess.value = 'Compte sécurisé ! Vous pouvez maintenant vous connecter avec votre email.'
+    nudgeDone.value = true
+  } catch (e) {
+    const errs = e.response?.data?.errors
+    nudgeError.value = errs ? Object.values(errs).flat()[0] : (e.response?.data?.message ?? 'Une erreur est survenue.')
+  } finally {
+    nudgeSaving.value = false
+  }
+}
+
+async function doSavePhone() {
+  if (!nudgeForm.value.phone) return
+  nudgeSaving.value = true
+  nudgeError.value  = ''
+  try {
+    await authStore.updateInfo({ phone: nudgeForm.value.phone })
+    nudgeSuccess.value = 'Numéro enregistré !'
+    nudgeDone.value = true
+  } catch (e) {
+    nudgeError.value = e.response?.data?.message ?? 'Une erreur est survenue.'
+  } finally {
+    nudgeSaving.value = false
+  }
+}
+
 const isWavePayment = computed(() =>
   confirmedOrder.value && (confirmedOrder.value?.payments?.[0]?.provider === 'wave' || form.value.payment === 'wave')
 )
 
 async function submit() {
-  if (!form.value.name || !form.value.phone || !form.value.commune || !form.value.payment) return
+  if (!form.value.name || !form.value.phone || !effectiveCommune.value || !form.value.payment) return
 
   submitting.value = true
   error.value = ''
@@ -333,7 +563,7 @@ async function submit() {
       name:           form.value.name,
       phone:          form.value.phone,
       email:          form.value.email?.trim() || null,
-      commune:        form.value.commune,
+      commune:        effectiveCommune.value,
       landmark:       form.value.indication?.trim() || null,
       payment_method: form.value.payment,
       note:           form.value.note || null,
@@ -476,8 +706,102 @@ function fmtPrice(val) {
 .qo-form { display: flex; flex-direction: column; gap: var(--space-4); }
 .qo-field { display: flex; flex-direction: column; gap: var(--space-1); }
 .qo-optional { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
-.qo-select { appearance: none; cursor: pointer; }
 .qo-indication { resize: none; min-height: 52px; line-height: 1.5; }
+
+/* ── Combobox commune ── */
+.qo-combobox { position: relative; }
+
+.qo-combobox__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 10px 14px;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: border-color var(--transition-fast);
+  min-height: 44px;
+}
+.qo-combobox__trigger:hover { border-color: var(--gray-300); }
+
+.qo-combobox__value { color: var(--gray-800); flex: 1; }
+.qo-combobox__placeholder { color: var(--gray-400); flex: 1; font-size: 0.875rem; }
+
+.qo-combobox__arrow {
+  flex-shrink: 0;
+  color: var(--gray-400);
+  transition: transform 0.2s ease;
+}
+.qo-combobox__arrow--open { transform: rotate(180deg); }
+
+.qo-combobox__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: #fff;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.qo-combobox__search {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid var(--cream-200);
+  font-size: 0.875rem;
+  outline: none;
+  background: var(--cream-50);
+}
+.qo-combobox__search::placeholder { color: var(--gray-400); }
+
+.qo-combobox__list {
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+.qo-combobox__option {
+  padding: 9px 14px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  color: var(--gray-700);
+  transition: background var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.qo-combobox__option:hover { background: var(--cream-50); }
+.qo-combobox__option--active {
+  background: var(--rose-50);
+  color: var(--rose-600);
+  font-weight: 500;
+}
+.qo-combobox__option--other {
+  color: var(--gray-500);
+  border-top: 1px solid var(--cream-100);
+  margin-top: var(--space-1);
+  font-style: italic;
+}
+.qo-combobox__option--other:hover { background: var(--cream-100); color: var(--gray-700); }
+
+.qo-combobox__empty {
+  padding: 10px 14px;
+  font-size: 0.8125rem;
+  color: var(--gray-400);
+  text-align: center;
+}
+
+.qo-commune-manuel {
+  margin-top: var(--space-2);
+}
 
 /* ── Géo dans QO ── */
 .qo-field-head {
@@ -574,6 +898,19 @@ function fmtPrice(val) {
 
 .qo-submit { width: 100%; justify-content: center; gap: var(--space-2); }
 
+.qo-checkout-link {
+  display: block;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--transition-fast);
+  margin-top: var(--space-1);
+}
+.qo-checkout-link:hover { color: var(--gray-800); }
+
 .qo-error {
   font-size: 0.875rem;
   color: #dc2626;
@@ -658,6 +995,66 @@ function fmtPrice(val) {
   flex-direction: column;
   gap: var(--space-3);
   width: 100%;
+}
+
+/* ── Pré-remplissage profil ── */
+.qo-prefilled-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--gray-400);
+  letter-spacing: 0.03em;
+}
+.input--prefilled {
+  border-color: var(--gray-300) !important;
+}
+
+/* ── Nudge complétion profil ── */
+.qo-nudge {
+  width: 100%;
+  background: linear-gradient(135deg, #fff9fb, #fff);
+  border: 1.5px solid var(--rose-200);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  text-align: left;
+}
+.qo-nudge__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: var(--space-1);
+}
+.qo-nudge__desc {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
+  margin-bottom: var(--space-3);
+  line-height: 1.5;
+}
+.qo-nudge__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.input--sm {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+}
+.qo-nudge__err {
+  font-size: 0.8125rem;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+}
+.qo-nudge__ok {
+  font-size: 0.8125rem;
+  color: #15803d;
+  font-weight: 600;
 }
 
 /* ── Mobile ── */

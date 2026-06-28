@@ -98,6 +98,19 @@
               </RouterLink>
             </li>
           </ul>
+          <div v-if="ordersMeta && ordersMeta.last_page > 1" class="profile-orders-pagination">
+            <button
+              class="profile-pgbtn"
+              :disabled="ordersPage <= 1"
+              @click="fetchRecentOrders(ordersPage - 1)"
+            >‹</button>
+            <span class="profile-pginfo">{{ ordersPage }} / {{ ordersMeta.last_page }}</span>
+            <button
+              class="profile-pgbtn"
+              :disabled="ordersPage >= ordersMeta.last_page"
+              @click="fetchRecentOrders(ordersPage + 1)"
+            >›</button>
+          </div>
         </section>
 
       </div>
@@ -370,16 +383,25 @@ async function doChangePassword() {
 // ── Commandes récentes ────────────────────────────────────────────────────────
 const recentOrders  = ref([])
 const loadingOrders = ref(true)
+const ordersMeta    = ref(null)
+const ordersPage    = ref(1)
+
+async function fetchRecentOrders(page = 1) {
+  loadingOrders.value = true
+  ordersPage.value    = page
+  try {
+    const { data } = await api.get('/orders', { params: { per_page: 4, page } })
+    recentOrders.value = data.data ?? data
+    ordersMeta.value   = data.meta ?? null
+  } catch { /* ignore */ } finally {
+    loadingOrders.value = false
+  }
+}
 
 onMounted(async () => {
   // Pré-remplir le formulaire info
   infoForm.value = { name: user.value?.name ?? '', phone: user.value?.phone ?? '' }
-  try {
-    const { data } = await api.get('/orders?per_page=4')
-    recentOrders.value = data.data ?? data
-  } catch { /* ignore */ } finally {
-    loadingOrders.value = false
-  }
+  await fetchRecentOrders()
 })
 
 // ── Déconnexion ───────────────────────────────────────────────────────────────
@@ -696,6 +718,34 @@ function eyeIcon(shown) {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--rose-600);
+}
+
+/* ── Pagination commandes ── */
+.profile-orders-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--cream-100);
+}
+.profile-pgbtn {
+  width: 28px; height: 28px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--cream-300);
+  background: #fff;
+  font-size: 1rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.profile-pgbtn:hover:not(:disabled) { border-color: var(--rose-400); color: var(--rose-500); }
+.profile-pgbtn:disabled { opacity: 0.35; cursor: default; }
+.profile-pginfo {
+  font-size: 0.8125rem;
+  color: var(--gray-500);
 }
 
 /* ── Déconnexion ── */

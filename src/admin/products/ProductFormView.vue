@@ -237,6 +237,7 @@ import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { adminProductsApi }              from './products.api'
 import { FIELDS, makeForm, toPayload, mapErrors } from './products.fields'
 import FormField from '@/shared/components/ui/FormField.vue'
+import api from '@/api'
 
 const route  = useRoute()
 const router = useRouter()
@@ -264,11 +265,23 @@ const typeOptions = [
   { value: 'service',  label: 'Service' },
 ]
 
+// Aplatit l'arbre catégories → parents puis enfants indentés
+function flattenCategories(list, depth = 0) {
+  const out = []
+  for (const c of list) {
+    out.push({ value: c.id, label: (depth ? '— '.repeat(depth) : '') + c.name })
+    if (c.children?.length) out.push(...flattenCategories(c.children, depth + 1))
+  }
+  return out
+}
+
 const categoryOptions = computed(() => [
-  ...categories.value.map(c => ({ value: c.id, label: c.name })),
+  { value: '', label: 'Sans catégorie' },
+  ...flattenCategories(categories.value),
 ])
 
 const productLineOptions = computed(() => [
+  { value: '', label: 'Aucune gamme' },
   ...productLines.value.map(l => ({ value: l.id, label: l.name })),
 ])
 
