@@ -67,7 +67,7 @@
           </ul>
           <div class="co-mini-total">
             <span>Livraison</span>
-            <span :class="shippingFound && shippingQuote.is_free ? 'co-summary__free' : ''">{{ shippingLabel }}</span>
+            <span :class="shippingPending ? 'co-summary__pending' : ''">{{ shippingLabel }}</span>
           </div>
           <div class="co-mini-total co-mini-total--bold">
             <span>Total</span>
@@ -404,7 +404,7 @@
             </li>
             <li>
               <span>Livraison</span>
-              <span :class="shippingFound && shippingQuote.is_free ? 'co-summary__free' : ''">
+              <span :class="shippingPending ? 'co-summary__pending' : ''">
                 {{ shippingLabel }}
               </span>
             </li>
@@ -765,13 +765,19 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value) {
-    if (shippingQuote.value.is_free) return 'Offerte'
+    // Pas de livraison gratuite réelle : le tarif est précisé par nos agents
+    if (shippingQuote.value.is_free) return 'À confirmer par nos agents'
     const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
     return formatPrice(shippingQuote.value.price) + suffix
   }
   if (shippingManual.value) return 'À confirmer par nos agents'
   return 'À renseigner'
 })
+
+// Livraison « à confirmer » : zone trouvée mais sans tarif fixe, ou hors zone
+const shippingPending = computed(() =>
+  (shippingFound.value && shippingQuote.value.is_free) || shippingManual.value
+)
 
 let quoteTimer = null
 async function refreshShippingQuote() {
@@ -1254,6 +1260,7 @@ function formatPrice(val) {
   color: var(--gray-600);
 }
 .co-summary__free { color: #15803d; font-weight: 500; }
+.co-summary__pending { color: #b45309; font-weight: 500; }
 
 /* ── Point de repère ── */
 .co-landmark {

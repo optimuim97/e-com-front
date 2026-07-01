@@ -279,11 +279,16 @@ onMounted(async () => {
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
-.products-cat-tag:hover {
-  border-color: var(--rose-300);
-  color: var(--rose-500);
+/* Hover uniquement sur appareils qui survolent vraiment (évite le hover
+   "collé" après un tap sur mobile → texte rose invisible sur fond rose) */
+@media (hover: hover) {
+  .products-cat-tag:hover {
+    border-color: var(--rose-300);
+    color: var(--rose-500);
+  }
 }
-.products-cat-tag--active {
+.products-cat-tag--active,
+.products-cat-tag--active:hover {
   background: var(--rose-500);
   border-color: var(--rose-500);
   color: #fff;

@@ -109,13 +109,8 @@ export const useSettingsStore = defineStore('settings', () => {
   /* Annonce barre (navbar) — override par home_promo_banner si défini */
   const announceText = computed(() => {
     if (data.value.home_promo_banner) return data.value.home_promo_banner
-    const threshold = shippingFreeThreshold.value
-    const currency  = shopCurrency.value
-
+    // Pas de promesse de livraison gratuite (aucune n'existe réellement → risque de litige)
     const parts = []
-    if (threshold > 0) {
-      parts.push(`🌹 Livraison offerte dès ${threshold.toLocaleString('fr-FR')} ${currency}`)
-    }
     const payNames = []
     if (paymentWaveEnabled.value)        payNames.push('Wave')
     if (paymentOrangeMoneyEnabled.value) payNames.push('Orange Money')

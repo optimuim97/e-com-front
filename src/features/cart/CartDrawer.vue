@@ -438,7 +438,8 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value) {
-    if (shippingQuote.value.is_free) return 'Offerte'
+    // Pas de livraison gratuite réelle : le tarif est précisé par nos agents
+    if (shippingQuote.value.is_free) return 'À confirmer par nos agents'
     const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
     return fmt(shippingQuote.value.price) + suffix
   }
@@ -449,7 +450,7 @@ const shippingLabel = computed(() => {
 })
 
 const shippingLabelClass = computed(() => {
-  if (shippingFound.value && shippingQuote.value.is_free) return 'drawer__green'
+  if (shippingFound.value && shippingQuote.value.is_free) return 'drawer__amber'
   if (shippingManual.value) return 'drawer__amber'
   return ''
 })

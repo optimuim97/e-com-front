@@ -2,6 +2,9 @@
   <Teleport to="body">
     <Transition name="fcart">
       <div v-if="isVisible" class="fcart-wrap">
+        <!-- Fermer / masquer -->
+        <button class="floating-cart__dismiss" @click="dismiss" aria-label="Masquer le panier">×</button>
+
         <button
           class="floating-cart"
           @click="showModal = true"
@@ -47,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useCartStore } from '@/features/cart/cart.store'
 import { useCurrencyStore } from '@/stores/currency'
@@ -58,9 +61,14 @@ const route     = useRoute()
 const cartStore = useCartStore()
 const settings  = useSettingsStore()
 const showModal = ref(false)
+const dismissed = ref(false)
 
 const itemCount      = computed(() => cartStore.itemCount)
 const formattedTotal = computed(() => useCurrencyStore().format(cartStore.total))
+
+function dismiss() { dismissed.value = true }
+// Un nouvel ajout au panier réaffiche le bouton (masquage = ponctuel)
+watch(itemCount, (n, old) => { if (n > old) dismissed.value = false })
 
 // Pages où le bouton doit être masqué
 const HIDDEN_ROUTES = new Set([
@@ -77,6 +85,7 @@ const HIDDEN_ROUTES = new Set([
 const isVisible = computed(() =>
   settings.floatingCartEnabled &&
   itemCount.value > 0 &&
+  !dismissed.value &&
   !HIDDEN_ROUTES.has(route.name)
 )
 </script>
@@ -94,6 +103,28 @@ const isVisible = computed(() =>
   align-items: flex-end;
   gap: 6px;
 }
+
+/* Bouton fermer (masquer le panier flottant) */
+.floating-cart__dismiss {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: var(--gray-500);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.floating-cart__dismiss:hover { color: var(--gray-800); }
 
 .floating-cart {
   display: flex;
@@ -204,19 +235,28 @@ const isVisible = computed(() =>
   transform: translateY(16px) scale(0.95);
 }
 
-/* Mobile : pleine largeur, au-dessus du bouton WhatsApp et de la bottom-nav */
+/* Mobile : pilule compacte alignée à droite, au-dessus de la bottom-nav.
+   On ne prend pas toute la largeur et on masque les éléments redondants. */
 @media (max-width: 480px) {
   .fcart-wrap {
-    left: 12px;
-    right: 12px;
-    bottom: calc(128px + env(safe-area-inset-bottom, 0px));
-    align-items: stretch;
+    left: auto;
+    right: 14px;
+    /* Empilé AU-DESSUS du bouton WhatsApp (bottom 72px, ~48px de haut) pour
+       ne plus le chevaucher. */
+    bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+    align-items: flex-end;
+    gap: 0;
   }
   .floating-cart {
-    border-radius: 16px;
-    justify-content: space-between;
+    padding: 8px 14px 8px 8px;
+    gap: 8px;
   }
-  .floating-cart__body { min-width: 0; flex: 1; }
-  .floating-cart-alt { align-self: flex-end; }
+  .floating-cart__icon { width: 32px; height: 32px; }
+  /* Total seul (pas la ligne "X articles") pour rester compact */
+  .floating-cart__label { display: none; }
+  .floating-cart__total { font-size: 0.9375rem; }
+  .floating-cart__cta { padding-left: 8px; }
+  /* Lien "Voir mon panier" redondant → masqué sur mobile */
+  .floating-cart-alt { display: none; }
 }
 </style>
