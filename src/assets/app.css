@@ -141,10 +141,14 @@
     transition: all var(--transition-normal);
     cursor: pointer;
   }
-  .card-hover:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-    border-color: var(--rose-200);
+  /* Hover uniquement sur périphériques à pointeur fin (souris) :
+     évite le "sticky hover" qui garde la carte soulevée après un tap tactile. */
+  @media (hover: hover) {
+    .card-hover:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--rose-200);
+    }
   }
 
   /* ── Badges (compat anciens noms + variantes rosa) ──
@@ -766,4 +770,29 @@ input[type="radio"]:checked {
 }
 input[type="radio"]:checked {
   box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.12), inset 0 0 0 4px var(--rose-500);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Mobile — anti-zoom iOS au focus
+   Safari (et Chrome iOS) zoome automatiquement sur un champ dont la
+   taille de police calculée est < 16px. Nos inputs sont à ~15px, ce
+   qui provoque un zoom disgracieux à chaque focus (checkout, login…).
+   On force 16px sur tous les champs saisissables en mobile. Le rendu
+   desktop reste inchangé.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .input,
+  input.input,
+  textarea.input,
+  select.input,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }

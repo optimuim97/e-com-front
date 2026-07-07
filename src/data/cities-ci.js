@@ -301,4 +301,30 @@ export const citiesCI = [
   }
 ]
 
+/** Communes du district autonome d'Abidjan (normalisées, sans accents). */
+const ABIDJAN_COMMUNES = (citiesCI.find(c => c.name === 'Abidjan')?.communes ?? [])
+  .map(normalizeLoc)
+
+function normalizeLoc(v) {
+  return String(v || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // retire les accents
+}
+
+/**
+ * Détecte si une adresse est dans Abidjan (ville OU commune).
+ * Règle métier : hors Abidjan, pas de paiement à la livraison
+ * (on n'expédie que ce qui est déjà payé).
+ */
+export function isAbidjan(city, commune) {
+  const c = normalizeLoc(city)
+  const q = normalizeLoc(commune)
+  if (c && c.includes('abidjan')) return true
+  if (q && ABIDJAN_COMMUNES.includes(q)) return true
+  if (c && ABIDJAN_COMMUNES.includes(c)) return true
+  return false
+}
+
 export default citiesCI

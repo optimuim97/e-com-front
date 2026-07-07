@@ -312,9 +312,12 @@ button {
   transition: all var(--transition-normal);
 }
 
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+/* Hover réservé aux pointeurs fins (souris) — pas de "sticky hover" au tap tactile */
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
 }
 
 /* ══ Divider décoratif ══ */

@@ -73,7 +73,9 @@ watch(
 )
 
 function handleSearch() {
-  router.push({ name: 'products' })
+  // Navigue vers la page produits et demande le focus auto du champ de recherche.
+  // Le timestamp force le changement de query même si on est déjà sur /products.
+  router.push({ name: 'products', query: { ...route.query, focus: 'search' } })
 }
 </script>
 

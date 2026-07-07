@@ -111,8 +111,10 @@ const hideNav = computed(() =>
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 2px;
-  padding: 4px var(--space-2);
+  min-height: 44px;         /* cible tactile confortable (recommandation WCAG/Apple) */
+  padding: 8px var(--space-2);
   color: var(--gray-400);
   text-decoration: none;
   font-size: 0.5625rem;

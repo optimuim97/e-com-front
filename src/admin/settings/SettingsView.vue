@@ -294,6 +294,12 @@
           </div>
 
           <div class="field">
+            <label class="label">Lien de paiement Wave <span class="hint">(marchand)</span></label>
+            <input v-model="form.payment_wave_link" type="url" class="input" placeholder="https://pay.wave.com/m/M_xxxxx/c/sn/" />
+            <p class="hint">Lien Wave marchand. Le bouton « Payer avec Wave » y ajoute automatiquement le montant de la commande.</p>
+          </div>
+
+          <div class="field">
             <label class="label">Numéro MTN MoMo</label>
             <input v-model="form.payment_mtn_number" type="text" class="input" placeholder="05 00 00 00 00" />
             <p class="hint">Affiché si MTN MoMo est activé ci-dessus.</p>
@@ -603,6 +609,7 @@ const form = ref({
   payment_stripe_enabled:        'false',
   payment_mobile_number:         '',
   payment_wave_number:           '',
+  payment_wave_link:             '',
   payment_orange_money_number:   '',
   payment_mtn_number:            '',
   payment_wave_instructions:         '',

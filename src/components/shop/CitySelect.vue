@@ -41,7 +41,7 @@
     </Transition>
 
     <!-- ── Ville ── -->
-    <div class="cs-field">
+    <div v-if="!manualMode" class="cs-field">
       <label class="label">Ville *</label>
       <div class="cs-combo" :class="{ 'cs-combo--open': cityOpen }">
         <div class="cs-input-wrap">
@@ -106,7 +106,7 @@
 
     <!-- ── Commune (cascadée) ── -->
     <Transition name="cs-slide">
-      <div v-if="selectedCity" class="cs-field">
+      <div v-if="selectedCity && !manualMode" class="cs-field">
         <label class="label">Commune *</label>
         <div class="cs-combo" :class="{ 'cs-combo--open': communeOpen }">
           <div class="cs-input-wrap">
@@ -170,6 +170,50 @@
       </div>
     </Transition>
 
+    <!-- ── Saisie manuelle (ville non listée / hors Abidjan) ── -->
+    <template v-if="manualMode">
+      <div class="cs-field">
+        <label class="label">Ville *</label>
+        <input
+          v-model="manualCity"
+          type="text"
+          class="cs-input cs-input--plain"
+          list="cs-city-suggestions"
+          autocomplete="off"
+          placeholder="Ex : Bouaké, San-Pédro, Korhogo…"
+          @input="emitManual"
+        />
+        <datalist id="cs-city-suggestions">
+          <option v-for="name in citySuggestions" :key="name" :value="name" />
+        </datalist>
+      </div>
+      <div class="cs-field">
+        <label class="label">Commune / Quartier</label>
+        <input
+          v-model="manualCommune"
+          type="text"
+          class="cs-input cs-input--plain"
+          placeholder="Ex : quartier, secteur, repère…"
+          @input="emitManual"
+        />
+      </div>
+    </template>
+
+    <!-- Bascule liste ⇄ saisie manuelle -->
+    <button
+      type="button"
+      class="cs-manual-toggle"
+      @click="manualMode ? disableManual() : enableManual()"
+    >
+      <svg v-if="manualMode" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 0 1 0 8h-1"/>
+      </svg>
+      <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+      </svg>
+      {{ manualMode ? 'Choisir dans la liste des villes' : "Ma ville n'est pas dans la liste ? Saisir manuellement" }}
+    </button>
+
   </div>
 </template>
 
@@ -204,6 +248,40 @@ const communeOpen = ref(false)
 
 const cityHighlight    = ref(-1)
 const communeHighlight = ref(-1)
+
+// ── Saisie manuelle (ville hors liste) ───────────────────────────────────────
+const manualMode    = ref(false)
+const manualCity    = ref('')
+const manualCommune = ref('')
+
+// Suggestions de villes pour le datalist (toutes les villes CI, triées)
+const citySuggestions = citiesCI
+  .map(c => c.name)
+  .sort((a, b) => a.localeCompare(b, 'fr'))
+
+function enableManual() {
+  manualMode.value    = true
+  manualCity.value    = selectedCity.value?.name || cityQuery.value.trim() || ''
+  manualCommune.value = selectedCommune.value || ''
+  // On abandonne la sélection liste
+  selectedCity.value    = null
+  selectedCommune.value = ''
+  emitManual()
+}
+
+function disableManual() {
+  manualMode.value    = false
+  manualCity.value    = ''
+  manualCommune.value = ''
+  emit('update:city', '')
+  emit('update:commune', '')
+  nextTick(() => cityInput.value?.focus())
+}
+
+function emitManual() {
+  emit('update:city', manualCity.value.trim())
+  emit('update:commune', manualCommune.value.trim())
+}
 
 // Debounce timers
 let cityTimer    = null
@@ -413,6 +491,7 @@ function selectHighlightedCommune() {
 
 // ── Sync depuis l'extérieur ──────────────────────────────────────────────────
 watch(() => props.city, (val) => {
+  if (manualMode.value) return
   if (!val) {
     selectedCity.value    = null
     cityQuery.value       = ''
@@ -428,6 +507,7 @@ watch(() => props.city, (val) => {
 }, { immediate: true })
 
 watch(() => props.commune, (val) => {
+  if (manualMode.value) return
   if (val && val !== selectedCommune.value) {
     selectedCommune.value = val
     communeQuery.value    = val
@@ -525,6 +605,30 @@ watch(() => props.commune, (val) => {
   flex-direction: column;
   gap: 0.375rem;
 }
+
+/* Input texte simple (mode manuel) : pas d'icône à gauche */
+.cs-input--plain { padding-left: 0.875rem; }
+
+/* Bascule liste ⇄ saisie manuelle */
+.cs-manual-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: calc(-1 * var(--space-1, 0.25rem));
+  padding: 2px 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--rose-600, #e11d48);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+}
+.cs-manual-toggle:hover { color: var(--rose-700, #be123c); }
+.cs-manual-toggle svg { flex-shrink: 0; }
 
 /* ── Combo box ── */
 .cs-combo {

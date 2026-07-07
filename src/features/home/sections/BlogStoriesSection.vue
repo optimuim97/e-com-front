@@ -11,6 +11,24 @@
 
       <!-- Carrousel horizontal stories -->
       <div class="stories-track" ref="trackRef">
+        <!-- Bouton "Ajouter" — admins et staff uniquement -->
+        <button
+          v-if="authStore.isAdmin || authStore.isStaff"
+          class="story-bubble story-bubble--add"
+          @click="router.push({ name: 'admin.blog.create' })"
+          aria-label="Ajouter une story"
+        >
+          <span class="story-bubble__ring story-bubble__ring--add">
+            <span class="story-bubble__add-inner">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </span>
+          </span>
+          <span class="story-bubble__label">Ajouter</span>
+        </button>
+
         <!-- Story skeleton -->
         <template v-if="loading">
           <div v-for="i in 6" :key="i" class="story-bubble story-bubble--skeleton">
@@ -138,8 +156,12 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import api from '@/api'
+import { useAuthStore } from '@/features/auth/auth.store'
+
+const router    = useRouter()
+const authStore = useAuthStore()
 
 const PLACEHOLDER      = 'https://placehold.co/200x200/f9ecee/e8336d?text=🌹'
 const LOGO_PLACEHOLDER = 'https://placehold.co/32x32/e8336d/fff?text=R'
@@ -389,6 +411,31 @@ onUnmounted(() => {
   0%   { opacity: 1; }
   50%  { opacity: 0.5; }
   100% { opacity: 1; }
+}
+
+/* ── Bubble "Ajouter" ── */
+.story-bubble--add .story-bubble__ring--add {
+  background: linear-gradient(135deg, #E8336D, #ff8fab, #c2185b);
+  animation: add-ring-pulse 2.8s ease-in-out infinite;
+}
+.story-bubble__add-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #fff;
+  border: 2.5px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #E8336D;
+  transition: background 0.18s;
+}
+.story-bubble--add:hover .story-bubble__add-inner {
+  background: #fff0f4;
+}
+@keyframes add-ring-pulse {
+  0%, 100% { box-shadow: 0 2px 12px rgba(232, 51, 109, .30); }
+  50%       { box-shadow: 0 2px 20px rgba(232, 51, 109, .55); }
 }
 
 /* ── Viewer ── */

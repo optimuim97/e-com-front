@@ -64,8 +64,27 @@
             class="line-card"
           >
             <div class="line-card__img-wrap">
-              <img v-if="line.cover_image" :src="line.cover_image" :alt="line.name" class="line-card__img" />
-              <div v-else class="line-card__img-placeholder"><FlowerMark /></div>
+              <img v-if="line.cover_url" :src="line.cover_url" :alt="line.name" class="line-card__img" />
+              <!-- Pas de couverture → décor listant les produits composants -->
+              <div
+                v-else
+                class="line-card__deco"
+                :style="{ '--line-color': line.color_hex || 'var(--rose-500)' }"
+              >
+                <span class="line-card__deco-flower" aria-hidden="true"><FlowerMark /></span>
+                <ul v-if="line.item_names?.length" class="line-card__deco-list">
+                  <li
+                    v-for="(name, i) in line.item_names.slice(0, 4)"
+                    :key="i"
+                    class="line-card__deco-item"
+                  >{{ name }}</li>
+                  <li
+                    v-if="line.item_names.length > 4"
+                    class="line-card__deco-item line-card__deco-item--more"
+                  >+{{ line.item_names.length - 4 }} autres</li>
+                </ul>
+                <span v-else class="line-card__deco-name">{{ line.name }}</span>
+              </div>
             </div>
             <div class="line-card__body">
               <h3 class="line-card__name">{{ line.name }}</h3>
@@ -221,9 +240,90 @@ onMounted(async () => {
   transition: transform 0.5s ease;
 }
 .line-card:hover .line-card__img { transform: scale(1.04); }
-.line-card__img-placeholder {
-  font-size: 3rem;
-  opacity: 0.4;
+
+/* ── Décor de repli (gamme sans couverture) ── */
+.line-card__deco {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-4);
+  overflow: hidden;
+  background: var(--cream-100); /* repli si color-mix non supporté */
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--line-color) 18%, #fff), transparent 60%),
+    linear-gradient(140deg, color-mix(in srgb, var(--line-color) 10%, #fff), var(--cream-50));
+}
+/* Filet décoratif en haut */
+.line-card__deco::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--line-color), transparent);
+  opacity: 0.5;
+}
+/* Fleur en filigrane, grande et discrète */
+.line-card__deco-flower {
+  position: absolute;
+  right: -18px;
+  bottom: -22px;
+  font-size: 7rem;
+  line-height: 1;
+  color: var(--line-color);
+  opacity: 0.10;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.line-card__deco-list {
+  position: relative;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  text-align: center;
+  width: 100%;
+}
+.line-card__deco-item {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+/* Puce florale devant chaque composant */
+.line-card__deco-item::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line-color);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+.line-card__deco-item--more {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--gray-400);
+}
+.line-card__deco-item--more::before { display: none; }
+.line-card__deco-name {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--gray-700);
+  text-align: center;
+  letter-spacing: -0.01em;
 }
 
 .line-card__body {

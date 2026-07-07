@@ -17,25 +17,23 @@
             <h2 class="qo-confirmed__title">{{ $t('quickOrder.confirmedTitle') }}</h2>
             <p class="qo-confirmed__number">{{ $t('quickOrder.confirmedNumber') }} <strong>{{ confirmedOrder.number }}</strong></p>
 
-            <div v-if="confirmedOrder.generated_pin" class="qo-pin-box">
-              <p class="qo-pin-box__label">{{ $t('quickOrder.pinLabel') }}</p>
-              <div class="qo-pin-box__digits">
-                <span v-for="d in confirmedOrder.generated_pin.split('')" :key="d" class="qo-pin-box__digit">{{ d }}</span>
-              </div>
-              <p class="qo-pin-box__hint">{{ $t('quickOrder.pinHint') }}</p>
-            </div>
-
-            <div v-if="isWavePayment && waveNumber" class="qo-wave-box">
+            <!-- Paiement Wave : montant + bouton payer -->
+            <div v-if="isWavePayment" class="qo-wave-box">
               <p class="qo-wave-box__label">{{ $t('quickOrder.wavePayLabel') }}</p>
-              <p class="qo-wave-box__number">{{ waveNumber }}</p>
               <p class="qo-wave-box__total">{{ $t('quickOrder.waveAmount') }} <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
-              <p class="qo-wave-box__ref">{{ $t('quickOrder.waveRef') }} <strong>{{ confirmedOrder.number }}</strong></p>
+              <p v-if="!wavePayUrl && waveNumber" class="qo-wave-box__number">{{ waveNumber }}</p>
+
+              <a v-if="wavePayUrl" :href="wavePayUrl" target="_blank" rel="noopener" class="qo-wave-pay">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Payer {{ fmtPrice(confirmedOrder.total) }} avec Wave
+              </a>
             </div>
 
+            <!-- Étape 2 : envoyer la capture du paiement sur WhatsApp -->
             <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
               class="btn btn-whatsapp qo-wa-btn">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              {{ $t('quickOrder.whatsapp') }}
+              {{ isWavePayment ? 'Envoyer la capture du paiement' : $t('quickOrder.whatsapp') }}
             </a>
 
             <!-- ── Widget complétion profil ──────────────────────── -->
@@ -204,6 +202,35 @@
                 <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
+              <!-- Ville obligatoire hors Abidjan -->
+              <div v-if="showCityField" class="qo-field">
+                <label class="label">Ville *</label>
+                <input
+                  v-model="form.city"
+                  type="text"
+                  class="input"
+                  list="qo-city-suggestions"
+                  autocomplete="off"
+                  placeholder="Ex : Bouaké, San-Pédro, Yamoussoukro…"
+                  required
+                />
+                <datalist id="qo-city-suggestions">
+                  <option v-for="name in citySuggestions" :key="name" :value="name" />
+                </datalist>
+                <p class="qo-city-hint">Commencez à taper : nous vous proposons les villes de Côte d'Ivoire.</p>
+              </div>
+
+              <!-- Bannière hors Abidjan -->
+              <div v-if="showCityField" class="qo-outzone">
+                <span class="qo-outzone__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                </span>
+                <div>
+                  <strong>Livraison hors Abidjan</strong>
+                  <p>Commande à <b>régler d'avance</b> (Wave ou Orange Money) : nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>. Le paiement à la livraison est réservé à Abidjan.</p>
+                </div>
+              </div>
+
               <div class="qo-field">
                 <label class="label">
                   {{ $t('quickOrder.indication') }} <span class="qo-optional">({{ $t('quickOrder.indicationOptional') }})</span>
@@ -266,13 +293,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
+import { isAbidjan, citiesCI } from '@/data/cities-ci'
 import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composables/useGeolocation.js'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -291,6 +319,20 @@ const cartItems  = computed(() => cartStore.items)
 const cartTotal  = computed(() => cartStore.total)
 const waveNumber = computed(() => settingsStore.paymentMobileNumber.value)
 
+// Déclaré tôt : de nombreux computeds/watchers dépendent de `form`
+const prefilled = ref({ name: false, phone: false, email: false })
+const form = ref({
+  name: '',
+  phone: '',
+  email: '',
+  commune: '',
+  communeManuel: '',
+  city: '',
+  indication: '',
+  payment: 'wave',
+  note: '',
+})
+
 const adminWhatsappLink = computed(() => {
   const order = confirmedOrder.value
   if (!order) return null
@@ -300,18 +342,17 @@ const adminWhatsappLink = computed(() => {
   const phone = form.value.phone
   const methodMap = { wave: 'Wave', orange_money: 'Orange Money', delivery: 'À la livraison' }
   const method = methodMap[form.value.payment] ?? form.value.payment
-  const pin = order.generated_pin ?? '—'
 
   const msg = [
     `🌹 Nouvelle commande Rosa Beauty Facial Care`,
     `N°: ${order.number}`,
     `Client: ${form.value.name} (${phone})`,
+    showCityField.value ? `Ville: ${form.value.city.trim()} (hors Abidjan)` : null,
     `Commune: ${effectiveCommune.value}`,
     form.value.indication?.trim() ? `📍 Indication: ${form.value.indication.trim()}` : null,
     `Paiement: ${method}`,
     `Total: ${fmtPrice(order.total)}`,
-    ``,
-    `🔐 PIN généré: ${pin}`,
+    isWavePayment.value ? `\n📸 Je vous envoie la capture du paiement Wave.` : null,
     form.value.note ? `📝 Note: ${form.value.note}` : null,
     ``,
     `Répondre au client sur ce numéro: ${phone}`,
@@ -348,6 +389,25 @@ const communeDisplay = computed(() => {
 const effectiveCommune = computed(() =>
   form.value.commune === '__autre__' ? form.value.communeManuel : form.value.commune
 )
+
+// ── Détection hors Abidjan (commande rapide) ─────────────────────────────────
+const isAbidjanQuick = computed(() => {
+  const c = form.value.commune
+  if (!c) return true // rien choisi encore → on n'alarme pas
+  if (c === 'Hors Abidjan') return false
+  const val = (effectiveCommune.value || '').trim()
+  if (/hors\s*abidjan/i.test(val)) return false
+  return isAbidjan(val, val)
+})
+
+// Champ Ville + bannière : affichés dès qu'on est hors Abidjan
+const showCityField = computed(() => !!form.value.commune && !isAbidjanQuick.value)
+
+// Suggestions de villes (hors Abidjan) pour le datalist, triées alphabétiquement
+const citySuggestions = citiesCI
+  .filter(c => c.name !== 'Abidjan')
+  .map(c => c.name)
+  .sort((a, b) => a.localeCompare(b, 'fr'))
 
 async function openCommune() {
   communeOpen.value  = true
@@ -405,33 +465,63 @@ async function doQoGeo() {
     const pos    = await getCurrentPosition()
     const result = await reverseGeocodeCI(pos.coords.latitude, pos.coords.longitude)
 
+    // Pré-remplit l'indication (rue + repères) si le champ est vide
+    const fillIndication = (extra = []) => {
+      const parts = [...extra, result.road].filter(Boolean)
+      if (parts.length && !form.value.indication.trim()) {
+        form.value.indication = parts.join(', ')
+      }
+    }
+
+    // ── 1) Hors Côte d'Ivoire ────────────────────────────────────────────────
     if (!result.inCI) {
+      form.value.commune = 'Hors Abidjan'           // → affiche le champ Ville
+      if (result.cityName) form.value.city = result.cityName
+      fillIndication([result.region])
       qoGeoState.value = 'outside'
-      qoGeoMsg.value   = t('geo.outsideAbidjanMsg')
-      form.value.commune = 'Autres / Hors Abidjan'
+      qoGeoMsg.value = result.cityName
+        ? `Position hors Côte d'Ivoire : ${result.cityName}. Vérifiez et complétez votre adresse.`
+        : `Position hors Côte d'Ivoire. Renseignez votre ville manuellement.`
       return
     }
 
-    // Cherche le match dans notre liste de communes (sans accents)
-    const candidates = [result.commune, result.city?.name].filter(Boolean)
-    let matched = null
+    const cityName        = result.city?.name ?? ''
+    const detectedCommune = result.commune ?? ''
 
-    for (const cand of candidates) {
-      const n = normQo(cand)
-      matched = COMMUNES.find(c => normQo(c) === n)
-        ?? COMMUNES.find(c => normQo(c).includes(n) || n.includes(normQo(c)))
-      if (matched && matched !== 'Autres / Hors Abidjan') break
+    // Cette commune correspond-elle à une commune d'Abidjan de notre liste ?
+    const communeMatch = detectedCommune
+      ? (COMMUNES.find(c => normQo(c) === normQo(detectedCommune))
+         ?? COMMUNES.find(c => normQo(c).includes(normQo(detectedCommune)) || normQo(detectedCommune).includes(normQo(c))))
+      : null
+    const abidjanCommune = communeMatch && communeMatch !== 'Hors Abidjan' ? communeMatch : null
+    const isAbj = cityName.toLowerCase() === 'abidjan' || !!abidjanCommune
+
+    // ── 2) Abidjan : remplir la commune ──────────────────────────────────────
+    if (isAbj) {
+      if (abidjanCommune) {
+        form.value.commune = abidjanCommune
+        fillIndication()
+        qoGeoState.value = 'success'
+        qoGeoMsg.value   = t('geo.communeFound', { commune: abidjanCommune })
+        setTimeout(() => { qoGeoMsg.value = '' }, 6000)
+      } else {
+        // Abidjan détecté mais commune non identifiée → on laisse la main
+        qoGeoState.value = 'outside'
+        qoGeoMsg.value   = "Abidjan détecté, mais commune non identifiée. Sélectionnez-la ci-dessus."
+      }
+      return
     }
 
-    if (matched) {
-      form.value.commune = matched
-      qoGeoState.value   = 'success'
-      qoGeoMsg.value     = t('geo.communeFound', { commune: matched })
-      setTimeout(() => { qoGeoMsg.value = '' }, 5000)
-    } else {
-      qoGeoState.value = 'outside'
-      qoGeoMsg.value   = t('geo.communeNotFound')
-    }
+    // ── 3) Côte d'Ivoire, hors Abidjan : remplir ville + indication ──────────
+    form.value.commune = 'Hors Abidjan'             // → affiche le champ Ville, force le prépaiement
+    if (cityName) form.value.city = cityName
+    fillIndication([detectedCommune])
+    qoGeoState.value = 'success'
+    qoGeoMsg.value = cityName
+      ? `Ville détectée : ${cityName} (hors Abidjan). Vérifiez votre adresse ci-dessous.`
+      : "Position hors Abidjan détectée. Renseignez votre ville ci-dessous."
+    setTimeout(() => { qoGeoMsg.value = '' }, 8000)
+
   } catch (err) {
     qoGeoState.value = 'error'
     qoGeoMsg.value   = geoErrorMessage(err.code)
@@ -441,23 +531,23 @@ async function doQoGeo() {
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
-const paymentMethods = computed(() => [
-  { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
-  { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
-  { value: 'delivery',     label: t('quickOrder.payDelivery'),    icon: ICON_TRUCK },
-])
+const paymentMethods = computed(() => {
+  const list = [
+    { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
+    { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
+  ]
+  // « À la livraison » réservé à Abidjan
+  if (isAbidjanQuick.value) {
+    list.push({ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK })
+  }
+  return list
+})
 
-const prefilled = ref({ name: false, phone: false, email: false })
-
-const form = ref({
-  name: '',
-  phone: '',
-  email: '',
-  commune: '',
-  communeManuel: '',
-  indication: '',
-  payment: 'wave',
-  note: '',
+// Si le client passe hors Abidjan après avoir choisi « À la livraison », on repasse sur Wave
+watch(isAbidjanQuick, (abidjan) => {
+  if (!abidjan && form.value.payment === 'delivery') {
+    form.value.payment = 'wave'
+  }
 })
 
 // Pré-remplir depuis le profil si l'utilisateur est connecté
@@ -540,8 +630,25 @@ const isWavePayment = computed(() =>
   confirmedOrder.value && (confirmedOrder.value?.payments?.[0]?.provider === 'wave' || form.value.payment === 'wave')
 )
 
+// Lien « Payer avec Wave » : lien marchand + montant en paramètre
+const wavePayUrl = computed(() => {
+  const base = (settingsStore.paymentWaveLink?.value || '').trim()
+  if (!base || !isWavePayment.value || !confirmedOrder.value) return null
+  const amount = Math.round(Number(confirmedOrder.value.total) || 0)
+  if (!amount) return base
+  const sep = base.includes('?')
+    ? (base.endsWith('?') || base.endsWith('&') ? '' : '&')
+    : '?'
+  return `${base}${sep}amount=${amount}`
+})
+
 async function submit() {
   if (!form.value.name || !form.value.phone || !effectiveCommune.value || !form.value.payment) return
+  // Hors Abidjan : la ville est obligatoire
+  if (showCityField.value && !form.value.city.trim()) {
+    error.value = 'Merci d\'indiquer votre ville (hors Abidjan).'
+    return
+  }
 
   submitting.value = true
   error.value = ''
@@ -564,6 +671,7 @@ async function submit() {
       phone:          form.value.phone,
       email:          form.value.email?.trim() || null,
       commune:        effectiveCommune.value,
+      city:           isAbidjanQuick.value ? 'Abidjan' : (form.value.city.trim() || null),
       landmark:       form.value.indication?.trim() || null,
       payment_method: form.value.payment,
       note:           form.value.note || null,
@@ -707,6 +815,46 @@ function fmtPrice(val) {
 .qo-field { display: flex; flex-direction: column; gap: var(--space-1); }
 .qo-optional { font-size: 0.75rem; color: var(--gray-400); font-weight: 400; }
 .qo-indication { resize: none; min-height: 52px; line-height: 1.5; }
+
+.qo-city-hint {
+  margin-top: 5px;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  line-height: 1.4;
+}
+
+/* Bannière hors Abidjan (commande rapide) */
+.qo-outzone {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg, 12px);
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fdba74;
+}
+.qo-outzone__icon {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #fed7aa;
+  color: #c2410c;
+}
+.qo-outzone strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #9a3412;
+  margin-bottom: 2px;
+}
+.qo-outzone p {
+  margin: 0;
+  font-size: 0.78125rem;
+  line-height: 1.45;
+  color: #b45309;
+}
+.qo-outzone b { color: #9a3412; font-weight: 700; }
 
 /* ── Combobox commune ── */
 .qo-combobox { position: relative; }
@@ -985,6 +1133,31 @@ function fmtPrice(val) {
 .qo-wave-box__number { font-size: 1.5rem; font-weight: 700; color: #1e40af; letter-spacing: 0.05em; }
 .qo-wave-box__total { font-size: 0.875rem; color: #1d4ed8; margin-top: var(--space-2); }
 .qo-wave-box__ref { font-size: 0.8125rem; color: #3b82f6; }
+
+/* Bouton « Payer avec Wave » */
+.qo-wave-pay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: 12px 18px;
+  border-radius: var(--radius-full, 999px);
+  background: #1dc3f0; /* bleu Wave */
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 4px 14px rgba(29, 195, 240, .35);
+}
+.qo-wave-pay:hover {
+  background: #06b6e0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(29, 195, 240, .45);
+}
+.qo-wave-pay:active { transform: translateY(0); }
 
 /* ── WhatsApp ── */
 .qo-wa-btn { width: 100%; justify-content: center; gap: var(--space-2); }

@@ -99,7 +99,7 @@
           <Transition name="step-slide" mode="out-in">
           <section v-if="authStore.isLoggedIn && paymentInstructions" key="pay-instructions" class="card co-section">
             <header class="co-section__head">
-              <span class="co-section__icon">{{ paymentInstructions.icon }}</span>
+              <span class="co-section__icon" v-html="paymentInstructions.icon"></span>
               <div>
                 <h2 class="co-section__title">{{ paymentInstructions.title }}</h2>
                 <p class="co-section__hint">Commande n° <strong>{{ confirmedOrderNumber }}</strong></p>
@@ -112,9 +112,21 @@
                 <strong class="pay-instr__amount-hero-value">{{ formatPrice(confirmedOrderTotal) }}</strong>
               </div>
 
-              <!-- Numéro de paiement — copiable -->
+              <!-- Payer avec Wave (lien marchand + montant) -->
+              <a
+                v-if="paymentInstructions.payUrl"
+                :href="paymentInstructions.payUrl"
+                target="_blank"
+                rel="noopener"
+                class="pay-instr__wave-btn"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Payer {{ formatPrice(confirmedOrderTotal) }} avec Wave
+              </a>
+
+              <!-- Numéro de paiement — copiable (masqué si lien Wave dispo) -->
               <button
-                v-if="paymentInstructions.number"
+                v-if="paymentInstructions.number && !paymentInstructions.payUrl"
                 type="button"
                 class="pay-instr__copy-card"
                 @click="copyValue(paymentInstructions.number, 'number')"
@@ -177,7 +189,9 @@
           <Transition name="step-slide" mode="out-in">
           <section v-if="authStore.isLoggedIn && !paymentInstructions && !cartStore.itemCount" key="empty-cart" class="card co-section co-empty">
             <div class="co-empty__body">
-              <div class="co-empty__icon">🛒</div>
+              <div class="co-empty__icon">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              </div>
               <h2 class="co-section__title">{{ $t('checkout.emptyCart') }}</h2>
               <p class="co-empty__hint">{{ $t('checkout.emptyCartHint') }}</p>
               <RouterLink :to="{ name: 'products' }" class="btn btn-primary co-empty__cta">
@@ -270,6 +284,26 @@
                 />
               </template>
 
+              <!-- Bannière bien visible dès qu'on est hors Abidjan -->
+              <Transition name="fade">
+                <div
+                  v-if="form.shipping_country === 'CI' && form.shipping_city && !isAbidjanDelivery"
+                  class="co-outzone"
+                >
+                  <span class="co-outzone__icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                  </span>
+                  <div class="co-outzone__body">
+                    <strong>Livraison hors Abidjan</strong>
+                    <p>
+                      Votre commande doit être <b>réglée d'avance</b> (Wave, Orange Money ou carte) :
+                      nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>.
+                      Le paiement à la livraison est réservé à Abidjan.
+                    </p>
+                  </div>
+                </div>
+              </Transition>
+
               <!-- Adresse -->
               <CheckoutField :def="FIELDS.shipping_address_line1" :error="fe('shipping_address_line1')" optional>
                 <input v-model="form.shipping_address_line1" type="text" class="input" :placeholder="$t('checkout.addressPlaceholder')" />
@@ -361,6 +395,11 @@
                 </label>
               </div>
 
+              <p v-if="!isAbidjanDelivery && form.shipping_city" class="co-shipping-note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Hors Abidjan, la commande doit être réglée d'avance : nous n'expédions que les commandes déjà payées. Le paiement à la livraison est réservé à Abidjan.
+              </p>
+
               <p v-if="submitError" class="co-msg co-msg--error">{{ submitError }}</p>
             </div>
             <div class="co-section__foot">
@@ -430,7 +469,10 @@
                 :disabled="couponLoading || couponApplied"
                 class="btn btn-outline btn-sm"
               >
-                {{ couponApplied ? '✓' : 'Appliquer' }}
+                <template v-if="couponApplied">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </template>
+                <template v-else>Appliquer</template>
               </button>
             </div>
             <p v-if="couponError" class="co-msg co-msg--error">{{ couponError }}</p>
@@ -512,6 +554,7 @@ import AppSelect            from '@/components/ui/AppSelect.vue'
 import PhoneInput           from '@/components/ui/PhoneInput.vue'
 import CitySelect           from '@/components/shop/CitySelect.vue'
 import CityFree             from '@/components/shop/CityFree.vue'
+import { isAbidjan }        from '@/data/cities-ci'
 import api                              from '@/api'
 import { checkoutApi }                  from './checkout.api'
 import { makeForm, mapErrors, FIELDS }  from './checkout.fields'
@@ -595,19 +638,22 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
 
   const CONFIGS = {
     wave: {
-      title: 'Paiement Wave', icon: '📱',
+      title: 'Paiement Wave',
+      icon: '<span class="pm-badge pm-badge--wave pm-badge--lg">W</span>',
       number: sget('payment_wave_number') || fallbackNumber,
       instructions: sget('payment_wave_instructions'),
       ussd: "Ouvrez l'application Wave",
     },
     orange_money: {
-      title: 'Paiement Orange Money', icon: '🟠',
+      title: 'Paiement Orange Money',
+      icon: '<span class="pm-badge pm-badge--orange pm-badge--lg">OM</span>',
       number: sget('payment_orange_money_number') || fallbackNumber,
       instructions: sget('payment_orange_money_instructions'),
       ussd: 'Composez #144# (ou ouvrez Orange Money)',
     },
     mtn: {
-      title: 'Paiement MTN MoMo', icon: '🟡',
+      title: 'Paiement MTN MoMo',
+      icon: '<span class="pm-badge pm-badge--mtn pm-badge--lg">M</span>',
       number: sget('payment_mtn_number') || fallbackNumber,
       instructions: sget('payment_mtn_instructions'),
       ussd: 'Composez *133# (MTN Mobile Money)',
@@ -617,10 +663,23 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
   const cfg = CONFIGS[method]
   if (!cfg) { paymentInstructions.value = null; return }
 
+  // Lien « Payer avec Wave » : lien marchand + montant en paramètre
+  let payUrl = null
+  if (method === 'wave') {
+    const base = sget('payment_wave_link')
+    if (base) {
+      const amount = Math.round(Number(orderTotal) || 0)
+      const sep = base.includes('?') ? (base.endsWith('?') || base.endsWith('&') ? '' : '&') : '?'
+      payUrl = amount ? `${base}${sep}amount=${amount}` : base
+    }
+  }
+
   paymentInstructions.value = {
     title:  cfg.title,
     icon:   cfg.icon,
     number: cfg.number,
+    method,
+    payUrl,
     instructions: cfg.instructions
       || `1. ${cfg.ussd}.\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${cfg.number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
   }
@@ -709,9 +768,17 @@ function onShippingCountryChange() {
 }
 
 // ── Moyens de paiement ────────────────────────────────────────────────────────
-const ICON_MOBILE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
+const ICON_WAVE   = '<span class="pm-badge pm-badge--wave">W</span>'
+const ICON_ORANGE = '<span class="pm-badge pm-badge--orange">OM</span>'
+const ICON_MTN    = '<span class="pm-badge pm-badge--mtn">M</span>'
 const ICON_CARD   = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>'
 const ICON_TRUCK  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
+
+// Livraison à domicile payable à réception : uniquement dans Abidjan.
+// Hors Abidjan, on n'expédie que ce qui est déjà payé → prépaiement obligatoire.
+const isAbidjanDelivery = computed(() =>
+  isAbidjan(form.value.shipping_city, form.value.shipping_commune)
+)
 
 const paymentMethods = computed(() => {
   // Accès robuste aux settings bruts, que Pinia déballe le ref ou non.
@@ -721,12 +788,22 @@ const paymentMethods = computed(() => {
 
   const list = []
   // Wave / Orange / Livraison : visibles par défaut, masqués seulement si explicitement désactivés.
-  if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',           icon: ICON_MOBILE, desc: 'Paiement mobile rapide' })
-  if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money',   icon: ICON_MOBILE, desc: 'Mobile Money Orange' })
-  if (isOn(s.payment_mtn_enabled))            list.push({ value: 'mtn',          label: 'MTN MoMo',       icon: ICON_MOBILE, desc: 'MTN Mobile Money' })
+  if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',         icon: ICON_WAVE,   desc: 'Paiement mobile rapide' })
+  if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money', icon: ICON_ORANGE, desc: 'Mobile Money Orange' })
+  if (isOn(s.payment_mtn_enabled))            list.push({ value: 'mtn',          label: 'MTN MoMo',     icon: ICON_MTN,    desc: 'MTN Mobile Money' })
   list.push({ value: 'card', label: 'Carte bancaire', icon: ICON_CARD, desc: 'Visa, Mastercard — paiement sécurisé Stripe' })
-  if (!isOff(s.payment_delivery_enabled))     list.push({ value: 'cod',          label: 'À la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis' })
+  // « À la livraison » réservé à Abidjan
+  if (!isOff(s.payment_delivery_enabled) && isAbidjanDelivery.value) {
+    list.push({ value: 'cod', label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis (Abidjan uniquement)' })
+  }
   return list
+})
+
+// Si le client passe hors Abidjan après avoir choisi « À la livraison », on réinitialise.
+watch(isAbidjanDelivery, (abidjan) => {
+  if (!abidjan && form.value.payment_method === 'cod') {
+    form.value.payment_method = ''
+  }
 })
 
 // ── Coupon ────────────────────────────────────────────────────────────────────
@@ -1099,9 +1176,10 @@ function formatPrice(val) {
   border-bottom: 1px solid var(--cream-100);
 }
 .co-section__icon {
-  font-size: 1.5rem;
   flex-shrink: 0;
   margin-top: 2px;
+  display: flex;
+  align-items: center;
 }
 .co-section__title {
   font-family: var(--font-display);
@@ -1161,7 +1239,14 @@ function formatPrice(val) {
   background: var(--rose-50);
 }
 .payment-method input { display: none; }
-.payment-method__icon { font-size: 1.25rem; flex-shrink: 0; }
+.payment-method__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
 .payment-method__body { flex: 1; }
 .payment-method__body strong {
   display: block;
@@ -1365,6 +1450,84 @@ function formatPrice(val) {
 .co-msg { font-size: 0.8125rem; }
 .co-msg--error { color: #b91c1c; }
 .co-msg--success { color: #15803d; }
+
+.co-shipping-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-md, 10px);
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+.co-shipping-note svg { flex-shrink: 0; margin-top: 2px; }
+
+/* Bannière hors Abidjan — prominente, à l'étape adresse */
+.co-outzone {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: var(--space-4);
+  padding: 14px 16px;
+  border-radius: var(--radius-lg, 14px);
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fdba74;
+  box-shadow: 0 2px 12px rgba(234, 88, 12, .10);
+}
+.co-outzone__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: #fed7aa;
+  color: #c2410c;
+}
+.co-outzone__body strong {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #9a3412;
+  margin-bottom: 3px;
+}
+.co-outzone__body p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #b45309;
+}
+.co-outzone__body b { color: #9a3412; font-weight: 700; }
+
+/* ── Badges brandés (méthodes de paiement) ── */
+.pm-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  font-weight: 800;
+  font-size: 0.6875rem;
+  letter-spacing: -0.01em;
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.pm-badge--wave   { background: #1dc3f0; }
+.pm-badge--orange { background: #ff6600; }
+.pm-badge--mtn    { background: #ffcb00; color: #333; }
+/* Grande variante pour l'en-tête des instructions */
+.pm-badge--lg {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+}
 
 /* ── Spinner ── */
 .co-spinner {
@@ -1642,6 +1805,30 @@ function formatPrice(val) {
   color: #fff;
   text-align: center;
 }
+
+/* Bouton « Payer avec Wave » */
+.pay-instr__wave-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: var(--radius-full, 999px);
+  background: #1dc3f0; /* bleu Wave */
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 4px 16px rgba(29, 195, 240, .38);
+}
+.pay-instr__wave-btn:hover {
+  background: #06b6e0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(29, 195, 240, .48);
+}
+.pay-instr__wave-btn:active { transform: translateY(0); }
 .pay-instr__amount-hero-label {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -1738,7 +1925,12 @@ function formatPrice(val) {
   align-items: center;
   gap: var(--space-3);
 }
-.co-empty__icon { font-size: 3rem; }
+.co-empty__icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--rose-300);
+}
 .co-empty__hint { color: var(--gray-500); font-size: 0.9375rem; max-width: 380px; }
 .co-empty__cta { margin-top: var(--space-3); padding: 12px 28px; text-decoration: none; }
 

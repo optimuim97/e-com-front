@@ -220,9 +220,11 @@
         <div class="ap-cta__quote-mark">"</div>
         <h2 class="display-md ap-cta__headline">
           Votre corps est<br><em>votre meilleur accessoire</em>
+          <br>
+          Prenez-en soin
         </h2>
         <p>
-          Prenez-en soin. Plus qu'une marque de cosmétiques, Rosabeauty Facial Care est une invitation
+          . Plus qu'une marque de cosmétiques, Rosabeauty Facial Care est une invitation
           à prendre soin de soi, à s'aimer davantage et à révéler sa beauté naturelle.
         </p>
         <div class="ap-cta__btns">
@@ -781,6 +783,12 @@ const values = [
   color: var(--gray-400);
   font-style: italic;
   margin-top: calc(-1 * var(--space-3));
+}
+.ap-cta__attr_ {
+  font-size: 0.8125rem;
+  color: var(--gray-400);
+  font-style: italic;
+  margin-top: calc(-1 * var(--space-2));
 }
 
 /* ── Responsive ── */

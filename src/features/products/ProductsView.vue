@@ -13,6 +13,7 @@
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
           <input
+            ref="searchInput"
             v-model="filters.search"
             type="search"
             :placeholder="$t('products.searchPlaceholder')"
@@ -87,8 +88,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
 import { storeToRefs } from 'pinia'
@@ -99,7 +100,21 @@ import AppSelect   from '@/components/ui/AppSelect.vue'
 
 const { t }     = useI18n()
 const route     = useRoute()
+const router    = useRouter()
 const cartStore = useCartStore()
+const searchInput = ref(null)
+
+// Focalise le champ de recherche quand on arrive via le bouton loupe (?focus=search)
+function focusSearchIfRequested() {
+  if (route.query.focus !== 'search') return
+  nextTick(() => {
+    searchInput.value?.focus()
+    // Nettoie l'URL pour ne pas re-focaliser à chaque navigation
+    const q = { ...route.query }
+    delete q.focus
+    router.replace({ query: q })
+  })
+}
 const homeStore = useHomeStore()
 const products  = ref([])
 const { categories } = storeToRefs(homeStore)
@@ -165,7 +180,11 @@ function resetFilters() {
 
 onMounted(async () => {
   await Promise.all([loadProducts(), homeStore.fetchCategories()])
+  focusSearchIfRequested()
 })
+
+// Si on est déjà sur /products et qu'on reclique la loupe, le focus se refait
+watch(() => route.query.focus, focusSearchIfRequested)
 </script>
 
 <style scoped>

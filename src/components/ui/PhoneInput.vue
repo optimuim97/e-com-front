@@ -338,6 +338,10 @@ onUnmounted(() => document.removeEventListener('click', onOutsideClick))
   font-family: inherit;
   line-height: 1.5;
 }
+/* Mobile : 16px pour empêcher le zoom auto d'iOS Safari au focus */
+@media (max-width: 768px) {
+  .phone-field { font-size: 16px; }
+}
 .phone-field::placeholder {
   color: var(--gray-400);
   font-style: italic;

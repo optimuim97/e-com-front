@@ -65,6 +65,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const paymentStripeEnabled      = bool('payment_stripe_enabled',       false)
   const paymentMobileNumber             = get('payment_mobile_number', '')
   const paymentWaveNumber               = get('payment_wave_number', '')
+  // Lien de paiement Wave marchand (ex : https://pay.wave.com/m/M_xxx/c/sn/)
+  const paymentWaveLink                 = get('payment_wave_link', '')
   const paymentWaveInstructions         = get('payment_wave_instructions', 'Envoyez le montant exact sur ce numéro Wave, puis communiquez votre référence de commande.')
   const paymentOrangeMoneyNumber        = get('payment_orange_money_number', '')
   const paymentOrangeMoneyInstructions  = get('payment_orange_money_instructions', 'Composez #144# sur votre téléphone Orange, puis envoyez le montant exact avec votre référence.')
@@ -185,7 +187,7 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentWaveEnabled, paymentOrangeMoneyEnabled,
     paymentDeliveryEnabled, paymentStripeEnabled,
     paymentMobileNumber, activePayments,
-    paymentWaveNumber, paymentWaveInstructions,
+    paymentWaveNumber, paymentWaveLink, paymentWaveInstructions,
     paymentOrangeMoneyNumber, paymentOrangeMoneyInstructions,
     paymentMtnEnabled, paymentMtnNumber, paymentMtnInstructions,
     paymentGeniuspayEnabled,

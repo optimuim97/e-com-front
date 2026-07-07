@@ -71,22 +71,54 @@
             <strong>{{ $t('orders.trackingNumber') }} :</strong> {{ order.tracking_number }}
           </div>
 
-          <!-- Bannière Wave : instructions de paiement -->
-          <div v-if="isWavePayment && settings.payment_mobile_number" class="order-wave-banner">
+          <!-- Bannière Wave : payer + envoyer la capture -->
+          <div v-if="isWavePayment && (wavePayUrl || settings.payment_wave_number || settings.payment_mobile_number)" class="order-wave-banner">
             <div class="order-wave-banner__icon">
               <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="#0E74F5"/><text x="18" y="24" text-anchor="middle" font-size="16" font-weight="bold" fill="white">W</text></svg>
             </div>
             <div class="order-wave-banner__body">
-              <strong>Paiement mobile requis</strong>
-              <p>Veuillez envoyer <strong>{{ formatPrice(order.total) }}</strong> sur le numéro :</p>
-              <div class="order-wave-banner__number-wrapper">
-                <p class="order-wave-banner__number">{{ settings.payment_mobile_number }}</p>
+              <strong>Réglez votre commande avec Wave</strong>
+
+              <!-- Montant + bouton inline (hors Abidjan : prépaiement mis en avant) -->
+              <div class="order-wave-amount-row">
+                <p>Montant à payer : <strong>{{ formatPrice(order.total) }}</strong></p>
+                <a
+                  v-if="wavePayUrl && isOutsideAbidjan"
+                  :href="wavePayUrl"
+                  target="_blank"
+                  rel="noopener"
+                  class="order-wave-pay order-wave-pay--inline"
+                >
+                  Payer avec Wave
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </a>
+              </div>
+
+              <!-- 1) Bouton payer avec Wave pleine largeur (cas Abidjan) -->
+              <a v-if="wavePayUrl && !isOutsideAbidjan" :href="wavePayUrl" target="_blank" rel="noopener" class="order-wave-pay">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                Payer {{ formatPrice(order.total) }} avec Wave
+              </a>
+
+              <!-- Fallback : numéro à défaut de lien -->
+              <div v-else-if="settings.payment_wave_number || settings.payment_mobile_number" class="order-wave-banner__number-wrapper">
+                <p class="order-wave-banner__number">{{ settings.payment_wave_number || settings.payment_mobile_number }}</p>
                 <CopyButton
-                  :text="settings.payment_mobile_number"
+                  :text="settings.payment_wave_number || settings.payment_mobile_number"
                   title="Copier le numéro"
                   copied-text="Copié !"
                 />
               </div>
+
+              <!-- 2) Envoyer la capture via WhatsApp -->
+              <div class="order-wave-steps">
+                <p class="order-wave-steps__label">Après le paiement :</p>
+                <a v-if="paymentProofLink" :href="paymentProofLink" target="_blank" rel="noopener" class="order-wave-proof">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0"/></svg>
+                  Envoyer la capture du paiement sur WhatsApp
+                </a>
+              </div>
+
               <p class="order-wave-banner__hint">Indiquez votre numéro de commande
                 <strong>{{ order.number }}</strong> en référence.</p>
             </div>
@@ -342,6 +374,22 @@ const waLink = computed(() => {
   return buildWaLink(settings.value.whatsapp_admin_number, message)
 })
 
+// Lien « Payer avec Wave » renvoyé par l'API (lien marchand + montant)
+const wavePayUrl = computed(() => order.value?.wave_pay_url || null)
+
+// Hors Abidjan (renvoyé par l'API) : prépaiement obligatoire → bouton à côté du montant
+const isOutsideAbidjan = computed(() => order.value?.is_abidjan === false)
+
+// Lien WhatsApp pour envoyer la capture du paiement (numéro admin, message pré-rempli)
+const paymentProofLink = computed(() => {
+  const num = settings.value.whatsapp_admin_number
+  if (!num || !order.value) return null
+  const msg =
+    `Bonjour ! Voici la capture du paiement Wave pour ma commande N° ${order.value.number}. ` +
+    `Montant : ${formatPrice(order.value.total)}.`
+  return buildWaLink(num, msg)
+})
+
 function formatDate(val) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -560,7 +608,61 @@ onMounted(fetchOrder)
   background: #eff6ff;
   border-color: #93c5fd;
 }
-.order-wave-banner__hint { font-size: 0.8125rem; color: #3b82f6; }
+.order-wave-banner__hint { font-size: 0.8125rem; color: #3b82f6; margin-top: var(--space-2); }
+
+/* Bouton « Payer avec Wave » */
+.order-wave-pay {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin: var(--space-3) 0;
+  padding: 12px 18px;
+  border-radius: var(--radius-full, 999px);
+  background: #1dc3f0;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 4px 14px rgba(29, 195, 240, .35);
+}
+.order-wave-pay:hover { background: #06b6e0; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(29, 195, 240, .45); }
+
+/* Rangée montant + bouton inline (hors Abidjan) */
+.order-wave-amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.order-wave-pay--inline {
+  width: auto;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+}
+
+/* Étape 2 : envoyer la capture */
+.order-wave-steps { margin-top: var(--space-3); }
+.order-wave-steps__label { font-size: 0.8125rem; font-weight: 600; color: #1e40af; margin-bottom: 6px; }
+.order-wave-proof {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--radius-full, 999px);
+  background: #25d366;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.order-wave-proof:hover { background: #1ebe5d; }
 
 .order-whatsapp {
   margin-top: var(--space-4);
