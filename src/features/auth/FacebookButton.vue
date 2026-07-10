@@ -14,19 +14,23 @@
 </template>
 
 <script setup>
-import { useToast } from 'vue-toastification'
+import { useSocialAuth } from '@/features/auth/social-auth'
 
 defineProps({
   label: { type: String, default: 'Continuer avec Facebook' },
 })
-defineEmits(['success', 'error'])
+const emit = defineEmits(['success', 'error'])
 
-const toast = useToast()
+const { loginWith, loading, error } = useSocialAuth()
 
-function onClick() {
-  toast.info('Connexion Facebook bientôt disponible — fonctionnalité en cours de développement.', {
-    timeout: 4000,
-  })
+async function onClick() {
+  try {
+    const data = await loginWith('facebook')
+    emit('success', data)
+  } catch (e) {
+    // popup fermée par l'utilisateur → pas une vraie erreur à signaler
+    if (e?.message !== 'popup_closed') emit('error', error.value || 'Connexion impossible.')
+  }
 }
 </script>
 

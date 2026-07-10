@@ -1094,32 +1094,6 @@ function fmtPrice(val) {
 }
 .qo-confirmed__number { font-size: 0.9375rem; color: var(--gray-500); }
 
-/* ── PIN Box ── */
-.qo-pin-box {
-  width: 100%;
-  background: var(--rose-50);
-  border: 1.5px solid var(--rose-200);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  text-align: center;
-}
-.qo-pin-box__label { font-size: 0.8125rem; color: var(--rose-600); margin-bottom: var(--space-3); font-weight: 600; }
-.qo-pin-box__digits { display: flex; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-3); }
-.qo-pin-box__digit {
-  width: 48px; height: 56px;
-  background: #fff;
-  border: 2px solid var(--rose-300);
-  border-radius: var(--radius-md);
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-family: var(--font-display);
-  color: var(--rose-700);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.qo-pin-box__hint { font-size: 0.75rem; color: var(--rose-500); }
-
 /* ── Wave Box ── */
 .qo-wave-box {
   width: 100%;

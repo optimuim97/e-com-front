@@ -31,8 +31,8 @@
 
       <!-- Séparateur + connexion sociale -->
       <div class="auth-divider"><span>ou</span></div>
-      <FacebookButton />
-      <GoogleButton />
+      <FacebookButton @success="onSocialSuccess" @error="error = $event" />
+      <GoogleButton @success="onSocialSuccess" @error="error = $event" />
     </form>
 
     <ForgotSecretModal v-if="showForgot" mode="password" @close="showForgot = false" />
@@ -73,6 +73,14 @@ async function handleSubmit() {
   } finally {
     loading.value = false;
   }
+}
+
+// Auth sociale (Facebook / Google) : la session est déjà établie par le
+// composable useSocialAuth via auth.setSession(). On redirige comme après login.
+function onSocialSuccess() {
+  const user = auth.user;
+  const redirect = route.query.redirect || (user?.roles?.includes('admin') ? '/admin' : '/');
+  router.push(redirect);
 }
 </script>
 

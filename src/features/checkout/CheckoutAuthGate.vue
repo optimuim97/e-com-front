@@ -47,11 +47,16 @@
       <span>{{ quickOrderEnabled ? $t('authGate.orLogin') : $t('authGate.tabLogin') }}</span>
     </div>
 
-    <!-- ── Facebook ── -->
+    <!-- ── Connexion sociale ── -->
     <div class="gate__social">
       <FacebookButton
         :label="$t('authGate.continueWithFacebook')"
-        @success="onFacebookSuccess"
+        @success="onSocialSuccess"
+        @error="socialError = $event"
+      />
+      <GoogleButton
+        :label="$t('authGate.continueWithGoogle')"
+        @success="onSocialSuccess"
         @error="socialError = $event"
       />
       <p v-if="socialError" class="gate__error">{{ socialError }}</p>
@@ -119,6 +124,7 @@ import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import { useCartStore }     from '@/features/cart/cart.store'
 import FacebookButton       from '@/features/auth/FacebookButton.vue'
+import GoogleButton         from '@/features/auth/GoogleButton.vue'
 
 const emit = defineEmits(['authenticated', 'quick-order', 'close'])
 
@@ -177,10 +183,10 @@ async function doRegister() {
 
 const quickOrderEnabled = settings.enableQuickOrder
 
-// ── Facebook ───────────────────────────────────────────────────────────────
+// ── Auth sociale (Facebook / Google) ────────────────────────────────────────
 const socialError = ref('')
 
-async function onFacebookSuccess() {
+async function onSocialSuccess() {
   socialError.value = ''
   try { await useCartStore().mergeLocalCart() } catch {}
   emit('authenticated')

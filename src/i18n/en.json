@@ -310,6 +310,7 @@
     "orLogin": "or sign in",
     "orEmail": "or via email",
     "continueWithFacebook": "Continue with Facebook",
+    "continueWithGoogle": "Continue with Google",
     "tabLogin": "Sign in",
     "tabRegister": "Create account",
     "loginCta": "Sign in and continue →",

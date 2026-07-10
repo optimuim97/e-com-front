@@ -43,13 +43,6 @@
                   </svg>
                   {{ $t('orders.invoice') }}
                 </button>
-                <button @click="showChangePinModal = true" class="order-pin-btn" :title="$t('orders.changePinTitle')">
-                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-                  <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M16.5 10.5V7.5a4.5 4.5 0 10-9 0v3M4.5 10.5h15A1.5 1.5 0 0121 12v7.5A1.5 1.5 0 0119.5 21h-15A1.5 1.5 0 013 19.5V12a1.5 1.5 0 011.5-1.5z" />
-                </svg>
-                PIN
-                </button>
               </div>
             </div>
           </div>
@@ -230,18 +223,6 @@
       </div>
     </div>
 
-    <!-- PIN verification modal -->
-    <PinModal
-      v-if="!pinStore.verified"
-      @verified="onPinVerified"
-      @change-pin="showChangePinModal = true"
-    />
-
-    <!-- Change PIN modal -->
-    <PinChangeModal
-      v-if="showChangePinModal"
-      @close="showChangePinModal = false"
-    />
   </main>
 </template>
 
@@ -252,19 +233,14 @@ import { useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
 import { buildAdminMessage, buildWaLink } from '@/utils/whatsapp'
-import { usePinStore } from '@/stores/pin'
-import PinModal from '@/shared/components/modals/PinModal.vue'
-import PinChangeModal from '@/shared/components/modals/PinChangeModal.vue'
 import CopyButton from '@/shared/components/CopyButton.vue'
 
 const { t } = useI18n()
 const route = useRoute()
-const pinStore = usePinStore()
 
 const order    = ref(null)
 const loading  = ref(true)
 const settings = ref({})
-const showChangePinModal = ref(false)
 const downloadingPdf     = ref(false)
 const copied   = ref(false)
 const paying   = ref(false)
@@ -305,10 +281,6 @@ async function payNow() {
   } finally {
     paying.value = false
   }
-}
-
-function onPinVerified() {
-  // PIN verified — order content is now visible
 }
 
 async function copyPhoneNumber() {
@@ -539,20 +511,6 @@ onMounted(fetchOrder)
 .order-pdf-btn__spin {
   animation: spin 0.7s linear infinite;
 }
-
-.order-pin-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-size: 0.75rem;
-  color: var(--gray-500);
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--cream-300);
-  background: #fff;
-  transition: all var(--transition-fast);
-}
-.order-pin-btn:hover { border-color: var(--rose-300); color: var(--rose-500); }
 
 .order-tracking {
   margin-top: var(--space-4);

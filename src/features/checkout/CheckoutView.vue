@@ -523,13 +523,6 @@
       </Transition>
     </Teleport>
 
-    <!-- PIN reveal modal -->
-    <PinRevealModal
-      v-if="generatedPin"
-      :pin="generatedPin"
-      @close="onPinRevealed"
-    />
-
     <!-- Quick Order Modal (invité sans compte) -->
     <QuickOrderModal
       v-if="showQuickOrder"
@@ -546,8 +539,6 @@ import { useI18n } from 'vue-i18n'
 import { useCartStore }     from '@/features/cart/cart.store'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
-import { usePinStore }      from '@/stores/pin'
-import PinRevealModal       from '@/shared/components/modals/PinRevealModal.vue'
 import CheckoutAuthGate     from './CheckoutAuthGate.vue'
 import QuickOrderModal      from './QuickOrderModal.vue'
 import AppSelect            from '@/components/ui/AppSelect.vue'
@@ -566,7 +557,6 @@ const router       = useRouter()
 const cartStore    = useCartStore()
 const authStore    = useAuthStore()
 const settings     = useSettingsStore()
-const pinStore     = usePinStore()
 
 // ── Gate d'auth + QuickOrder ─────────────────────────────────────────────────
 const showQuickOrder = ref(false)
@@ -743,8 +733,6 @@ const fieldErrors    = ref({})
 const fe             = (key) => fieldErrors.value[key] ?? ''
 const submitting     = ref(false)
 const submitError    = ref('')
-const generatedPin   = ref(null)
-const pendingOrderNr = ref(null)
 const couponFromCart = ref(false)
 
 // ── Validations par étape ────────────────────────────────────────────────────
@@ -980,15 +968,6 @@ async function placeOrder(payload) {
       return
     }
 
-    // PIN généré (commande rapide)
-    if (data.generated_pin) {
-      pinStore.verified = true
-      sessionStorage.setItem('pin_verified', '1')
-      generatedPin.value   = data.generated_pin
-      pendingOrderNr.value = data.number
-      return
-    }
-
     // Paiement manuel Wave / Orange Money / MTN → instructions
     if (['wave', 'orange_money', 'mtn'].includes(payload.payment_method)) {
       buildPaymentInstructions(payload.payment_method, data.number, data.total ?? orderTotal.value)
@@ -1015,11 +994,6 @@ async function placeOrder(payload) {
   } finally {
     submitting.value = false
   }
-}
-
-function onPinRevealed() {
-  generatedPin.value = null
-  router.push({ name: 'order', params: { number: pendingOrderNr.value } })
 }
 
 function formatPrice(val) {
