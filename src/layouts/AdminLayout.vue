@@ -125,59 +125,61 @@ function badgeFor(to) {
   return null;
 }
 
+// Chaque item porte la permission qui conditionne son affichage.
+// Un item sans `permission` est visible par tout le staff.
 const NAV_GROUPS = [
   {
     key: 'ops',
     label: 'Opérations',
     items: [
-      { to: '/admin',        label: 'Dashboard',    icon: Squares2X2Icon          },
-      { to: '/admin/orders', label: 'Commandes',    icon: ClipboardDocumentListIcon },
-      { to: '/admin/pos',    label: 'Caisse / POS', icon: CalculatorIcon          },
+      { to: '/admin',        label: 'Dashboard',    icon: Squares2X2Icon,           permission: 'dashboard.view' },
+      { to: '/admin/orders', label: 'Commandes',    icon: ClipboardDocumentListIcon, permission: 'orders.view'   },
+      { to: '/admin/pos',    label: 'Caisse / POS', icon: CalculatorIcon,           permission: 'pos.use'        },
     ],
   },
   {
     key: 'delivery',
     label: 'Livraison',
     items: [
-      { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon  },
-      { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon },
+      { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon,  permission: 'deliveries.view'     },
+      { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon, permission: 'delivery_zones.view' },
     ],
   },
   {
     key: 'catalog',
     label: 'Catalogue',
     items: [
-      { to: '/admin/products',      label: 'Produits',    icon: ShoppingBagIcon },
-      { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon      },
-      { to: '/admin/product-lines', label: 'Gammes',      icon: SwatchIcon      },
+      { to: '/admin/products',      label: 'Produits',    icon: ShoppingBagIcon, permission: 'products.view'      },
+      { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon,      permission: 'categories.view'    },
+      { to: '/admin/product-lines', label: 'Gammes',      icon: SwatchIcon,      permission: 'product_lines.view' },
     ],
   },
   {
     key: 'marketing',
     label: 'Marketing',
     items: [
-      { to: '/admin/coupons',         label: 'Coupons',            icon: TicketIcon             },
-      { to: '/admin/programme',       label: 'Club fidélité',      icon: StarIcon               },
-      { to: '/admin/reviews',         label: 'Avis clients',       icon: ChatBubbleLeftRightIcon },
-      { to: '/admin/blog',            label: 'Blog',               icon: NewspaperIcon          },
-      { to: '/admin/newsletter',      label: 'Newsletter',         icon: EnvelopeIcon           },
-      { to: '/admin/abandoned-carts', label: 'Paniers abandonnés', icon: ShoppingCartIcon       },
+      { to: '/admin/coupons',         label: 'Coupons',            icon: TicketIcon,              permission: 'coupons.view'         },
+      { to: '/admin/programme',       label: 'Club fidélité',      icon: StarIcon,                permission: 'program.view'         },
+      { to: '/admin/reviews',         label: 'Avis clients',       icon: ChatBubbleLeftRightIcon, permission: 'reviews.view'         },
+      { to: '/admin/blog',            label: 'Blog',               icon: NewspaperIcon,           permission: 'blog.view'            },
+      { to: '/admin/newsletter',      label: 'Newsletter',         icon: EnvelopeIcon,            permission: 'newsletter.view'      },
+      { to: '/admin/abandoned-carts', label: 'Paniers abandonnés', icon: ShoppingCartIcon,        permission: 'abandoned_carts.view' },
     ],
   },
   {
     key: 'team',
     label: 'Équipe',
     items: [
-      { to: '/admin/users',       label: 'Utilisateurs', icon: UsersIcon       },
-      { to: '/admin/roles',       label: 'Rôles',        icon: ShieldCheckIcon, adminOnly: true },
-      { to: '/admin/permissions', label: 'Permissions',  icon: KeyIcon,         adminOnly: true },
+      { to: '/admin/users',       label: 'Clients',      icon: UsersIcon,       permission: 'customers.view'   },
+      { to: '/admin/roles',       label: 'Rôles',        icon: ShieldCheckIcon, permission: 'roles.view'       },
+      { to: '/admin/permissions', label: 'Permissions',  icon: KeyIcon,         permission: 'permissions.view' },
     ],
   },
   {
     key: 'system',
     label: 'Système',
     items: [
-      { to: '/admin/settings', label: 'Paramètres', icon: Cog6ToothIcon },
+      { to: '/admin/settings', label: 'Paramètres', icon: Cog6ToothIcon, permission: 'settings.view' },
     ],
   },
 ];
@@ -213,7 +215,7 @@ const TITLES = {
 const visibleGroups = computed(() =>
   NAV_GROUPS.map(group => ({
     ...group,
-    items: group.items.filter(item => !item.adminOnly || auth.isAdmin),
+    items: group.items.filter(item => !item.permission || auth.can(item.permission)),
   })).filter(group => group.items.length > 0)
 );
 

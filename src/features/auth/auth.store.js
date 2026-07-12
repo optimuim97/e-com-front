@@ -9,8 +9,30 @@ export const useAuthStore = defineStore('auth', () => {
   const checked = ref(false);
 
   const isAdmin    = computed(() => user.value?.roles?.includes('admin'));
-  const isStaff    = computed(() => user.value?.roles?.includes('staff') || isAdmin.value);
+  // Accès à l'espace admin : admin, manager ou staff (agent). Le backend
+  // renvoie `is_staff` ; on garde un fallback sur les rôles par sécurité.
+  const isStaff    = computed(() =>
+    user.value?.is_staff
+    ?? (isAdmin.value
+      || user.value?.roles?.includes('staff')
+      || user.value?.roles?.includes('manager'))
+  );
   const isLoggedIn = computed(() => !!user.value);
+
+  // Permissions granulaires (fournies par /auth/me, login, register).
+  const permissions = computed(() => user.value?.permissions ?? []);
+
+  /**
+   * Teste une permission. L'admin passe toujours. On accepte une chaîne
+   * ou un tableau (dans ce cas : au moins une permission suffit).
+   */
+  function can(permission) {
+    if (isAdmin.value) return true;
+    if (!permission) return true;
+    const list = permissions.value;
+    if (Array.isArray(permission)) return permission.some(p => list.includes(p));
+    return list.includes(permission);
+  }
 
   async function fetchUser() {
     try {
@@ -94,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, checked, isAdmin, isStaff, isLoggedIn, isQuickOrderUser,
+    permissions, can,
     fetchUser, login, register, logout, setSession,
     updateInfo, setupAccount, changePassword,
   };

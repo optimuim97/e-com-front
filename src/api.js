@@ -13,10 +13,16 @@ const api = axios.create({
   },
 });
 
-// Injecter le token Bearer sur chaque requête
+// Injecter le token Bearer + la langue courante sur chaque requête
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
+
+  // Langue choisie côté SPA → messages de validation/erreurs traduits.
+  // (Accept-Language est un en-tête interdit en XHR, on utilise X-Locale.)
+  const locale = localStorage.getItem('locale');
+  config.headers['X-Locale'] = ['fr', 'en'].includes(locale) ? locale : 'fr';
+
   return config;
 });
 

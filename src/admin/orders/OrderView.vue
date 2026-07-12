@@ -518,11 +518,13 @@ function formatDate(val) {
 }
 
 function formatPrice(val) {
+  // Montant masqué (finance privée) → tiret
+  if (val === null || val === undefined) return "—";
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
     currency: "XOF",
     maximumFractionDigits: 0,
-  }).format(val ?? 0);
+  }).format(val);
 }
 
 function statusLabel(status) {

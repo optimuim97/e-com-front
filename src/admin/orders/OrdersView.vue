@@ -25,11 +25,12 @@
         class="stat-card stat-card--pending"
         :class="{ 'stat-card--active': filters.status === 'pending' }"
         @click="setStatusFilter('pending')"
-        :title="`${fmt(orderStats.pendingRevenue)} en attente de validation`"
+        :title="canFinance ? `${fmt(orderStats.pendingRevenue)} en attente de validation` : ''"
       >
         <span class="stat-card__label">En attente</span>
         <span class="stat-card__value">{{ orderStats.pending }}</span>
-        <span class="stat-card__hint">{{ fmt(orderStats.pendingRevenue) }}</span>
+        <span class="stat-card__hint" v-if="canFinance">{{ fmt(orderStats.pendingRevenue) }}</span>
+        <span class="stat-card__hint" v-else>À valider</span>
       </button>
 
       <button
@@ -62,7 +63,7 @@
         <span class="stat-card__hint">Terminées</span>
       </button>
 
-      <div class="stat-card stat-card--revenue">
+      <div class="stat-card stat-card--revenue" v-if="canFinance">
         <span class="stat-card__label">Chiffre d'affaires</span>
         <span class="stat-card__value">{{ fmtCompact(orderStats.revenue) }}</span>
         <span class="stat-card__hint">Panier moyen {{ fmt(orderStats.avgBasket) }}</span>
@@ -385,7 +386,11 @@ import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 import { useSettingsStore } from '@/stores/settings'
+import { useAuthStore } from '@/features/auth/auth.store'
 
+const auth = useAuthStore()
+// Finance privée : masque les montants agrégés pour les agents sans finance.view
+const canFinance = computed(() => auth.can('finance.view'))
 const orderStats = useOrderStatsStore()
 const settings   = useSettingsStore()
 
@@ -871,7 +876,9 @@ function formatDate(val) {
 }
 
 function formatPrice(val) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
+  // Montant masqué (finance privée) → tiret
+  if (val === null || val === undefined) return '—'
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val)
 }
 
 function statusLabel(status) {

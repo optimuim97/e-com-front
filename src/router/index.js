@@ -65,6 +65,13 @@ router.beforeEach(async (to) => {
 
   if (to.meta.requiresAuth  && !auth.user)    return { name: 'login', query: { redirect: to.fullPath } }
   if (to.meta.requiresAdmin && !auth.isAdmin) return { name: 'home' }
+  // Espace admin : réservé au personnel (admin / manager / staff)
+  if (to.meta.requiresStaff && !auth.isStaff) return { name: 'home' }
+  // Contrôle fin par permission : si l'agent n'a pas la permission requise,
+  // on le renvoie vers le tableau de bord (accessible à tout le staff).
+  if (to.meta.permission && !auth.can(to.meta.permission)) {
+    return to.name === 'admin.dashboard' ? true : { name: 'admin.dashboard' }
+  }
   if (to.meta.guest         && auth.user)     return { name: 'home' }
 })
 

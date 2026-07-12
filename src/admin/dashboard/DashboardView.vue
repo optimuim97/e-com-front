@@ -12,7 +12,7 @@
           <svg class="today-pill__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
           <span><strong>{{ stats.today_orders ?? 0 }}</strong> commande{{ (stats.today_orders ?? 0) !== 1 ? 's' : '' }} aujourd'hui</span>
         </span>
-        <span class="today-pill today-pill--revenue">
+        <span class="today-pill today-pill--revenue" v-if="canFinance">
           <svg class="today-pill__icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
           <span><strong>{{ fmtCompact(stats.today_revenue ?? 0) }}</strong> de CA</span>
         </span>
@@ -46,8 +46,8 @@
     <!-- ── Ligne milieu : graphique + statuts ── -->
     <div class="mid-grid">
 
-      <!-- Graphique CA 30 jours -->
-      <section class="card chart-card">
+      <!-- Graphique CA 30 jours — finance uniquement -->
+      <section class="card chart-card" v-if="canFinance">
         <div class="chart-card__head">
           <div>
             <span class="eyebrow">Tendance</span>
@@ -232,7 +232,11 @@ import {
   BanknotesIcon, ShoppingBagIcon, UserGroupIcon, CubeIcon,
 } from '@heroicons/vue/24/outline'
 import api from '@/api'
+import { useAuthStore } from '@/features/auth/auth.store'
 
+const auth         = useAuthStore()
+// Finance privée : les blocs monétaires ne s'affichent qu'avec `finance.view`.
+const canFinance   = computed(() => auth.can('finance.view'))
 const router       = useRouter()
 const stats        = ref({})
 const recentOrders = ref([])
@@ -247,13 +251,14 @@ const formattedDate = computed(() =>
 
 // ── KPI Cards ─────────────────────────────────────────────────────────────────
 const kpis = computed(() => [
-  {
+  // Carte CA : réservée à la finance
+  ...(canFinance.value ? [{
     label: 'Chiffre d\'affaires',
     value: fmtCompact(stats.value.revenue ?? 0),
     sub:   'Commandes livrées / expédiées',
     icon:  BanknotesIcon,
     bg:    '#dcfce7', color: '#15803d',
-  },
+  }] : []),
   {
     label: 'Commandes',
     value: stats.value.orders ?? 0,
@@ -353,7 +358,9 @@ const chartOrdersTotal = computed(() => salesChart.value.reduce((s, d) => s + d.
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(v) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(v ?? 0))
+  // Montant masqué (finance privée) → tiret
+  if (v === null || v === undefined) return '—'
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(v))
 }
 function fmtCompact(v) {
   const n = Number(v ?? 0)
