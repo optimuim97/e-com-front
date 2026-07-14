@@ -22,11 +22,17 @@ test.describe('Commande rapide', () => {
   test.beforeEach(async ({ page }) => {
     // Mock quick-order API — ne crée pas de vraie commande
     await mockApi(page, '**/api/quick-order', MOCK_ORDER_RESPONSE)
-    // Mock cart API pour simuler un panier avec produit
+    // Mock cart API (utilisateur connecté)
     await mockApi(page, '**/api/cart', {
       items: [{ id: 1, product_id: 1, quantity: 1, unit_price: 8500, product: { name: 'Huile Rose Musquée' } }],
       total: 8500,
       item_count: 1,
+    })
+    // Panier INVITÉ : le store lit localStorage['rosa_guest_cart'] (pas /api/cart).
+    await page.addInitScript(() => {
+      localStorage.setItem('rosa_guest_cart', JSON.stringify([
+        { product_id: 1, variant_id: null, quantity: 1, unit_price: 8500, product: { name: 'Huile Rose Musquée' } },
+      ]))
     })
   })
 
@@ -96,33 +102,28 @@ test.describe('Commande rapide', () => {
     await quickBtn.click()
     await page.waitForTimeout(500)
 
-    // Remplir le formulaire
-    await page.fill('input[type="text"][class*="input"]:near(:text("Nom complet"))', 'Fatou Test')
+    // Nom (premier input texte du formulaire)
+    await page.locator('#qo-form input.input').first().fill('Fatou Test')
 
-    // Téléphone (peut être un composant PhoneInput)
+    // Téléphone (composant PhoneInput → input[type=tel])
     const phoneInput = page.locator('input[type="tel"], input[placeholder*="07"]').first()
-    if (await phoneInput.isVisible()) {
+    if (await phoneInput.isVisible().catch(() => false)) {
       await phoneInput.fill('0708000000')
     }
 
-    // Sélectionner commune
-    await page.selectOption('select[class*="qo-select"]', { index: 1 })
+    // Commune : combobox searchable (plus un <select>)
+    await page.locator('.qo-combobox__trigger').first().click()
+    await page.locator('.qo-combobox__option', { hasText: 'Cocody' }).first().click()
 
-    // Cliquer sur "Commander maintenant"
-    const submitBtn = page.locator('button[form="qo-form"]').first()
-    await submitBtn.click()
+    // Paiement « Wave » est sélectionné par défaut → soumettre
+    await page.locator('button[form="qo-form"]').first().click()
 
-    // Attendre la confirmation (mock répond instantanément)
-    const confirmTitle = page.locator('text=/Commande confirmée|Order confirmed/i').first()
+    // Confirmation (le PIN a été retiré du process de commande)
+    const confirmTitle = page.locator('.qo-confirmed__title').first()
     await expect(confirmTitle).toBeVisible({ timeout: 10_000 })
 
-    // Le PIN doit s'afficher
-    const pinSection = page.locator('[class*="qo-pin-box"]').first()
-    await expect(pinSection).toBeVisible({ timeout: 3_000 })
-
-    // Vérifier que les 4 chiffres du PIN mock sont affichés
-    const digits = page.locator('[class*="qo-pin-box__digit"]')
-    await expect(digits).toHaveCount(4)
+    // Le numéro de commande mock doit apparaître
+    await expect(page.locator('text=RB-TEST-001').first()).toBeVisible({ timeout: 3_000 })
   })
 
   test('le bouton submit est toujours visible sans scroller (sticky footer)', async ({ page }) => {

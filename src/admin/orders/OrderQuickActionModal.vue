@@ -30,7 +30,7 @@
             <span class="recap-label">Moyen de paiement</span>
             <strong>{{ paymentLabel(order.payment_method) }}</strong>
             <span class="recap-sub" :class="['pmt-state', order.paid_at ? 'pmt-state--ok' : 'pmt-state--pending']">
-              {{ order.paid_at ? '✓ Payée' : '⏳ Non payée' }}
+              {{ order.paid_at ? 'Payée' : 'Non payée' }}
             </span>
           </div>
           <div>
@@ -50,14 +50,14 @@
             :disabled="busy === 'mark-paid'"
             @click="markPaid"
           >
-            {{ busy === 'mark-paid' ? 'Validation…' : '✓ Marquer comme payée (cash / COD)' }}
+            {{ busy === 'mark-paid' ? 'Validation…' : 'Marquer comme payée (cash / COD)' }}
           </button>
           <button
             class="btn btn-outline"
             :disabled="busy === 'pay-link'"
             @click="generatePaymentLink"
           >
-            {{ busy === 'pay-link' ? 'Génération…' : '🔗 Générer lien de paiement en ligne' }}
+            {{ busy === 'pay-link' ? 'Génération…' : 'Générer un lien de paiement' }}
           </button>
         </div>
         <div v-if="paymentLink" class="payment-link-box">
@@ -66,13 +66,13 @@
             <input :value="paymentLink" readonly class="input" />
             <button class="btn btn-xs btn-outline" @click="copy(paymentLink)">Copier</button>
             <a :href="waPayLink" target="_blank" rel="noopener" class="btn btn-xs btn-primary">
-              📲 Envoyer via WhatsApp
+              Envoyer via WhatsApp
             </a>
           </div>
         </div>
       </div>
       <div class="modal__section" v-else>
-        <p class="modal__info">✓ Paiement déjà enregistré.</p>
+        <p class="modal__info">Paiement déjà enregistré.</p>
       </div>
 
       <!-- Action tracking -->
@@ -93,7 +93,7 @@
             @click="generateTracking"
             title="Générer un numéro de suivi"
           >
-            {{ busy === 'gen-tracking' ? '…' : '🎲 Générer' }}
+            {{ busy === 'gen-tracking' ? '…' : 'Générer' }}
           </button>
           <button
             class="btn btn-primary"
@@ -168,7 +168,7 @@ async function markPaid() {
   try {
     const { data } = await api.post(`/admin/orders/${props.order.id}/mark-paid`);
     emit('updated', data.data ?? data);
-    success.value = '✓ Commande marquée comme payée.';
+    success.value = 'Commande marquée comme payée.';
   } catch (e) {
     error.value = e.response?.data?.message ?? 'Erreur.';
   } finally {
@@ -212,7 +212,7 @@ async function saveTracking() {
       status: 'shipped',
     });
     emit('updated', data.data ?? data);
-    success.value = '✓ Numéro enregistré, commande marquée expédiée.';
+    success.value = 'Numéro enregistré, commande marquée expédiée.';
 
     // Pré-remplir WhatsApp pour notifier le client
     if (clientPhone.value) {
@@ -232,7 +232,9 @@ function copy(text) {
 }
 
 function fmt(v) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(v ?? 0));
+  // Montant masqué (finance privée) → tiret
+  if (v === null || v === undefined) return '—';
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', minimumFractionDigits: 0 }).format(Number(v));
 }
 
 const STATUS_LABELS = {
@@ -242,8 +244,8 @@ const STATUS_LABELS = {
 function statusLabel(s) { return STATUS_LABELS[s] ?? s; }
 
 const PAYMENT_LABELS = {
-  wave: 'Wave 💙', orange_money: 'Orange Money 🟠', cinetpay: 'Carte bancaire 💳',
-  cod: 'Paiement à la livraison 🚚', delivery: 'Paiement à la livraison 🚚', cash: 'Espèces',
+  wave: 'Wave', orange_money: 'Orange Money', cinetpay: 'Carte bancaire',
+  cod: 'Paiement à la livraison', delivery: 'Paiement à la livraison', cash: 'Espèces',
 };
 function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
 </script>

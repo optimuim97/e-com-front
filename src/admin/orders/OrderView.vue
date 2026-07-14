@@ -284,55 +284,24 @@
           </p>
         </div>
 
-        <!-- Payment -->
-        <div class="card p-5">
-          <h2 class="font-semibold text-gray-800 mb-2">Paiement</h2>
-          <p class="text-sm text-gray-600">{{ paymentLabel(order.payment_method) }}</p>
-          <span
-            :class="order.is_paid ? 'badge badge-success' : 'badge badge-warning'"
-            class="mt-2"
-          >
-            {{ order.is_paid ? "Payé" : "En attente" }}
-          </span>
+        <!-- Traitement rapide (parité avec la liste « en attente ») -->
+        <div class="card admin-qa-card">
+          <OrderQuickActionModal :order="order" inline @updated="onOrderUpdated" />
           <p
             v-if="order.payment_reference"
-            class="text-xs text-gray-400 mt-2 font-mono break-all"
+            class="admin-qa-ref"
           >
-            Ref : {{ order.payment_reference }}
-          </p>
-          <p v-if="order.paid_at" class="text-xs text-gray-400 mt-1">
-            Payé le {{ formatDate(order.paid_at) }}
+            Réf. paiement : {{ order.payment_reference }}
           </p>
         </div>
 
-        <!-- Update status -->
+        <!-- Changer le statut (contrôle complet, tous les statuts) -->
         <div class="card p-5 space-y-4">
-          <h2 class="font-semibold text-gray-800">Modifier la commande</h2>
+          <h2 class="font-semibold text-gray-800">Changer le statut</h2>
 
           <div>
-            <label class="label">Statut</label>
+            <label class="label">Statut de la commande</label>
             <AppSelect v-model="editForm.status" :options="orderStatusOptions" />
-          </div>
-
-          <div>
-            <label class="label">Numéro de suivi</label>
-            <div class="tracking-row">
-              <input
-                v-model="editForm.tracking_number"
-                type="text"
-                class="input"
-                placeholder="Ex. RB-2026-00123"
-              />
-              <button
-                type="button"
-                class="btn-outline tracking-gen-btn"
-                :disabled="generatingTracking"
-                @click="generateTracking"
-                title="Générer un numéro de suivi"
-              >
-                {{ generatingTracking ? "…" : "🎲 Générer" }}
-              </button>
-            </div>
           </div>
 
           <button
@@ -346,11 +315,11 @@
               ></span>
               Enregistrement…
             </span>
-            <span v-else>Enregistrer</span>
+            <span v-else>Enregistrer le statut</span>
           </button>
 
           <p v-if="saveSuccess" class="text-green-600 text-sm text-center">
-            Commande mise à jour.
+            Statut mis à jour.
           </p>
           <p v-if="saveError" class="text-red-500 text-sm text-center">{{ saveError }}</p>
         </div>
@@ -369,6 +338,16 @@ import { ref, reactive, computed, onMounted } from "vue";
 import { useRoute, RouterLink } from "vue-router";
 import api from "@/api";
 import { buildClientMessage, buildWaLink } from "@/utils/whatsapp";
+import OrderQuickActionModal from "./OrderQuickActionModal.vue";
+
+// Rafraîchit la commande après une action du panneau de traitement rapide
+// (marquer payée / lien de paiement / suivi + expédition).
+function onOrderUpdated(updated) {
+  if (!updated) return;
+  order.value = { ...order.value, ...updated };
+  editForm.status = order.value.status;
+  editForm.tracking_number = order.value.tracking_number ?? "";
+}
 
 const route = useRoute();
 const order = ref(null);
@@ -399,6 +378,7 @@ const estimatedTotal = computed(() => {
 
 const orderStatusOptions = [
   { value: "pending", label: "En attente" },
+  { value: "confirmed", label: "Confirmée" },
   { value: "processing", label: "En cours" },
   { value: "shipped", label: "Expédiée" },
   { value: "delivered", label: "Livrée" },
@@ -530,6 +510,7 @@ function formatPrice(val) {
 function statusLabel(status) {
   const map = {
     pending: "En attente",
+    confirmed: "Confirmée",
     processing: "En cours",
     shipped: "Expédiée",
     delivered: "Livrée",
@@ -575,6 +556,24 @@ onMounted(fetchOrder);
 </script>
 
 <style scoped>
+/* ── Panneau de traitement rapide (embarqué dans le détail) ── */
+.admin-qa-card { padding: 0; overflow: hidden; }
+.admin-qa-ref {
+  font-size: 0.7rem;
+  font-family: ui-monospace, monospace;
+  color: var(--gray-400);
+  padding: 8px 16px 12px;
+  word-break: break-all;
+}
+/* Le panneau est conçu pour une ligne de tableau pleine largeur : on le
+   contraint pour la colonne étroite du détail (récap 2 col, boutons empilés). */
+.admin-qa-card :deep(.recap-grid) { grid-template-columns: repeat(2, 1fr); }
+.admin-qa-card :deep(.action-row) { flex-direction: column; align-items: stretch; }
+.admin-qa-card :deep(.action-row .input) { min-width: 0; }
+.admin-qa-card :deep(.action-row .btn) { width: 100%; }
+.admin-qa-card :deep(.payment-link-row) { flex-wrap: wrap; }
+.admin-qa-card :deep(.modal__footer) { display: none; }
+
 /* ── Zone de livraison résolue ── */
 .zone-block {
   margin-top: 16px;
