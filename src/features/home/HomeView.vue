@@ -27,9 +27,6 @@
     <!-- 4. Univers / catégories — naviguer par besoin -->
     <CategoriesSection :categories="categories" :loading="loadingCats" />
 
-    <!-- 4b. Gammes de soins — ouverture vers les rituels complets -->
-    <ProductLinesSection />
-
     <!-- 5. Vente flash — urgence / promo, au cœur de la page (pas avant la marque) -->
     <FlashSaleSection
       v-if="homeStats.flash_sales && homeStats.flash_sales.length"
@@ -56,8 +53,11 @@
       :stats="dynamicStats"
     />
 
-    <!-- 9. Galerie lifestyle -->
+    <!-- 9. Galerie « Nos égéries » -->
     <GallerySection />
+
+    <!-- 9b. Gammes de soins — ouverture vers les rituels complets -->
+    <ProductLinesSection />
 
     <!-- 10. Avis clients — dernière preuve sociale avant le footer -->
     <TestimonialsSection :items="testimonials" />
