@@ -40,9 +40,10 @@
 
         <!-- Prix + CTA -->
         <div class="line-hero__actions">
-          <div v-if="line.price" class="line-hero__price-wrap">
+          <!-- Prix : kit s'il est défini, sinon somme des composants -->
+          <div v-if="heroPrice > 0" class="line-hero__price-wrap">
             <span class="line-hero__price-label">Gamme complète</span>
-            <span class="line-hero__price">{{ formatPrice(line.price) }}</span>
+            <span class="line-hero__price">{{ formatPrice(heroPrice) }}</span>
           </div>
 
           <button
@@ -161,6 +162,12 @@ const savings = computed(() => {
   if (!line.value?.price || !itemsTotal.value) return 0
   return Math.max(0, itemsTotal.value - Number(line.value.price))
 })
+
+// Prix affiché dans le hero : prix kit s'il est défini, sinon la somme
+// des prix des produits composants.
+const heroPrice = computed(() =>
+  Number(line.value?.price) || itemsTotal.value || 0
+)
 
 function avatarStyle(p) {
   const color = line.value?.color_hex ?? '#E8336D'

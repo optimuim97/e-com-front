@@ -24,6 +24,10 @@
       <h3 class="pl-card__name">{{ line.name }}</h3>
       <p v-if="line.tagline" class="pl-card__tagline">{{ line.tagline }}</p>
       <span class="pl-card__count">{{ line.products_count ?? 0 }} produit{{ (line.products_count ?? 0) > 1 ? 's' : '' }}</span>
+      <div v-if="displayPrice > 0" class="pl-card__price-row">
+        <span class="pl-card__price-label">Gamme complète</span>
+        <span class="pl-card__price">{{ formatPrice(displayPrice) }}</span>
+      </div>
       <span class="pl-card__cta">
         Découvrir
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
@@ -33,11 +37,23 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useCurrencyStore } from '@/stores/currency'
 
-defineProps({
+const props = defineProps({
   line: { type: Object, required: true },
 })
+
+// Prix de la gamme = prix kit s'il est défini, sinon la somme des prix
+// des produits composants (items_total, calculé côté serveur).
+const displayPrice = computed(() =>
+  Number(props.line.price) || Number(props.line.items_total) || 0
+)
+
+function formatPrice(val) {
+  return useCurrencyStore().format(val ?? 0)
+}
 </script>
 
 <style scoped>
@@ -190,6 +206,26 @@ defineProps({
   font-size: 0.75rem;
   color: var(--gray-400);
   margin-top: 4px;
+}
+.pl-card__price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--cream-200);
+}
+.pl-card__price-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-400);
+}
+.pl-card__price {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--rose-600);
 }
 .pl-card__cta {
   display: inline-flex;
