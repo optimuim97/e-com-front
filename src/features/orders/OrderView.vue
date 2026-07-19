@@ -169,7 +169,10 @@
             </li>
             <li>
               <span>{{ $t('common.shipping') }}</span>
-              <span>{{ Number(order.shipping_cost) > 0 ? formatPrice(order.shipping_cost) : $t('common.free') }}</span>
+              <!-- Pas de livraison gratuite : 0 = frais pas encore renseignés par nos agents -->
+              <span :class="{ 'order-shipping--pending': !(Number(order.shipping_cost) > 0) }">
+                {{ Number(order.shipping_cost) > 0 ? formatPrice(order.shipping_cost) : 'À renseigner par nos agents' }}
+              </span>
             </li>
             <li class="order-totals__final">
               <span>{{ $t('common.total') }}</span>
@@ -715,6 +718,7 @@ onMounted(fetchOrder)
   color: var(--gray-600);
 }
 .order-totals__discount { color: #15803d; }
+.order-shipping--pending { color: #b45309; font-weight: 500; font-size: 0.8125rem; }
 .order-totals__final {
   font-family: var(--font-display);
   font-size: 1.25rem !important;

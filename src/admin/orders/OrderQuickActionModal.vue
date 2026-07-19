@@ -59,6 +59,13 @@
           >
             {{ busy === 'pay-link' ? 'Génération…' : 'Générer un lien de paiement' }}
           </button>
+         
+          <button
+            class="btn btn-outline"
+            @click="generateMerchantLink"
+          >
+            Générer lien marchand Wave
+          </button>
         </div>
         <div v-if="paymentLink" class="payment-link-box">
           <p>Lien généré (CinetPay) :</p>
@@ -66,6 +73,19 @@
             <input :value="paymentLink" readonly class="input" />
             <button class="btn btn-xs btn-outline" @click="copy(paymentLink)">Copier</button>
             <a :href="waPayLink" target="_blank" rel="noopener" class="btn btn-xs btn-primary">
+              Envoyer via WhatsApp
+            </a>
+          </div>
+        </div>
+        <div v-if="merchantLink" class="payment-link-box">
+          <p>Lien marchand Wave ({{ fmt(order.total) }}) :</p>
+          <div class="payment-link-row">
+            <input :value="merchantLink" readonly class="input" />
+            <button class="btn btn-xs btn-outline" @click="copy(merchantLink)">Copier</button>
+            <a :href="merchantLink" target="_blank" rel="noopener" class="btn btn-xs btn-outline">
+              Ouvrir
+            </a>
+            <a :href="waMerchantLink" target="_blank" rel="noopener" class="btn btn-xs btn-primary">
               Envoyer via WhatsApp
             </a>
           </div>
@@ -128,6 +148,7 @@
 import { ref, computed } from 'vue';
 import { RouterLink } from 'vue-router';
 import api from '@/api';
+import { useSettingsStore } from '@/stores/settings';
 
 const props = defineProps({
   order:  { type: Object,  required: true },
@@ -135,11 +156,17 @@ const props = defineProps({
 });
 const emit = defineEmits(['close', 'updated']);
 
+const settings = useSettingsStore();
+
+// Lien marchand Wave par défaut si non configuré dans Paramètres (payment_wave_link)
+const WAVE_MERCHANT_DEFAULT = 'https://pay.wave.com/m/M_sn_-VVZrJ_wEEIP/c/sn/';
+
 const tracking      = ref(props.order.tracking_number ?? '');
 const busy          = ref(null); // 'mark-paid' | 'pay-link' | 'tracking'
 const error         = ref('');
 const success       = ref('');
 const paymentLink   = ref(null);
+const merchantLink  = ref(null);
 
 const clientName = computed(() => {
   const addr = props.order.shipping_address || {};
@@ -189,6 +216,28 @@ async function generatePaymentLink() {
     busy.value = null;
   }
 }
+
+/**
+ * Génère le lien marchand Wave (pay.wave.com) avec le montant de la commande.
+ * Base : setting `payment_wave_link` (admin → Paramètres), sinon lien par défaut.
+ * Aucune requête API : le lien est construit localement, prêt à envoyer au client.
+ */
+function generateMerchantLink() {
+  error.value = ''; success.value = '';
+
+  const base = (settings.paymentWaveLink || '').trim() || WAVE_MERCHANT_DEFAULT;
+  const amount = Math.round(Number(props.order.total) || 0);
+  // Ajoute ?amount= (ou &amount= si la base contient déjà des paramètres)
+  const sep = base.includes('?') ? (base.endsWith('?') || base.endsWith('&') ? '' : '&') : '?';
+
+  merchantLink.value = amount ? `${base}${sep}amount=${amount}` : base;
+  success.value = 'Lien marchand Wave généré. Tu peux l\'envoyer au client.';
+}
+
+const waMerchantLink = computed(() => buildWaLink(
+  clientPhone.value,
+  `Bonjour ${clientName.value.split(' ')[0]} 🌹\n\nVoici votre lien de paiement Wave pour la commande ${props.order.number} (${fmt(props.order.total)}) :\n${merchantLink.value}\n\nCliquez sur le lien pour payer directement avec Wave.\n\nMerci de votre confiance.\nRosabeauty Facial Care`,
+));
 
 async function generateTracking() {
   busy.value = 'gen-tracking';

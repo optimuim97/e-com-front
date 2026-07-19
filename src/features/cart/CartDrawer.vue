@@ -427,33 +427,25 @@ const shippingQuote = ref(null)
 
 const shippingFound  = computed(() => shippingQuote.value && !shippingQuote.value.not_found)
 const shippingManual = computed(() => shippingQuote.value?.not_found === true)
+// Tarif au kilo (international) : poids inconnu → agents renseignent
+const shippingPerKg  = computed(() => shippingFound.value && shippingQuote.value.unit === 'per_kg')
 
 const shippingCost = computed(() => {
-  if (shippingFound.value) {
-    return shippingQuote.value.is_free ? 0 : shippingQuote.value.price
-  }
-  // Hors zone OU pas encore renseigné : on n'invente aucun montant.
+  // Le prix vient directement de la zone de livraison — pas de gratuité.
+  if (shippingFound.value && !shippingPerKg.value) return Number(shippingQuote.value.price) || 0
+  // Hors zone / per kg / pas encore renseigné : on n'invente aucun montant.
   return 0
 })
 
 const shippingLabel = computed(() => {
-  if (shippingFound.value) {
-    // Pas de livraison gratuite réelle : le tarif est précisé par nos agents
-    if (shippingQuote.value.is_free) return 'À confirmer par nos agents'
-    const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
-    return fmt(shippingQuote.value.price) + suffix
-  }
-  if (shippingManual.value) {
-    return 'À confirmer par nos agents'
-  }
+  if (shippingFound.value && !shippingPerKg.value) return fmt(shippingQuote.value.price)
+  if (shippingManual.value || shippingPerKg.value) return 'À renseigner par nos agents'
   return 'À renseigner'
 })
 
-const shippingLabelClass = computed(() => {
-  if (shippingFound.value && shippingQuote.value.is_free) return 'drawer__amber'
-  if (shippingManual.value) return 'drawer__amber'
-  return ''
-})
+const shippingLabelClass = computed(() =>
+  (shippingManual.value || shippingPerKg.value) ? 'drawer__amber' : ''
+)
 
 const grandTotal = computed(() => cartStore.total + shippingCost.value)
 

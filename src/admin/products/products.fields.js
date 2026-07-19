@@ -15,7 +15,7 @@ export const FIELDS = {
   description:     { api: 'description',     label: 'Description',        type: 'textarea', required: false },
   sku:             { api: 'sku',             label: 'SKU',                type: 'text',     required: false },
   type:            { api: 'type',            label: 'Type',               type: 'select',   required: true  },
-  category_id:     { api: 'category_id',     label: 'Catégorie',          type: 'select',   required: false },
+  category_ids:    { api: 'category_ids',    label: 'Catégories',         type: 'multi',    required: false },
   product_line_id: { api: 'product_line_id', label: 'Gamme de produits',  type: 'select',   required: false },
 
   // ── Prix & stock ────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ export const FIELDS = {
 export function makeForm() {
   return {
     name: '', description: '', sku: '', type: 'physical',
-    category_id: '', product_line_id: '',
+    category_ids: [], product_line_id: '',
     price: '', compare_price: '', stock: 0,
     is_active: true, is_featured: false,
   }
@@ -48,7 +48,10 @@ export function toPayload(form) {
     description:     form.description     || null,
     sku:             form.sku             || null,
     type:            form.type,
-    category_id:     form.category_id     || null,
+    // Multi-catégories : le serveur synchronise le pivot et prend la
+    // première comme catégorie principale (category_id).
+    category_ids:    form.category_ids ?? [],
+    category_id:     (form.category_ids ?? [])[0] ?? null,
     product_line_id: form.product_line_id || null,
     price:           form.price,
     compare_price:   form.compare_price   || null,

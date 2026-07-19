@@ -44,8 +44,25 @@
           </FormField>
         </div>
 
-        <FormField :def="FIELDS.category_id" :error="fieldErrors.category_id" optional>
-          <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Sans catégorie" />
+        <FormField :def="FIELDS.category_ids" :error="fieldErrors.category_ids || fieldErrors.category_id" optional>
+          <!-- Multi-sélection : un produit peut appartenir à plusieurs catégories -->
+          <div class="cat-multi">
+            <button
+              v-for="opt in flatCategoryOptions"
+              :key="opt.value"
+              type="button"
+              class="cat-pill"
+              :class="{ 'cat-pill--on': form.category_ids.includes(opt.value) }"
+              @click="toggleCategory(opt.value)"
+            >
+              <svg v-if="form.category_ids.includes(opt.value)" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              {{ opt.label }}
+            </button>
+            <p v-if="!flatCategoryOptions.length" class="cat-multi__empty">Aucune catégorie créée.</p>
+          </div>
+          <p v-if="form.category_ids.length > 1" class="cat-multi__hint">
+            La première sélectionnée devient la catégorie principale.
+          </p>
         </FormField>
 
         <FormField :def="FIELDS.product_line_id" :error="fieldErrors.product_line_id" optional>
@@ -275,10 +292,13 @@ function flattenCategories(list, depth = 0) {
   return out
 }
 
-const categoryOptions = computed(() => [
-  { value: '', label: 'Sans catégorie' },
-  ...flattenCategories(categories.value),
-])
+const flatCategoryOptions = computed(() => flattenCategories(categories.value))
+
+function toggleCategory(id) {
+  const i = form.category_ids.indexOf(id)
+  if (i === -1) form.category_ids.push(id)
+  else form.category_ids.splice(i, 1)
+}
 
 const productLineOptions = computed(() => [
   { value: '', label: 'Aucune gamme' },
@@ -311,7 +331,7 @@ async function fetchProduct() {
       description:     p.description     ?? '',
       sku:             p.sku             ?? '',
       type:            p.type            ?? 'physical',
-      category_id:     p.category?.id    ?? '',
+      category_ids:    (p.categories?.length ? p.categories.map(c => c.id) : [p.category?.id].filter(Boolean)),
       product_line_id: p.product_line?.id ?? '',
       price:           p.price           ?? '',
       compare_price:   p.compare_price   ?? '',
@@ -466,5 +486,39 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--gray-800);
   margin-top: 4px;
+}
+
+/* ── Multi-sélection catégories ── */
+.cat-multi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cream-300);
+  background: var(--cream-50);
+  font-size: 0.8125rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.cat-pill:hover { border-color: var(--rose-300); color: var(--rose-600); }
+.cat-pill--on {
+  background: var(--rose-50);
+  border-color: var(--rose-400);
+  color: var(--rose-700);
+  font-weight: 600;
+}
+.cat-multi__empty { font-size: 0.8125rem; color: var(--gray-400); }
+.cat-multi__hint {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  font-style: italic;
 }
 </style>

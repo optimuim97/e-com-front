@@ -79,7 +79,7 @@
     "natural": "100% naturel",
     "noParaben": "Sans paraben",
     "delivery48h": "Livraison 48h",
-    "return14d": "Retour 14 jours",
+    "return14d": "Votre satisfaction garantie",
     "flashBadge": "Vente flash",
     "defaultProductName": "Huile de Rose Musquée Pure",
     "defaultReview": "Ma peau est transformée en 2 semaines !"
@@ -170,6 +170,7 @@
     "legal": "Mentions légales"
   },
   "auth": {
+    "name": "Nom complet",
     "loginEyebrow": "Connexion",
     "loginTitle": "Bon retour",
     "loginDesc": "Connectez-vous pour retrouver vos commandes & soins favoris.",
@@ -388,7 +389,7 @@
     "addedToCart": "✓ Produit ajouté au panier",
     "natural": "100% naturel",
     "delivery48h": "Livraison 48h",
-    "return14d": "Retour 14 jours",
+    "return14d": "Votre satisfaction garantie",
     "featured": "Vedette",
     "soldOut": "Épuisé"
   },

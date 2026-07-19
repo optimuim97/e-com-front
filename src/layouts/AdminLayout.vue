@@ -99,6 +99,7 @@ import {
   ClipboardDocumentListIcon,
   ShoppingCartIcon,
   SwatchIcon,
+  PhotoIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
@@ -162,6 +163,7 @@ const NAV_GROUPS = [
       { to: '/admin/programme',       label: 'Club fidélité',      icon: StarIcon,                permission: 'program.view'         },
       { to: '/admin/reviews',         label: 'Avis clients',       icon: ChatBubbleLeftRightIcon, permission: 'reviews.view'         },
       { to: '/admin/blog',            label: 'Blog',               icon: NewspaperIcon,           permission: 'blog.view'            },
+      { to: '/admin/galerie',         label: 'Galerie égéries',    icon: PhotoIcon,               permission: 'gallery.view'         },
       { to: '/admin/newsletter',      label: 'Newsletter',         icon: EnvelopeIcon,            permission: 'newsletter.view'      },
       { to: '/admin/abandoned-carts', label: 'Paniers abandonnés', icon: ShoppingCartIcon,        permission: 'abandoned_carts.view' },
     ],

@@ -816,33 +816,27 @@ const couponLabelSuffix = computed(() => {
   return couponDiscount.value ? ` (${couponDiscount.value}%)` : ''
 })
 
-// ── Frais de livraison : quote API. Hors zone => frais dictés par agents. ────
+// ── Frais de livraison : quote API — le prix vient directement de la zone. ───
+// Pas de livraison gratuite dans le système. Zone non identifiée ou tarif au
+// kilo (poids inconnu) → « À renseigner par nos agents ».
 const shippingQuote  = ref(null)
 const shippingFound  = computed(() => shippingQuote.value && !shippingQuote.value.not_found)
 const shippingManual = computed(() => shippingQuote.value?.not_found === true)
+const shippingPerKg  = computed(() => shippingFound.value && shippingQuote.value.unit === 'per_kg')
 
 const shippingCost = computed(() => {
-  if (shippingFound.value) {
-    return shippingQuote.value.is_free ? 0 : shippingQuote.value.price
-  }
-  return 0 // hors zone : aucun montant injecté, agents reviendront vers le client
+  if (shippingFound.value && !shippingPerKg.value) return Number(shippingQuote.value.price) || 0
+  return 0 // zone inconnue / per kg : aucun montant injecté, agents renseignent
 })
 
 const shippingLabel = computed(() => {
-  if (shippingFound.value) {
-    // Pas de livraison gratuite réelle : le tarif est précisé par nos agents
-    if (shippingQuote.value.is_free) return 'À confirmer par nos agents'
-    const suffix = shippingQuote.value.unit === 'per_kg' ? ' / kg' : ''
-    return formatPrice(shippingQuote.value.price) + suffix
-  }
-  if (shippingManual.value) return 'À confirmer par nos agents'
+  if (shippingFound.value && !shippingPerKg.value) return formatPrice(shippingQuote.value.price)
+  if (shippingManual.value || shippingPerKg.value) return 'À renseigner par nos agents'
   return 'À renseigner'
 })
 
-// Livraison « à confirmer » : zone trouvée mais sans tarif fixe, ou hors zone
-const shippingPending = computed(() =>
-  (shippingFound.value && shippingQuote.value.is_free) || shippingManual.value
-)
+// Livraison « à renseigner » : hors zone, ou tarif au kilo sans poids connu
+const shippingPending = computed(() => shippingPerKg.value || shippingManual.value)
 
 let quoteTimer = null
 async function refreshShippingQuote() {

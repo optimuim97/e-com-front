@@ -1,80 +1,45 @@
 <template>
-  <section class="gallery-section">
+  <section v-if="loading || photos.length" class="gallery-section">
     <div class="container">
       <SectionHeader eyebrow="Univers Rosa Beauty Facial Care">
-        Dans les coulisses de la beauté
+        Nos égéries
       </SectionHeader>
+      <p class="gallery-sub">Elles incarnent la beauté naturelle Rosa Beauty — découvrez leurs portraits.</p>
 
-      <div class="gallery-grid">
-        <!-- Grande image gauche -->
-        <div class="gallery-item gallery-item--large" @click="openLightbox(0)">
-          <img src="/image_site/FLS_8032.jpeg" alt="Produits Rosa Beauty Facial Care — Collection" loading="lazy" />
-          <div class="gallery-overlay">
-            <span class="gallery-zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-              </svg>
-            </span>
-          </div>
-        </div>
-
-        <!-- Colonne droite -->
-        <div class="gallery-col">
-          <div class="gallery-item" @click="openLightbox(1)">
-            <img src="/image_site/FLS_8111.jpeg" alt="Matières premières naturelles" loading="lazy" />
-            <div class="gallery-overlay">
-              <span class="gallery-zoom">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-                </svg>
-              </span>
-            </div>
-          </div>
-          <div class="gallery-item" @click="openLightbox(2)">
-            <img src="/image_site/FLS_8130.jpeg" alt="Formulation Rosa Beauty Facial Care" loading="lazy" />
-            <div class="gallery-overlay">
-              <span class="gallery-zoom">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-                </svg>
-              </span>
-            </div>
-          </div>
-        </div>
+      <!-- Skeleton -->
+      <div v-if="loading" class="muses-grid">
+        <div v-for="i in 5" :key="i" class="muse-card muse-card--skeleton" :class="{ 'muse-card--featured': i === 1 }"></div>
       </div>
 
-      <!-- Rangée basse -->
-      <div class="gallery-row">
-        <div class="gallery-item gallery-item--wide" @click="openLightbox(3)">
-          <img src="/image_site/FLS_8142.jpeg" alt="Atelier Rosa Beauty Facial Care" loading="lazy" />
-          <div class="gallery-overlay">
-            <span class="gallery-zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-              </svg>
-            </span>
+      <!-- Grille éditoriale -->
+      <div v-else class="muses-grid">
+        <button
+          v-for="(photo, idx) in photos"
+          :key="photo.id ?? idx"
+          class="muse-card"
+          :class="{ 'muse-card--featured': idx === 0 }"
+          @click="openLightbox(idx)"
+          :aria-label="photo.title || 'Photo Rosa Beauty'"
+        >
+          <img
+            :src="photo.image_url"
+            :alt="photo.title || 'Égérie Rosa Beauty Facial Care'"
+            loading="lazy"
+          />
+          <!-- Voile dégradé permanent pour lisibilité du texte -->
+          <div class="muse-card__scrim" aria-hidden="true"></div>
+
+          <div v-if="photo.title || photo.description" class="muse-card__caption">
+            <span v-if="photo.title" class="muse-card__name">{{ photo.title }}</span>
+            <span v-if="photo.description" class="muse-card__desc">{{ photo.description }}</span>
           </div>
-        </div>
-        <div class="gallery-item gallery-item--wide" @click="openLightbox(4)">
-          <img src="/image_site/DSC_7542.jpeg" alt="Ingrédients naturels Rosa Beauty Facial Care" loading="lazy" />
-          <div class="gallery-overlay">
-            <span class="gallery-zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-              </svg>
-            </span>
-          </div>
-        </div>
-        <div class="gallery-item gallery-item--wide" @click="openLightbox(5)">
-          <img src="/image_site/DSC_7553.jpeg" alt="Soins Rosa Beauty Facial Care" loading="lazy" />
-          <div class="gallery-overlay">
-            <span class="gallery-zoom">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
-              </svg>
-            </span>
-          </div>
-        </div>
+
+          <span class="muse-card__zoom" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+            </svg>
+          </span>
+        </button>
       </div>
     </div>
 
@@ -82,10 +47,20 @@
     <Teleport to="body">
       <Transition name="lb">
         <div v-if="lightboxIndex !== null" class="lightbox" @click.self="lightboxIndex = null">
-          <button class="lightbox__close" @click="lightboxIndex = null">×</button>
-          <button class="lightbox__prev" @click="prevImg" v-if="lightboxIndex > 0">‹</button>
-          <button class="lightbox__next" @click="nextImg" v-if="lightboxIndex < images.length - 1">›</button>
-          <img :src="images[lightboxIndex]" class="lightbox__img" />
+          <button class="lightbox__close" @click="lightboxIndex = null" aria-label="Fermer">×</button>
+          <button class="lightbox__prev" @click="prevImg" v-if="lightboxIndex > 0" aria-label="Précédent">‹</button>
+          <button class="lightbox__next" @click="nextImg" v-if="lightboxIndex < photos.length - 1" aria-label="Suivant">›</button>
+
+          <figure class="lightbox__figure">
+            <img :src="photos[lightboxIndex].image_url" class="lightbox__img" :alt="photos[lightboxIndex].title || ''" />
+            <figcaption
+              v-if="photos[lightboxIndex].title || photos[lightboxIndex].description"
+              class="lightbox__caption"
+            >
+              <strong v-if="photos[lightboxIndex].title">{{ photos[lightboxIndex].title }}</strong>
+              <span v-if="photos[lightboxIndex].description">{{ photos[lightboxIndex].description }}</span>
+            </figcaption>
+          </figure>
         </div>
       </Transition>
     </Teleport>
@@ -93,24 +68,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
+import api from '@/api'
 
-const images = [
-  '/image_site/FLS_8032.jpeg',
-  '/image_site/FLS_8111.jpeg',
-  '/image_site/FLS_8130.jpeg',
-  '/image_site/FLS_8142.jpeg',
-  '/image_site/DSC_7542.jpeg',
-  '/image_site/DSC_7553.jpeg',
-  '/image_site/DSC_7629.jpeg',
+/**
+ * Galerie « Nos égéries » — photos publiées depuis l'admin (/admin/galerie).
+ * Repli sur les photos historiques du site si rien n'est encore publié.
+ */
+const FALLBACK = [
+  { image_url: '/image_site/FLS_8032.jpeg', title: 'Rosa Beauty', description: '' },
+  { image_url: '/image_site/FLS_8111.jpeg', title: '', description: '' },
+  { image_url: '/image_site/FLS_8130.jpeg', title: '', description: '' },
+  { image_url: '/image_site/FLS_8142.jpeg', title: '', description: '' },
+  { image_url: '/image_site/DSC_7542.jpeg', title: '', description: '' },
+  { image_url: '/image_site/DSC_7553.jpeg', title: '', description: '' },
 ]
 
+const photos        = ref([])
+const loading       = ref(true)
 const lightboxIndex = ref(null)
+
+async function fetchPhotos() {
+  try {
+    const { data } = await api.get('/gallery')
+    const list = data.data ?? data
+    photos.value = Array.isArray(list) && list.length ? list : FALLBACK
+  } catch {
+    photos.value = FALLBACK
+  } finally {
+    loading.value = false
+  }
+}
 
 function openLightbox(idx) { lightboxIndex.value = idx }
 function prevImg() { if (lightboxIndex.value > 0) lightboxIndex.value-- }
-function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.value++ }
+function nextImg() { if (lightboxIndex.value < photos.value.length - 1) lightboxIndex.value++ }
+
+function onKeyDown(e) {
+  if (lightboxIndex.value === null) return
+  if (e.key === 'ArrowRight') nextImg()
+  else if (e.key === 'ArrowLeft') prevImg()
+  else if (e.key === 'Escape') lightboxIndex.value = null
+}
+
+onMounted(() => {
+  fetchPhotos()
+  window.addEventListener('keydown', onKeyDown)
+})
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 </script>
 
 <style scoped>
@@ -119,66 +125,114 @@ function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.
   background: var(--color-bg);
 }
 
-/* ── Grid principale ── */
-.gallery-grid {
+.gallery-sub {
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 0.9375rem;
+  margin: calc(-1 * var(--space-4)) auto var(--space-8);
+  max-width: 480px;
+}
+
+/* ── Grille éditoriale ──
+   1ère photo en vedette (2×2), les suivantes en 1×1.
+   dense pour combler les trous quel que soit le nombre de photos. */
+.muses-grid {
   display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: var(--space-3);
-  margin-bottom: var(--space-3);
-}
-
-.gallery-col {
-  display: flex;
-  flex-direction: column;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: 210px;
+  grid-auto-flow: dense;
   gap: var(--space-3);
 }
 
-.gallery-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
-}
-
-/* ── Item ── */
-.gallery-item {
+.muse-card {
   position: relative;
   border-radius: var(--radius-xl);
   overflow: hidden;
   cursor: pointer;
   background: var(--cream-100);
+  padding: 0;
+  border: none;
+  text-align: left;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.gallery-item img {
+.muse-card--featured {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.muse-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.5s ease;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.gallery-item:hover img { transform: scale(1.04); }
+@media (hover: hover) {
+  .muse-card:hover img { transform: scale(1.05); }
+  .muse-card:hover .muse-card__zoom { opacity: 1; transform: scale(1); }
+  .muse-card:hover .muse-card__scrim { opacity: 1; }
+}
 
-.gallery-item--large { min-height: 340px; }
-.gallery-col .gallery-item { height: 160px; }
-.gallery-row .gallery-item { height: 200px; }
-
-/* ── Overlay ── */
-.gallery-overlay {
+/* Voile bas permanent — renforcé au hover */
+.muse-card__scrim {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background var(--transition-fast);
+  background: linear-gradient(to top, rgba(20, 12, 16, 0.72) 0%, rgba(20, 12, 16, 0.18) 38%, transparent 62%);
+  opacity: 0.9;
+  transition: opacity var(--transition-normal);
+  pointer-events: none;
 }
-.gallery-item:hover .gallery-overlay { background: rgba(0,0,0,0.28); }
 
-.gallery-zoom {
-  width: 44px;
-  height: 44px;
+/* ── Légende (nom + description) ── */
+.muse-card__caption {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.muse-card__name {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+}
+.muse-card--featured .muse-card__name { font-size: 1.5rem; }
+
+.muse-card__desc {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.85);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+}
+.muse-card--featured .muse-card__desc {
+  font-size: 0.8438rem;
+  -webkit-line-clamp: 3;
+}
+
+/* ── Zoom ── */
+.muse-card__zoom {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,9 +241,16 @@ function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.
   transition: all var(--transition-fast);
   color: var(--gray-700);
 }
-.gallery-item:hover .gallery-zoom {
-  opacity: 1;
-  transform: scale(1);
+
+/* ── Skeleton ── */
+.muse-card--skeleton {
+  background: var(--cream-200);
+  animation: gallery-pulse 1.5s ease-in-out infinite;
+  cursor: default;
+}
+@keyframes gallery-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
 }
 
 /* ── Lightbox ── */
@@ -204,11 +265,39 @@ function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.
   padding: var(--space-8);
 }
 
+.lightbox__figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 90vw;
+}
+
 .lightbox__img {
   max-width: 90vw;
-  max-height: 88vh;
+  max-height: 78vh;
   object-fit: contain;
   border-radius: var(--radius-lg);
+}
+
+.lightbox__caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  max-width: 560px;
+}
+.lightbox__caption strong {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #fff;
+}
+.lightbox__caption span {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.55;
 }
 
 .lightbox__close {
@@ -219,6 +308,7 @@ function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.
   color: rgba(255,255,255,0.7);
   line-height: 1;
   transition: color var(--transition-fast);
+  z-index: 2;
 }
 .lightbox__close:hover { color: #fff; }
 
@@ -231,26 +321,51 @@ function nextImg() { if (lightboxIndex.value < images.length - 1) lightboxIndex.
   color: rgba(255,255,255,0.6);
   padding: 16px;
   transition: color var(--transition-fast);
+  z-index: 2;
 }
 .lightbox__prev:hover,
 .lightbox__next:hover { color: #fff; }
 .lightbox__prev { left: 16px; }
 .lightbox__next { right: 16px; }
 
-/* Lightbox transition */
 .lb-enter-active,
 .lb-leave-active { transition: opacity 0.2s ease; }
 .lb-enter-from,
 .lb-leave-to { opacity: 0; }
 
+/* ── Responsive ── */
 @media (max-width: 1024px) {
-  .gallery-grid { grid-template-columns: 1fr; }
-  .gallery-col  { flex-direction: row; }
-  .gallery-col .gallery-item { flex: 1; height: 180px; }
+  .muses-grid {
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 190px;
+  }
 }
+
 @media (max-width: 640px) {
-  .gallery-row  { grid-template-columns: 1fr 1fr; }
-  .gallery-col  { flex-direction: column; }
-  .gallery-col .gallery-item { height: 160px; }
+  /* Mobile : carrousel horizontal scroll-snap — plus agréable que la grille empilée */
+  .muses-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: var(--space-3);
+    padding-bottom: var(--space-3);
+    margin-inline: calc(-1 * var(--space-4));
+    padding-inline: var(--space-4);
+    scrollbar-width: none;
+  }
+  .muses-grid::-webkit-scrollbar { display: none; }
+
+  .muse-card,
+  .muse-card--featured {
+    flex: 0 0 78vw;
+    max-width: 340px;
+    height: 380px;
+    scroll-snap-align: center;
+  }
+
+  .muse-card--featured .muse-card__name { font-size: 1.25rem; }
+
+  .lightbox { padding: var(--space-4); }
+  .lightbox__img { max-height: 66vh; }
 }
 </style>

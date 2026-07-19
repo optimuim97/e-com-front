@@ -37,6 +37,11 @@
             </p>
           </div>
           <div class="flex items-center gap-3">
+            <span
+              v-if="order.shipping_unknown || !(Number(order.shipping_cost) > 0)"
+              class="badge badge-warning"
+              title="Zone de livraison non identifiée — renseignez les frais via Modifier"
+            >Frais livraison à renseigner</span>
             <span :class="statusBadge(order.status)">{{
               statusLabel(order.status)
             }}</span>
@@ -134,10 +139,12 @@
               <span>Réduction</span><span>-{{ formatPrice(order.discount_amount) }}</span>
             </div>
             <div class="flex justify-between text-sm text-gray-500">
-              <span>Livraison</span
-              ><span>{{
-                order.shipping_amount ? formatPrice(order.shipping_amount) : "Gratuite"
-              }}</span>
+              <span>Livraison</span>
+              <!-- Pas de gratuité : 0 = frais à renseigner par l'agent (via Modifier) -->
+              <span
+                v-if="Number(order.shipping_cost) > 0"
+              >{{ formatPrice(order.shipping_cost) }}</span>
+              <span v-else class="badge badge-warning">À renseigner</span>
             </div>
             <div
               class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-100"

@@ -18,6 +18,7 @@ export default {
     { path: 'roles',                        name: 'admin.roles',                  meta: { permission: 'roles.view' },           component: () => import('./roles/RolesView.vue') },
     { path: 'permissions',                  name: 'admin.permissions',            meta: { permission: 'permissions.view' },     component: () => import('./permissions/PermissionsView.vue') },
     { path: 'settings',                     name: 'admin.settings',               meta: { permission: 'settings.view' },        component: () => import('./settings/SettingsView.vue') },
+    { path: 'galerie',                      name: 'admin.gallery',                meta: { permission: 'gallery.view' },         component: () => import('./gallery/GalleryView.vue') },
     { path: 'blog',                         name: 'admin.blog',                   meta: { permission: 'blog.view' },            component: () => import('./blog/BlogView.vue') },
     { path: 'blog/create',                  name: 'admin.blog.create',            meta: { permission: 'blog.create' },          component: () => import('./blog/BlogFormView.vue') },
     { path: 'blog/:id/edit',                name: 'admin.blog.edit',              meta: { permission: 'blog.edit' },            component: () => import('./blog/BlogFormView.vue') },
