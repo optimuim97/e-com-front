@@ -79,6 +79,9 @@
                     <span class="navbar__dropdown-dot navbar__dropdown-dot--rose"></span>
                     {{ line.name }}
                   </RouterLink>
+                  <RouterLink to="/gammes" class="navbar__dropdown-all" @click="productsOpen = false">
+                    Toutes les gammes →
+                  </RouterLink>
                 </div>
               </div>
             </div>
@@ -236,6 +239,7 @@ const productLines = ref([])
 const navLinks = computed(() => [
   { to: '/',          label: t('common.home') },
   { to: '/products',  label: t('common.products') },
+  { to: '/gammes',    label: 'Gammes de soins' },
   { to: '/a-propos',  label: 'À propos' },
   { to: '/blog',      label: t('common.blog') },
   { to: '/contact',   label: 'Contact' },

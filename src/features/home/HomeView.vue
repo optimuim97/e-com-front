@@ -27,6 +27,9 @@
     <!-- 4. Univers / catégories — naviguer par besoin -->
     <CategoriesSection :categories="categories" :loading="loadingCats" />
 
+    <!-- 4b. Gammes de soins — ouverture vers les rituels complets -->
+    <ProductLinesSection />
+
     <!-- 5. Vente flash — urgence / promo, au cœur de la page (pas avant la marque) -->
     <FlashSaleSection
       v-if="homeStats.flash_sales && homeStats.flash_sales.length"
@@ -76,6 +79,7 @@ import HeroSection          from '@/features/home/sections/HeroSection.vue'
 import GallerySection       from '@/features/home/sections/GallerySection.vue'
 import BenefitsSection      from '@/features/home/sections/BenefitsSection.vue'
 import CategoriesSection    from '@/features/home/sections/CategoriesSection.vue'
+import ProductLinesSection  from '@/features/home/sections/ProductLinesSection.vue'
 import BestSellersSection   from '@/features/home/sections/BestSellersSection.vue'
 import NewCollectionSection from '@/features/home/sections/NewCollectionSection.vue'
 import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
