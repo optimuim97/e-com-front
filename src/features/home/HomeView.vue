@@ -162,9 +162,10 @@ const promises = computed(() => [
 /* ── Stats dynamiques ────────────────────────────────────────────────────── */
 const dynamicStats = computed(() => [
   {
-    value: homeStats.value.clients_count
-      ? `${homeStats.value.clients_count.toLocaleString('fr-FR')}+`
-      : '2 000+',
+    // Volontairement statique : clients_count ne compte que les comptes
+    // créés sur le site (une poignée), pas les clientes servies. L'afficher
+    // donnait « 11+ », en contradiction avec la page À propos.
+    value: '5 000+',
     label: t('about.satisfiedClients'),
   },
   { value: '100%', label: t('about.naturalPure') },

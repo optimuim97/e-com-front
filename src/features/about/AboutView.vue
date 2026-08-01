@@ -257,7 +257,7 @@ const stats = [
   { value: '100%', label: 'Formules naturelles' },
   { value: '5+',   label: 'Gammes de soins' },
   { value: '0',    label: 'Parabens & sulfates' },
-  { value: '2 000+', label: 'Clientes satisfaites' },
+  { value: '5 000+', label: 'Clientes satisfaites' },
 ]
 
 const missionPoints = [
