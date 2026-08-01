@@ -269,10 +269,12 @@ const missionPoints = [
 ]
 
 const processSteps = [
+  // La grille du procédé est pensée pour 4 étapes (4 / 2 / 1 colonnes selon
+  // la largeur) : une cinquième se retrouverait seule sur sa ligne.
   {
     image: '/image_site/DSC_7630.jpeg',
-    title: 'Sélection des ingrédients',
-    desc:  'Nous sourçons des ingrédients naturels de haute qualité — huiles précieuses, extraits botaniques et actifs concentrés soigneusement choisis.',
+    title: 'La cueillette',
+    desc:  'Nos roses de Damas sont récoltées à la main, fleur par fleur, dans les roseraies de nos partenaires producteurs.',
   },
   {
     image: '/image_site/FLS_8130.jpeg',

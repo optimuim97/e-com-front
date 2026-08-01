@@ -160,8 +160,11 @@
               </button>
 
               <!-- Connexion sociale rapide -->
+              <!-- Facebook était le seul bouton ici ; il est masqué tant que
+                   la configuration côté Meta n'est pas finalisée, et remplacé
+                   par Google pour ne pas laisser la section vide. -->
               <div class="drawer__choice-divider"><span>ou en un clic</span></div>
-              <FacebookButton @success="onSocialSuccess" />
+              <GoogleButton @success="onSocialSuccess" />
             </div>
           </Transition>
 
@@ -404,7 +407,7 @@ import { useCurrencyStore } from '@/stores/currency';
 import CitySelect      from '@/components/shop/CitySelect.vue';
 import CityFree        from '@/components/shop/CityFree.vue';
 import QuickOrderModal from '@/features/checkout/QuickOrderModal.vue';
-import FacebookButton  from '@/features/auth/FacebookButton.vue';
+import GoogleButton    from '@/features/auth/GoogleButton.vue';
 import PhoneInput      from '@/components/ui/PhoneInput.vue';
 import { useRouter, RouterLink } from 'vue-router';
 import api from '@/api';
