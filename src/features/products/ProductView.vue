@@ -559,7 +559,7 @@ watch(() => route.params.slug, () => {
   gap: var(--space-3);
 }
 .product-info__price-current {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 2rem;
   font-weight: 600;
   color: var(--rose-600);

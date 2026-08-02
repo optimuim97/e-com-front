@@ -292,7 +292,7 @@ async function applyCoupon() {
 }
 .cart-item__variant { font-size: 0.75rem; color: var(--gray-400); }
 .cart-item__price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--rose-600);
@@ -433,7 +433,7 @@ async function applyCoupon() {
 }
 .cart-summary__line--discount { color: #15803d; }
 .cart-summary__line--total {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.375rem !important;
   font-weight: 600;
   color: var(--gray-800) !important;

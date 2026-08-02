@@ -1039,7 +1039,7 @@ function fmtPrice(val) {
   color: var(--gray-600);
 }
 .qo-total strong {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.25rem;
   color: var(--rose-600);
 }

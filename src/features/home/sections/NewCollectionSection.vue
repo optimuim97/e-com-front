@@ -341,7 +341,7 @@ const formatPrice = (v) => settings.formatPrice(v);
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--rose-600);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
 }
 .new-card__btn {
   width: 36px;

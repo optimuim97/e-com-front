@@ -279,7 +279,7 @@ async function remove(productId) {
   margin-top: var(--space-1);
 }
 .wishlist-card__price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.125rem;
   font-weight: 600;
   color: var(--rose-600);

@@ -283,7 +283,7 @@ onMounted(() => fetchOrders())
   gap: var(--space-1);
 }
 .order-row__total {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.375rem;
   font-weight: 600;
   color: var(--rose-600);

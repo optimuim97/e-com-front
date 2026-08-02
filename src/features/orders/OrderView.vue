@@ -697,7 +697,7 @@ onMounted(fetchOrder)
   margin-top: 4px;
 }
 .order-item__price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.0625rem;
   font-weight: 600;
   color: var(--gray-800);
@@ -720,7 +720,7 @@ onMounted(fetchOrder)
 .order-totals__discount { color: #15803d; }
 .order-shipping--pending { color: #b45309; font-weight: 500; font-size: 0.8125rem; }
 .order-totals__final {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.25rem !important;
   font-weight: 600;
   color: var(--gray-800) !important;

@@ -1374,7 +1374,7 @@ function formatPrice(val) {
 }
 .co-summary__discount { color: #15803d; }
 .co-summary__total {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.125rem !important;
   font-weight: 600;
   color: var(--gray-800) !important;
@@ -1672,7 +1672,7 @@ function formatPrice(val) {
   border-top: 1px solid var(--cream-100);
 }
 .co-mini-total--bold {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1rem;
   color: var(--gray-800);
@@ -1707,7 +1707,7 @@ function formatPrice(val) {
 }
 .co-mobile-cta__total span { font-size: 0.6875rem; color: var(--gray-400); }
 .co-mobile-cta__total strong {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 700;
   color: var(--rose-600);
@@ -1748,7 +1748,7 @@ function formatPrice(val) {
   color: var(--gray-600);
 }
 .pay-instr__amount {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.0625rem;
   color: var(--rose-600);
 }
@@ -1804,7 +1804,7 @@ function formatPrice(val) {
   opacity: 0.9;
 }
 .pay-instr__amount-hero-value {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.1;

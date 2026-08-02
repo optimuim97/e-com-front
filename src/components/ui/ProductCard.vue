@@ -421,7 +421,7 @@ function toggleWishlist() {
   text-decoration: line-through;
 }
 .product-card__price-current {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.375rem;
   font-weight: 800;
   color: var(--rose-600);

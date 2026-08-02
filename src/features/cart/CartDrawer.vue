@@ -1105,7 +1105,7 @@ function fmt(val) {
   text-overflow: ellipsis;
 }
 .drawer__item-price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--rose-600);
@@ -1229,7 +1229,7 @@ function fmt(val) {
 }
 .drawer__recap-line--discount { color: #15803d; }
 .drawer__recap-line--total {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
   color: var(--gray-800);
@@ -1462,7 +1462,7 @@ function fmt(val) {
 .drawer__amber { color: var(--gold-600); font-weight: 500; }
 .drawer__green { color: #15803d; font-weight: 500; }
 .drawer__totals-final {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.125rem !important;
   font-weight: 600;
   color: var(--gray-800) !important;
