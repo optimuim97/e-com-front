@@ -579,7 +579,7 @@ onMounted(async () => {
   margin-bottom: 3px;
 }
 .chart-footer__val {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1rem;
   color: var(--gray-800);
 }

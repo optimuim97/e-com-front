@@ -48,12 +48,9 @@
     </div>
 
     <!-- ── Connexion sociale ── -->
+    <!-- Facebook masqué tant que la configuration côté Meta n'est pas
+         finalisée — remettre <FacebookButton> pour le réactiver. -->
     <div class="gate__social">
-      <FacebookButton
-        :label="$t('authGate.continueWithFacebook')"
-        @success="onSocialSuccess"
-        @error="socialError = $event"
-      />
       <GoogleButton
         :label="$t('authGate.continueWithGoogle')"
         @success="onSocialSuccess"
@@ -123,7 +120,6 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import { useCartStore }     from '@/features/cart/cart.store'
-import FacebookButton       from '@/features/auth/FacebookButton.vue'
 import GoogleButton         from '@/features/auth/GoogleButton.vue'
 
 const emit = defineEmits(['authenticated', 'quick-order', 'close'])

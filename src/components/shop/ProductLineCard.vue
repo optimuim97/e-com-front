@@ -222,7 +222,7 @@ function formatPrice(val) {
   color: var(--gray-400);
 }
 .pl-card__price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--rose-600);

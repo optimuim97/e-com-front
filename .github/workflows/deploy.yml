@@ -1,39 +1,135 @@
 # ══════════════════════════════════════════════════════════════════════
-# Déploiement automatique sur push (frontend)
+# Frontend — construction de l'image, déploiement
 #
-# Déclenche deploy.sh sur le VPS via SSH. Le script pull les 2 sous-repos,
-# rebuild les images Docker, redémarre les containers, joue les migrations.
+#   push sur main    →  image GHCR → déploiement en RECETTE
+#   « Run workflow » →  déploiement en PRODUCTION
+#
+# L'image ne contient aucune référence au domaine : la même image sert la
+# recette et la production. Pour revenir en arrière, relancer le workflow
+# en indiquant le tag précédent (« sha-xxxxxxx »).
 #
 # Secrets requis (Settings → Secrets and variables → Actions) :
-#   VPS_HOST    ex. vps120941.softara.tech (ou IP)
-#   VPS_USER    ex. root
-#   VPS_SSH_KEY clé privée OpenSSH complète (contenu de ~/.ssh/id_ed25519)
-#   VPS_PORT    optionnel, défaut 22
+#   Recette     VPS_HOST · VPS_USER · VPS_SSH_KEY · VPS_PORT (optionnel)
+#   Production  PROD_VPS_HOST · PROD_VPS_USER · PROD_VPS_SSH_KEY
+#   Commun      REVERB_APP_KEY (identifiant public Reverb, compilé au build)
 # ══════════════════════════════════════════════════════════════════════
-name: Deploy to production
+name: CI/CD
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      deploy_production:
+        description: "Déployer en production"
+        type: boolean
+        default: false
+      tag:
+        description: "Tag à promouvoir (vide = image construite par ce run)"
+        type: string
+        default: ""
 
 concurrency:
-  group: prod-deploy
+  group: frontend-pipeline
   cancel-in-progress: false
 
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/rosabeauty-web
+
 jobs:
-  deploy:
+
+  # ── Construction et publication de l'image ──────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag de l'image
+        id: meta
+        run: echo "tag=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Connexion à GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build et publication
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_REVERB_APP_KEY=${{ secrets.REVERB_APP_KEY }}
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── Recette : automatique à chaque push sur main ────────────────────
+  deploy-staging:
+    needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment:
+      name: staging
+      url: https://rosabeauty.softara.tech
     steps:
-      - name: Deploy on VPS
+      - name: Déploiement sur le VPS de recette
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER:  ${{ github.actor }}
+          IMAGE_TAG:  ${{ needs.build.outputs.tag }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 20m
+          envs: GHCR_TOKEN,GHCR_USER,IMAGE_TAG
           script: |
+            set -e
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             cd /var/www/rosabeauty
-            echo "[CI] frontend push — running deploy.sh"
-            bash deploy.sh
+            bash deploy.sh --only web "$IMAGE_TAG"
+
+  # ── Production : promotion manuelle ─────────────────────────────────
+  deploy-production:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy_production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://rosabeautystore.com
+    steps:
+      - name: Déploiement sur le VPS de production
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER:  ${{ github.actor }}
+          IMAGE_TAG:  ${{ inputs.tag || needs.build.outputs.tag }}
+        with:
+          host: ${{ secrets.PROD_VPS_HOST }}
+          username: ${{ secrets.PROD_VPS_USER }}
+          key: ${{ secrets.PROD_VPS_SSH_KEY }}
+          port: ${{ secrets.PROD_VPS_PORT || 22 }}
+          command_timeout: 20m
+          envs: GHCR_TOKEN,GHCR_USER,IMAGE_TAG
+          script: |
+            set -e
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd /var/www/rosabeauty
+            bash deploy.sh --only web "$IMAGE_TAG"

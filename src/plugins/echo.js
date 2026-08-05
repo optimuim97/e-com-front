@@ -27,14 +27,25 @@ export function createEcho() {
 
     window.Pusher = Pusher;
 
+    // En production le WebSocket passe par le même domaine que la page
+    // (nginx proxifie /app/ vers Reverb). On dérive donc l'hôte de
+    // window.location au lieu de le figer à la compilation : la même image
+    // Docker sert ainsi la recette et la production.
+    // Les variables VITE_REVERB_* restent prioritaires pour le dev local,
+    // où le serveur Reverb tourne sur un autre port que Vite.
+    const isSecure  = window.location.protocol === 'https:';
+    const wsHost    = import.meta.env.VITE_REVERB_HOST   || window.location.hostname;
+    const wsScheme  = import.meta.env.VITE_REVERB_SCHEME || (isSecure ? 'https' : 'http');
+    const wsPort    = Number(import.meta.env.VITE_REVERB_PORT) || (isSecure ? 443 : 8080);
+
     echoInstance = new Echo({
         broadcaster:     'reverb',
         key:             appKey,
-        wsHost:          import.meta.env.VITE_REVERB_HOST      ?? 'localhost',
-        wsPort:          Number(import.meta.env.VITE_REVERB_PORT)  || 8080,
-        wssPort:         Number(import.meta.env.VITE_REVERB_PORT)  || 8080,
-        scheme:          import.meta.env.VITE_REVERB_SCHEME    ?? 'http',
-        forceTLS:       (import.meta.env.VITE_REVERB_SCHEME    ?? 'http') === 'https',
+        wsHost:          wsHost,
+        wsPort:          wsPort,
+        wssPort:         wsPort,
+        scheme:          wsScheme,
+        forceTLS:        wsScheme === 'https',
         enabledTransports: ['ws', 'wss'],
         // Authorizer custom : on (re-)lit le token à CHAQUE handshake d'auth,
         // pas seulement à l'init. Sinon, un login après chargement de la page

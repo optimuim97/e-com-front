@@ -51,6 +51,16 @@
               </div>
             </header>
 
+            <!-- Vidéo de l'article -->
+            <div v-if="post.video_url" class="post-video">
+              <RosaVideoPlayer
+                :src="post.video_url"
+                :poster="post.cover_image || ''"
+                aspect-ratio="9 / 16"
+                max-height="640px"
+              />
+            </div>
+
             <!-- Body content -->
             <div class="post-content prose" v-html="post.content"></div>
 
@@ -112,6 +122,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import api from '@/api'
+import RosaVideoPlayer from '@/components/ui/RosaVideoPlayer.vue'
 
 const route   = useRoute()
 const post    = ref(null)
@@ -356,6 +367,12 @@ watch(() => route.params.slug, (slug) => { if (slug) fetchPost(slug) })
 }
 .post-related__title:hover { color: var(--rose-500); }
 .post-related__date { font-size: 0.6875rem; color: var(--gray-400); margin-top: 2px; }
+/* Vidéo de l'article — les sources sont tournées au format portrait,
+   d'où le cadre centré et borné plutôt qu'une pleine largeur. */
+.post-video {
+  margin: var(--space-8) auto;
+  max-width: 420px;
+}
 </style>
 
 <!-- Prose styles for rendered HTML content -->

@@ -42,7 +42,7 @@
         <div class="ap-founder__video-wrap">
           <RosaVideoPlayer
             :src="videoSrc"
-            poster="/image_site/FLS_8142.jpeg"
+            :poster="videoPoster"
             aspect-ratio="4 / 5"
             max-height="540px"
           />
@@ -206,11 +206,16 @@
     <!-- ── Galerie immersive ── -->
     <section class="ap-gallery">
       <div class="ap-gallery__strip">
-        <img src="/image_site/FLS_8130.jpeg" alt="" />
-        <img src="/image_site/FLS_8142.jpeg" alt="" />
-        <img src="/image_site/DSC_7542.jpeg" alt="" />
-        <img src="/image_site/DSC_7553.jpeg" alt="" />
-        <img src="/image_site/DSC_7629.jpeg" alt="" />
+        <img src="/image_site/DSC_7546.jpeg" loading="lazy" decoding="async"
+             alt="Cueillette de la rose de Damas — récolte matinale" />
+        <img src="/image_site/DSC_7611.jpeg" loading="lazy" decoding="async"
+             alt="Cueilleuses dans la roseraie, au pied de l'Atlas" />
+        <img src="/image_site/DSC_7630.jpeg" loading="lazy" decoding="async"
+             alt="Récolte des roses à la main, fleur par fleur" />
+        <img src="/image_site/DSC_7645.jpeg" loading="lazy" decoding="async"
+             alt="Roses de Damas en fleur dans la roseraie" />
+        <img src="/image_site/DSC_7647.jpeg" loading="lazy" decoding="async"
+             alt="La roseraie face aux montagnes de l'Atlas" />
       </div>
     </section>
 
@@ -242,16 +247,17 @@
 import { RouterLink } from 'vue-router'
 import RosaVideoPlayer from '@/components/ui/RosaVideoPlayer.vue'
 
-// Chemin runtime — pas résolu par Vite à la compilation
-// Mets rosa-beauty.mp4 dans commerce-front/public/ avant de tester
-// V6.mp4 = version web convertie depuis V6.mov (node scripts/convert-video.cjs)
-const videoSrc = '/rosa-beauty.mp4'
+// Servie depuis le storage Laravel, pas depuis public/ : un fichier de
+// cette taille n'a pas sa place dans le dépôt ni dans l'image Docker.
+// Elle vit dans un volume persistant, inclus dans les sauvegardes.
+const videoSrc    = '/storage/videos/rosa-beauty.mp4'
+const videoPoster = '/storage/videos/rosa-beauty-poster.jpg'
 
 const stats = [
   { value: '100%', label: 'Formules naturelles' },
   { value: '5+',   label: 'Gammes de soins' },
   { value: '0',    label: 'Parabens & sulfates' },
-  { value: '2 000+', label: 'Clientes satisfaites' },
+  { value: '5 000+', label: 'Clientes satisfaites' },
 ]
 
 const missionPoints = [
@@ -263,10 +269,12 @@ const missionPoints = [
 ]
 
 const processSteps = [
+  // La grille du procédé est pensée pour 4 étapes (4 / 2 / 1 colonnes selon
+  // la largeur) : une cinquième se retrouverait seule sur sa ligne.
   {
-    image: '/image_site/FLS_8111.jpeg',
-    title: 'Sélection des ingrédients',
-    desc:  'Nous sourçons des ingrédients naturels de haute qualité — huiles précieuses, extraits botaniques et actifs concentrés soigneusement choisis.',
+    image: '/image_site/DSC_7630.jpeg',
+    title: 'La cueillette',
+    desc:  'Nos roses de Damas sont récoltées à la main, fleur par fleur, dans les roseraies de nos partenaires producteurs.',
   },
   {
     image: '/image_site/FLS_8130.jpeg',

@@ -353,7 +353,7 @@ onMounted(async () => {
   letter-spacing: 0.05em;
 }
 .line-hero__price {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.75rem;
   font-weight: 700;
   color: #fff;
@@ -571,7 +571,7 @@ onMounted(async () => {
   letter-spacing: 0.05em;
 }
 .kit-summary__price-val {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--line-color, #E8336D);

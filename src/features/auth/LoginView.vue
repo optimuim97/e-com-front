@@ -30,8 +30,10 @@
       </button>
 
       <!-- Séparateur + connexion sociale -->
+      <!-- Facebook masqué tant que la configuration côté Meta n'est pas
+           finalisée. Le composant et la route restent en place : il suffit
+           de remettre <FacebookButton> pour le réactiver. -->
       <div class="auth-divider"><span>ou</span></div>
-      <FacebookButton @success="onSocialSuccess" @error="error = $event" />
       <GoogleButton @success="onSocialSuccess" @error="error = $event" />
     </form>
 
@@ -45,7 +47,6 @@ import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '@/features/auth/auth.store';
 import AuthShell from '@/components/auth/AuthShell.vue';
-import FacebookButton from '@/features/auth/FacebookButton.vue';
 import GoogleButton from '@/features/auth/GoogleButton.vue';
 import ForgotSecretModal from '@/features/auth/ForgotSecretModal.vue';
 
