@@ -118,7 +118,7 @@
           <button
             class="btn btn-primary"
             :disabled="!tracking.trim() || busy === 'tracking'"
-            @click="saveTracking"
+            @click="saveTracking()"
           >
             {{ busy === 'tracking' ? 'Enregistrement…' : 'Confirmer + marquer expédiée' }}
           </button>
@@ -252,13 +252,14 @@ async function generateTracking() {
   }
 }
 
-async function saveTracking() {
+async function saveTracking(force = false) {
   busy.value = 'tracking';
   error.value = ''; success.value = '';
   try {
     const { data } = await api.patch(`/admin/orders/${props.order.id}`, {
       tracking_number: tracking.value.trim(),
       status: 'shipped',
+      ...(force ? { force: true } : {}),
     });
     emit('updated', data.data ?? data);
     success.value = 'Numéro enregistré, commande marquée expédiée.';
@@ -269,7 +270,17 @@ async function saveTracking() {
       window.open(buildWaLink(clientPhone.value, msg), '_blank', 'noopener');
     }
   } catch (e) {
-    error.value = e.response?.data?.message ?? 'Erreur.';
+    // Expédition bloquée (hors zone sans frais / impayée) → confirmation explicite
+    if (e.response?.status === 422 && e.response?.data?.code === 'shipping_blocked') {
+      const raisons = (e.response.data.blockers ?? []).map(b => `• ${b}`).join('\n');
+      if (confirm(`Expédition risquée :\n\n${raisons}\n\nExpédier quand même ?`)) {
+        busy.value = null;
+        return saveTracking(true);
+      }
+      error.value = e.response.data.message;
+    } else {
+      error.value = e.response?.data?.message ?? 'Erreur.';
+    }
   } finally {
     busy.value = null;
   }
@@ -293,7 +304,7 @@ const STATUS_LABELS = {
 function statusLabel(s) { return STATUS_LABELS[s] ?? s; }
 
 const PAYMENT_LABELS = {
-  wave: 'Wave', orange_money: 'Orange Money', cinetpay: 'Carte bancaire',
+  wave: 'Wave', orange_money: 'Orange Money', card: 'Carte bancaire', stripe: 'Carte bancaire', cinetpay: 'Carte bancaire',
   cod: 'Paiement à la livraison', delivery: 'Paiement à la livraison', cash: 'Espèces',
 };
 function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }

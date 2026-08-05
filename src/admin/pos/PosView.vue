@@ -123,7 +123,7 @@
           <option value="cash">Espèces</option>
           <option value="wave">Wave</option>
           <option value="orange_money">Orange Money</option>
-          <option value="cinetpay">Carte bancaire</option>
+          <option value="stripe">Carte bancaire</option>
           <option value="cod">À la livraison</option>
         </select>
       </div>

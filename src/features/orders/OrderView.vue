@@ -256,13 +256,16 @@ const orderProvider = computed(() =>
 const geniuspayEnabled = computed(() => settings.value.payment_geniuspay_enabled === 'true')
 
 // Bouton "Payer maintenant" (paiement en ligne) : seulement si une passerelle
-// en ligne est réellement disponible — carte (cinetpay) toujours, Wave/OM
-// uniquement si GeniusPay est activé. Sinon → instructions manuelles.
+// en ligne est réellement disponible — carte bancaire (Stripe) toujours,
+// Wave/OM uniquement si GeniusPay est activé. Sinon → instructions manuelles.
+// 'cinetpay' reste accepté pour les anciennes commandes créées avant Stripe.
+const CARD_PROVIDERS = ['card', 'stripe', 'cinetpay']
+
 const showPayNow = computed(() => {
   if (!order.value || order.value.is_paid) return false
   if (['cancelled', 'refunded'].includes(order.value.status)) return false
   const p = orderProvider.value
-  if (p === 'cinetpay') return true
+  if (CARD_PROVIDERS.includes(p)) return true
   if (['wave', 'orange_money'].includes(p)) return geniuspayEnabled.value
   return false
 })

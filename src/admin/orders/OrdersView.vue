@@ -168,25 +168,14 @@
           Les filtres actifs (statut, recherche) ne s'appliquent pas à l'export — utilisez les filtres ci-dessus.
         </p>
         <div class="export-btns">
-          <button @click="downloadExport('xlsx')" :disabled="exporting" class="btn btn-primary btn-sm">
+          <button @click="openGlobalExportPreview" :disabled="loadingPreview" class="btn btn-primary btn-sm">
             <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
             </svg>
-            {{ exporting ? 'Génération…' : 'Télécharger Excel (.xlsx)' }}
+            {{ loadingPreview ? 'Chargement…' : 'Aperçu et export' }}
           </button>
-          <button @click="downloadExport('csv')" :disabled="exporting" class="btn btn-outline btn-sm">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            {{ exporting ? 'Génération…' : 'Télécharger CSV' }}
-          </button>
-          <button @click="downloadByZoneExport" :disabled="exportingZone" class="btn btn-outline btn-sm export-zone-btn">
-            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            {{ exportingZone ? 'Génération…' : 'PDF par zone de livraison' }}
-          </button>
+          <p v-if="previewError" class="export-error">{{ previewError }}</p>
         </div>
       </div>
     </div>
@@ -198,6 +187,15 @@
       :orders="routeMap.orders"
       :start-address="routeMap.startAddress"
       @close="routeMap = null"
+    />
+
+    <!-- Aperçu / ajustements avant export d'un groupe -->
+    <ZoneExportPreviewModal
+      v-if="exportPreview"
+      :label="exportPreview.label"
+      :orders="exportPreview.orders"
+      :formats="exportPreview.formats"
+      @close="exportPreview = null"
     />
 
     <!-- ── Vue groupée (groupBy ≠ '') ── -->
@@ -231,21 +229,11 @@
               <button
                 type="button"
                 class="commune-group__export commune-group__export--pdf"
-                @click.stop="exportGroupPDF(g)"
-                :disabled="exportingGroupPDF === g.key"
-                title="Exporter en PDF (format livraison)"
+                @click.stop="openExportPreview(g)"
+                title="Prévisualiser et ajuster avant export"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/></svg>
-                {{ exportingGroupPDF === g.key ? '…' : 'PDF' }}
-              </button>
-              <button
-                type="button"
-                class="commune-group__export"
-                @click.stop="exportGroupCSV(g)"
-                title="Exporter en CSV"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                CSV
+                Exporter
               </button>
               <span class="zone-group__chevron" :class="{ open: openGroups.has(g.key) }">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -383,6 +371,7 @@ import { RouterLink } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
+import ZoneExportPreviewModal from './ZoneExportPreviewModal.vue'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -617,72 +606,11 @@ async function fetchAllForGrouping() {
   }
 }
 
-// Export CSV d'un groupe (feuille de tournée).
-function exportGroupCSV(group) {
-  const escape = (v) => {
-    const s = String(v ?? '').replace(/"/g, '""')
-    return /[",;\n]/.test(s) ? `"${s}"` : s
-  }
-  const sep    = ';'
-  const header = ['N°', 'Client', 'Téléphone', 'Adresse', 'Commune', 'Total', 'Statut', 'Date']
-  const rows   = group.orders.map(o => {
-    const a = o.shipping_address || {}
-    return [
-      o.number,
-      o.user?.name ?? `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim(),
-      a.phone ?? '',
-      a.address_line1 ?? '',
-      a.commune ?? a.city ?? '',
-      o.total ?? '',
-      statusLabel(o.status),
-      formatDate(o.created_at),
-    ]
-  })
-  const csv  = '﻿' + [header, ...rows].map(r => r.map(escape).join(sep)).join('\n')
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-  const url  = URL.createObjectURL(blob)
-  const safe = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_')
-  const a    = document.createElement('a')
-  a.href     = url
-  a.download = `tournee_${groupBy.value}_${safe(group.label)}_${new Date().toISOString().slice(0,10)}.csv`
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}
+// ── Aperçu avant export d'un groupe (ajustements : titre, sélection, filtres) ─
+const exportPreview = ref(null) // { label, orders } | null
 
-// ── Export PDF d'un groupe ────────────────────────────────────────────────────
-const exportingGroupPDF = ref(null) // clé du groupe en cours d'export
-
-async function exportGroupPDF(group) {
-  if (exportingGroupPDF.value) return
-  exportingGroupPDF.value = group.key
-  try {
-    const ids = group.orders.map(o => o.id)
-    const params = new URLSearchParams()
-    ids.forEach(id => params.append('order_ids[]', id))
-    params.append('label', group.label)
-
-    const response = await api.get('/admin/orders/export-by-zone?' + params.toString(), {
-      responseType: 'blob',
-    })
-
-    const safe     = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_').slice(0, 50)
-    const date     = new Date().toISOString().slice(0, 10)
-    const filename = `livraison_${safe(group.label)}_${date}.pdf`
-    const url      = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-    const link     = document.createElement('a')
-    link.href      = url
-    link.download  = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-  } catch (e) {
-    console.error('Export PDF groupe failed', e)
-  } finally {
-    exportingGroupPDF.value = null
-  }
+function openExportPreview(group) {
+  exportPreview.value = { label: group.label, orders: group.orders }
 }
 
 // ── Modal itinéraire ─────────────────────────────────────────────────────────
@@ -720,9 +648,9 @@ const exportCountryOptions = [
 ]
 
 /* ── Export ── */
-const showExport = ref(false)
-const exporting      = ref(false)
-const exportingZone  = ref(false)
+const showExport     = ref(false)
+const loadingPreview = ref(false)
+const previewError   = ref('')
 const exportFilters = reactive({
   date_from: '',
   date_to:   '',
@@ -730,67 +658,42 @@ const exportFilters = reactive({
   country:   '',
 })
 
-async function downloadByZoneExport() {
-  exportingZone.value = true
+/**
+ * Charge les commandes correspondant aux filtres d'export puis ouvre l'aperçu.
+ * Le backend applique exactement les mêmes règles que l'export réel, donc ce
+ * qui est affiché ici est bien ce qui sera exporté.
+ */
+async function openGlobalExportPreview() {
+  loadingPreview.value = true
+  previewError.value   = ''
   try {
     const params = {}
     if (exportFilters.date_from) params.date_from = exportFilters.date_from
     if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
-    if (exportFilters.status)    params.status     = exportFilters.status
+    if (exportFilters.status)    params.status    = exportFilters.status
+    if (exportFilters.country)   params.country   = exportFilters.country
 
-    const response = await api.get('/admin/orders/export-by-zone', {
-      params,
-      responseType: 'blob',
-    })
+    const { data } = await api.get('/admin/orders/export-preview', { params })
+    const orders = data.data ?? []
 
-    const date     = new Date().toISOString().slice(0, 10)
-    const filename = `livraisons-par-zone-${date}.pdf`
-    const url      = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-    const link     = document.createElement('a')
-    link.href      = url
-    link.download  = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+    if (!orders.length) {
+      previewError.value = 'Aucune commande ne correspond à ces filtres.'
+      return
+    }
+
+    exportPreview.value = {
+      label:   `Commandes ${new Date().toLocaleDateString('fr-FR')}`,
+      orders,
+      formats: ['xlsx', 'pdf', 'csv'],
+    }
   } catch (e) {
-    console.error('Export by zone failed', e)
+    previewError.value = e.response?.data?.message ?? "Impossible de charger l'aperçu."
   } finally {
-    exportingZone.value = false
+    loadingPreview.value = false
   }
 }
 
-async function downloadExport(format) {
-  exporting.value = true
-  try {
-    const params = { format }
-    if (exportFilters.date_from) params.date_from = exportFilters.date_from
-    if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
-    if (exportFilters.status)    params.status     = exportFilters.status
-    if (exportFilters.country)   params.country    = exportFilters.country
 
-    const response = await api.get('/admin/orders/export', {
-      params,
-      responseType: 'blob',
-    })
-
-    const ext      = format === 'csv' ? 'csv' : 'xlsx'
-    const date     = new Date().toISOString().slice(0, 10)
-    const filename = `commandes-${date}.${ext}`
-    const url      = URL.createObjectURL(new Blob([response.data]))
-    const link     = document.createElement('a')
-    link.href      = url
-    link.download  = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-  } catch (e) {
-    console.error('Export failed', e)
-  } finally {
-    exporting.value = false
-  }
-}
 
 const statusTabs = [
   { value: '', label: 'Toutes' },
@@ -901,7 +804,7 @@ function statusBadge(status) {
 function paymentLabel(method) {
   const map = {
     wave: 'Wave', orange_money: 'Orange Money',
-    cinetpay: 'Carte', cod: 'Livraison', delivery: 'Livraison',
+    card: 'Carte', stripe: 'Carte', cinetpay: 'Carte', cod: 'Livraison', delivery: 'Livraison',
   }
   return map[method] ?? method
 }
@@ -1250,6 +1153,12 @@ onMounted(() => {
   display: flex;
   gap: var(--space-2);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.export-error {
+  font-size: 0.8125rem;
+  color: #b91c1c;
 }
 
 .export-zone-btn {

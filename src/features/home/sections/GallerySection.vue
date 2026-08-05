@@ -2,9 +2,9 @@
   <section v-if="loading || photos.length" class="gallery-section">
     <div class="container">
       <SectionHeader eyebrow="Univers Rosa Beauty Facial Care">
-        Nos égéries
+        <!-- Nos égéries -->
       </SectionHeader>
-      <p class="gallery-sub">Elles incarnent la beauté naturelle Rosa Beauty — découvrez leurs portraits.</p>
+      <!-- <p class="gallery-sub">Elles incarnent la beauté naturelle Rosa Beauty — découvrez leurs portraits.</p> -->
 
       <!-- Skeleton -->
       <div v-if="loading" class="muses-grid">

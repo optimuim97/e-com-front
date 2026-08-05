@@ -312,7 +312,7 @@
           </div>
 
           <button
-            @click="updateOrder"
+            @click="updateOrder()"
             :disabled="saving"
             class="btn-primary w-full py-2.5 font-medium disabled:opacity-50"
           >
@@ -477,19 +477,31 @@ async function generateTracking() {
   }
 }
 
-async function updateOrder() {
+async function updateOrder(force = false) {
   saving.value = true;
   saveSuccess.value = false;
   saveError.value = "";
   try {
-    const { data } = await api.patch(`/admin/orders/${route.params.id}`, editForm);
+    const payload = force ? { ...editForm, force: true } : { ...editForm };
+    const { data } = await api.patch(`/admin/orders/${route.params.id}`, payload);
     order.value = data.data ?? data;
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
     }, 3000);
   } catch (e) {
-    saveError.value = e.response?.data?.message ?? "Erreur lors de la mise à jour.";
+    // Expédition bloquée (hors zone sans frais / commande impayée) :
+    // on demande confirmation explicite avant de passer outre.
+    if (e.response?.status === 422 && e.response?.data?.code === "shipping_blocked") {
+      const raisons = (e.response.data.blockers ?? []).map((b) => `• ${b}`).join("\n");
+      if (confirm(`Expédition risquée :\n\n${raisons}\n\nExpédier quand même ?`)) {
+        saving.value = false;
+        return updateOrder(true);
+      }
+      saveError.value = e.response.data.message;
+    } else {
+      saveError.value = e.response?.data?.message ?? "Erreur lors de la mise à jour.";
+    }
   } finally {
     saving.value = false;
   }
@@ -552,6 +564,8 @@ function paymentLabel(method) {
   const map = {
     wave: "Wave",
     orange_money: "Orange Money",
+    card: "Carte bancaire",
+    stripe: "Carte bancaire",
     cinetpay: "Carte bancaire",
     cod: "À la livraison",
     delivery: "À la livraison",

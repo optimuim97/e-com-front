@@ -588,7 +588,7 @@ const ICON_TRUCK  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
 const paymentMethods = [
   { value: 'wave',         label: 'Wave',                    icon: ICON_MOBILE, desc: 'Paiement mobile rapide',             badge: 'RAPIDE' },
   { value: 'orange_money', label: 'Orange Money',            icon: ICON_MOBILE, desc: 'Mobile Money Orange',               badge: null },
-  { value: 'cinetpay',     label: 'Carte bancaire',          icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé', badge: null },
+  { value: 'card',         label: 'Carte bancaire',          icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé Stripe', badge: null },
   { value: 'cod',          label: 'Paiement à la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis',     badge: null },
 ];
 
