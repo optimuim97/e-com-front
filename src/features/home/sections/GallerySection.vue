@@ -127,16 +127,16 @@ import api from "@/api";
  */
 const FALLBACK = [
   { image_url: "/image_site/FLS_8032.jpeg", title: "Rosa Beauty", description: "" },
-  { image_url: "/image_site/FLS_8111.jpeg", title: "", description: "" },
-  { image_url: "/image_site/FLS_8130.jpeg", title: "", description: "" },
-  { image_url: "/image_site/FLS_8142.jpeg", title: "", description: "" },
-  { image_url: "/image_site/DSC_7542.jpeg", title: "", description: "" },
-  { image_url: "/image_site/DSC_7553.jpeg", title: "", description: "" },
-  { image_url: "/image_site/image_galerie1.jpeg", title: "", description: "" },
-  { image_url: "/image_site/image_galerie2.jpeg", title: "", description: "" },
-  { image_url: "/image_site/image_galerie3.jpeg", title: "", description: "" },
-  { image_url: "/image_site/image_galerie4.jpeg", title: "", description: "" },
-  { image_url: "/image_site/image_galerie5.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/FLS_8111.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/FLS_8130.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/FLS_8142.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/DSC_7542.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/DSC_7553.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/image_galerie1.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/image_galerie2.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/image_galerie3.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/image_galerie4.jpeg", title: "", description: "" },
+  // { image_url: "/image_site/image_galerie5.jpeg", title: "", description: "" },
 ];
 
 const photos = ref([]);
