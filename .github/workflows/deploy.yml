@@ -1,8 +1,11 @@
 # ══════════════════════════════════════════════════════════════════════
 # Frontend — construction de l'image, déploiement
 #
-#   push sur main    →  image GHCR → déploiement en RECETTE
-#   « Run workflow » →  déploiement en PRODUCTION
+#   push sur main    →  image GHCR → RECETTE → vérification → PRODUCTION
+#   « Run workflow » →  rejoue une image précise en production
+#
+# La production suit la recette automatiquement, et seulement si celle-ci
+# répond correctement après déploiement.
 #
 # L'image ne contient aucune référence au domaine : la même image sert la
 # recette et la production. Pour revenir en arrière, relancer le workflow
@@ -105,10 +108,30 @@ jobs:
             cd /var/www/rosabeauty
             bash deploy.sh --only web "$IMAGE_TAG"
 
-  # ── Production : promotion manuelle ─────────────────────────────────
+      # Dernier filet avant la boutique : si la recette ne répond plus
+      # correctement, l'étape échoue et la production n'est pas touchée.
+      - name: Vérification de la recette
+        run: |
+          set -e
+          for chemin in / /a-propos /api/home/stats; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 --retry 3 --retry-delay 5 \
+                   "https://rosabeauty.softara.tech${chemin}")
+            echo "  ${chemin} -> ${code}"
+            [ "$code" = "200" ] || { echo "::error::Recette en échec sur ${chemin} (HTTP ${code})"; exit 1; }
+          done
+
+  # ── Production ──────────────────────────────────────────────────────
+  # Suit la recette dès qu'elle est vérifiée. Reste déclenchable à la main
+  # pour rejouer une image précise (retour arrière).
   deploy-production:
-    needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.deploy_production
+    needs: [build, deploy-staging]
+    if: >-
+      always()
+      && needs.build.result == 'success'
+      && (
+        (github.event_name == 'push' && needs.deploy-staging.result == 'success')
+        || (github.event_name == 'workflow_dispatch' && inputs.deploy_production)
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -133,3 +156,15 @@ jobs:
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             cd /var/www/rosabeauty
             bash deploy.sh --only web "$IMAGE_TAG"
+
+      # La boutique doit répondre après déploiement. Un échec ici rend le
+      # run rouge : la panne est signalée au lieu de passer inaperçue.
+      - name: Vérification de la production
+        run: |
+          set -e
+          for chemin in / /a-propos /api/home/stats; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 --retry 3 --retry-delay 5 \
+                   "https://rosabeautystore.com${chemin}")
+            echo "  ${chemin} -> ${code}"
+            [ "$code" = "200" ] || { echo "::error::Production en échec sur ${chemin} (HTTP ${code})"; exit 1; }
+          done
