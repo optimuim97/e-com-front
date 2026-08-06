@@ -128,6 +128,53 @@
         </p>
       </div>
 
+      <!-- Notification de la cliente -->
+      <div class="modal__section">
+        <h4>3. Notifier la cliente</h4>
+        <div class="action-row">
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="!clientPhone || busy === 'notify'"
+            @click="notifyNow"
+            title="Envoie le récapitulatif et la facture par WhatsApp"
+          >
+            {{ busy === 'notify' ? 'Envoi…' : 'Notifier directement' }}
+          </button>
+          <button
+            class="btn btn-outline"
+            type="button"
+            :disabled="busy === 'invoice'"
+            @click="downloadInvoice"
+          >
+            {{ busy === 'invoice' ? '…' : 'Facture PDF' }}
+          </button>
+        </div>
+
+        <p v-if="!clientPhone" class="modal__hint">
+          Aucun numéro sur cette commande — seule la facture PDF est disponible.
+        </p>
+
+        <!-- Repli manuel : propose d'envoyer soi-même quand l'API a refusé -->
+        <div v-if="notifyFallback" class="notify-fallback">
+          <p>
+            L'envoi automatique n'a pas abouti. Vous pouvez envoyer le message
+            vous-même — il est déjà rédigé.
+          </p>
+          <div class="action-row">
+            <a :href="waNotifyLink" target="_blank" rel="noopener" class="btn btn-xs btn-primary">
+              Ouvrir WhatsApp
+            </a>
+            <button class="btn btn-xs btn-outline" @click="copy(notifyFallback)">
+              Copier le message
+            </button>
+            <button class="btn btn-xs btn-outline" @click="downloadInvoice">
+              Facture PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Lien détails -->
       <footer class="modal__footer">
         <RouterLink
@@ -187,6 +234,56 @@ function buildWaLink(phoneRaw, message) {
   if (!phoneRaw) return '#';
   const phone = String(phoneRaw).replace(/[^0-9]/g, '');
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+// Message rédigé par le serveur, conservé quand l'envoi automatique échoue :
+// l'agent peut alors l'envoyer lui-même plutôt que de le retaper.
+const notifyFallback = ref('');
+const waNotifyLink = computed(() => buildWaLink(clientPhone.value, notifyFallback.value));
+
+/**
+ * Envoie le récapitulatif + la facture par WhatsApp, à la demande.
+ *
+ * L'envoi automatique à la commande peut échouer sans que personne le
+ * remarque. En cas de refus de l'API, on n'affiche pas qu'une erreur : on
+ * bascule sur le repli manuel, sinon la cliente reste sans nouvelle.
+ */
+async function notifyNow() {
+  busy.value = 'notify';
+  error.value = ''; success.value = ''; notifyFallback.value = '';
+  try {
+    const { data } = await api.post(`/admin/orders/${props.order.id}/notify`);
+    success.value = data.document
+      ? 'Récapitulatif et facture envoyés par WhatsApp.'
+      : 'Récapitulatif envoyé — la facture PDF n’a pas pu être jointe.';
+  } catch (e) {
+    const data = e.response?.data ?? {};
+    error.value = data.reason ?? "L'envoi WhatsApp a échoué.";
+    // Le serveur renvoie le message même en échec : on le propose à l'agent.
+    if (data.message) notifyFallback.value = data.message;
+  } finally {
+    busy.value = '';
+  }
+}
+
+/** Récupère la facture PDF — recours quand WhatsApp ne passe pas. */
+async function downloadInvoice() {
+  busy.value = 'invoice';
+  error.value = '';
+  try {
+    const res = await api.get(`/admin/orders/${props.order.id}/invoice`, { responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `facture-${props.order.number}.pdf`;
+    a.click();
+    // Libère le blob : sans ça chaque téléchargement fuit en mémoire.
+    URL.revokeObjectURL(url);
+  } catch {
+    error.value = 'Impossible de générer la facture.';
+  } finally {
+    busy.value = '';
+  }
 }
 
 async function markPaid() {
@@ -388,6 +485,21 @@ function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
 }
 .modal__info { color: var(--gray-500); font-size: 0.875rem; }
 .modal__hint { font-size: 0.75rem; color: var(--gray-400); margin-top: var(--space-2); }
+
+/* Repli manuel après échec d'envoi : teinté d'ambre, pour signaler qu'une
+   action reste à faire sans dramatiser comme le ferait du rouge. */
+.notify-fallback {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: var(--radius-sm, 6px);
+}
+.notify-fallback p {
+  font-size: 0.8125rem;
+  color: #92400e;
+  margin: 0 0 var(--space-2);
+}
 
 .recap-grid {
   display: grid;

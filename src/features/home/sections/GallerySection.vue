@@ -8,7 +8,12 @@
 
       <!-- Skeleton -->
       <div v-if="loading" class="muses-grid">
-        <div v-for="i in 5" :key="i" class="muse-card muse-card--skeleton" :class="{ 'muse-card--featured': i === 1 }"></div>
+        <div
+          v-for="i in 5"
+          :key="i"
+          class="muse-card muse-card--skeleton"
+          :class="{ 'muse-card--featured': i === 1 }"
+        ></div>
       </div>
 
       <!-- Grille éditoriale -->
@@ -31,12 +36,24 @@
 
           <div v-if="photo.title || photo.description" class="muse-card__caption">
             <span v-if="photo.title" class="muse-card__name">{{ photo.title }}</span>
-            <span v-if="photo.description" class="muse-card__desc">{{ photo.description }}</span>
+            <span v-if="photo.description" class="muse-card__desc">{{
+              photo.description
+            }}</span>
           </div>
 
           <span class="muse-card__zoom" aria-hidden="true">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+              <path d="M11 8v6M8 11h6" />
             </svg>
           </span>
         </button>
@@ -46,19 +63,51 @@
     <!-- Lightbox -->
     <Teleport to="body">
       <Transition name="lb">
-        <div v-if="lightboxIndex !== null" class="lightbox" @click.self="lightboxIndex = null">
-          <button class="lightbox__close" @click="lightboxIndex = null" aria-label="Fermer">×</button>
-          <button class="lightbox__prev" @click="prevImg" v-if="lightboxIndex > 0" aria-label="Précédent">‹</button>
-          <button class="lightbox__next" @click="nextImg" v-if="lightboxIndex < photos.length - 1" aria-label="Suivant">›</button>
+        <div
+          v-if="lightboxIndex !== null"
+          class="lightbox"
+          @click.self="lightboxIndex = null"
+        >
+          <button
+            class="lightbox__close"
+            @click="lightboxIndex = null"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+          <button
+            class="lightbox__prev"
+            @click="prevImg"
+            v-if="lightboxIndex > 0"
+            aria-label="Précédent"
+          >
+            ‹
+          </button>
+          <button
+            class="lightbox__next"
+            @click="nextImg"
+            v-if="lightboxIndex < photos.length - 1"
+            aria-label="Suivant"
+          >
+            ›
+          </button>
 
           <figure class="lightbox__figure">
-            <img :src="photos[lightboxIndex].image_url" class="lightbox__img" :alt="photos[lightboxIndex].title || ''" />
+            <img
+              :src="photos[lightboxIndex].image_url"
+              class="lightbox__img"
+              :alt="photos[lightboxIndex].title || ''"
+            />
             <figcaption
               v-if="photos[lightboxIndex].title || photos[lightboxIndex].description"
               class="lightbox__caption"
             >
-              <strong v-if="photos[lightboxIndex].title">{{ photos[lightboxIndex].title }}</strong>
-              <span v-if="photos[lightboxIndex].description">{{ photos[lightboxIndex].description }}</span>
+              <strong v-if="photos[lightboxIndex].title">{{
+                photos[lightboxIndex].title
+              }}</strong>
+              <span v-if="photos[lightboxIndex].description">{{
+                photos[lightboxIndex].description
+              }}</span>
             </figcaption>
           </figure>
         </div>
@@ -68,55 +117,66 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import SectionHeader from '@/components/ui/SectionHeader.vue'
-import api from '@/api'
+import { ref, onMounted, onUnmounted } from "vue";
+import SectionHeader from "@/components/ui/SectionHeader.vue";
+import api from "@/api";
 
 /**
  * Galerie « Nos égéries » — photos publiées depuis l'admin (/admin/galerie).
  * Repli sur les photos historiques du site si rien n'est encore publié.
  */
 const FALLBACK = [
-  { image_url: '/image_site/FLS_8032.jpeg', title: 'Rosa Beauty', description: '' },
-  { image_url: '/image_site/FLS_8111.jpeg', title: '', description: '' },
-  { image_url: '/image_site/FLS_8130.jpeg', title: '', description: '' },
-  { image_url: '/image_site/FLS_8142.jpeg', title: '', description: '' },
-  { image_url: '/image_site/DSC_7542.jpeg', title: '', description: '' },
-  { image_url: '/image_site/DSC_7553.jpeg', title: '', description: '' },
-]
+  { image_url: "/image_site/FLS_8032.jpeg", title: "Rosa Beauty", description: "" },
+  { image_url: "/image_site/FLS_8111.jpeg", title: "", description: "" },
+  { image_url: "/image_site/FLS_8130.jpeg", title: "", description: "" },
+  { image_url: "/image_site/FLS_8142.jpeg", title: "", description: "" },
+  { image_url: "/image_site/DSC_7542.jpeg", title: "", description: "" },
+  { image_url: "/image_site/DSC_7553.jpeg", title: "", description: "" },
+  { image_url: "/image_site/image_galerie1.jpeg", title: "", description: "" },
+  { image_url: "/image_site/image_galerie2.jpeg", title: "", description: "" },
+  { image_url: "/image_site/image_galerie3.jpeg", title: "", description: "" },
+  { image_url: "/image_site/image_galerie4.jpeg", title: "", description: "" },
+  { image_url: "/image_site/image_galerie5.jpeg", title: "", description: "" },
+];
 
-const photos        = ref([])
-const loading       = ref(true)
-const lightboxIndex = ref(null)
+const photos = ref([]);
+const loading = ref(true);
+const lightboxIndex = ref(null);
 
 async function fetchPhotos() {
   try {
-    const { data } = await api.get('/gallery')
-    const list = data.data ?? data
-    photos.value = Array.isArray(list) && list.length ? list : FALLBACK
+    const { data } = await api.get("/gallery");
+    const list = data.data ?? data;
+    photos.value = Array.isArray(list) && list.length ? list : FALLBACK;
   } catch {
-    photos.value = FALLBACK
+    photos.value = FALLBACK;
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-function openLightbox(idx) { lightboxIndex.value = idx }
-function prevImg() { if (lightboxIndex.value > 0) lightboxIndex.value-- }
-function nextImg() { if (lightboxIndex.value < photos.value.length - 1) lightboxIndex.value++ }
+function openLightbox(idx) {
+  lightboxIndex.value = idx;
+}
+function prevImg() {
+  if (lightboxIndex.value > 0) lightboxIndex.value--;
+}
+function nextImg() {
+  if (lightboxIndex.value < photos.value.length - 1) lightboxIndex.value++;
+}
 
 function onKeyDown(e) {
-  if (lightboxIndex.value === null) return
-  if (e.key === 'ArrowRight') nextImg()
-  else if (e.key === 'ArrowLeft') prevImg()
-  else if (e.key === 'Escape') lightboxIndex.value = null
+  if (lightboxIndex.value === null) return;
+  if (e.key === "ArrowRight") nextImg();
+  else if (e.key === "ArrowLeft") prevImg();
+  else if (e.key === "Escape") lightboxIndex.value = null;
 }
 
 onMounted(() => {
-  fetchPhotos()
-  window.addEventListener('keydown', onKeyDown)
-})
-onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
+  fetchPhotos();
+  window.addEventListener("keydown", onKeyDown);
+});
+onUnmounted(() => window.removeEventListener("keydown", onKeyDown));
 </script>
 
 <style scoped>
@@ -172,16 +232,28 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 }
 
 @media (hover: hover) {
-  .muse-card:hover img { transform: scale(1.05); }
-  .muse-card:hover .muse-card__zoom { opacity: 1; transform: scale(1); }
-  .muse-card:hover .muse-card__scrim { opacity: 1; }
+  .muse-card:hover img {
+    transform: scale(1.05);
+  }
+  .muse-card:hover .muse-card__zoom {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .muse-card:hover .muse-card__scrim {
+    opacity: 1;
+  }
 }
 
 /* Voile bas permanent — renforcé au hover */
 .muse-card__scrim {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(20, 12, 16, 0.72) 0%, rgba(20, 12, 16, 0.18) 38%, transparent 62%);
+  background: linear-gradient(
+    to top,
+    rgba(20, 12, 16, 0.72) 0%,
+    rgba(20, 12, 16, 0.18) 38%,
+    transparent 62%
+  );
   opacity: 0.9;
   transition: opacity var(--transition-normal);
   pointer-events: none;
@@ -190,7 +262,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 /* ── Légende (nom + description) ── */
 .muse-card__caption {
   position: absolute;
-  left: 0; right: 0; bottom: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   padding: var(--space-4) var(--space-4) var(--space-3);
   display: flex;
   flex-direction: column;
@@ -205,19 +279,21 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   color: #fff;
   letter-spacing: 0.01em;
   line-height: 1.2;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
-.muse-card--featured .muse-card__name { font-size: 1.5rem; }
+.muse-card--featured .muse-card__name {
+  font-size: 1.5rem;
+}
 
 .muse-card__desc {
   font-size: 0.75rem;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  text-shadow: 0 1px 6px rgba(0,0,0,0.35);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
 }
 .muse-card--featured .muse-card__desc {
   font-size: 0.8438rem;
@@ -232,7 +308,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255, 255, 255, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,8 +325,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   cursor: default;
 }
 @keyframes gallery-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.55; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 /* ── Lightbox ── */
@@ -258,7 +339,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0,0,0,0.92);
+  background: rgba(0, 0, 0, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -296,7 +377,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 }
 .lightbox__caption span {
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255, 255, 255, 0.75);
   line-height: 1.55;
 }
 
@@ -305,12 +386,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   top: 20px;
   right: 24px;
   font-size: 2rem;
-  color: rgba(255,255,255,0.7);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1;
   transition: color var(--transition-fast);
   z-index: 2;
 }
-.lightbox__close:hover { color: #fff; }
+.lightbox__close:hover {
+  color: #fff;
+}
 
 .lightbox__prev,
 .lightbox__next {
@@ -318,20 +401,30 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   top: 50%;
   transform: translateY(-50%);
   font-size: 3rem;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   padding: 16px;
   transition: color var(--transition-fast);
   z-index: 2;
 }
 .lightbox__prev:hover,
-.lightbox__next:hover { color: #fff; }
-.lightbox__prev { left: 16px; }
-.lightbox__next { right: 16px; }
+.lightbox__next:hover {
+  color: #fff;
+}
+.lightbox__prev {
+  left: 16px;
+}
+.lightbox__next {
+  right: 16px;
+}
 
 .lb-enter-active,
-.lb-leave-active { transition: opacity 0.2s ease; }
+.lb-leave-active {
+  transition: opacity 0.2s ease;
+}
 .lb-enter-from,
-.lb-leave-to { opacity: 0; }
+.lb-leave-to {
+  opacity: 0;
+}
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
@@ -353,7 +446,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
     padding-inline: var(--space-4);
     scrollbar-width: none;
   }
-  .muses-grid::-webkit-scrollbar { display: none; }
+  .muses-grid::-webkit-scrollbar {
+    display: none;
+  }
 
   .muse-card,
   .muse-card--featured {
@@ -363,9 +458,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
     scroll-snap-align: center;
   }
 
-  .muse-card--featured .muse-card__name { font-size: 1.25rem; }
+  .muse-card--featured .muse-card__name {
+    font-size: 1.25rem;
+  }
 
-  .lightbox { padding: var(--space-4); }
-  .lightbox__img { max-height: 66vh; }
+  .lightbox {
+    padding: var(--space-4);
+  }
+  .lightbox__img {
+    max-height: 66vh;
+  }
 }
 </style>
