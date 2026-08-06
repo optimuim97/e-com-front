@@ -9,7 +9,7 @@
       <!-- Skeleton -->
       <div v-if="loading" class="muses-grid">
         <div
-          v-for="i in 5"
+          v-for="i in 10"
           :key="i"
           class="muse-card muse-card--skeleton"
           :class="{ 'muse-card--featured': i === 1 }"
