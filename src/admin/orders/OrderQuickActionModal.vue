@@ -52,13 +52,13 @@
           >
             {{ busy === 'mark-paid' ? 'Validation…' : 'Marquer comme payée (cash / COD)' }}
           </button>
-          <button
+          <!-- <button
             class="btn btn-outline"
             :disabled="busy === 'pay-link'"
             @click="generatePaymentLink"
           >
             {{ busy === 'pay-link' ? 'Génération…' : 'Générer un lien de paiement' }}
-          </button>
+          </button> -->
          
           <button
             class="btn btn-outline"

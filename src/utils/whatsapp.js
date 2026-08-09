@@ -7,14 +7,6 @@ function formatPrice(val) {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
 }
 
-function statusLabel(status) {
-    const map = {
-        pending: 'En attente', confirmed: 'Confirmée', processing: 'En cours',
-        shipped: 'Expédiée', delivered: 'Livrée', cancelled: 'Annulée', refunded: 'Remboursée',
-    }
-    return map[status] ?? status
-}
-
 /**
  * @param {Object} order        - L'objet commande (avec items, shipping_address, payments…)
  * @param {Object} [settings]   - Réglages boutique (payment_mobile_number, etc.)
@@ -57,20 +49,14 @@ export function buildAdminMessage(order, settings = {}) {
     ].filter(l => l !== null).join('\n')
 }
 
-export function buildClientMessage(order, shopName = 'La boutique') {
-    const addr  = order.shipping_address ?? {}
-    const name  = addr.first_name ?? 'Client'
-    const track = order.tracking_number ? `\nSuivi: ${order.tracking_number}` : ''
-
-    return [
-        `Bonjour ${name},`,
-        `Votre commande n° ${order.number} a bien été enregistrée.`,
-        `Statut: ${statusLabel(order.status)}${track}`,
-        '',
-        `Merci pour votre confiance !`,
-        shopName,
-    ].join('\n')
-}
+/*
+ * Le récapitulatif destiné à la cliente n'est plus rédigé ici.
+ * Cette version-ci n'avait ni le détail des articles ni les montants, alors
+ * que l'envoi automatique (OrderNotificationMessage, côté serveur) les
+ * contenait : deux textes pour un même message, qui ont fini par diverger.
+ * L'écran de détail récupère désormais le texte du serveur via
+ * GET /admin/orders/{order}/whatsapp-message.
+ */
 
 export function buildWaLink(phone, message) {
     const num = cleanPhone(phone)

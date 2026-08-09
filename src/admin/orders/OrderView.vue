@@ -344,7 +344,7 @@ import { ref, reactive, computed, onMounted } from "vue";
 // computed déjà importé — utilisé pour estimatedTotal
 import { useRoute, RouterLink } from "vue-router";
 import api from "@/api";
-import { buildClientMessage, buildWaLink } from "@/utils/whatsapp";
+import { buildWaLink } from "@/utils/whatsapp";
 import OrderQuickActionModal from "./OrderQuickActionModal.vue";
 
 // Rafraîchit la commande après une action du panneau de traitement rapide
@@ -354,6 +354,8 @@ function onOrderUpdated(updated) {
   order.value = { ...order.value, ...updated };
   editForm.status = order.value.status;
   editForm.tracking_number = order.value.tracking_number ?? "";
+  // Statut et n° de suivi figurent dans le récapitulatif : il doit suivre.
+  fetchWaMessage();
 }
 
 const route = useRoute();
@@ -405,6 +407,7 @@ async function fetchOrder() {
     editForm.status = order.value.status;
     editForm.tracking_number = order.value.tracking_number ?? "";
     editForm.shipping_cost = order.value.shipping_cost ?? "";
+    fetchWaMessage();
   } catch {
     order.value = null;
   } finally {
@@ -412,13 +415,29 @@ async function fetchOrder() {
   }
 }
 
+/**
+ * Récapitulatif WhatsApp rédigé par le serveur — le même que l'envoi
+ * automatique. Le composer ici avait fait diverger les deux textes : la
+ * cliente recevait le statut sans le détail des articles ni les montants.
+ */
+const waMessage = ref("");
+
+async function fetchWaMessage() {
+  try {
+    const { data } = await api.get(
+      `/admin/orders/${route.params.id}/whatsapp-message`
+    );
+    waMessage.value = data.message ?? "";
+  } catch {
+    // Lien simplement masqué : mieux vaut pas de bouton qu'un message vide.
+    waMessage.value = "";
+  }
+}
+
 const clientWaLink = computed(() => {
-  if (!order.value) return null;
-  const phone = order.value.shipping_address?.phone;
-  if (!phone) return null;
-  const shopName = settings.value.shop_name || "Rosa Beauty Facial Care";
-  const message = buildClientMessage(order.value, shopName);
-  return buildWaLink(phone, message);
+  const phone = order.value?.shipping_address?.phone;
+  if (!phone || !waMessage.value) return null;
+  return buildWaLink(phone, waMessage.value);
 });
 
 async function downloadInvoice() {
@@ -454,6 +473,8 @@ async function saveShippingCost() {
     });
     order.value = data.data ?? data;
     editForm.shipping_cost = order.value.shipping_cost ?? "";
+    // Les frais entrent dans le total repris par le récapitulatif.
+    fetchWaMessage();
     shippingMsg.value = "✓ Frais enregistrés. Total mis à jour.";
     setTimeout(() => {
       shippingMsg.value = "";
@@ -485,6 +506,7 @@ async function updateOrder(force = false) {
     const payload = force ? { ...editForm, force: true } : { ...editForm };
     const { data } = await api.patch(`/admin/orders/${route.params.id}`, payload);
     order.value = data.data ?? data;
+    fetchWaMessage();
     saveSuccess.value = true;
     setTimeout(() => {
       saveSuccess.value = false;
