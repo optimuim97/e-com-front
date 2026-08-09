@@ -28,6 +28,19 @@
           <button type="button" class="zep__link" @click="selectAll">Tout cocher</button>
           <button type="button" class="zep__link" @click="selectNone">Tout décocher</button>
         </div>
+
+        <!-- Blocs récapitulatifs du document (PDF / TXT) -->
+        <div class="zep__toggles">
+          <span class="zep__toggles-label">À inclure dans le document</span>
+          <label class="zep__check">
+            <input type="checkbox" v-model="showProductTotals" />
+            Total des prix par produit
+          </label>
+          <label class="zep__check">
+            <input type="checkbox" v-model="showItemCounts" />
+            Total du nombre d'articles
+          </label>
+        </div>
       </div>
 
       <!-- Tableau de prévisualisation -->
@@ -85,6 +98,7 @@
       <footer class="zep__foot">
         <div class="zep__summary">
           <strong>{{ selectedOrders.length }}</strong> commande(s) sélectionnée(s)
+          <span v-if="showItemCounts && selectedItems">{{ selectedItems }} article(s)</span>
           <span class="zep__summary-total">{{ formatPrice(selectedTotal) }}</span>
           <span v-if="unpaidCount" class="zep__warn">{{ unpaidCount }} non payée(s)</span>
         </div>
@@ -100,6 +114,14 @@
             @click="downloadXlsx"
           >
             {{ busy === 'xlsx' ? '…' : 'Excel' }}
+          </button>
+          <button
+            class="btn btn-outline btn-sm"
+            :disabled="!selectedOrders.length || busy"
+            title="Feuille de livraison en texte brut, avec une case à cocher « Livré » par commande"
+            @click="downloadTxt"
+          >
+            {{ busy === 'txt' ? '…' : 'Imprimer (.txt)' }}
           </button>
           <button
             v-if="has('pdf')"
@@ -132,7 +154,11 @@ const has = (f) => props.formats.includes(f)
 const titleEdit     = ref(props.label)
 const onlyPaid      = ref(false)
 const hideOutOfZone = ref(false)
-const busy          = ref(null)   // null | 'pdf' | 'xlsx'
+const busy          = ref(null)   // null | 'pdf' | 'xlsx' | 'txt'
+
+// Blocs récapitulatifs du document — cochés par défaut (même défaut côté backend)
+const showProductTotals = ref(true)
+const showItemCounts    = ref(true)
 
 // Toutes les commandes sont cochées par défaut
 const selected = ref(new Set(props.orders.map(o => o.id)))
@@ -149,6 +175,12 @@ const visibleOrders = computed(() =>
 const selectedOrders = computed(() => visibleOrders.value.filter(o => selected.value.has(o.id)))
 const selectedTotal  = computed(() => selectedOrders.value.reduce((s, o) => s + (Number(o.total) || 0), 0))
 const unpaidCount    = computed(() => selectedOrders.value.filter(o => !o.is_paid).length)
+const selectedItems  = computed(() =>
+  selectedOrders.value.reduce(
+    (s, o) => s + (o.items ?? []).reduce((n, i) => n + (Number(i.quantity) || 0), 0),
+    0,
+  )
+)
 
 const allVisibleSelected = computed(() =>
   visibleOrders.value.length > 0 && visibleOrders.value.every(o => selected.value.has(o.id))
@@ -178,6 +210,9 @@ function clientName(o) {
   return o.user?.name || `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim() || '—'
 }
 function formatPrice(v) {
+  // Montant absent (jamais calculé) → tiret. Afficher « 0 XOF » laissait croire
+  // à une commande gratuite et masquait le vrai problème.
+  if (v === null || v === undefined || v === '') return '—'
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency', currency: 'XOF', maximumFractionDigits: 0,
   }).format(Number(v) || 0)
@@ -185,20 +220,26 @@ function formatPrice(v) {
 const safeName = (s) => String(s ?? '').replace(/[^a-zA-Z0-9\-_]+/g, '_').slice(0, 50)
 
 /** Télécharge un blob renvoyé par le backend pour les ids sélectionnés. */
-async function downloadBlob({ kind, url, mime, ext }) {
+async function downloadBlob({ kind, url, mime, ext, prefix = 'commandes' }) {
   if (busy.value || !selectedOrders.value.length) return
   busy.value = kind
   try {
     const params = new URLSearchParams()
     selectedOrders.value.forEach(o => params.append('order_ids[]', o.id))
-    if (kind === 'pdf')  params.append('label', titleEdit.value || props.label)
     if (kind === 'xlsx') params.append('format', 'xlsx')
+
+    // Feuilles de livraison (PDF et TXT) : titre + blocs récapitulatifs choisis
+    if (kind === 'pdf' || kind === 'txt') {
+      params.append('label', titleEdit.value || props.label)
+      params.append('show_product_totals', showProductTotals.value ? '1' : '0')
+      params.append('show_item_counts',    showItemCounts.value    ? '1' : '0')
+    }
 
     const res  = await api.get(`${url}?${params.toString()}`, { responseType: 'blob' })
     const href = URL.createObjectURL(new Blob([res.data], { type: mime }))
     const a    = document.createElement('a')
     a.href     = href
-    a.download = `${kind === 'pdf' ? 'livraison' : 'commandes'}_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.${ext}`
+    a.download = `${prefix}_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.${ext}`
     document.body.appendChild(a); a.click(); a.remove()
     URL.revokeObjectURL(href)
   } catch (e) {
@@ -210,10 +251,20 @@ async function downloadBlob({ kind, url, mime, ext }) {
 
 // PDF : feuille de livraison groupée par zone
 const downloadPDF = () => downloadBlob({
-  kind: 'pdf',
-  url:  '/admin/orders/export-by-zone',
-  mime: 'application/pdf',
-  ext:  'pdf',
+  kind:   'pdf',
+  url:    '/admin/orders/export-by-zone',
+  mime:   'application/pdf',
+  ext:    'pdf',
+  prefix: 'livraison',
+})
+
+// TXT : même feuille, en texte brut annotable (case « [ ] LIVRÉ » par commande)
+const downloadTxt = () => downloadBlob({
+  kind:   'txt',
+  url:    '/admin/orders/export-by-zone-txt',
+  mime:   'text/plain;charset=utf-8',
+  ext:    'txt',
+  prefix: 'livraison',
 })
 
 // Excel : tableau complet des commandes (même générateur que l'export global)
@@ -310,6 +361,16 @@ function downloadCSV() {
   font-size: 0.75rem; font-weight: 500; color: var(--rose-600);
 }
 .zep__link:hover { text-decoration: underline; }
+
+.zep__toggles-label {
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--gray-500);
+}
+.zep__check {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: var(--gray-700); cursor: pointer;
+}
+.zep__check input { cursor: pointer; accent-color: var(--rose-500); }
 
 /* Tableau */
 .zep__body { flex: 1; overflow-y: auto; padding: 0 var(--space-5); }
