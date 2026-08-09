@@ -328,8 +328,19 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/api'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
+import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
 
 const settings = useSettingsStore()
+
+useSeo(() => ({
+  title: 'Contact — Rosa Beauty Facial Care',
+  description: "Une question sur nos soins ou votre commande ? Contactez Rosa Beauty Facial Care par WhatsApp, téléphone ou e-mail. Réponse rapide, livraison partout en Côte d'Ivoire.",
+  canonical: '/contact',
+  jsonLd: breadcrumbJsonLd([
+    { name: 'Accueil', path: '/' },
+    { name: 'Contact', path: '/contact' },
+  ]),
+}))
 
 // Charger les paramètres au montage
 onMounted(() => {

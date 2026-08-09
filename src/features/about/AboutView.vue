@@ -246,6 +246,17 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import RosaVideoPlayer from '@/components/ui/RosaVideoPlayer.vue'
+import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
+
+useSeo(() => ({
+  title: 'Notre histoire — Cosmétique naturelle ivoirienne',
+  description: "Rosa Beauty Facial Care formule et fabrique en Côte d'Ivoire des soins du visage à base de rose naturelle. Découvrez notre histoire, nos engagements et nos ateliers.",
+  canonical: '/a-propos',
+  jsonLd: breadcrumbJsonLd([
+    { name: 'Accueil', path: '/' },
+    { name: 'Notre histoire', path: '/a-propos' },
+  ]),
+}))
 
 // Servie depuis le storage Laravel, pas depuis public/ : un fichier de
 // cette taille n'a pas sa place dans le dépôt ni dans l'image Docker.

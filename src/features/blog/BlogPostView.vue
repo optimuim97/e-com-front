@@ -123,6 +123,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import api from '@/api'
 import RosaVideoPlayer from '@/components/ui/RosaVideoPlayer.vue'
+import { useSeo, articleJsonLd, breadcrumbJsonLd } from '@/composables/useSeo'
 
 const route   = useRoute()
 const post    = ref(null)
@@ -130,6 +131,30 @@ const related = ref([])
 const loading = ref(true)
 
 const pageUrl = computed(() => window.location.href)
+
+/* ── SEO — l'article se référence sur son titre et son extrait ── */
+useSeo(() => {
+  if (!post.value) return { noindex: true }
+
+  const p = post.value
+  return {
+    title: p.meta_title || p.title,
+    description: p.meta_description || p.excerpt || p.content,
+    image: p.cover_url,
+    type: 'article',
+    canonical: `/blog/${p.slug}`,
+    publishedAt: p.published_at,
+    modifiedAt: p.updated_at,
+    jsonLd: [
+      articleJsonLd(p),
+      breadcrumbJsonLd([
+        { name: 'Accueil', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        { name: p.title, path: `/blog/${p.slug}` },
+      ]),
+    ],
+  }
+})
 
 async function fetchPost(slug) {
   loading.value = true

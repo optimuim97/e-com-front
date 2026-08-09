@@ -106,8 +106,19 @@ import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
+import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
 
 const { t } = useI18n()
+
+useSeo(() => ({
+  title: 'Blog beauté — Conseils soins du visage',
+  description: "Conseils beauté, routines visage et vertus de l'eau de rose par Rosa Beauty Facial Care. Nos experts partagent leurs rituels pour une peau saine sous le climat ivoirien.",
+  canonical: '/blog',
+  jsonLd: breadcrumbJsonLd([
+    { name: 'Accueil', path: '/' },
+    { name: 'Blog', path: '/blog' },
+  ]),
+}))
 
 const posts          = ref([])
 const categories     = ref([])

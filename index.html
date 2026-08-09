@@ -4,7 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#e8336d" />
-    <title>Rosa Beauty Facial Care — Facial Care</title>
+
+    <!-- ⚠ Valeurs par défaut uniquement. Chaque page les remplace au runtime
+         via src/composables/useSeo.js. Elles restent visibles pour les robots
+         qui n'exécutent pas le JavaScript (WhatsApp, Facebook) : voir la note
+         sur le rendu côté serveur dans useSeo.js. Aucun domaine en dur ici —
+         la même image est promue de la recette vers la production. -->
+    <title>Rosa Beauty Facial Care — Soins du visage naturels à la rose</title>
+    <meta
+      name="description"
+      content="Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire. Élixirs, eaux florales et laits corporels livrés à Abidjan et dans tout le pays."
+    />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="/logos/favicon.ico" />
@@ -12,11 +23,19 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/logos/rosa-favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/logos/apple-touch-icon.png" />
 
-    <!-- Open Graph -->
-    <meta property="og:title"       content="Rosa Beauty Facial Care — Facial Care" />
-    <meta property="og:description" content="Soins du visage naturels Rosa Beauty Facial Care." />
-    <meta property="og:image"       content="/logos/rosa-logo-600.png" />
+    <!-- Open Graph — ce que lisent WhatsApp et Facebook au partage d'un lien -->
+    <meta property="og:site_name"   content="Rosa Beauty Facial Care" />
+    <meta property="og:title"       content="Rosa Beauty Facial Care — Soins du visage naturels à la rose" />
+    <meta property="og:description" content="Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire." />
+    <meta property="og:image"       content="/rosa-beauty-facial-care.jpg" />
     <meta property="og:type"        content="website" />
+    <meta property="og:locale"      content="fr_FR" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="Rosa Beauty Facial Care — Soins du visage naturels à la rose" />
+    <meta name="twitter:description" content="Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire." />
+    <meta name="twitter:image"       content="/rosa-beauty-facial-care.jpg" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

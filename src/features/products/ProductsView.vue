@@ -97,6 +97,7 @@ import { useCartStore } from '@/features/cart/cart.store'
 import { useHomeStore } from '@/features/home/home.store'
 import ProductCard from '@/components/ui/ProductCard.vue'
 import AppSelect   from '@/components/ui/AppSelect.vue'
+import { useSeo, itemListJsonLd } from '@/composables/useSeo'
 
 const { t }     = useI18n()
 const route     = useRoute()
@@ -120,6 +121,28 @@ const products  = ref([])
 const { categories } = storeToRefs(homeStore)
 const meta      = ref({})
 const loading   = ref(true)
+
+/* ── SEO ────────────────────────────────────────────────────────────────────
+   Les pages filtrées (catégorie, recherche, pagination) pointent leur canonique
+   vers /products : sans ça, chaque combinaison de filtres deviendrait une page
+   concurrente du catalogue sur les mêmes produits. */
+useSeo(() => {
+  const categorie = route.query.category
+    ? categories.value.find(c => c.slug === route.query.category)
+    : null
+  const recherche = route.query.search
+
+  return {
+    title: categorie
+      ? `${categorie.name} — Soins Rosa Beauty`
+      : 'Boutique — Tous nos soins naturels à la rose',
+    description: categorie?.description
+      || "Découvrez tous les soins Rosa Beauty : élixirs, eaux florales, laits corporels et rituels visage à base de rose naturelle. Livraison à Abidjan et dans toute la Côte d'Ivoire.",
+    canonical: '/products',
+    noindex: !!recherche,
+    jsonLd: itemListJsonLd(products.value),
+  }
+})
 
 const sortOptions = computed(() => [
   { value: 'price_asc',  label: t('products.priceAsc') },

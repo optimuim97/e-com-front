@@ -285,6 +285,7 @@ import StarRating from '@/features/reviews/StarRating.vue'
 import { reviewApi } from '@/features/reviews/review.api'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 import ProductCard from '@/components/shop/ProductCard.vue'
+import { useSeo, productJsonLd, breadcrumbJsonLd } from '@/composables/useSeo'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -344,6 +345,35 @@ const trustBadges = computed(() => [
     label: t('product.return14d'),
   },
 ])
+
+/* ── SEO ──────────────────────────────────────────────────────────
+   Déclaré après `reviews` : watchEffect s'exécute dès le montage et lirait
+   une référence non encore initialisée s'il était placé plus haut.
+   Réévalué quand le produit arrive — au premier rendu il est encore nul, et
+   un moteur ne doit pas mémoriser une fiche sans titre ni prix. */
+useSeo(() => {
+  if (!product.value) return { noindex: true }
+
+  const p = product.value
+  return {
+    title: p.meta_title || p.name,
+    description: p.meta_description || p.short_description || p.description,
+    image: p.images?.[0]?.url,
+    type: 'product',
+    canonical: `/products/${p.slug}`,
+    jsonLd: [
+      productJsonLd(p, {
+        rating: p.rating_avg ? { average: p.rating_avg, count: p.reviews_count } : null,
+        reviews: reviews.value,
+      }),
+      breadcrumbJsonLd([
+        { name: 'Accueil', path: '/' },
+        { name: 'Boutique', path: '/products' },
+        { name: p.name, path: `/products/${p.slug}` },
+      ]),
+    ],
+  }
+})
 
 async function loadReviews() {
   reviewsLoading.value = true

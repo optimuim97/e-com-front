@@ -87,6 +87,7 @@ import AboutSection         from '@/features/home/sections/AboutSection.vue'
 import ExploreSection       from '@/features/home/sections/ExploreSection.vue'
 import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'
 import BlogStoriesSection   from '@/features/home/sections/BlogStoriesSection.vue'
+import { useSeo, organizationJsonLd, webSiteJsonLd } from '@/composables/useSeo'
 
 /* ── Stores ─────────────────────────────────────────────────────────────── */
 const { t }     = useI18n()
@@ -104,6 +105,29 @@ const {
 } = storeToRefs(homeStore)
 
 const FALLBACK_TAGLINE = computed(() => t('about.defaultTagline'))
+
+/* ── SEO ────────────────────────────────────────────────────────────────────
+   La page d'accueil porte les blocs Store et WebSite : ce sont eux que Google
+   rattache au domaine (encart marque, barre de recherche dans les résultats). */
+useSeo(() => ({
+  title: settings.homeHeroTitle
+    ? `${settings.shopName || 'Rosa Beauty Facial Care'} — ${settings.homeHeroTitle}`
+    : 'Rosa Beauty Facial Care — Soins du visage naturels à la rose',
+  description: settings.shopTagline
+    || "Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire. Élixirs, eaux florales et laits corporels livrés à Abidjan et dans tout le pays.",
+  canonical: '/',
+  image: '/rosa-beauty-facial-care.jpg',
+  jsonLd: [
+    organizationJsonLd({
+      shop_name: settings.shopName,
+      shop_tagline: settings.shopTagline,
+      shop_phone: settings.shopPhone,
+      shop_email: settings.shopEmail,
+      shop_address: settings.shopAddress,
+    }),
+    webSiteJsonLd(),
+  ],
+}))
 
 /* ── Chargement : ne refetch que si le TTL de 5 min est dépassé ─────────── */
 onMounted(() => homeStore.fetchAll())

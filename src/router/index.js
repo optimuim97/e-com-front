@@ -75,4 +75,33 @@ router.beforeEach(async (to) => {
   if (to.meta.guest         && auth.user)     return { name: 'home' }
 })
 
+/**
+ * Ligne de base SEO, posée à chaque navigation.
+ *
+ * Les pages publiques la remplacent aussitôt via useSeo() — leur composant est
+ * monté après ce hook, donc leurs valeurs gagnent. Elle sert aux écrans privés
+ * (panier, tunnel, compte, admin) qui n'appellent pas useSeo : sans elle, ils
+ * héritaient du titre et de l'URL canonique de la page précédente, et Google
+ * pouvait indexer « /checkout » sous le nom d'un produit.
+ */
+router.afterEach((to) => {
+  const prive = to.path.startsWith('/admin')
+    || to.meta.requiresAuth
+    || to.meta.guest
+    || ['cart', 'checkout', 'not-found'].includes(to.name)
+
+  if (!prive) return
+
+  const robots = document.head.querySelector('meta[name="robots"]')
+    ?? document.head.appendChild(
+      Object.assign(document.createElement('meta'), { name: 'robots' })
+    )
+  robots.setAttribute('content', 'noindex, nofollow')
+
+  document.head.querySelector('link[rel="canonical"]')?.remove()
+  document.head
+    .querySelectorAll('script[data-seo-jsonld]')
+    .forEach(el => el.remove())
+})
+
 export default router
