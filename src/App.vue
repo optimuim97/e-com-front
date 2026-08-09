@@ -5,6 +5,9 @@
     :phone="settings.whatsappNumber"
   />
   <FloatingCart v-if="!isAdminRoute" />
+  <!-- Installation / mise à jour PWA — hors back-office : l'invite
+       « installez la boutique » n'a aucun sens pour un agent. -->
+  <PwaPrompts v-if="!isAdminRoute" />
 </template>
 
 <script setup>
@@ -14,6 +17,7 @@ import { useToast } from 'vue-toastification';
 import { useI18n } from 'vue-i18n';
 import WhatsAppButton from '@/components/shop/WhatsAppButton.vue';
 import FloatingCart   from '@/components/shop/FloatingCart.vue';
+import PwaPrompts     from '@/components/ui/PwaPrompts.vue';
 import { useSettingsStore } from '@/stores/settings';
 
 const { t } = useI18n();

@@ -8,8 +8,13 @@ import App from './App.vue';
 import AppSelect from '@/components/ui/AppSelect.vue';
 import FlowerMark from '@/components/ui/FlowerMark.vue';
 import echoPlugin from '@/plugins/echo';
+import { registerServiceWorker, captureInstallPrompt } from '@/pwa';
 import './assets/css/design-system.css'
 import './assets/app.css'
+
+// Capturé avant le montage : le navigateur peut émettre beforeinstallprompt
+// très tôt, et l'événement est perdu si personne ne l'écoute à ce moment-là.
+captureInstallPrompt();
 
 const app = createApp(App);
 app.component('AppSelect', AppSelect);
@@ -36,6 +41,9 @@ app.use(Toast, {
 app.use(echoPlugin);
 
 app.mount('#app');
+
+// Après le montage : l'enregistrement ne doit pas retarder le premier rendu.
+registerServiceWorker();
 
 app.directive('img-fallback', {
     mounted(el, binding) {

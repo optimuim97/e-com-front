@@ -23,6 +23,16 @@
     <link rel="icon" type="image/png" sizes="192x192" href="/logos/rosa-favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/logos/apple-touch-icon.png" />
 
+    <!-- ── PWA ── -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- iOS ignore le manifeste : mode plein écran et titre passent par ces
+         balises propriétaires, sans quoi « Sur l'écran d'accueil » ouvre
+         simplement Safari avec sa barre d'adresse. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Rosa Beauty" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
     <!-- Open Graph — ce que lisent WhatsApp et Facebook au partage d'un lien -->
     <meta property="og:site_name"   content="Rosa Beauty Facial Care" />
     <meta property="og:title"       content="Rosa Beauty Facial Care — Soins du visage naturels à la rose" />
