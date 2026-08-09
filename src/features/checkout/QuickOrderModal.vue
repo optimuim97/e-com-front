@@ -531,24 +531,29 @@ async function doQoGeo() {
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
+/**
+ * Moyens de paiement selon la destination — miroir de PaymentAvailability,
+ * que le serveur applique de son côté (QuickOrderController).
+ *   Abidjan            → paiement à la livraison uniquement
+ *   Intérieur de la CI → prépaiement Wave ou Orange Money
+ * (la commande rapide est réservée à la Côte d'Ivoire : pas d'international)
+ */
 const paymentMethods = computed(() => {
-  const list = [
+  if (isAbidjanQuick.value) {
+    return [{ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK }]
+  }
+  return [
     { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
     { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
   ]
-  // « À la livraison » réservé à Abidjan
-  if (isAbidjanQuick.value) {
-    list.push({ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK })
-  }
-  return list
 })
 
-// Si le client passe hors Abidjan après avoir choisi « À la livraison », on repasse sur Wave
-watch(isAbidjanQuick, (abidjan) => {
-  if (!abidjan && form.value.payment === 'delivery') {
-    form.value.payment = 'wave'
+// La destination change → un moyen devenu invalide ne doit pas rester coché.
+watch(paymentMethods, (methods) => {
+  if (!methods.some(m => m.value === form.value.payment)) {
+    form.value.payment = methods[0]?.value ?? ''
   }
-})
+}, { immediate: true })
 
 // Pré-remplir depuis le profil si l'utilisateur est connecté
 onMounted(() => {

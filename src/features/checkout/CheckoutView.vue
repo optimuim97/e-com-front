@@ -378,27 +378,78 @@
               </div>
             </header>
             <div class="co-section__body">
-              <div class="payment-methods">
-                <label
-                  v-for="method in paymentMethods"
-                  :key="method.value"
-                  class="payment-method"
-                  :class="{ 'payment-method--active': form.payment_method === method.value }"
+              <!-- INTERNATIONAL : pas de paiement en ligne, on passe par un agent -->
+              <div v-if="isInternational" class="co-intl">
+                <p class="co-intl__lead">
+                  Pour une livraison hors de Côte d'Ivoire, la commande se finalise
+                  avec un de nos agents : il calcule les frais de transport vers
+                  votre pays et vous indique comment régler.
+                </p>
+                <a
+                  v-if="internationalWhatsappLink"
+                  :href="internationalWhatsappLink"
+                  target="_blank"
+                  rel="noopener"
+                  class="btn btn-whatsapp co-intl__cta"
                 >
-                  <input type="radio" :value="method.value" v-model="form.payment_method" required />
-                  <span class="payment-method__icon" v-html="method.icon"></span>
-                  <div class="payment-method__body">
-                    <strong>{{ method.label }}</strong>
-                    <span v-if="method.desc">{{ method.desc }}</span>
-                  </div>
-                  <span class="payment-method__dot"></span>
-                </label>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  Finaliser ma commande sur WhatsApp
+                </a>
+                <p v-else class="co-msg co-msg--error">
+                  Le numéro WhatsApp de la boutique n'est pas configuré — contactez-nous
+                  par e-mail pour finaliser votre commande.
+                </p>
+                <p class="co-intl__note">
+                  Votre panier est repris automatiquement dans le message.
+                </p>
               </div>
 
-              <p v-if="!isAbidjanDelivery && form.shipping_city" class="co-shipping-note">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                Hors Abidjan, la commande doit être réglée d'avance : nous n'expédions que les commandes déjà payées. Le paiement à la livraison est réservé à Abidjan.
-              </p>
+              <!-- HORS ZONE : frais inconnus → nos agents fixent aussi le règlement -->
+              <div v-else-if="shippingManual" class="co-intl">
+                <p class="co-intl__lead">
+                  Votre zone de livraison n'est pas encore tarifée. Nos agents
+                  vous contactent pour vous confirmer les frais de livraison,
+                  puis le mode de règlement — vous n'avez rien à choisir ici.
+                </p>
+                <p class="co-intl__note">
+                  Validez votre commande : nous revenons vers vous rapidement.
+                </p>
+              </div>
+
+              <template v-else>
+                <div class="payment-methods">
+                  <label
+                    v-for="method in paymentMethods"
+                    :key="method.value"
+                    class="payment-method"
+                    :class="{ 'payment-method--active': form.payment_method === method.value }"
+                  >
+                    <input type="radio" :value="method.value" v-model="form.payment_method" required />
+                    <span class="payment-method__icon" v-html="method.icon"></span>
+                    <div class="payment-method__body">
+                      <strong>{{ method.label }}</strong>
+                      <span v-if="method.desc">{{ method.desc }}</span>
+                    </div>
+                    <span class="payment-method__dot"></span>
+                  </label>
+                </div>
+
+                <p v-if="!paymentMethods.length" class="co-msg co-msg--error">
+                  Aucun moyen de paiement n'est disponible pour cette destination.
+                  Contactez-nous pour finaliser votre commande.
+                </p>
+
+                <p v-if="destination === 'abidjan'" class="co-shipping-note">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  À Abidjan, vous réglez directement au livreur en recevant votre colis.
+                </p>
+                <p v-else-if="form.shipping_city" class="co-shipping-note">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  À l'intérieur du pays, la commande doit être réglée d'avance : nous n'expédions que les commandes déjà payées.
+                </p>
+              </template>
 
               <p v-if="submitError" class="co-msg co-msg--error">{{ submitError }}</p>
             </div>
@@ -481,11 +532,12 @@
 
           <!-- Bouton confirmer — visible uniquement à l'étape 3 -->
           <Transition name="fade">
+            <!-- International : la commande ne se confirme pas ici (voir étape 3) -->
             <button
-              v-if="currentStep === 3"
+              v-if="currentStep === 3 && !isInternational"
               type="button"
               @click="submitOrder"
-              :disabled="submitting || !form.payment_method || cartStore.items.length === 0"
+              :disabled="submitting || !canSubmit"
               class="btn btn-primary btn-lg co-summary__cta"
             >
               <span v-if="submitting" class="co-spinner"></span>
@@ -504,7 +556,7 @@
     <!-- ── CTA fixé en bas sur mobile (step 3) ── -->
     <Teleport to="body">
       <Transition name="slide-up">
-        <div v-if="currentStep === 3 && cartStore.itemCount && !paymentInstructions" class="co-mobile-cta hide-desktop">
+        <div v-if="currentStep === 3 && cartStore.itemCount && !paymentInstructions && !isInternational" class="co-mobile-cta hide-desktop">
           <div class="co-mobile-cta__inner">
             <div class="co-mobile-cta__total">
               <span>Total</span>
@@ -512,7 +564,7 @@
             </div>
             <button
               @click="submitOrder"
-              :disabled="submitting || !form.payment_method || cartStore.items.length === 0"
+              :disabled="submitting || !canSubmit"
               class="btn btn-primary co-mobile-cta__btn"
             >
               <span v-if="submitting" class="co-spinner"></span>
@@ -685,6 +737,44 @@ const adminWhatsappLink = computed(() => {
   return `https://wa.me/${phone.replace(/\D/g, '')}?text=${msg}`
 })
 
+/**
+ * Commande internationale : elle ne se règle pas en ligne. On ouvre WhatsApp
+ * avec le panier et l'adresse déjà rédigés, pour que l'agent puisse chiffrer
+ * le transport et donner les instructions sans rien redemander à la cliente.
+ */
+const internationalWhatsappLink = computed(() => {
+  const s = (settings.data?.value ?? settings.data ?? {})
+  const phone = (s.whatsapp_admin_number ?? '').toString().replace(/\D/g, '')
+  if (!phone) return null
+
+  const pays = shippingCountryOptions.value
+    .find(o => o.value === form.value.shipping_country)?.label
+    ?? form.value.shipping_country
+
+  const articles = cartStore.items.map(i => {
+    const nom = i.product?.name ?? i.name ?? 'Produit'
+    return `• ${nom} × ${i.quantity}`
+  })
+
+  const lignes = [
+    'Bonjour ! Je souhaite passer une commande à livrer hors de Côte d\'Ivoire.',
+    '',
+    `Destination : ${pays}`,
+    form.value.shipping_city ? `Ville : ${form.value.shipping_city}` : null,
+    `Nom : ${[form.value.first_name, form.value.last_name].filter(Boolean).join(' ')}`,
+    form.value.phone ? `Téléphone : ${form.value.phone}` : null,
+    '',
+    'Articles :',
+    ...articles,
+    '',
+    `Sous-total : ${formatPrice(Number(cartStore.subtotal))}`,
+    '',
+    'Pouvez-vous me communiquer les frais de livraison et les instructions de paiement ?',
+  ].filter(l => l !== null)
+
+  return `https://wa.me/${phone}?text=${encodeURIComponent(lignes.join('\n'))}`
+})
+
 function goToOrder() {
   paymentInstructions.value = null
   router.push({ name: 'order', params: { number: confirmedOrderNumber.value } })
@@ -768,30 +858,55 @@ const isAbidjanDelivery = computed(() =>
   isAbidjan(form.value.shipping_city, form.value.shipping_commune)
 )
 
+/**
+ * Destination de la commande — miroir de PaymentAvailability côté serveur.
+ * C'est le serveur qui tranche (StoreOrderRequest) ; ceci n'est que l'affichage.
+ */
+const destination = computed(() => {
+  const pays = (form.value.shipping_country || 'CI').toUpperCase()
+  if (pays !== 'CI') return 'international'
+  return isAbidjanDelivery.value ? 'abidjan' : 'interior'
+})
+
+const isInternational = computed(() => destination.value === 'international')
+
 const paymentMethods = computed(() => {
   // Accès robuste aux settings bruts, que Pinia déballe le ref ou non.
   const s = (settings.data?.value ?? settings.data ?? {})
-  const isOn  = (v) => v === true || v === 'true' || v === '1' || v === 1
   const isOff = (v) => v === false || v === 'false' || v === '0' || v === 0
 
+  // International : rien à choisir, la commande se finalise sur WhatsApp.
+  if (isInternational.value) return []
+
+  // Grand Abidjan : paiement à la livraison uniquement — nos livreurs encaissent.
+  if (destination.value === 'abidjan') {
+    if (isOff(s.payment_delivery_enabled)) return []
+    return [{ value: 'cod', label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis' }]
+  }
+
+  // Intérieur de la CI : prépaiement mobile obligatoire.
   const list = []
-  // Wave / Orange / Livraison : visibles par défaut, masqués seulement si explicitement désactivés.
   if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',         icon: ICON_WAVE,   desc: 'Paiement mobile rapide' })
   if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money', icon: ICON_ORANGE, desc: 'Mobile Money Orange' })
-  if (isOn(s.payment_mtn_enabled))            list.push({ value: 'mtn',          label: 'MTN MoMo',     icon: ICON_MTN,    desc: 'MTN Mobile Money' })
-  list.push({ value: 'card', label: 'Carte bancaire', icon: ICON_CARD, desc: 'Visa, Mastercard — paiement sécurisé Stripe' })
-  // « À la livraison » réservé à Abidjan
-  if (!isOff(s.payment_delivery_enabled) && isAbidjanDelivery.value) {
-    list.push({ value: 'cod', label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis (Abidjan uniquement)' })
-  }
   return list
 })
 
-// Si le client passe hors Abidjan après avoir choisi « À la livraison », on réinitialise.
-watch(isAbidjanDelivery, (abidjan) => {
-  if (!abidjan && form.value.payment_method === 'cod') {
+// La destination change → un moyen devenu invalide ne doit pas rester coché.
+watch(paymentMethods, (methods) => {
+  const choisi = form.value.payment_method
+  if (choisi && !methods.some(m => m.value === choisi)) {
     form.value.payment_method = ''
   }
+}, { immediate: true })
+
+/**
+ * Commande envoyable ?
+ * Hors zone, on n'attend aucun moyen de paiement : la commande part sans, et
+ * nos agents fixent frais puis règlement. À l'international, rien ne part d'ici.
+ */
+const canSubmit = computed(() => {
+  if (!cartStore.items.length || isInternational.value) return false
+  return shippingManual.value || !!form.value.payment_method
 })
 
 // ── Coupon ────────────────────────────────────────────────────────────────────
@@ -931,7 +1046,8 @@ function buildPayload() {
   return {
     shipping_address,
     billing_address:  { ...shipping_address },
-    payment_method:   form.value.payment_method,
+    // Hors zone : aucun moyen retenu, nos agents fixent frais puis règlement.
+    payment_method:   form.value.payment_method || null,
     coupon_code:      couponApplied.value ? couponCode.value : null,
     customer_note:    form.value.customer_note || null,
     shipping_cost:    shippingFound.value ? shippingCost.value : null,
@@ -1433,6 +1549,34 @@ function formatPrice(val) {
   line-height: 1.45;
 }
 .co-shipping-note svg { flex-shrink: 0; margin-top: 2px; }
+
+/* ── Commande internationale : finalisation par un agent WhatsApp ── */
+.co-intl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md, 10px);
+  background: var(--cream-50, #fdfaf8);
+  border: 1px solid var(--cream-300, #e8ddd6);
+}
+.co-intl__lead {
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--gray-700);
+}
+.co-intl__cta {
+  align-self: stretch;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.co-intl__note {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  text-align: center;
+}
 
 /* Bannière hors Abidjan — prominente, à l'étape adresse */
 .co-outzone {

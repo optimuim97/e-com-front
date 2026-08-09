@@ -302,6 +302,49 @@
           </p>
         </div>
 
+        <!-- Mode de règlement — à fixer sur les commandes hors zone -->
+        <div class="card p-5 space-y-4">
+          <h2 class="font-semibold text-gray-800">Mode de règlement</h2>
+
+          <p v-if="!order.payment_method" class="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">
+            Aucun mode de règlement : cette commande a été passée hors zone.
+            Renseignez les frais de livraison, puis choisissez comment la cliente règle.
+          </p>
+
+          <div>
+            <label class="label">Moyen de paiement</label>
+            <AppSelect v-model="editForm.payment_method" :options="paymentMethodOptions" />
+          </div>
+
+          <label class="flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" v-model="editForm.notify_client" class="accent-rose-500" />
+            Prévenir la cliente par WhatsApp (instructions de paiement incluses)
+          </label>
+
+          <button
+            @click="savePaymentMethod"
+            :disabled="savingPayment || editForm.payment_method === (order.payment_method ?? '')"
+            class="btn-primary w-full py-2.5 font-medium disabled:opacity-50"
+          >
+            {{ savingPayment ? "Enregistrement…" : "Enregistrer le mode de règlement" }}
+          </button>
+
+          <p v-if="paymentMsg" class="text-sm text-center" :class="paymentMsgError ? 'text-red-500' : 'text-green-600'">
+            {{ paymentMsg }}
+          </p>
+
+          <!-- Repli manuel : WhatsApp a refusé l'envoi, l'agent transmet lui-même -->
+          <a
+            v-if="notifyFallbackLink"
+            :href="notifyFallbackLink"
+            target="_blank"
+            rel="noopener"
+            class="flex items-center justify-center gap-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 px-3 py-2 rounded-lg transition-colors"
+          >
+            Envoyer moi-même le message sur WhatsApp
+          </a>
+        </div>
+
         <!-- Changer le statut (contrôle complet, tous les statuts) -->
         <div class="card p-5 space-y-4">
           <h2 class="font-semibold text-gray-800">Changer le statut</h2>
@@ -372,7 +415,68 @@ const editForm = reactive({
   status: "",
   tracking_number: "",
   shipping_cost: "",
+  payment_method: "",
+  notify_client: true,
 });
+
+const savingPayment  = ref(false);
+const paymentMsg     = ref("");
+const paymentMsgError = ref(false);
+const notifyFallback = ref("");
+
+// Le serveur renvoie le message même quand WhatsApp refuse l'envoi : l'agent
+// peut alors le transmettre lui-même plutôt que de laisser la cliente sans
+// instructions de paiement.
+const notifyFallbackLink = computed(() => {
+  const phone = order.value?.shipping_address?.phone;
+  if (!phone || !notifyFallback.value) return null;
+  return buildWaLink(phone, notifyFallback.value);
+});
+
+const paymentMethodOptions = [
+  { value: "", label: "— Non défini —" },
+  { value: "wave", label: "Wave" },
+  { value: "orange_money", label: "Orange Money" },
+  { value: "cod", label: "À la livraison" },
+  { value: "cash", label: "Espèces" },
+  { value: "card", label: "Carte bancaire" },
+];
+
+/**
+ * Fixe le mode de règlement. La cliente est prévenue par défaut : c'est l'agent
+ * qui décide pour elle, elle doit recevoir les instructions correspondantes.
+ */
+async function savePaymentMethod() {
+  savingPayment.value = true;
+  paymentMsg.value = "";
+  paymentMsgError.value = false;
+  notifyFallback.value = "";
+  try {
+    const { data } = await api.patch(`/admin/orders/${route.params.id}`, {
+      payment_method: editForm.payment_method || null,
+      notify_client: editForm.notify_client,
+    });
+    order.value = data.data ?? data;
+    editForm.payment_method = order.value.payment_method ?? "";
+
+    const notif = data.notification;
+    if (!notif) {
+      paymentMsg.value = "✓ Mode de règlement enregistré.";
+    } else if (notif.sent) {
+      paymentMsg.value = "✓ Enregistré. Cliente prévenue par WhatsApp.";
+    } else {
+      paymentMsgError.value = true;
+      paymentMsg.value = `Enregistré, mais la notification n'est pas partie : ${notif.reason ?? "envoi refusé"}`;
+      notifyFallback.value = notif.message ?? "";
+    }
+    fetchWaMessage();
+  } catch (e) {
+    paymentMsgError.value = true;
+    paymentMsg.value = e.response?.data?.message ?? "Erreur lors de l'enregistrement.";
+  } finally {
+    savingPayment.value = false;
+  }
+}
 
 const savingShipping = ref(false);
 const shippingMsg = ref("");
@@ -407,6 +511,7 @@ async function fetchOrder() {
     editForm.status = order.value.status;
     editForm.tracking_number = order.value.tracking_number ?? "";
     editForm.shipping_cost = order.value.shipping_cost ?? "";
+    editForm.payment_method = order.value.payment_method ?? "";
     fetchWaMessage();
   } catch {
     order.value = null;
@@ -503,7 +608,14 @@ async function updateOrder(force = false) {
   saveSuccess.value = false;
   saveError.value = "";
   try {
-    const payload = force ? { ...editForm, force: true } : { ...editForm };
+    // Volontairement limité au statut : le mode de règlement a son propre
+    // enregistrement, qui notifie la cliente. L'envoyer ici déclencherait une
+    // notification surprise sur un simple changement de statut.
+    const payload = {
+      status: editForm.status,
+      tracking_number: editForm.tracking_number,
+      ...(force ? { force: true } : {}),
+    };
     const { data } = await api.patch(`/admin/orders/${route.params.id}`, payload);
     order.value = data.data ?? data;
     fetchWaMessage();
