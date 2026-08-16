@@ -159,6 +159,7 @@ const NAV_GROUPS = [
     key: 'marketing',
     label: 'Marketing',
     items: [
+      { to: '/admin/promotions',      label: 'Promotions',         icon: TagIcon,                 permission: 'promotions.view'      },
       { to: '/admin/coupons',         label: 'Coupons',            icon: TicketIcon,              permission: 'coupons.view'         },
       { to: '/admin/programme',       label: 'Club fidélité',      icon: StarIcon,                permission: 'program.view'         },
       { to: '/admin/reviews',         label: 'Avis clients',       icon: ChatBubbleLeftRightIcon, permission: 'reviews.view'         },
@@ -197,6 +198,7 @@ const TITLES = {
   'admin.pos':                 'Caisse / POS',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
+  'admin.promotions':          'Opérations commerciales',
   'admin.coupons':             'Coupons & promotions',
   'admin.programme':           'Club fidélité',
   'admin.reviews':             'Avis clients',
