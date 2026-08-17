@@ -56,12 +56,41 @@
               {{ p.name }} <span>{{ fmt(p.price) }}</span>
             </button>
           </div>
-          <ul v-if="form.products.length" class="product-chips">
-            <li v-for="p in form.products" :key="p.id">
-              {{ p.name }}
-              <button type="button" @click="removeProduct(p.id)" aria-label="Retirer">✕</button>
-            </li>
-          </ul>
+          <!-- Aperçu : chaque article, sa remise et le prix qui en résulte -->
+          <table v-if="form.products.length" class="preview">
+            <thead>
+              <tr>
+                <th>Article</th>
+                <th>Prix</th>
+                <th>Remise</th>
+                <th>Prix remisé</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in form.products" :key="p.id">
+                <td class="preview__name">{{ p.name }}</td>
+                <td class="preview__price">{{ fmt(p.price) }}</td>
+                <td class="preview__discount">
+                  <select v-model="p.discount_type" class="input input--xs">
+                    <option :value="null">Celle de l'opération</option>
+                    <option value="percent">%</option>
+                    <option value="fixed">F CFA</option>
+                  </select>
+                  <input v-if="p.discount_type" v-model.number="p.value" type="number"
+                         min="0" class="input input--xs" placeholder="0" />
+                </td>
+                <td class="preview__result">
+                  <strong>{{ fmt(previewPrice(p)) }}</strong>
+                  <small>−{{ fmt(p.price - previewPrice(p)) }}</small>
+                </td>
+                <td>
+                  <button type="button" class="btn btn-xs btn-outline"
+                          @click="removeProduct(p.id)">Retirer</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
           <p v-else class="hint">Aucun article sélectionné pour l'instant.</p>
         </div>
 
@@ -176,7 +205,14 @@ onMounted(() => {
     ...props.promotion,
     starts_at: toLocalInput(props.promotion.starts_at),
     ends_at:   toLocalInput(props.promotion.ends_at),
-    products:  props.promotion.products ?? [],
+    // Les remises dérogatoires vivent dans le pivot renvoyé par l'API.
+    products: (props.promotion.products ?? []).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: Number(p.price),
+      discount_type: p.pivot?.discount_type ?? null,
+      value: p.pivot?.value != null ? Number(p.pivot.value) : null,
+    })),
   })
 })
 
@@ -200,13 +236,41 @@ function debouncedSearch() {
 }
 
 function addProduct(product) {
-  form.products.push({ id: product.id, name: product.name, price: product.price })
+  form.products.push({
+    id: product.id,
+    name: product.name,
+    price: Number(product.price),
+    // Null = l'article suit la remise de l'opération.
+    discount_type: null,
+    value: null,
+  })
   searchResults.value = searchResults.value.filter((p) => p.id !== product.id)
   productSearch.value = ''
 }
 
 function removeProduct(id) {
   form.products = form.products.filter((p) => p.id !== id)
+}
+
+/**
+ * Prix remisé tel que le calculera le serveur.
+ *
+ * Reproduit volontairement la même règle qu'en base — remise propre à
+ * l'article si elle est renseignée, sinon celle de l'opération, le tout borné
+ * par le plafond — pour que l'aperçu ne mente pas.
+ */
+function previewPrice(product) {
+  const price = Number(product.price) || 0
+  const type  = product.discount_type || form.discount_type
+  const value = product.discount_type ? Number(product.value) || 0 : Number(form.value) || 0
+
+  let discount = type === 'percent' ? (price * value) / 100 : value
+
+  if (form.discount_type === 'percent' && form.max_discount_amount) {
+    discount = Math.min(discount, Number(form.max_discount_amount))
+  }
+
+  return Math.max(0, Math.round((price - discount) * 100) / 100)
 }
 
 // ── Enregistrement ──────────────────────────────────────────────────────
@@ -231,7 +295,14 @@ async function save() {
       ends_at:   form.ends_at || null,
       priority:  form.priority || 0,
       is_active: form.is_active,
-      product_ids: form.scope === 'product' ? form.products.map((p) => p.id) : [],
+      // Chaque article part avec sa remise dérogatoire éventuelle.
+      products: form.scope === 'product'
+        ? form.products.map((p) => ({
+            id: p.id,
+            discount_type: p.discount_type || null,
+            value: p.discount_type ? (p.value ?? null) : null,
+          }))
+        : [],
     }
 
     if (props.promotion) {
@@ -282,12 +353,19 @@ async function save() {
   font-size: 0.8125rem;
 }
 .product-row:hover { background: var(--rose-50); }
-.product-chips { list-style: none; padding: 0; margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.product-chips li {
-  display: flex; align-items: center; gap: 6px; font-size: 0.75rem;
-  background: var(--gray-100); padding: 4px 10px; border-radius: 999px;
+.preview { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 0.8125rem; }
+.preview th {
+  text-align: left; font-weight: 500; font-size: 0.6875rem;
+  color: var(--gray-500); padding: 4px 8px; border-bottom: 1px solid var(--gray-200);
 }
-.product-chips button { background: none; border: 0; cursor: pointer; color: var(--gray-500); }
+.preview td { padding: 8px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+.preview__name { max-width: 200px; }
+.preview__price { color: var(--gray-500); white-space: nowrap; }
+.preview__discount { display: flex; gap: 4px; align-items: center; }
+.preview__result { white-space: nowrap; }
+.preview__result strong { color: var(--rose-600); display: block; }
+.preview__result small { color: var(--gray-400); font-size: 0.6875rem; }
+.input--xs { padding: 4px 6px !important; font-size: 0.75rem !important; max-width: 110px; }
 
 .hint { font-size: 0.75rem; color: var(--gray-400); margin: -8px 0 var(--space-4); }
 .switch { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; }
