@@ -136,6 +136,7 @@ const NAV_GROUPS = [
       { to: '/admin',        label: 'Dashboard',    icon: Squares2X2Icon,           permission: 'dashboard.view' },
       { to: '/admin/orders', label: 'Commandes',    icon: ClipboardDocumentListIcon, permission: 'orders.view'   },
       { to: '/admin/pos',    label: 'Caisse / POS', icon: CalculatorIcon,           permission: 'pos.use'        },
+      { to: '/admin/whatsapp', label: 'Messages WhatsApp', icon: ChatBubbleLeftRightIcon, permission: 'whatsapp.view' },
     ],
   },
   {
@@ -196,6 +197,7 @@ const TITLES = {
   'admin.orders':              'Commandes',
   'admin.order':               'Détail commande',
   'admin.pos':                 'Caisse / POS',
+  'admin.whatsapp':            'Messages WhatsApp',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
   'admin.promotions':          'Opérations commerciales',

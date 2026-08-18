@@ -12,6 +12,7 @@ export default {
     { path: 'categories',                   name: 'admin.categories',             meta: { permission: 'categories.view' },      component: () => import('./categories/CategoriesView.vue') },
     { path: 'orders',                       name: 'admin.orders',                 meta: { permission: 'orders.view' },          component: () => import('./orders/OrdersView.vue') },
     { path: 'pos',                          name: 'admin.pos',                    meta: { permission: 'pos.use' },              component: () => import('./pos/PosView.vue') },
+    { path: 'whatsapp',                     name: 'admin.whatsapp',               meta: { permission: 'whatsapp.view' },        component: () => import('./whatsapp/WhatsAppInboxView.vue') },
     { path: 'orders/:id',                   name: 'admin.order',                  meta: { permission: 'orders.view' },          component: () => import('./orders/OrderView.vue') },
     { path: 'promotions',                   name: 'admin.promotions',             meta: { permission: 'promotions.view' },      component: () => import('./promotions/PromotionsView.vue') },
     { path: 'coupons',                      name: 'admin.coupons',                meta: { permission: 'coupons.view' },         component: () => import('./coupons/CouponsView.vue') },

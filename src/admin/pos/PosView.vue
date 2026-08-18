@@ -2,6 +2,21 @@
   <div class="pos">
     <!-- ── Colonne gauche : saisie ── -->
     <div class="pos__left">
+      <!-- Origine WhatsApp : la commande est rattachée au message d'origine -->
+      <div v-if="waMessage" class="card pos-card pos-origin">
+        <div class="pos-origin__head">
+          <strong>📲 Message WhatsApp de {{ waMessage.contact_name || formatPhone(waMessage.from_phone) }}</strong>
+          <RouterLink :to="{ name: 'admin.whatsapp' }" class="pos-origin__back">← Retour à la file</RouterLink>
+        </div>
+        <p class="pos-origin__body">{{ waMessage.body }}</p>
+        <p v-if="waKnownCustomer" class="pos-origin__known">
+          Cliente déjà connue : {{ waKnownCustomer.name }} — {{ waKnownCustomer.orders_count }} commande(s)
+        </p>
+        <p class="pos-origin__hint">
+          La commande créée sera rattachée à ce message, qui quittera la file.
+        </p>
+      </div>
+
       <!-- Analyse de message -->
       <div class="card pos-card">
         <h3 class="pos-card__title">🪄 Commande depuis un message</h3>
@@ -158,12 +173,20 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
+import { adminWhatsAppApi } from '@/admin/whatsapp/whatsapp.api'
+
+const route = useRoute()
 
 // Catalogue affiché en grille avant toute recherche
 const catalog        = ref([])
 const loadingCatalog = ref(true)
+
+// Message WhatsApp d'origine, quand la caisse est ouverte depuis la file
+// (/admin/pos?wa=42). La commande créée sera rattachée à ce message.
+const waMessage       = ref(null)
+const waKnownCustomer = ref(null)
 
 onMounted(async () => {
   try {
@@ -174,7 +197,49 @@ onMounted(async () => {
   } finally {
     loadingCatalog.value = false
   }
+
+  if (route.query.wa) await loadFromWhatsApp(route.query.wa)
 })
+
+/**
+ * Charge le message, en extrait produits et cliente, et pré-remplit la caisse.
+ * L'agent vérifie et corrige : le parseur propose, il ne valide pas.
+ */
+async function loadFromWhatsApp(id) {
+  try {
+    const { data: msg } = await adminWhatsAppApi.get(id)
+    waMessage.value = msg
+    message.value   = msg.body ?? ''
+
+    if (msg.status !== 'pending') {
+      parseInfo.value = 'Ce message a déjà été traité — vérifiez avant de créer une seconde commande.'
+    }
+
+    const { data } = await adminWhatsAppApi.parse(id)
+    waKnownCustomer.value = data.known_customer ?? null
+
+    if (data.customer?.name)  customer.name  = data.customer.name
+    if (data.customer?.phone) customer.phone = data.customer.phone
+    if (data.known_customer?.email) customer.email = data.known_customer.email
+
+    for (const it of data.items ?? []) {
+      addItem({ id: it.product_id, name: it.name, price: it.price }, it.quantity || 1)
+    }
+
+    parseInfo.value = data.items?.length
+      ? `${data.items.length} produit(s) reconnu(s) dans le message. Vérifiez les quantités.`
+      : 'Aucun produit reconnu automatiquement — ajoutez-les via la recherche.'
+  } catch (e) {
+    error.value = e.response?.data?.message ?? 'Message WhatsApp introuvable.'
+  }
+}
+
+/** 2250707849883 → +225 07 07 84 98 83 */
+function formatPhone(phone) {
+  const d = String(phone ?? '').replace(/\D/g, '')
+  const local = d.startsWith('225') ? d.slice(3) : d
+  return (d.startsWith('225') ? '+225 ' : '') + local.replace(/(\d{2})(?=\d)/g, '$1 ').trim()
+}
 
 const message  = ref('')
 const parsing  = ref(false)
@@ -278,6 +343,7 @@ async function submit() {
       shipping_cost:  Number(shippingCost.value) || 0,
       discount_amount: Number(discount.value) || 0,
       note: note.value.trim() || null,
+      whatsapp_message_id: waMessage.value?.id ?? null,
     }
     const { data } = await api.post('/admin/pos/orders', payload)
     created.value = data.data ?? data
@@ -330,6 +396,8 @@ function resetAll() {
   shippingCost.value = 0; discount.value = 0
   paymentStatus.value = 'paid'; paymentMethod.value = 'cash'; note.value = ''
   created.value = null; error.value = ''
+  // Le message d'origine est consommé : la commande suivante repart neutre.
+  waMessage.value = null; waKnownCustomer.value = null
 }
 
 function fmt(v) {
@@ -346,6 +414,18 @@ function fmt(v) {
 }
 
 .pos-card { padding: var(--space-4); margin-bottom: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Origine WhatsApp */
+.pos-origin { border-left: 3px solid #25d366; }
+.pos-origin__head { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+.pos-origin__head strong { font-size: 0.9375rem; color: var(--gray-800); }
+.pos-origin__back { font-size: 0.8125rem; color: var(--rose-600); text-decoration: none; }
+.pos-origin__body {
+  font-size: 0.875rem; color: var(--gray-700); white-space: pre-wrap; word-break: break-word;
+  background: var(--cream-100); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3);
+}
+.pos-origin__known { font-size: 0.8125rem; color: #15803d; font-weight: 600; }
+.pos-origin__hint  { font-size: 0.75rem; color: var(--gray-500); }
 .pos-card__title { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--gray-800); }
 .pos-card__hint { font-size: 0.8125rem; color: var(--gray-500); }
 .pos-textarea { resize: vertical; }
