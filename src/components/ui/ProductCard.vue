@@ -425,9 +425,11 @@ function toggleWishlist() {
   min-width: 0;
   flex: 1 1 auto;
 }
+/* Le montant et sa devise ne se séparent jamais : « 2 500 » sur une ligne et
+   « XOF » sur la suivante se lit comme deux informations distinctes. */
 .product-card__price-old,
 .product-card__price-current {
-  overflow-wrap: break-word;
+  white-space: nowrap;
 }
 .product-card__price-old {
   font-size: 0.75rem;
@@ -517,8 +519,15 @@ function toggleWishlist() {
     border-top: none;
     gap: var(--space-2);
   }
-  /* Pas de taille fixe ici : le `clamp()` de base descend déjà au bon
-     calibre sur mobile, et la figer ferait revenir le débordement. */
+  /*
+   * Deux colonnes sur mobile : la carte fait environ 165 px, dont 24 px de
+   * padding, 34 px de bouton et 8 px d'écart — il reste une centaine de
+   * pixels pour le prix. À 14 px, « 125 000 XOF » y tient d'une seule ligne,
+   * devise comprise, sans jamais pousser le panier.
+   */
+  .product-card__price-current {
+    font-size: 0.875rem;
+  }
   .product-card__price-old {
     font-size: 0.6875rem;
   }
