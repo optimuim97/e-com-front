@@ -90,6 +90,7 @@
 
       <div class="card">
         <input v-model="search" @input="debouncedSubs" class="input nl-search" placeholder="Rechercher par email…" />
+        <div class="table-scroll">
         <table class="admin-table">
           <thead><tr><th>Email</th><th>Nom</th><th>Statut</th><th>Source</th><th>Inscrit le</th><th></th></tr></thead>
           <tbody>
@@ -103,6 +104,7 @@
             </tr>
           </tbody>
         </table>
+        </div>
         <p v-if="!subscribers.length" class="nl-empty">Aucun abonné.</p>
       </div>
     </template>

@@ -406,23 +406,42 @@ function toggleWishlist() {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
   margin-top: auto;
   padding-top: var(--space-3);
   border-top: 1px solid var(--cream-200);
 }
+
+/*
+ * `min-width: 0` est ce qui empêche le débordement : par défaut un élément
+ * flex vaut `min-width: auto` et refuse de descendre sous la largeur de son
+ * contenu. Un prix long poussait donc le bouton panier hors de la carte, et
+ * d'autant plus loin que le montant était grand.
+ */
 .product-card__price {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.product-card__price-old,
+.product-card__price-current {
+  overflow-wrap: break-word;
 }
 .product-card__price-old {
   font-size: 0.75rem;
   color: var(--gray-300);
   text-decoration: line-through;
 }
+/*
+ * Taille fluide plutôt que fixe : sur une carte étroite, un montant à sept
+ * chiffres tient ainsi sur une ligne au lieu de se couper en deux.
+ */
 .product-card__price-current {
   font-family: var(--font-sans);
-  font-size: 1.375rem;
+  font-size: clamp(1rem, 0.72rem + 1.4vw, 1.375rem);
+  line-height: 1.15;
   font-weight: 800;
   color: var(--rose-600);
   letter-spacing: -0.01em;
@@ -498,9 +517,8 @@ function toggleWishlist() {
     border-top: none;
     gap: var(--space-2);
   }
-  .product-card__price-current {
-    font-size: 1.1875rem;
-  }
+  /* Pas de taille fixe ici : le `clamp()` de base descend déjà au bon
+     calibre sur mobile, et la figer ferait revenir le débordement. */
   .product-card__price-old {
     font-size: 0.6875rem;
   }

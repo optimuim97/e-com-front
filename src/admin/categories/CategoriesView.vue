@@ -42,7 +42,7 @@
     </div>
 
     <!-- Table -->
-    <div v-else class="card">
+    <div v-else class="card table-scroll">
       <table class="admin-table">
         <thead>
           <tr>

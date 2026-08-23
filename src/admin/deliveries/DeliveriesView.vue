@@ -56,7 +56,8 @@
         <p>Aucune livraison trouvée.</p>
       </div>
 
-      <table v-else class="admin-table">
+      <div v-else class="table-scroll">
+      <table class="admin-table">
         <thead>
           <tr>
             <th>Commande</th>
@@ -117,6 +118,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
 
       <AdminPagination
         :current-page="pagination.current_page"

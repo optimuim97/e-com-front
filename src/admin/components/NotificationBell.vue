@@ -154,10 +154,16 @@ function timeAgo(timestamp) {
 
 function handleClick(notif) {
     store.markRead(notif.id);
-    if (notif.payload?.number) {
-        router.push(`/admin/orders/${notif.payload.number}`);
-        close();
-    }
+
+    // La route admin est `orders/:id` : elle attend la clé primaire, pas le
+    // numéro affiché. Pousser « ORD-2026-00074 » menait à « Commande
+    // introuvable ». Le payload porte les deux, `id` sert à naviguer et
+    // `number` à afficher.
+    const id = notif.payload?.id;
+    if (!id) return;
+
+    router.push(`/admin/orders/${id}`);
+    close();
 }
 </script>
 
