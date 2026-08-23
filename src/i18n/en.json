@@ -333,6 +333,8 @@
     "note": "Note for the delivery person",
     "noteOptional": "optional",
     "notePlaceholder": "e.g. Call when arriving",
+    "required": "Required field",
+    "requiredSummary": "Please complete the fields highlighted in red.",
     "submit": "Order now",
     "payWave": "Wave",
     "payOrangeMoney": "Orange Money",

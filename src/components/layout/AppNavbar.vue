@@ -132,7 +132,7 @@
           </svg>
         </RouterLink>
         <template v-else>
-          <RouterLink v-if="auth.isAdmin" to="/admin" class="navbar__icon-btn" :aria-label="$t('nav.adminLabel')">
+          <RouterLink v-if="auth.isAdmin && auth.isStaff" to="/admin" class="navbar__icon-btn" :aria-label="$t('nav.adminLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>

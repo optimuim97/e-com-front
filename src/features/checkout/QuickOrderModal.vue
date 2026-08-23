@@ -91,8 +91,14 @@
               </span>
             </div>
 
-            <form id="qo-form" @submit.prevent="submit" class="qo-form">
-              <div class="qo-field">
+            <!--
+              novalidate : la validation est faite en JavaScript. Le navigateur
+              refusait de soumettre à cause d'un champ « commune » requis mais
+              masqué, qu'il ne pouvait ni signaler ni focaliser — le clic sur
+              « Commander » ne produisait alors strictement rien.
+            -->
+            <form id="qo-form" ref="formEl" novalidate @submit.prevent="submit" class="qo-form">
+              <div class="qo-field" data-field="name">
                 <div class="qo-field-head">
                   <label class="label">{{ $t('quickOrder.name') }} *</label>
                   <span v-if="prefilled.name" class="qo-prefilled-badge">
@@ -100,10 +106,18 @@
                     Profil
                   </span>
                 </div>
-                <input v-model="form.name" type="text" class="input" :class="{ 'input--prefilled': prefilled.name }" :placeholder="$t('quickOrder.namePlaceholder')" required />
+                <input
+                  v-model="form.name"
+                  type="text"
+                  class="input"
+                  :class="{ 'input--prefilled': prefilled.name, 'input--error': fieldErrors.name }"
+                  :aria-invalid="!!fieldErrors.name"
+                  :placeholder="$t('quickOrder.namePlaceholder')"
+                />
+                <p v-if="fieldErrors.name" class="qo-required">{{ $t('quickOrder.required') }}</p>
               </div>
 
-              <div class="qo-field">
+              <div class="qo-field" data-field="phone">
                 <div class="qo-field-head">
                   <label class="label">{{ $t('quickOrder.phone') }} *</label>
                   <span v-if="prefilled.phone" class="qo-prefilled-badge">
@@ -111,7 +125,14 @@
                     Profil
                   </span>
                 </div>
-                <PhoneInput v-model="form.phone" placeholder="07 00 00 00 00" :required="true" :class="{ 'input--prefilled': prefilled.phone }" />
+                <PhoneInput
+                  v-model="form.phone"
+                  placeholder="07 00 00 00 00"
+                  :required="true"
+                  :has-error="!!fieldErrors.phone"
+                  :class="{ 'input--prefilled': prefilled.phone }"
+                />
+                <p v-if="fieldErrors.phone" class="qo-required">{{ $t('quickOrder.required') }}</p>
               </div>
 
               <div class="qo-field">
@@ -127,7 +148,7 @@
                 <input v-model="form.email" type="email" class="input" :class="{ 'input--prefilled': prefilled.email }" :placeholder="$t('quickOrder.emailPlaceholder')" />
               </div>
 
-              <div class="qo-field">
+              <div class="qo-field" data-field="commune">
                 <div class="qo-field-head">
                   <label class="label">{{ $t('quickOrder.commune') }} *</label>
                   <button
@@ -148,7 +169,17 @@
                 </div>
                 <!-- Combobox searchable -->
                 <div class="qo-combobox" v-click-outside="closeCommune">
-                  <div class="qo-combobox__trigger" @click="openCommune">
+                  <div
+                    class="qo-combobox__trigger"
+                    :class="{ 'qo-combobox__trigger--error': fieldErrors.commune }"
+                    tabindex="0"
+                    role="combobox"
+                    :aria-expanded="communeOpen"
+                    :aria-invalid="!!fieldErrors.commune"
+                    @click="openCommune"
+                    @keydown.enter.prevent="openCommune"
+                    @keydown.space.prevent="openCommune"
+                  >
                     <span v-if="communeDisplay" class="qo-combobox__value">{{ communeDisplay }}</span>
                     <span v-else class="qo-combobox__placeholder">{{ $t('quickOrder.communePlaceholder') }}</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="qo-combobox__arrow" :class="{ 'qo-combobox__arrow--open': communeOpen }">
@@ -192,31 +223,33 @@
                   v-model="form.communeManuel"
                   type="text"
                   class="input qo-commune-manuel"
+                  :class="{ 'input--error': fieldErrors.commune }"
+                  :aria-invalid="!!fieldErrors.commune"
                   placeholder="Ex : Koumassi extension, Songon Agban..."
-                  required
                 />
 
-                <!-- Champ caché pour la validation required -->
-                <input type="text" :value="effectiveCommune" required style="display:none" tabindex="-1" />
+                <p v-if="fieldErrors.commune" class="qo-required">{{ $t('quickOrder.required') }}</p>
 
                 <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
               <!-- Ville obligatoire hors Abidjan -->
-              <div v-if="showCityField" class="qo-field">
+              <div v-if="showCityField" class="qo-field" data-field="city">
                 <label class="label">Ville *</label>
                 <input
                   v-model="form.city"
                   type="text"
                   class="input"
+                  :class="{ 'input--error': fieldErrors.city }"
+                  :aria-invalid="!!fieldErrors.city"
                   list="qo-city-suggestions"
                   autocomplete="off"
                   placeholder="Ex : Bouaké, San-Pédro, Yamoussoukro…"
-                  required
                 />
                 <datalist id="qo-city-suggestions">
                   <option v-for="name in citySuggestions" :key="name" :value="name" />
                 </datalist>
+                <p v-if="fieldErrors.city" class="qo-required">{{ $t('quickOrder.required') }}</p>
                 <p class="qo-city-hint">Commencez à taper : nous vous proposons les villes de Côte d'Ivoire.</p>
               </div>
 
@@ -243,16 +276,17 @@
                 />
               </div>
 
-              <div class="qo-field">
+              <div class="qo-field" data-field="payment">
                 <label class="label">{{ $t('quickOrder.payment') }} *</label>
-                <div class="qo-payments">
+                <div class="qo-payments" :class="{ 'qo-payments--error': fieldErrors.payment }">
                   <label v-for="pm in paymentMethods" :key="pm.value"
                     class="qo-payment" :class="{ 'qo-payment--active': form.payment === pm.value }">
-                    <input type="radio" :value="pm.value" v-model="form.payment" required />
+                    <input type="radio" :value="pm.value" v-model="form.payment" />
                     <span class="qo-payment__icon" v-html="pm.icon"></span>
                     <span class="qo-payment__label">{{ pm.label }}</span>
                   </label>
                 </div>
+                <p v-if="fieldErrors.payment" class="qo-required">{{ $t('quickOrder.required') }}</p>
               </div>
 
               <div class="qo-field">
@@ -569,6 +603,73 @@ const error          = ref('')
 const confirmed      = ref(false)
 const confirmedOrder = ref(null)
 
+// ── Validation des champs requis ──────────────────────────────────────────────
+//
+// Faite ici plutôt que par l'attribut `required` du navigateur : la commune est
+// un combobox, donc un `<div>`, que la validation native ne sait pas contrôler.
+// Le contournement précédent — un `<input required>` en `display:none` — rendait
+// le formulaire insoumettable *et* muet, puisqu'un champ masqué ne peut pas
+// recevoir le focus ni afficher son message.
+
+const formEl      = ref(null)
+const fieldErrors = ref({})
+
+/** Champs requis, dans l'ordre d'affichage : le premier en défaut prend le focus. */
+function requiredFields() {
+  return [
+    { key: 'name',    ok: () => !!form.value.name.trim() },
+    { key: 'phone',   ok: () => !!form.value.phone.trim() },
+    { key: 'commune', ok: () => !!effectiveCommune.value.trim() },
+    // La ville n'est demandée qu'en dehors d'Abidjan.
+    { key: 'city',    ok: () => !showCityField.value || !!form.value.city.trim() },
+    { key: 'payment', ok: () => !!form.value.payment },
+  ]
+}
+
+/**
+ * Amène le champ fautif sous les yeux, puis dans le focus.
+ *
+ * La modal défile : un champ signalé en rouge hors de l'écran ne vaut pas mieux
+ * qu'un silence. Le combobox n'étant pas un champ natif, on ouvre sa liste dans
+ * la foulée — c'est le geste que la cliente allait faire de toute façon.
+ */
+function focusField(key) {
+  const root = formEl.value?.querySelector(`[data-field="${key}"]`)
+  if (!root) return
+
+  root.scrollIntoView({ block: 'center', behavior: 'smooth' })
+
+  if (key === 'commune') {
+    const manuel = root.querySelector('.qo-commune-manuel')
+    if (manuel) { manuel.focus(); return }
+    root.querySelector('.qo-combobox__trigger')?.focus()
+    openCommune()
+    return
+  }
+
+  root.querySelector('input, textarea, select')?.focus()
+}
+
+/** Renseigne `fieldErrors` et renvoie la clé du premier champ manquant. */
+function validateRequired() {
+  const manquants = requiredFields().filter(f => !f.ok())
+
+  fieldErrors.value = Object.fromEntries(manquants.map(f => [f.key, true]))
+
+  return manquants[0]?.key ?? null
+}
+
+// Un champ corrigé perd son signalement immédiatement : garder le rouge pendant
+// que la cliente tape donnerait l'impression que sa saisie n'est pas prise.
+watch(form, () => {
+  if (!Object.keys(fieldErrors.value).length) return
+
+  const encoreEnDefaut = requiredFields().filter(f => !f.ok()).map(f => f.key)
+  fieldErrors.value = Object.fromEntries(encoreEnDefaut.map(k => [k, true]))
+
+  if (!encoreEnDefaut.length && error.value) error.value = ''
+}, { deep: true })
+
 // ── Nudge complétion profil (post-commande) ───────────────────────────────
 const nudgeForm    = ref({ email: '', password: '', phone: '' })
 const nudgeSaving  = ref(false)
@@ -648,10 +749,12 @@ const wavePayUrl = computed(() => {
 })
 
 async function submit() {
-  if (!form.value.name || !form.value.phone || !effectiveCommune.value || !form.value.payment) return
-  // Hors Abidjan : la ville est obligatoire
-  if (showCityField.value && !form.value.city.trim()) {
-    error.value = 'Merci d\'indiquer votre ville (hors Abidjan).'
+  // Un `return` nu ici laissait la cliente devant un bouton sans effet.
+  const premierManquant = validateRequired()
+  if (premierManquant) {
+    error.value = t('quickOrder.requiredSummary')
+    await nextTick()
+    focusField(premierManquant)
     return
   }
 
@@ -1070,6 +1173,48 @@ function fmtPrice(val) {
   background: #fef2f2;
   padding: var(--space-3);
   border-radius: var(--radius-md);
+}
+
+/* ── Champs requis non remplis ───────────────────────────────────────────────
+   Bordure rouge doublée d'un halo : la bordure seule se perd sur les petits
+   écrans, où le champ signalé occupe toute la largeur. */
+.input--error,
+.qo-combobox__trigger--error {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.input--error:focus,
+.qo-combobox__trigger--error:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+}
+
+.qo-payments--error {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 2px #dc2626;
+}
+
+.qo-required {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* Le losange tient lieu d'icône : pas de SVG à charger, et le repère reste
+   lisible pour qui distingue mal le rouge du texte voisin. */
+.qo-required::before {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #dc2626;
+  transform: rotate(45deg);
+  flex: none;
 }
 
 .qo-spinner {

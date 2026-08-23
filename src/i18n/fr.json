@@ -337,6 +337,8 @@
     "note": "Note pour le livreur",
     "noteOptional": "optionnel",
     "notePlaceholder": "Ex. Appeler en arrivant",
+    "required": "Champ requis",
+    "requiredSummary": "Merci de compléter les champs en rouge.",
     "submit": "Commander maintenant",
     "payWave": "Wave",
     "payOrangeMoney": "Orange Money",

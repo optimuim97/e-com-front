@@ -27,7 +27,7 @@
                    :class="{ 'choice--active': form.type === t.value }">
               <input type="radio" :value="t.value" v-model="form.type" />
               <strong>{{ t.label }}</strong>
-              <span>{{ t.hint }}</span>
+              <span class='mt-2'>{{ t.hint }}</span>
             </label>
           </div>
         </div>
