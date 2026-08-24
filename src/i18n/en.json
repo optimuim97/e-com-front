@@ -347,6 +347,8 @@
     "waveAmount": "Amount to send:",
     "waveRef": "Reference:",
     "whatsapp": "Send my order via WhatsApp",
+    "downloadInvoice": "Download the invoice",
+    "downloadingInvoice": "Preparing…",
     "viewOrder": "View my order",
     "secureAccount": "Secure my account",
     "emptyCart": "Your cart is empty.",

@@ -70,8 +70,21 @@
 
             <div class="qo-confirmed__actions">
               <button class="btn btn-primary" @click="viewOrder">{{ $t('quickOrder.viewOrder') }}</button>
+
+              <!--
+                La facture part par email, or une grande partie de la clientèle
+                n'en a pas et ne va pas en créer un pour l'occasion. Le
+                téléchargement direct est donc le seul chemin qui la lui remet
+                vraiment, ici, tant qu'elle a la commande sous les yeux.
+              -->
+              <button class="btn btn-outline btn-sm" :disabled="downloadingInvoice" @click="downloadInvoice">
+                <span v-if="downloadingInvoice" class="qo-geo-spin"></span>
+                <span v-else>{{ $t('quickOrder.downloadInvoice') }}</span>
+              </button>
+
               <button v-if="!profileNudge" class="btn btn-outline btn-sm" @click="goToProfile">{{ $t('quickOrder.secureAccount') }}</button>
             </div>
+            <p v-if="invoiceError" class="qo-nudge__err">{{ invoiceError }}</p>
           </div>
 
           <!-- ── Formulaire commande rapide ────────────────────────────── -->
@@ -167,8 +180,31 @@
                     <span>{{ qoGeoLabel }}</span>
                   </button>
                 </div>
-                <!-- Combobox searchable -->
-                <div class="qo-combobox" v-click-outside="closeCommune">
+                <!--
+                  Destination affichée en premier, et non plus cachée au fond
+                  de la liste des communes : personne ne cherche une adresse
+                  « hors Abidjan » sous treize communes d'Abidjan. Abidjan
+                  reste présélectionné, la majorité des clientes ne perd donc
+                  aucun geste.
+                -->
+                <div class="qo-dest" role="radiogroup" aria-label="Destination de livraison">
+                  <button
+                    v-for="d in DESTINATIONS"
+                    :key="d.value"
+                    type="button"
+                    class="qo-dest__btn"
+                    :class="{ 'qo-dest__btn--active': destination === d.value }"
+                    role="radio"
+                    :aria-checked="destination === d.value"
+                    @click="destination = d.value"
+                  >
+                    <span class="qo-dest__icon" v-html="d.icon"></span>
+                    <span class="qo-dest__label">{{ d.label }}</span>
+                  </button>
+                </div>
+
+                <!-- Combobox searchable — communes d'Abidjan uniquement -->
+                <div v-if="destination === 'abidjan'" class="qo-combobox" v-click-outside="closeCommune">
                   <div
                     class="qo-combobox__trigger"
                     :class="{ 'qo-combobox__trigger--error': fieldErrors.commune }"
@@ -219,7 +255,7 @@
 
                 <!-- Saisie manuelle si "Autre" -->
                 <input
-                  v-if="form.commune === '__autre__'"
+                  v-if="destination === 'abidjan' && form.commune === '__autre__'"
                   v-model="form.communeManuel"
                   type="text"
                   class="input qo-commune-manuel"
@@ -236,21 +272,22 @@
               <!-- Ville obligatoire hors Abidjan -->
               <div v-if="showCityField" class="qo-field" data-field="city">
                 <label class="label">Ville *</label>
-                <input
+                <!--
+                  Liste fermée et non plus saisie libre : une ville mal
+                  orthographiée ne se rattache à aucune zone de livraison, et
+                  les frais deviennent alors « à renseigner par nos agents ».
+                -->
+                <select
                   v-model="form.city"
-                  type="text"
                   class="input"
                   :class="{ 'input--error': fieldErrors.city }"
                   :aria-invalid="!!fieldErrors.city"
-                  list="qo-city-suggestions"
-                  autocomplete="off"
-                  placeholder="Ex : Bouaké, San-Pédro, Yamoussoukro…"
-                />
-                <datalist id="qo-city-suggestions">
-                  <option v-for="name in citySuggestions" :key="name" :value="name" />
-                </datalist>
+                >
+                  <option value="" disabled>Choisir votre ville…</option>
+                  <option v-for="name in citySuggestions" :key="name" :value="name">{{ name }}</option>
+                </select>
                 <p v-if="fieldErrors.city" class="qo-required">{{ $t('quickOrder.required') }}</p>
-                <p class="qo-city-hint">Commencez à taper : nous vous proposons les villes de Côte d'Ivoire.</p>
+                <p class="qo-city-hint">Toutes les villes de Côte d'Ivoire desservies, hors Abidjan.</p>
               </div>
 
               <!-- Bannière hors Abidjan -->
@@ -260,7 +297,7 @@
                 </span>
                 <div>
                   <strong>Livraison hors Abidjan</strong>
-                  <p>Commande à <b>régler d'avance</b> (Wave ou Orange Money) : nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>. Le paiement à la livraison est réservé à Abidjan.</p>
+                  <p>Les frais dépendent de la ville choisie et s'ajoutent au total ci-dessous. Le règlement d'avance par Wave ou Orange Money reste le plus sûr, mais le paiement à la livraison est possible.</p>
                 </div>
               </div>
 
@@ -303,9 +340,24 @@
 
         <!-- ── Footer fixe : total + bouton (formulaire uniquement) ── -->
         <div v-if="!confirmed" class="qo-footer">
+          <!--
+            Le détail remplace le total sec : hors Abidjan, la cliente réglait
+            par Wave un montant qu'elle n'avait jamais vu, la livraison n'étant
+            ajoutée que par le serveur au moment de créer la commande.
+          -->
+          <div class="qo-total qo-total--lines">
+            <div class="qo-total__line">
+              <span>Articles</span>
+              <span>{{ fmtPrice(cartTotal) }}</span>
+            </div>
+            <div class="qo-total__line">
+              <span>Livraison</span>
+              <span :class="{ 'qo-total__pending': shippingPending }">{{ shippingLabel }}</span>
+            </div>
+          </div>
           <div class="qo-total">
             <span>Total</span>
-            <strong>{{ fmtPrice(cartTotal) }}</strong>
+            <strong>{{ fmtPrice(cartTotal + shippingCost) }}</strong>
           </div>
           <button
             type="submit"
@@ -396,11 +448,13 @@ const adminWhatsappLink = computed(() => {
   return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`
 })
 
+// « Hors Abidjan » n'y figure plus : c'est devenu un choix de destination à
+// part entière, au-dessus de la liste. Le reste du code continue d'utiliser
+// cette valeur comme commune, la géolocalisation comprise.
 const COMMUNES = [
   'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville',
   'Cocody', 'Koumassi', 'Marcory', 'Plateau', 'Port-Bouët',
   'Songon', 'Treichville', 'Yopougon',
-  'Hors Abidjan',
 ]
 
 // ── Combobox commune ──────────────────────────────────────────────────────────
@@ -437,11 +491,69 @@ const isAbidjanQuick = computed(() => {
 // Champ Ville + bannière : affichés dès qu'on est hors Abidjan
 const showCityField = computed(() => !!form.value.commune && !isAbidjanQuick.value)
 
-// Suggestions de villes (hors Abidjan) pour le datalist, triées alphabétiquement
+// Villes hors Abidjan proposées dans la liste, triées alphabétiquement
 const citySuggestions = citiesCI
   .filter(c => c.name !== 'Abidjan')
   .map(c => c.name)
   .sort((a, b) => a.localeCompare(b, 'fr'))
+
+// ── Frais de livraison ────────────────────────────────────────────────────────
+//
+// Même source que le tunnel classique : le tarif vient de la zone, par
+// /shipping/quote. Rien n'est gratuit dans le système ; une zone non reconnue
+// ou un tarif au kilo laisse le montant à la charge des agents, et il ne doit
+// alors surtout pas être compté comme zéro dans le total affiché.
+
+const shippingQuote = ref(null)
+
+const shippingFound   = computed(() => !!shippingQuote.value && !shippingQuote.value.not_found)
+const shippingPerKg   = computed(() => shippingFound.value && shippingQuote.value.unit === 'per_kg')
+const shippingPending = computed(() => shippingPerKg.value || shippingQuote.value?.not_found === true)
+
+const shippingCost = computed(() =>
+  shippingFound.value && !shippingPerKg.value ? Number(shippingQuote.value.price) || 0 : 0
+)
+
+const shippingLabel = computed(() => {
+  if (!effectiveCommune.value) return 'Selon la destination'
+  if (shippingFound.value && !shippingPerKg.value) return fmtPrice(shippingCost.value)
+  if (shippingPending.value) return 'À renseigner par nos agents'
+  return '…'
+})
+
+let quoteTimer = null
+
+async function refreshShippingQuote() {
+  const commune = effectiveCommune.value
+  if (!commune) { shippingQuote.value = null; return }
+
+  // Hors Abidjan, la ville pilote la zone ; tant qu'elle n'est pas choisie,
+  // interroger le serveur ne donnerait qu'un « hors zone » trompeur.
+  if (showCityField.value && !form.value.city) { shippingQuote.value = null; return }
+
+  try {
+    const { data } = await api.get('/shipping/quote', {
+      params: {
+        city:     showCityField.value ? form.value.city : 'Abidjan',
+        commune,
+        country:  'CI',
+        subtotal: cartStore.subtotal,
+      },
+    })
+    shippingQuote.value = data?.found ? data : { not_found: true }
+  } catch (e) {
+    shippingQuote.value = e.response?.status === 404 ? { not_found: true } : null
+  }
+}
+
+watch(
+  () => [effectiveCommune.value, form.value.city, cartStore.subtotal],
+  () => {
+    clearTimeout(quoteTimer)
+    quoteTimer = setTimeout(refreshShippingQuote, 250)
+  },
+  { immediate: true },
+)
 
 async function openCommune() {
   communeOpen.value  = true
@@ -565,20 +677,57 @@ async function doQoGeo() {
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
+const ICON_CITY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5-4v18"/><path d="M19 21V11l-9-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>'
+
+const DESTINATIONS = [
+  { value: 'abidjan',  label: 'Abidjan',      icon: ICON_CITY },
+  { value: 'interior', label: 'Hors Abidjan', icon: ICON_TRUCK },
+]
+
+/*
+ * Destination et commune restent synchronisées dans les deux sens : le bouton
+ * écrit la commune, et la géolocalisation écrit `form.commune` directement —
+ * une position détectée à Bouaké doit donc allumer « Hors Abidjan » sans que
+ * personne n'y touche.
+ */
+const destination = ref('abidjan')
+
+watch(destination, (d) => {
+  if (d === 'interior') {
+    form.value.commune = 'Hors Abidjan'
+    form.value.communeManuel = ''
+    return
+  }
+  if (form.value.commune === 'Hors Abidjan') {
+    form.value.commune = ''
+    form.value.city = ''
+  }
+})
+
+watch(() => form.value.commune, (c) => {
+  if (c === 'Hors Abidjan') destination.value = 'interior'
+  else if (c) destination.value = 'abidjan'
+})
+
 /**
  * Moyens de paiement selon la destination — miroir de PaymentAvailability,
  * que le serveur applique de son côté (QuickOrderController).
  *   Abidjan            → paiement à la livraison uniquement
- *   Intérieur de la CI → prépaiement Wave ou Orange Money
+ *   Intérieur de la CI → Wave, Orange Money ou paiement à la livraison,
+ *                        le prépaiement restant proposé en premier
  * (la commande rapide est réservée à la Côte d'Ivoire : pas d'international)
  */
 const paymentMethods = computed(() => {
   if (isAbidjanQuick.value) {
     return [{ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK }]
   }
+
+  // Hors Abidjan, le règlement d'avance vient en tête — c'est celui que la
+  // boutique préfère — mais le paiement à la livraison n'est plus refusé.
   return [
     { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
     { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
+    { value: 'delivery',     label: t('quickOrder.payDelivery'),    icon: ICON_TRUCK },
   ]
 })
 
@@ -602,6 +751,43 @@ const submitting     = ref(false)
 const error          = ref('')
 const confirmed      = ref(false)
 const confirmedOrder = ref(null)
+
+// ── Facture téléchargeable ────────────────────────────────────────────────────
+const downloadingInvoice = ref(false)
+const invoiceError       = ref('')
+
+/**
+ * Récupère le PDF et le remet au visiteur.
+ *
+ * Même endpoint que le détail de commande côté client : la facture est
+ * identique des deux côtés, et un second générateur finirait par diverger.
+ * L'échec est dit à voix haute — la page de confirmation ne revient jamais,
+ * et un téléchargement raté en silence perdrait la facture pour de bon.
+ */
+async function downloadInvoice() {
+  const numero = confirmedOrder.value?.number
+  if (!numero) return
+
+  downloadingInvoice.value = true
+  invoiceError.value = ''
+
+  try {
+    const response = await api.get(`/orders/${numero}/invoice`, { responseType: 'blob' })
+
+    const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+    const link = document.createElement('a')
+    link.href     = url
+    link.download = `facture-${numero}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch {
+    invoiceError.value = "La facture n'a pas pu être téléchargée. Réessayez, ou retrouvez-la dans le détail de votre commande."
+  } finally {
+    downloadingInvoice.value = false
+  }
+}
 
 // ── Validation des champs requis ──────────────────────────────────────────────
 //
@@ -1145,6 +1331,75 @@ function fmtPrice(val) {
   border-radius: var(--radius-md);
   font-size: 0.9375rem;
   color: var(--gray-600);
+}
+
+/* ── Choix de destination ─────────────────────────────────────────────────── */
+.qo-dest {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.qo-dest__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 12px 10px;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--gray-600);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  /* Cible tactile confortable : c'est le premier geste du formulaire. */
+  min-height: 48px;
+}
+.qo-dest__btn:hover { border-color: var(--rose-300); color: var(--rose-600); }
+.qo-dest__btn--active {
+  border-color: var(--rose-500);
+  background: var(--rose-50);
+  color: var(--rose-600);
+  font-weight: 600;
+  box-shadow: 0 0 0 3px rgba(232, 51, 109, 0.12);
+}
+.qo-dest__icon { display: flex; flex: none; }
+.qo-dest__label { white-space: nowrap; }
+
+@media (max-width: 380px) {
+  /* Deux libellés côte à côte ne tiennent plus : on empile plutôt que de
+     rogner un texte qui porte toute la décision. */
+  .qo-dest { grid-template-columns: 1fr; }
+  .qo-dest__btn { justify-content: flex-start; }
+}
+
+/* Détail articles / livraison, au-dessus du total */
+.qo-total--lines {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin-bottom: var(--space-1);
+  background: transparent;
+  padding-bottom: 0;
+  font-size: 0.8125rem;
+}
+.qo-total__line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.qo-total__line > span:last-child {
+  font-weight: 600;
+  color: var(--gray-700);
+  text-align: right;
+}
+/* Livraison non chiffrable : le montant ne doit pas se lire comme un prix. */
+.qo-total__pending {
+  font-weight: 500 !important;
+  font-style: italic;
+  color: var(--gray-500) !important;
 }
 .qo-total strong {
   font-family: var(--font-sans);

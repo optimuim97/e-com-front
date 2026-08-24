@@ -351,6 +351,8 @@
     "waveAmount": "Montant à envoyer :",
     "waveRef": "Référence :",
     "whatsapp": "Envoyer ma commande via WhatsApp",
+    "downloadInvoice": "Télécharger la facture",
+    "downloadingInvoice": "Préparation…",
     "viewOrder": "Voir ma commande",
     "secureAccount": "Sécuriser mon compte",
     "emptyCart": "Votre panier est vide.",

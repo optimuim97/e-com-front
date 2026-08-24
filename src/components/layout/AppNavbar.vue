@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar" :class="{ 'navbar--scrolled': isScrolled, 'navbar--open': mobileMenuOpen }">
+  <header ref="headerEl" class="navbar" :class="{ 'navbar--scrolled': isScrolled, 'navbar--open': mobileMenuOpen }">
     <!-- Bande d'annonce -->
     <div class="navbar__announce" v-if="settings.announceEnabled && !announceDismissed">
       <div class="navbar__announce-inner container">
@@ -115,8 +115,8 @@
         <!-- Devise -->
         <CurrencySwitcher class="hide-mobile" v-if="settings.shopCurrencyIsActive" />
 
-        <!-- Language switcher -->
-        <LanguageSwitcher />
+        <!-- Language switcher — repris dans le menu mobile -->
+        <LanguageSwitcher class="hide-mobile" />
 
         <!-- Recherche -->
         <button class="navbar__icon-btn" @click="$emit('open-search')" :aria-label="$t('nav.searchLabel')">
@@ -131,15 +131,21 @@
             <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
         </RouterLink>
+        <!--
+          Administration, favoris et profil quittent la barre sur mobile : à
+          sept contrôles, la rangée dépassait la largeur de l'écran. Les trois
+          sont repris dans le menu déroulant, où ils sont bien plus faciles à
+          viser au doigt qu'une icône de 40 px collée à ses voisines.
+        -->
         <template v-else>
-          <RouterLink v-if="auth.isAdmin && auth.isStaff" to="/admin" class="navbar__icon-btn" :aria-label="$t('nav.adminLabel')">
+          <RouterLink v-if="auth.isAdmin && auth.isStaff" to="/admin" class="navbar__icon-btn hide-mobile" :aria-label="$t('nav.adminLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
             </svg>
           </RouterLink>
 
           <!-- Favoris -->
-          <RouterLink to="/wishlist" class="navbar__icon-btn navbar__icon-btn--relative" :aria-label="$t('nav.wishlistLabel')">
+          <RouterLink to="/wishlist" class="navbar__icon-btn navbar__icon-btn--relative hide-mobile" :aria-label="$t('nav.wishlistLabel')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
@@ -147,7 +153,7 @@
           </RouterLink>
 
           <!-- Profil utilisateur -->
-          <RouterLink to="/profil" class="navbar__icon-btn navbar__icon-btn--relative" :aria-label="'Mon profil'">
+          <RouterLink to="/profil" class="navbar__icon-btn navbar__icon-btn--relative hide-mobile" :aria-label="'Mon profil'">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
               <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
             </svg>
@@ -198,6 +204,12 @@
             {{ $t('common.viewAllProducts') }}
           </RouterLink>
         </div>
+
+        <!-- Langue et devise, chassées de la barre faute de place -->
+        <div class="navbar__mobile-switchers">
+          <LanguageSwitcher />
+          <CurrencySwitcher v-if="settings.shopCurrencyIsActive" />
+        </div>
       </div>
     </Transition>
   </header>
@@ -247,14 +259,40 @@ const navLinks = computed(() => [
   ...(auth.isLoggedIn ? [{ to: '/wishlist', label: t('common.wishlist'), badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
   ...(auth.isLoggedIn ? [{ to: '/orders',   label: t('common.myOrders') }] : []),
   ...(auth.isLoggedIn ? [{ to: '/profil',   label: 'Mon profil', badge: auth.isQuickOrderUser ? '!' : null }] : []),
+  // L'icône d'administration disparaît de la barre sur mobile, faute de place :
+  // sans cette entrée, le tableau de bord deviendrait inatteignable au doigt.
+  ...(auth.isLoggedIn && auth.isAdmin && auth.isStaff ? [{ to: '/admin', label: t('nav.adminLabel') }] : []),
 ])
 
-const spacerHeight = computed(() => {
-  const base = 96   // hauteur réelle de navbar__main
-  // La bande compte seulement si activée côté admin ET pas fermée par le visiteur
-  const announceVisible = settings.announceEnabled && !announceDismissed.value
-  return base + (announceVisible ? 40 : 0)
+/*
+ * Hauteur du cale-vide qui compense le header `fixed`.
+ *
+ * Elle était figée à 96 + 40 px. Deux choses la démentaient : la barre ne fait
+ * pas la même hauteur selon l'appareil, et la bande d'annonce passe à deux
+ * lignes dès que le texte est un peu long sur mobile — le haut du contenu
+ * finissait alors caché sous la barre. On mesure donc l'élément réel.
+ */
+const headerEl     = ref(null)
+const spacerHeight = ref(96)
+
+let observer = null
+
+onMounted(() => {
+  if (!headerEl.value) return
+
+  const mesurer = () => {
+    // Menu ouvert, le panneau déroulant recouvre le contenu : il ne doit pas
+    // entrer dans le calcul, sans quoi la page sauterait à chaque ouverture.
+    const menu = headerEl.value.querySelector('.navbar__mobile')
+    spacerHeight.value = headerEl.value.offsetHeight - (menu?.offsetHeight ?? 0)
+  }
+
+  observer = new ResizeObserver(mesurer)
+  observer.observe(headerEl.value)
+  mesurer()
 })
+
+onUnmounted(() => observer?.disconnect())
 
 // Expose la hauteur totale comme variable CSS → tous les sticky en dessous s'ajustent
 watch(spacerHeight, (h) => {
@@ -347,9 +385,9 @@ onUnmounted(() => {
   object-fit: contain;
   display: block;
 }
-@media (max-width: 640px) {
-  .navbar__logo-img { height: 68px; }
-}
+/* La taille mobile du logo est fixée avec le reste des règles ≤640 px, en bas
+   de la feuille — deux blocs concurrents pour la même propriété se contredisent
+   vite au fil des retouches. */
 
 /* ── Nav links ── */
 .navbar__nav {
@@ -691,10 +729,52 @@ onUnmounted(() => {
   max-height: 500px;
 }
 
+.navbar__mobile-switchers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 1024px) {
   .navbar__nav { display: none; }
   .navbar__burger { display: flex; }
+
+  /*
+   * C'est `.navbar__nav` qui portait le `margin-left: auto` poussant tout vers
+   * la droite. Masqué, il emportait l'alignement avec lui et les actions
+   * venaient se coller au logo.
+   */
+  .navbar__actions { margin-left: auto; }
+
+  /* Le menu vit dans un header `fixed` : sans hauteur bornée, dix entrées
+     poussent le bouton d'appel hors de l'écran sur un petit téléphone. */
+  .navbar__mobile {
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (max-width: 640px) {
+  /* 96 px de barre plus 68 px de logo mangeaient un tiers d'un écran de
+     téléphone. On revient aux proportions habituelles d'une barre mobile. */
+  .navbar__main {
+    height: 64px;
+    gap: var(--space-2);
+  }
+  .navbar__logo-img { height: 48px; }
+
+  .navbar__icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .navbar__cart-btn {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 </style>
