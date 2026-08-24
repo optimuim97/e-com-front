@@ -297,7 +297,7 @@
                 </span>
                 <div>
                   <strong>Livraison hors Abidjan</strong>
-                  <p>Les frais dépendent de la ville choisie et s'ajoutent au total ci-dessous. Le règlement d'avance par Wave ou Orange Money reste le plus sûr, mais le paiement à la livraison est possible.</p>
+                  <p>Commande à <b>régler d'avance</b> (Wave ou Orange Money) : nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>. Le paiement à la livraison est réservé à Abidjan.</p>
                 </div>
               </div>
 
@@ -340,24 +340,9 @@
 
         <!-- ── Footer fixe : total + bouton (formulaire uniquement) ── -->
         <div v-if="!confirmed" class="qo-footer">
-          <!--
-            Le détail remplace le total sec : hors Abidjan, la cliente réglait
-            par Wave un montant qu'elle n'avait jamais vu, la livraison n'étant
-            ajoutée que par le serveur au moment de créer la commande.
-          -->
-          <div class="qo-total qo-total--lines">
-            <div class="qo-total__line">
-              <span>Articles</span>
-              <span>{{ fmtPrice(cartTotal) }}</span>
-            </div>
-            <div class="qo-total__line">
-              <span>Livraison</span>
-              <span :class="{ 'qo-total__pending': shippingPending }">{{ shippingLabel }}</span>
-            </div>
-          </div>
           <div class="qo-total">
             <span>Total</span>
-            <strong>{{ fmtPrice(cartTotal + shippingCost) }}</strong>
+            <strong>{{ fmtPrice(cartTotal) }}</strong>
           </div>
           <button
             type="submit"
@@ -497,63 +482,6 @@ const citySuggestions = citiesCI
   .map(c => c.name)
   .sort((a, b) => a.localeCompare(b, 'fr'))
 
-// ── Frais de livraison ────────────────────────────────────────────────────────
-//
-// Même source que le tunnel classique : le tarif vient de la zone, par
-// /shipping/quote. Rien n'est gratuit dans le système ; une zone non reconnue
-// ou un tarif au kilo laisse le montant à la charge des agents, et il ne doit
-// alors surtout pas être compté comme zéro dans le total affiché.
-
-const shippingQuote = ref(null)
-
-const shippingFound   = computed(() => !!shippingQuote.value && !shippingQuote.value.not_found)
-const shippingPerKg   = computed(() => shippingFound.value && shippingQuote.value.unit === 'per_kg')
-const shippingPending = computed(() => shippingPerKg.value || shippingQuote.value?.not_found === true)
-
-const shippingCost = computed(() =>
-  shippingFound.value && !shippingPerKg.value ? Number(shippingQuote.value.price) || 0 : 0
-)
-
-const shippingLabel = computed(() => {
-  if (!effectiveCommune.value) return 'Selon la destination'
-  if (shippingFound.value && !shippingPerKg.value) return fmtPrice(shippingCost.value)
-  if (shippingPending.value) return 'À renseigner par nos agents'
-  return '…'
-})
-
-let quoteTimer = null
-
-async function refreshShippingQuote() {
-  const commune = effectiveCommune.value
-  if (!commune) { shippingQuote.value = null; return }
-
-  // Hors Abidjan, la ville pilote la zone ; tant qu'elle n'est pas choisie,
-  // interroger le serveur ne donnerait qu'un « hors zone » trompeur.
-  if (showCityField.value && !form.value.city) { shippingQuote.value = null; return }
-
-  try {
-    const { data } = await api.get('/shipping/quote', {
-      params: {
-        city:     showCityField.value ? form.value.city : 'Abidjan',
-        commune,
-        country:  'CI',
-        subtotal: cartStore.subtotal,
-      },
-    })
-    shippingQuote.value = data?.found ? data : { not_found: true }
-  } catch (e) {
-    shippingQuote.value = e.response?.status === 404 ? { not_found: true } : null
-  }
-}
-
-watch(
-  () => [effectiveCommune.value, form.value.city, cartStore.subtotal],
-  () => {
-    clearTimeout(quoteTimer)
-    quoteTimer = setTimeout(refreshShippingQuote, 250)
-  },
-  { immediate: true },
-)
 
 async function openCommune() {
   communeOpen.value  = true
@@ -713,8 +641,7 @@ watch(() => form.value.commune, (c) => {
  * Moyens de paiement selon la destination — miroir de PaymentAvailability,
  * que le serveur applique de son côté (QuickOrderController).
  *   Abidjan            → paiement à la livraison uniquement
- *   Intérieur de la CI → Wave, Orange Money ou paiement à la livraison,
- *                        le prépaiement restant proposé en premier
+ *   Intérieur de la CI → prépaiement Wave ou Orange Money
  * (la commande rapide est réservée à la Côte d'Ivoire : pas d'international)
  */
 const paymentMethods = computed(() => {
@@ -722,12 +649,9 @@ const paymentMethods = computed(() => {
     return [{ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK }]
   }
 
-  // Hors Abidjan, le règlement d'avance vient en tête — c'est celui que la
-  // boutique préfère — mais le paiement à la livraison n'est plus refusé.
   return [
     { value: 'wave',         label: t('quickOrder.payWave'),        icon: ICON_MOBILE },
     { value: 'orange_money', label: t('quickOrder.payOrangeMoney'), icon: ICON_MOBILE },
-    { value: 'delivery',     label: t('quickOrder.payDelivery'),    icon: ICON_TRUCK },
   ]
 })
 
@@ -1375,32 +1299,6 @@ function fmtPrice(val) {
   .qo-dest__btn { justify-content: flex-start; }
 }
 
-/* Détail articles / livraison, au-dessus du total */
-.qo-total--lines {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 2px;
-  margin-bottom: var(--space-1);
-  background: transparent;
-  padding-bottom: 0;
-  font-size: 0.8125rem;
-}
-.qo-total__line {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-.qo-total__line > span:last-child {
-  font-weight: 600;
-  color: var(--gray-700);
-  text-align: right;
-}
-/* Livraison non chiffrable : le montant ne doit pas se lire comme un prix. */
-.qo-total__pending {
-  font-weight: 500 !important;
-  font-style: italic;
-  color: var(--gray-500) !important;
-}
 .qo-total strong {
   font-family: var(--font-sans);
   font-size: 1.25rem;

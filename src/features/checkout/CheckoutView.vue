@@ -296,9 +296,9 @@
                   <div class="co-outzone__body">
                     <strong>Livraison hors Abidjan</strong>
                     <p>
-                      Les frais de livraison dépendent de votre ville et s'ajoutent au total.
-                      Le <b>règlement d'avance</b> (Wave ou Orange Money) reste le moyen le plus sûr,
-                      mais le paiement à la livraison est possible.
+                      Votre commande doit être <b>réglée d'avance</b> (Wave, Orange Money ou carte) :
+                      nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>.
+                      Le paiement à la livraison est réservé à Abidjan.
                     </p>
                   </div>
                 </div>
@@ -884,12 +884,10 @@ const paymentMethods = computed(() => {
     return [{ value: 'cod', label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis' }]
   }
 
-  // Intérieur de la CI : prépaiement mobile en tête, puis paiement à la
-  // livraison. L'ordre reflète la préférence de la boutique, pas une contrainte.
+  // Intérieur de la CI : prépaiement mobile obligatoire.
   const list = []
   if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',         icon: ICON_WAVE,   desc: 'Paiement mobile rapide' })
   if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money', icon: ICON_ORANGE, desc: 'Mobile Money Orange' })
-  if (!isOff(s.payment_delivery_enabled))     list.push({ value: 'cod',          label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis' })
   return list
 })
 
