@@ -112,7 +112,7 @@ const FALLBACK_TAGLINE = computed(() => t('about.defaultTagline'))
 useSeo(() => ({
   title: settings.homeHeroTitle
     ? `${settings.shopName || 'Rosa Beauty Facial Care'} — ${settings.homeHeroTitle}`
-    : 'Rosa Beauty Facial Care — Soins du visage naturels à la rose',
+    : 'Rosa Beauty Facial Care — Soins du visage naturels à base de roses',
   description: settings.shopTagline
     || "Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire. Élixirs, eaux florales et laits corporels livrés à Abidjan et dans tout le pays.",
   canonical: '/',
