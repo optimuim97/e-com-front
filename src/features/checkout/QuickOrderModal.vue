@@ -333,12 +333,26 @@
 
               <p v-if="error" class="qo-error">{{ error }}</p>
             </form>
+
+            <!--
+              Sortie de secours vers le panier classique. Elle occupait une
+              ligne entière du pied collant, en permanence, pour un usage rare :
+              elle vit maintenant à la fin du formulaire, là où on la cherche.
+            -->
+            <RouterLink :to="{ name: 'checkout' }" class="qo-checkout-link" @click="$emit('close')">
+              Voir mon panier →
+            </RouterLink>
           </template>
 
         </div>
         <!-- fin .qo-body -->
 
-        <!-- ── Footer fixe : total + bouton (formulaire uniquement) ── -->
+        <!--
+          Pied collant : montant à gauche, action à droite, sur une seule
+          ligne. Le montant est une information, pas une commande — lui donner
+          toute la largeur revenait à voler une ligne au formulaire, sur
+          l'écran où il y en a le moins.
+        -->
         <div v-if="!confirmed" class="qo-footer">
           <div class="qo-total">
             <span>Total</span>
@@ -347,15 +361,12 @@
           <button
             type="submit"
             form="qo-form"
-            class="btn btn-primary btn-lg qo-submit"
+            class="btn btn-primary qo-submit"
             :disabled="submitting"
           >
             <span v-if="submitting" class="qo-spinner"></span>
             <span v-else>{{ $t('quickOrder.submit') }}</span>
           </button>
-          <RouterLink :to="{ name: 'checkout' }" class="qo-checkout-link" @click="$emit('close')">
-            Voir mon panier →
-          </RouterLink>
         </div>
 
       </div>
@@ -972,12 +983,12 @@ function fmtPrice(val) {
 /* ── Footer collé en bas : total + bouton ── */
 .qo-footer {
   flex-shrink: 0;
-  padding: var(--space-3) var(--space-6) var(--space-5);
+  padding: var(--space-3) var(--space-6);
   border-top: 1px solid var(--cream-200);
   background: #fff;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  align-items: center;
+  gap: var(--space-4);
   /* Ombre vers le haut pour signaler que ça scrolle */
   box-shadow: 0 -6px 16px rgba(0,0,0,.06);
 }
@@ -1246,15 +1257,24 @@ function fmtPrice(val) {
 .qo-payment--active .qo-payment__label { color: var(--rose-600); }
 
 /* ── Total (dans le footer) ── */
+/*
+ * Montant empilé sous son libellé : en colonne étroite, « Total » et le
+ * chiffre côte à côte forçaient soit un retour à la ligne, soit une largeur
+ * qui rognait le bouton. Le fond crème et le cadre disparaissent — dans un
+ * pied déjà séparé par un filet et une ombre, ils ne délimitaient plus rien.
+ */
 .qo-total {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-2) var(--space-3);
-  background: var(--cream-50);
-  border-radius: var(--radius-md);
-  font-size: 0.9375rem;
-  color: var(--gray-600);
+  flex-direction: column;
+  justify-content: center;
+  flex: 0 0 auto;
+  line-height: 1.15;
+  color: var(--gray-500);
+}
+.qo-total > span {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* ── Choix de destination ─────────────────────────────────────────────────── */
@@ -1301,11 +1321,25 @@ function fmtPrice(val) {
 
 .qo-total strong {
   font-family: var(--font-sans);
-  font-size: 1.25rem;
+  font-size: 1.1875rem;
+  font-weight: 800;
   color: var(--rose-600);
+  white-space: nowrap;
 }
 
-.qo-submit { width: 100%; justify-content: center; gap: var(--space-2); }
+/*
+ * Le bouton prend toute la place restante et garde 52 px de haut : c'est lui
+ * qui fixe la hauteur du pied, et la cible tactile ne doit pas payer le gain
+ * de place. Plus de `btn-lg` : ses 18 px de padding vertical et ses 40 px
+ * horizontaux sont dimensionnés pour une page, pas pour une barre d'action.
+ */
+.qo-submit {
+  flex: 1 1 auto;
+  min-height: 52px;
+  padding: 12px 20px;
+  justify-content: center;
+  gap: var(--space-2);
+}
 
 .qo-checkout-link {
   display: block;
@@ -1316,7 +1350,10 @@ function fmtPrice(val) {
   text-decoration: underline;
   text-underline-offset: 3px;
   transition: color var(--transition-fast);
-  margin-top: var(--space-1);
+  /* Détachée du dernier champ : au bout d'un formulaire, un lien collé à la
+     saisie se clique par erreur. */
+  margin: var(--space-5) 0 var(--space-2);
+  padding: var(--space-2);
 }
 .qo-checkout-link:hover { color: var(--gray-800); }
 
@@ -1515,6 +1552,13 @@ function fmtPrice(val) {
     max-height: 95vh;
     border-radius: var(--radius-2xl, 20px) var(--radius-2xl, 20px) 0 0;
   }
-  .qo-footer { padding-bottom: max(var(--space-5), env(safe-area-inset-bottom)); }
+  /* Marges resserrées et bord latéral réduit : sur un écran de téléphone, le
+     pied ne doit plus être une zone mais une barre. */
+  .qo-footer {
+    padding: var(--space-2) var(--space-4);
+    padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+    gap: var(--space-3);
+  }
+  .qo-total strong { font-size: 1.0625rem; }
 }
 </style>
