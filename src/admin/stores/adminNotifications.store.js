@@ -12,6 +12,7 @@
  */
 
 import { defineStore } from 'pinia';
+import { jouerSignal } from './notificationSound';
 import { ref, computed } from 'vue';
 import { useEcho } from '@/plugins/echo';
 import { useAuthStore } from '@/features/auth/auth.store';
@@ -66,6 +67,10 @@ export const useAdminNotificationsStore = defineStore('adminNotifications', () =
 
             channel.listen('.AdminNotification', ({ event, payload }) => {
                 pushNotification(event, payload);
+
+                // Seules les nouvelles commandes sonnent. Une expédition ou une
+                // annulation part d'un geste de l'agent : il sait déjà.
+                if (event === 'order.placed') jouerSignal();
             });
 
             channel.subscribed(() => {

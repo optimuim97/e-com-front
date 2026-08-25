@@ -30,6 +30,17 @@
         <div class="nb__panel-header">
           <span class="nb__panel-title">Notifications</span>
           <div class="nb__panel-actions">
+            <!--
+              Interrupteur du son, ici plutôt que dans les réglages boutique :
+              c'est une préférence de poste, pas un paramètre d'entreprise. Deux
+              agents partageant le même compte n'ont pas le même bureau.
+            -->
+            <span
+              class="nb__sound"
+              :class="{ 'nb__sound--off': !son }"
+              :title="son ? 'Couper le son des nouvelles commandes' : 'Activer le son des nouvelles commandes'"
+              @click="son = basculerSon()"
+            >{{ son ? '🔔 Son' : '🔕 Muet' }}</span>
             <span
               v-if="store.hasUnread"
               class="nb__mark-read"
@@ -90,8 +101,10 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
+import { sonActif, basculerSon } from '@/admin/stores/notificationSound';
 
 const store  = useAdminNotificationsStore();
+const son    = ref(sonActif());
 const router = useRouter();
 
 const open    = ref(false);
@@ -272,6 +285,17 @@ function handleClick(notif) {
 }
 .nb__mark-read:hover { color: var(--rose-500); }
 .nb__clear:hover     { color: #ef4444; }
+
+.nb__sound {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--rose-500);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.nb__sound--off { color: var(--gray-400); }
+.nb__sound:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* Status bar */
 .nb__status {
