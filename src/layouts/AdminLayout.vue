@@ -92,6 +92,7 @@ import {
   ChatBubbleLeftRightIcon,
   EnvelopeIcon,
   TruckIcon,
+  PaperAirplaneIcon,
   CalculatorIcon,
   ShieldCheckIcon,
   KeyIcon,
@@ -143,6 +144,10 @@ const NAV_GROUPS = [
     key: 'delivery',
     label: 'Livraison',
     items: [
+      // Les commandes à expédier vivent sous « Livraison » et non sous
+      // « Opérations » : ce n'est pas une seconde liste de commandes, c'est
+      // le poste de travail de qui prépare les envois hors Abidjan.
+      { to: '/admin/expeditions',     label: 'Expéditions',       icon: PaperAirplaneIcon, permission: 'orders.view' },
       { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon,  permission: 'deliveries.view'     },
       { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon, permission: 'delivery_zones.view' },
     ],
@@ -198,6 +203,7 @@ const TITLES = {
   'admin.order':               'Détail commande',
   'admin.pos':                 'Caisse / POS',
   'admin.whatsapp':            'Messages WhatsApp',
+  'admin.expeditions':         'Expéditions',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
   'admin.promotions':          'Opérations commerciales',

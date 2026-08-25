@@ -13,6 +13,9 @@ export default {
     { path: 'orders',                       name: 'admin.orders',                 meta: { permission: 'orders.view' },          component: () => import('./orders/OrdersView.vue') },
     { path: 'pos',                          name: 'admin.pos',                    meta: { permission: 'pos.use' },              component: () => import('./pos/PosView.vue') },
     { path: 'whatsapp',                     name: 'admin.whatsapp',               meta: { permission: 'whatsapp.view' },        component: () => import('./whatsapp/WhatsAppInboxView.vue') },
+    // Déclarée avant `orders/:id`, sinon « expeditions » serait avalé comme un
+    // identifiant de commande par la route paramétrée.
+    { path: 'expeditions',                  name: 'admin.expeditions',            meta: { permission: 'orders.view' },          component: () => import('./orders/ShipmentsView.vue') },
     { path: 'orders/:id',                   name: 'admin.order',                  meta: { permission: 'orders.view' },          component: () => import('./orders/OrderView.vue') },
     { path: 'promotions',                   name: 'admin.promotions',             meta: { permission: 'promotions.view' },      component: () => import('./promotions/PromotionsView.vue') },
     { path: 'coupons',                      name: 'admin.coupons',                meta: { permission: 'coupons.view' },         component: () => import('./coupons/CouponsView.vue') },

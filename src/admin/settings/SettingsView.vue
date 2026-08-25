@@ -531,6 +531,26 @@
               <span>Le client voit un bouton pour envoyer sa commande depuis la page de confirmation.</span>
             </div>
           </label>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('whatsapp_order_notify_customer')" class="toggle" :class="{ 'toggle--on': form.whatsapp_order_notify_customer === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Envoyer la confirmation de commande à la cliente</strong>
+              <span>Message WhatsApp et facture PDF, envoyés dès la commande passée. Les codes de connexion ne sont pas concernés : ils partent toujours.</span>
+            </div>
+          </label>
+
+          <label class="settings-toggle">
+            <button type="button" @click="toggle('whatsapp_order_notify_admin')" class="toggle" :class="{ 'toggle--on': form.whatsapp_order_notify_admin === 'true' }">
+              <span class="toggle__dot"></span>
+            </button>
+            <div class="settings-toggle__text">
+              <strong>Alerter la gérante à chaque commande</strong>
+              <span>Message WhatsApp au numéro ci-dessus, à chaque commande passée, expédiée ou annulée.</span>
+            </div>
+          </label>
         </div>
       </section>
 
@@ -642,6 +662,11 @@ const form = ref({
   // WhatsApp
   whatsapp_admin_number:    '',
   whatsapp_notify_customer: 'false',
+  // Envois : actifs par défaut, comme le lit le serveur pour un réglage jamais
+  // renseigné. Les afficher éteints ici ferait croire à une boutique muette
+  // alors qu'elle envoie.
+  whatsapp_order_notify_customer: 'true',
+  whatsapp_order_notify_admin:    'true',
 })
 
 const heroVariants = [
