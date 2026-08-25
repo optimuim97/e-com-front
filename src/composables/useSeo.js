@@ -179,7 +179,7 @@ export function organizationJsonLd(settings = {}) {
     url: origin(),
     logo: absoluteUrl('/logos/rosa-logo-600.png'),
     image: absoluteUrl('/rosa-beauty-facial-care.jpg'),
-    description: settings.shop_tagline || 'Soins du visage naturels à base de roses, fabriqués en Côte d\'Ivoire.',
+    description: settings.shop_tagline || 'Soins du corps naturels à base de roses.',
     telephone: settings.shop_phone || undefined,
     email: settings.shop_email || undefined,
     address: {
