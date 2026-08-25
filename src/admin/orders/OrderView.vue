@@ -415,7 +415,7 @@ const lienRetour = computed(() =>
         name: 'admin.expeditions',
         query: { onglet: route.query.onglet, commande: route.params.id },
       }
-    : { name: 'admin.orders' },
+    : { name: 'admin.orders', query: { commande: route.params.id } },
 );
 const order = ref(null);
 const loading = ref(true);

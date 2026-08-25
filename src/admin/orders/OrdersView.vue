@@ -289,7 +289,26 @@
         Aucune commande trouvée.
       </div>
 
-      <div v-else class="table-scroll">
+      <template v-else>
+        <!--
+          Bandeau permanent tant qu'une commande est masquée : sans lui, une
+          mise de côté oubliée deviendrait une commande jamais traitée.
+        -->
+        <div v-if="decote.size" class="orders__aside-bar">
+          <span>
+            {{ decote.size }} commande{{ decote.size > 1 ? 's' : '' }} mise{{ decote.size > 1 ? 's' : '' }} de côté,
+            visible{{ decote.size > 1 ? 's' : '' }} de vous seul.
+          </span>
+          <button type="button" class="btn btn-xs btn-outline" @click="toutReafficher">
+            Tout réafficher
+          </button>
+        </div>
+
+        <div v-if="ordersVisibles.length === 0" class="empty-state">
+          Toutes les commandes de cette page sont mises de côté.
+        </div>
+
+        <div v-else class="table-scroll">
         <table class="admin-table">
           <thead>
             <tr>
@@ -303,8 +322,11 @@
             </tr>
           </thead>
           <tbody>
-            <template v-for="order in orders" :key="order.id">
-              <tr :class="{ 'admin-table__row--expanded': expandedId === order.id }">
+            <template v-for="order in ordersVisibles" :key="order.id">
+              <tr :class="{
+                'admin-table__row--expanded': expandedId === order.id,
+                'orders__row--revue': revue === order.id,
+              }">
                 <td class="admin-table__mono">
                   {{ order.number }}
                   <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
@@ -328,9 +350,23 @@
                     >
                       {{ expandedId === order.id ? 'Fermer' : 'Traiter' }}
                     </button>
-                    <RouterLink :to="{ name: 'admin.order', params: { id: order.id } }">
+                    <RouterLink :to="{ name: 'admin.order', params: { id: order.id }, query: { retour: 'commandes' } }">
                       Détail →
                     </RouterLink>
+                    <!--
+                      Mise de côté : préférence de travail personnelle, jamais
+                      un état de la commande. Elle n'est ni enregistrée en base
+                      ni visible des collègues — masquer une commande pour toute
+                      l'équipe reviendrait à cacher du travail à faire.
+                    -->
+                    <button
+                      class="orders__aside"
+                      type="button"
+                      :title="'Retirer ' + order.number + ' de ma liste de travail'"
+                      @click="mettreDeCote(order.id)"
+                    >
+                      Mettre de côté
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -347,7 +383,8 @@
             </template>
           </tbody>
         </table>
-      </div>
+        </div>
+      </template>
 
       <!-- Pagination unifiée (mode liste uniquement) -->
       <AdminPagination
@@ -366,8 +403,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
@@ -409,6 +446,55 @@ function onOrderUpdated(updated) {
   if (idx >= 0) orders.value[idx] = { ...orders.value[idx], ...updated }
   // Rafraîchir le badge sidebar
   orderStats.refresh()
+}
+
+/* ── Mise de côté et retour surligné ──────────────────────────────────────────
+ *
+ * Deux conforts de travail, tous deux volontairement locaux.
+ *
+ * La mise de côté n'est PAS un état de la commande : elle n'est pas enregistrée
+ * en base et reste invisible des collègues. Masquer une commande pour toute
+ * l'équipe reviendrait à cacher du travail à faire, et une commande archivée
+ * par erreur ne se retrouverait plus. Elle vit donc dans le stockage de session
+ * du navigateur : elle disparaît à la fermeture de l'onglet, ce qui garantit
+ * qu'aucune commande ne reste masquée d'un jour sur l'autre.
+ */
+const CLE_DECOTE = 'admin:commandes:de-cote'
+
+const decote = ref(new Set(JSON.parse(sessionStorage.getItem(CLE_DECOTE) ?? '[]')))
+const revue = ref(null)
+
+const ordersVisibles = computed(() => orders.value.filter(o => !decote.value.has(o.id)))
+
+function persisterDecote() {
+  sessionStorage.setItem(CLE_DECOTE, JSON.stringify([...decote.value]))
+}
+
+function mettreDeCote(id) {
+  decote.value = new Set(decote.value).add(id)
+  if (expandedId.value === id) expandedId.value = null
+  persisterDecote()
+}
+
+function toutReafficher() {
+  decote.value = new Set()
+  persisterDecote()
+}
+
+/**
+ * Surligne la commande que l'on vient de quitter et la ramène à l'écran.
+ *
+ * Sans ce repère, revenir d'une fiche renvoyait en haut d'une liste de vingt
+ * lignes identiques, et il fallait relire les numéros pour retrouver où l'on
+ * en était.
+ */
+async function surlignerRetour() {
+  const id = Number(route.query.commande)
+  if (!id) return
+
+  revue.value = id
+  await nextTick()
+  document.querySelector('.orders__row--revue')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
 const orders = ref([])
@@ -809,15 +895,51 @@ function paymentLabel(method) {
   return map[method] ?? method
 }
 
-onMounted(() => {
+const route = useRoute()
+
+onMounted(async () => {
   settings.fetch()
-  if (groupBy.value) fetchAllForGrouping()
-  else fetchOrders()
+  if (groupBy.value) await fetchAllForGrouping()
+  else await fetchOrders()
+
+  await surlignerRetour()
 })
 </script>
 
 <style scoped>
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+/* Commande que l'on vient de quitter : repère éphémère, pas un état. */
+.orders__row--revue > td {
+  background: var(--rose-50);
+  box-shadow: inset 3px 0 0 var(--rose-500);
+}
+
+.orders__aside {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.orders__aside:hover { color: var(--gray-700); }
+
+.orders__aside-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-3);
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--cream-100);
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
 
 .filters-bar {
   padding: var(--space-4);
