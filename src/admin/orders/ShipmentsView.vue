@@ -46,23 +46,54 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="o in commandes" :key="o.id">
-            <td class="admin-table__mono">{{ o.number }}</td>
-            <td>{{ formatDate(o.created_at) }}</td>
-            <td>
-              {{ o.shipping_address?.first_name }} {{ o.shipping_address?.last_name }}
-              <span class="ship__phone">{{ o.shipping_address?.phone || '—' }}</span>
-            </td>
-            <td>
-              {{ o.shipping_address?.city || '—' }}
-              <span v-if="o.shipping_unknown" class="ship__flag">à tarifer</span>
-            </td>
-            <td>{{ STATUTS[o.status] ?? o.status }}</td>
-            <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
-            <td>
-              <RouterLink :to="{ name: 'admin.order', params: { id: o.id } }">Traiter →</RouterLink>
-            </td>
-          </tr>
+          <template v-for="o in commandes" :key="o.id">
+            <tr :class="{ 'ship__row--traitee': traitees.has(o.id), 'ship__row--ouverte': ouverte === o.id }">
+              <td class="admin-table__mono">{{ o.number }}</td>
+              <td>{{ formatDate(o.created_at) }}</td>
+              <td>
+                {{ o.shipping_address?.first_name }} {{ o.shipping_address?.last_name }}
+                <span class="ship__phone">{{ o.shipping_address?.phone || '—' }}</span>
+              </td>
+              <td>
+                {{ o.shipping_address?.city || '—' }}
+                <span v-if="o.shipping_unknown" class="ship__flag">à tarifer</span>
+              </td>
+              <td>
+                {{ STATUTS[o.status] ?? o.status }}
+                <span v-if="traitees.has(o.id)" class="ship__done">traitée</span>
+              </td>
+              <td class="admin-table__total">{{ formatPrice(o.total) }}</td>
+              <td>
+                <div class="ship__actions">
+                  <!--
+                    Traitement sur place : l'agent enchaîne les commandes sans
+                    quitter son onglet. Ouvrir la fiche complète le renvoyait
+                    dans la liste générale, où il perdait à la fois sa place et
+                    le filtre qui l'y avait amené.
+                  -->
+                  <button type="button" class="btn btn-xs btn-primary" @click="basculer(o)">
+                    {{ ouverte === o.id ? 'Fermer' : 'Traiter' }}
+                  </button>
+                  <RouterLink
+                    class="ship__detail"
+                    :to="{ name: 'admin.order', params: { id: o.id }, query: { retour: 'expeditions', onglet } }"
+                  >
+                    Fiche →
+                  </RouterLink>
+                </div>
+              </td>
+            </tr>
+            <tr v-if="ouverte === o.id" class="admin-table__detail-row">
+              <td :colspan="7">
+                <OrderQuickActionModal
+                  :order="o"
+                  inline
+                  @close="ouverte = null"
+                  @updated="apresTraitement"
+                />
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
 
@@ -75,9 +106,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
+import OrderQuickActionModal from './OrderQuickActionModal.vue'
 
 /*
  * Trois onglets, dans l'ordre où ils coûtent de l'argent : une commande à
@@ -98,10 +130,25 @@ const STATUTS = {
   shipped: 'Expédiée', delivered: 'Livrée', cancelled: 'Annulée', refunded: 'Remboursée',
 }
 
+const route = useRoute()
+
 const onglet = ref('a_tarifer')
 const commandes = ref([])
 const loading = ref(false)
 const compteurs = reactive({ a_tarifer: null, interior: null, international: null })
+
+/** Fiche dépliée sous sa ligne. Une seule à la fois. */
+const ouverte = ref(null)
+
+/*
+ * Commandes traitées pendant cette session d'écran.
+ *
+ * Une commande dont on vient de saisir les frais quitte l'onglet « À tarifer »
+ * au prochain chargement. La faire disparaître sous le curseur donne
+ * l'impression d'avoir perdu quelque chose : on la garde affichée, marquée
+ * « traitée », jusqu'à ce que l'agent change d'onglet ou actualise lui-même.
+ */
+const traitees = ref(new Set())
 
 /** Traduit un onglet en paramètres de l'API des commandes. */
 function parametres(cle) {
@@ -145,15 +192,52 @@ async function chargerCompteurs() {
 function changerOnglet(cle) {
   if (cle === onglet.value) return
   onglet.value = cle
+  ouverte.value = null
+  traitees.value = new Set()   // le marquage ne vaut que pour l'onglet en cours
   charger()
 }
 
+function basculer(commande) {
+  ouverte.value = ouverte.value === commande.id ? null : commande.id
+}
+
+/**
+ * Une action vient d'aboutir sur la commande dépliée.
+ *
+ * La ligne est mise à jour sur place et marquée, plutôt que rechargée : le
+ * rechargement la ferait sortir de l'onglet et refermerait la fiche, alors que
+ * l'agent a souvent deux ou trois gestes à enchaîner dessus.
+ */
+function apresTraitement(majOrder) {
+  const i = commandes.value.findIndex((o) => o.id === majOrder.id)
+  if (i >= 0) commandes.value[i] = { ...commandes.value[i], ...majOrder }
+
+  traitees.value = new Set(traitees.value).add(majOrder.id)
+}
+
 async function rafraichir() {
+  ouverte.value = null
+  traitees.value = new Set()
   await charger()
   await chargerCompteurs()
 }
 
-onMounted(rafraichir)
+onMounted(async () => {
+  // Retour depuis la fiche complète : on rouvre l'onglet quitté et on surligne
+  // la commande, pour que l'agent retrouve sa place au lieu de repartir du haut.
+  if (route.query.onglet && ONGLETS.some((t) => t.cle === route.query.onglet)) {
+    onglet.value = route.query.onglet
+  }
+
+  await rafraichir()
+
+  const retour = Number(route.query.commande)
+  if (retour) {
+    traitees.value = new Set([retour])
+    await nextTick()
+    document.querySelector('.ship__row--traitee')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }
+})
 
 function formatDate(val) {
   if (!val) return '—'
@@ -248,6 +332,35 @@ function formatPrice(val) {
   border-radius: var(--radius-full);
   background: #fbeeec;
   color: #a3221b;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.ship__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  white-space: nowrap;
+}
+.ship__detail { font-size: 0.8125rem; color: var(--gray-500); }
+.ship__detail:hover { color: var(--rose-600); }
+
+/* Ligne dépliée : rattachée visuellement à sa fiche, sinon les deux flottent. */
+.ship__row--ouverte > td { background: var(--cream-50); }
+
+/* Traitée pendant cette session : la ligne reste, mais se distingue. */
+.ship__row--traitee > td {
+  background: #f2f8f4;
+  box-shadow: inset 3px 0 0 #2f6b46;
+}
+
+.ship__done {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: #dcece2;
+  color: #2f6b46;
   font-size: 0.6875rem;
   font-weight: 700;
 }

@@ -1,7 +1,12 @@
 <template>
   <div class="space-y-6">
-    <!-- Back -->
-    <RouterLink :to="{ name: 'admin.orders' }" class="admin-back-link">
+    <!--
+      Retour vers l'écran d'où l'on vient, et non systématiquement vers la liste
+      générale : un agent arrivé depuis les expéditions y perdait sa place et le
+      filtre qui l'y avait mené. L'identifiant de la commande voyage avec, pour
+      qu'elle soit surlignée au retour.
+    -->
+    <RouterLink :to="lienRetour" class="admin-back-link">
       <svg
         width="14"
         height="14"
@@ -13,7 +18,7 @@
       >
         <path d="M19 12H5M12 19l-7-7 7-7" />
       </svg>
-      Retour aux commandes
+      {{ route.query.retour === 'expeditions' ? 'Retour aux expéditions' : 'Retour aux commandes' }}
     </RouterLink>
 
     <!-- Loading -->
@@ -402,6 +407,16 @@ function onOrderUpdated(updated) {
 }
 
 const route = useRoute();
+
+/** Destination du lien « Retour », selon l'écran d'origine. */
+const lienRetour = computed(() =>
+  route.query.retour === 'expeditions'
+    ? {
+        name: 'admin.expeditions',
+        query: { onglet: route.query.onglet, commande: route.params.id },
+      }
+    : { name: 'admin.orders' },
+);
 const order = ref(null);
 const loading = ref(true);
 const saving = ref(false);
