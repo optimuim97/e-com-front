@@ -90,6 +90,22 @@
         class="input filters-bar__search"
         placeholder="Rechercher par numéro, client…"
       />
+      <!--
+        Axe distinct des statuts : « aujourd'hui » se combine avec eux plutôt
+        que de les remplacer. En faire un onglet de plus aurait obligé à choisir
+        entre « en attente » et « du jour », alors que la question du matin est
+        justement « qu'est-ce qui est arrivé aujourd'hui et attend encore ».
+      -->
+      <button
+        type="button"
+        class="orders__today"
+        :class="{ 'orders__today--on': filters.du_jour }"
+        @click="basculerDuJour"
+      >
+        Aujourd'hui
+        <span v-if="filters.du_jour" class="orders__today-count">{{ pagination.total ?? 0 }}</span>
+      </button>
+
       <!-- Group-by selector -->
       <label class="group-by">
         <span>Grouper par</span>
@@ -709,9 +725,16 @@ function openRouteMapForGroup(group) {
 const filters = reactive({
   status: '',
   search: '',
+  du_jour: false,
   page: 1,
   per_page: 20,
 })
+
+function basculerDuJour() {
+  filters.du_jour = !filters.du_jour
+  filters.page = 1          // le filtre change le jeu de résultats, la page 3 n'a plus de sens
+  fetchOrders()
+}
 
 
 const orderStatusOptions = [
@@ -847,6 +870,7 @@ async function fetchOrders() {
     const params = { page: filters.page, per_page: filters.per_page }
     if (filters.status) params.status = filters.status
     if (filters.search) params.search = filters.search
+    if (filters.du_jour) params.du_jour = 1
     const { data } = await api.get('/admin/orders', { params })
     orders.value = data.data
     pagination.value = {
@@ -908,6 +932,38 @@ onMounted(async () => {
 
 <style scoped>
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.orders__today {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px 14px;
+  border: 1.5px solid var(--cream-300);
+  border-radius: var(--radius-full);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.orders__today:hover { border-color: var(--rose-300); color: var(--rose-600); }
+.orders__today--on {
+  border-color: var(--rose-500);
+  background: var(--rose-50);
+  color: var(--rose-600);
+  font-weight: 600;
+}
+.orders__today-count {
+  min-width: 1.4rem;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--rose-200);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
 
 /* Commande que l'on vient de quitter : repère éphémère, pas un état. */
 .orders__row--revue > td {
