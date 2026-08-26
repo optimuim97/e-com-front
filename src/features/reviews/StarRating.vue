@@ -13,7 +13,7 @@
       @mouseenter="interactive && (hovered = i)"
       @mouseleave="interactive && (hovered = 0)"
       @click="interactive && emit('update:modelValue', i)"
-      :aria-label="`${i} étoile${i > 1 ? 's' : ''}`"
+      :aria-label="$t('reviews.starLabel', { count: i }, i)"
     >★</button>
 
     <span v-if="showCount && count !== undefined" class="star-rating__count">

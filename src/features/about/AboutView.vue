@@ -5,32 +5,31 @@
     <section class="ap-hero">
       <div class="container ap-hero__inner">
         <div class="ap-hero__text">
-          <span class="eyebrow">Notre histoire</span>
+          <span class="eyebrow">{{ $t('aboutPage.eyebrow') }}</span>
           <h1 class="display-lg ap-hero__title">
-            Révéler la beauté naturelle<br>
-            <em>de chaque femme</em>
+            {{ $t('aboutPage.heroTitle') }}<br>
+            <em>{{ $t('aboutPage.heroTitleEm') }}</em>
           </h1>
           <p class="ap-hero__desc">
-            Rosabeauty Facial Care est née d'une histoire personnelle, d'une passion pour la beauté
-            et d'une volonté d'aider les femmes à prendre soin de leur peau avec douceur et confiance.
-            La <strong>première marque ivoirienne dédiée à la rose</strong>, pour révéler l'éclat naturel de votre peau.
+            {{ $t('aboutPage.heroDescBefore') }}
+            <strong>{{ $t('aboutPage.heroDescStrong') }}</strong>{{ $t('aboutPage.heroDescAfter') }}
           </p>
           <div class="ap-hero__founder">
             <div class="ap-hero__founder-avatar">M</div>
             <div>
               <p class="ap-hero__founder-name">Maïmouna Diabagate</p>
-              <p class="ap-hero__founder-role">Fondatrice, Rosa Beauty Facial Care</p>
+              <p class="ap-hero__founder-role">{{ $t('aboutPage.founderRole') }}</p>
             </div>
           </div>
           <RouterLink to="/products" class="btn btn-primary">
-            Découvrir nos soins
+            {{ $t('hero.discoverCare') }}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
           </RouterLink>
         </div>
         <div class="ap-hero__img-wrap">
-          <img src="/image_site/DSC_7629.jpeg" alt="Rosa Beauty Facial Care — Fondatrice" class="ap-hero__img" />
+          <img src="/image_site/DSC_7629.jpeg" :alt="$t('aboutPage.founderImgAlt')" class="ap-hero__img" />
           <div class="ap-hero__img-deco"></div>
         </div>
       </div>
@@ -48,27 +47,23 @@
           />
           <div class="ap-founder__video-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            Mot de la fondatrice
+            {{ $t('aboutPage.founderWord') }}
           </div>
         </div>
         <div class="ap-founder__quote-col">
-          <span class="eyebrow">La vision</span>
+          <span class="eyebrow">{{ $t('aboutPage.visionEyebrow') }}</span>
           <blockquote class="ap-founder__blockquote">
-            « Votre corps est votre meilleur accessoire, prenez-en soin. »
+            {{ $t('aboutPage.visionQuote') }}
           </blockquote>
           <p class="ap-founder__text">
-            Comme beaucoup de femmes, j'ai moi-même été confrontée à des problèmes de peau qui affectaient
-            ma confiance en moi. Au cours de ma quête pour retrouver une peau saine et lumineuse, j'ai découvert
-            les bienfaits exceptionnels de la rose. Séduite par ses propriétés apaisantes, hydratantes et éclatantes,
-            elle est rapidement devenue un élément essentiel de ma routine beauté.
+            {{ $t('aboutPage.founderText1') }}
           </p>
           <p class="ap-founder__text">
-            Les résultats ont éveillé en moi une véritable passion et l'envie de partager ce trésor naturel
-            avec d'autres femmes. C'est ainsi qu'est née Rosabeauty Facial Care.
+            {{ $t('aboutPage.founderText2') }}
           </p>
           <div class="ap-founder__sig">
             <span class="ap-founder__sig-name">Maïmouna Diabagate</span>
-            <span class="ap-founder__sig-title">Fondatrice &amp; Directrice</span>
+            <span class="ap-founder__sig-title">{{ $t('aboutPage.founderSigTitle') }}</span>
           </div>
         </div>
       </div>
@@ -88,40 +83,38 @@
     <section class="ap-rose">
       <div class="container ap-rose__inner">
         <div class="ap-rose__text">
-          <span class="eyebrow">L'ingrédient phare</span>
-          <h2 class="display-md">La <em>Rose de Damas</em></h2>
+          <span class="eyebrow">{{ $t('aboutPage.roseEyebrow') }}</span>
+          <h2 class="display-md">{{ $t('aboutPage.roseTitle') }} <em>{{ $t('aboutPage.roseTitleEm') }}</em></h2>
           <p class="ap-rose__desc">
-            Au cœur de Rosa Beauty Facial Care, il y a la rose de Damas — un ingrédient précieux reconnu depuis
-            des siècles pour ses vertus exceptionnelles sur la peau. Nous en faisons le fil conducteur
-            de toute notre gamme.
+            {{ $t('aboutPage.roseDesc') }}
           </p>
           <div class="ap-rose__benefits">
             <div class="ap-rose__benefit">
               <div class="ap-rose__benefit-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
               <div>
-                <strong>Hydratante</strong>
-                <p>Restaure le film hydrolipidique et retient l'eau dans les couches profondes.</p>
+                <strong>{{ $t('aboutPage.roseBenefit1') }}</strong>
+                <p>{{ $t('aboutPage.roseBenefit1Desc') }}</p>
               </div>
             </div>
             <div class="ap-rose__benefit">
               <div class="ap-rose__benefit-icon"><FlowerMark /></div>
               <div>
-                <strong>Apaisante</strong>
-                <p>Calme les irritations, réduit les rougeurs et renforce la tolérance cutanée.</p>
+                <strong>{{ $t('aboutPage.roseBenefit2') }}</strong>
+                <p>{{ $t('aboutPage.roseBenefit2Desc') }}</p>
               </div>
             </div>
             <div class="ap-rose__benefit">
               <div class="ap-rose__benefit-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/></svg></div>
               <div>
-                <strong>Illuminatrice</strong>
-                <p>Unifie le teint, révèle l'éclat naturel et donne une peau lumineuse au quotidien.</p>
+                <strong>{{ $t('aboutPage.roseBenefit3') }}</strong>
+                <p>{{ $t('aboutPage.roseBenefit3Desc') }}</p>
               </div>
             </div>
           </div>
         </div>
         <div class="ap-rose__img-wrap">
-          <img src="/image_site/FLS_8032.jpeg" alt="Rose de Damas — Rosa Beauty Facial Care" class="ap-rose__img" />
-          <div class="ap-rose__img-badge">Rose de Damas</div>
+          <img src="/image_site/FLS_8032.jpeg" :alt="$t('aboutPage.roseImgAlt')" class="ap-rose__img" />
+          <div class="ap-rose__img-badge">{{ $t('hero.naturalSub') }}</div>
         </div>
       </div>
     </section>
@@ -131,24 +124,21 @@
       <div class="container ap-mission__inner">
         <div class="ap-mission__img-col">
           <div class="ap-mission__img-stack">
-            <img src="/image_site/FLS_8111.jpeg" alt="Produits Rosa Beauty Facial Care" class="ap-mission__img ap-mission__img--back" />
-            <img src="/image_site/FLS_8130.jpeg" alt="Ingrédients naturels" class="ap-mission__img ap-mission__img--front" />
+            <img src="/image_site/FLS_8111.jpeg" :alt="$t('aboutPage.missionImg1Alt')" class="ap-mission__img ap-mission__img--back" />
+            <img src="/image_site/FLS_8130.jpeg" :alt="$t('hero.naturalIngredients')" class="ap-mission__img ap-mission__img--front" />
           </div>
         </div>
         <div class="ap-mission__text">
-          <span class="eyebrow">Notre mission</span>
+          <span class="eyebrow">{{ $t('aboutPage.missionEyebrow') }}</span>
           <h2 class="display-md">
-            Un <em>rituel de soins</em><br>pensé pour vous
+            {{ $t('aboutPage.missionTitle') }} <em>{{ $t('aboutPage.missionTitleEm') }}</em><br>{{ $t('aboutPage.missionTitleSuffix') }}
           </h2>
           <p>
-            Chez Rosabeauty Facial Care, notre mission n'est pas de transformer la couleur de votre peau,
-            mais de l'aider à être <strong>saine, lumineuse, équilibrée et rayonnante</strong>. Nous croyons que chaque
-            femme mérite de se sentir belle dans sa peau et de prendre soin d'elle avec des produits adaptés à ses besoins.
+            {{ $t('aboutPage.missionText1Before') }}
+            <strong>{{ $t('aboutPage.missionText1Strong') }}</strong>{{ $t('aboutPage.missionText1After') }}
           </p>
           <p>
-            Au fil des années, Rosabeauty Facial Care a grandi grâce à la confiance de milliers de clientes.
-            Chaque produit est pensé avec amour, exigence et respect de la peau, afin d'offrir une expérience
-            de soin unique — pensée pour les peaux africaines, leur éclat et leurs besoins spécifiques.
+            {{ $t('aboutPage.missionText2') }}
           </p>
           <ul class="ap-mission__list">
             <li v-for="item in missionPoints" :key="item">
@@ -166,10 +156,10 @@
     <section class="ap-process">
       <div class="container">
         <div class="ap-process__header">
-          <span class="eyebrow">Notre procédé</span>
-          <h2 class="display-md">De la nature à votre peau</h2>
+          <span class="eyebrow">{{ $t('aboutPage.processEyebrow') }}</span>
+          <h2 class="display-md">{{ $t('aboutPage.processTitle') }}</h2>
           <p class="ap-process__desc">
-            Chaque étape de la fabrication est pensée pour préserver les bienfaits des ingrédients naturels.
+            {{ $t('aboutPage.processDesc') }}
           </p>
         </div>
 
@@ -189,9 +179,9 @@
     <!-- ── Valeurs ── -->
     <section class="ap-values">
       <div class="container">
-        <span class="eyebrow" style="text-align:center; display:block;">Nos engagements</span>
+        <span class="eyebrow" style="text-align:center; display:block;">{{ $t('aboutPage.valuesEyebrow') }}</span>
         <h2 class="display-md" style="text-align:center; margin-bottom: var(--space-12);">
-          Ce qui nous définit
+          {{ $t('aboutPage.valuesTitle') }}
         </h2>
         <div class="ap-values__grid">
           <div v-for="val in values" :key="val.title" class="ap-value-card card">
@@ -207,15 +197,15 @@
     <section class="ap-gallery">
       <div class="ap-gallery__strip">
         <img src="/image_site/DSC_7546.jpeg" loading="lazy" decoding="async"
-             alt="Cueillette de la rose de Damas — récolte matinale" />
+             :alt="$t('aboutPage.galleryAlt1')" />
         <img src="/image_site/DSC_7611.jpeg" loading="lazy" decoding="async"
-             alt="Cueilleuses dans la roseraie, au pied de l'Atlas" />
+             :alt="$t('aboutPage.galleryAlt2')" />
         <img src="/image_site/DSC_7630.jpeg" loading="lazy" decoding="async"
-             alt="Récolte des roses à la main, fleur par fleur" />
+             :alt="$t('aboutPage.galleryAlt3')" />
         <img src="/image_site/DSC_7645.jpeg" loading="lazy" decoding="async"
-             alt="Roses de Damas en fleur dans la roseraie" />
+             :alt="$t('aboutPage.galleryAlt4')" />
         <img src="/image_site/DSC_7647.jpeg" loading="lazy" decoding="async"
-             alt="La roseraie face aux montagnes de l'Atlas" />
+             :alt="$t('aboutPage.galleryAlt5')" />
       </div>
     </section>
 
@@ -224,19 +214,18 @@
       <div class="container ap-cta__inner">
         <div class="ap-cta__quote-mark">"</div>
         <h2 class="display-md ap-cta__headline">
-          Votre corps est<br><em>votre meilleur accessoire</em>
+          {{ $t('aboutPage.ctaHeadline') }}<br><em>{{ $t('aboutPage.ctaHeadlineEm') }}</em>
           <br>
-          Prenez-en soin
+          {{ $t('aboutPage.ctaHeadlineSuffix') }}
         </h2>
         <p>
-          . Plus qu'une marque de cosmétiques, Rosabeauty Facial Care est une invitation
-          à prendre soin de soi, à s'aimer davantage et à révéler sa beauté naturelle.
+          {{ $t('aboutPage.ctaDesc') }}
         </p>
         <div class="ap-cta__btns">
-          <RouterLink to="/products" class="btn btn-primary">Voir nos produits</RouterLink>
-          <RouterLink to="/contact"  class="btn btn-outline">Nous contacter</RouterLink>
+          <RouterLink to="/products" class="btn btn-primary">{{ $t('aboutPage.ctaProducts') }}</RouterLink>
+          <RouterLink to="/contact"  class="btn btn-outline">{{ $t('contact.eyebrow') }}</RouterLink>
         </div>
-        <p class="ap-cta__attr">— Maïmouna Diabagate, fondatrice de Rosa Beauty Facial Care</p>
+        <p class="ap-cta__attr">{{ $t('aboutPage.ctaAttribution') }}</p>
       </div>
     </section>
 
@@ -244,17 +233,21 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import RosaVideoPlayer from '@/components/ui/RosaVideoPlayer.vue'
 import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
 
+const { t } = useI18n()
+
 useSeo(() => ({
-  title: 'Notre histoire — Cosmétique naturelle ivoirienne',
-  description: "Rosa Beauty Facial Care formule et fabrique en Côte d'Ivoire des soins du visage à base de rose naturelle. Découvrez notre histoire, nos engagements et nos ateliers.",
+  title: t('aboutPage.seoTitle'),
+  description: t('aboutPage.seoDescription'),
   canonical: '/a-propos',
   jsonLd: breadcrumbJsonLd([
-    { name: 'Accueil', path: '/' },
-    { name: 'Notre histoire', path: '/a-propos' },
+    { name: t('common.home'), path: '/' },
+    { name: t('aboutPage.eyebrow'), path: '/a-propos' },
   ]),
 }))
 
@@ -264,69 +257,69 @@ useSeo(() => ({
 const videoSrc    = '/storage/videos/rosa-beauty.mp4'
 const videoPoster = '/storage/videos/rosa-beauty-poster.jpg'
 
-const stats = [
-  { value: '100%', label: 'Formules naturelles' },
-  { value: '5+',   label: 'Gammes de soins' },
-  { value: '0',    label: 'Parabens & sulfates' },
-  { value: '5 000+', label: 'Clientes satisfaites' },
-]
+const stats = computed(() => [
+  { value: '100%',   label: t('aboutPage.statNaturalFormulas') },
+  { value: '5+',     label: t('about.careRanges') },
+  { value: '0',      label: t('aboutPage.statNoParabens') },
+  { value: '5 000+', label: t('about.satisfiedClients') },
+])
 
-const missionPoints = [
-  'Formules 95%+ d\'ingrédients naturels',
-  'Sans parabens, sulfates, ni colorants artificiels',
-  'Testées dermatologiquement',
-  'Adaptées aux peaux africaines',
-  'Produites de façon éthique et responsable',
-]
+const missionPoints = computed(() => [
+  t('aboutPage.missionPoint1'),
+  t('aboutPage.missionPoint2'),
+  t('aboutPage.missionPoint3'),
+  t('aboutPage.missionPoint4'),
+  t('aboutPage.missionPoint5'),
+])
 
-const processSteps = [
-  // La grille du procédé est pensée pour 4 étapes (4 / 2 / 1 colonnes selon
-  // la largeur) : une cinquième se retrouverait seule sur sa ligne.
+// La grille du procédé est pensée pour 4 étapes (4 / 2 / 1 colonnes selon
+// la largeur) : une cinquième se retrouverait seule sur sa ligne.
+const processSteps = computed(() => [
   {
     image: '/image_site/DSC_7630.jpeg',
-    title: 'La cueillette',
-    desc:  'Nos roses de Damas sont récoltées à la main, fleur par fleur, dans les roseraies de nos partenaires producteurs.',
+    title: t('aboutPage.step1Title'),
+    desc:  t('aboutPage.step1Desc'),
   },
   {
     image: '/image_site/FLS_8130.jpeg',
-    title: 'Formulation experte',
-    desc:  'Nos formules sont développées en collaboration avec des experts en cosmétique pour garantir efficacité et tolérance cutanée.',
+    title: t('aboutPage.step2Title'),
+    desc:  t('aboutPage.step2Desc'),
   },
   {
     image: '/image_site/FLS_8032.jpeg',
-    title: 'Contrôle qualité',
-    desc:  'Chaque lot est testé rigoureusement avant distribution pour garantir une qualité constante et une sécurité optimale.',
+    title: t('aboutPage.step3Title'),
+    desc:  t('aboutPage.step3Desc'),
   },
   {
     image: '/image_site/FLS_8142.jpeg',
-    title: 'Livraison chez vous',
-    desc:  'Vos produits arrivent dans un emballage soigné, directement à votre porte, partout en Côte d\'Ivoire.',
+    title: t('aboutPage.step4Title'),
+    desc:  t('aboutPage.step4Desc'),
   },
-]
+])
 
 const SVG = (p) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`
-const values = [
+const values = computed(() => [
   {
     icon:  SVG('<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/>'),
-    title: 'Naturalité',
-    desc:  'Des formules pensées pour préserver les bienfaits des actifs naturels, sans compromis sur l\'efficacité.',
+    title: t('aboutPage.value1Title'),
+    desc:  t('aboutPage.value1Desc'),
   },
   {
     icon:  SVG('<path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/>'),
-    title: 'Efficacité prouvée',
-    desc:  'Chaque produit est formulé pour apporter des résultats visibles, adaptés à toutes les types de peaux.',
+    title: t('aboutPage.value2Title'),
+    desc:  t('aboutPage.value2Desc'),
   },
   {
     icon:  SVG('<path d="M20 21v-2a4 4 0 0 0-3-3.87M4 21v-2a4 4 0 0 1 3-3.87M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/>'),
-    title: 'Accessibilité',
-    desc:  'Une beauté de qualité ne devrait pas être réservée à quelques-unes. Rosa Beauty Facial Care est pour toutes.',
+    title: t('aboutPage.value3Title'),
+    desc:  t('aboutPage.value3Desc'),
   },
   {
     icon:  SVG('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 1 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>'),
-    title: 'Éthique',
-    desc:  'Nous nous engageons pour une production responsable, respectueuse des personnes et de l\'environnement.',
+    title: t('aboutPage.value4Title'),
+    desc:  t('aboutPage.value4Desc'),
   },
-]
+])
 </script>
 
 <style scoped>

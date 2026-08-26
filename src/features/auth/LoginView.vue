@@ -16,7 +16,7 @@
         <div class="auth-row">
           <label class="label">{{ $t('auth.password') }}</label>
           <button type="button" class="auth-forgot-link" @click="showForgot = true">
-            Mot de passe oublié ?
+            {{ $t('auth.forgotPassword') }}
           </button>
         </div>
         <input v-model="form.password" type="password" class="input" :placeholder="$t('auth.passwordPlaceholder')" required />
@@ -33,7 +33,7 @@
       <!-- Facebook masqué tant que la configuration côté Meta n'est pas
            finalisée. Le composant et la route restent en place : il suffit
            de remettre <FacebookButton> pour le réactiver. -->
-      <div class="auth-divider"><span>ou</span></div>
+      <div class="auth-divider"><span>{{ $t('common.or') }}</span></div>
       <GoogleButton @success="onSocialSuccess" @error="error = $event" />
     </form>
 

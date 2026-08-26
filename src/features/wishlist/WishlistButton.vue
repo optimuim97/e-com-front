@@ -2,7 +2,7 @@
   <button
     class="wishlist-btn"
     :class="{ 'wishlist-btn--active': active, 'wishlist-btn--loading': busy }"
-    :aria-label="active ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+    :aria-label="active ? $t('wishlist.removeLabel') : $t('product.addToWishlist')"
     :aria-pressed="active"
     @click.prevent="handleClick"
     :disabled="busy"

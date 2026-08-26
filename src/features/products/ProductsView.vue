@@ -34,7 +34,7 @@
             :class="{ 'products-cat-tag--active': !filters.category }"
             @click="setCategory(null)"
           >
-            Tout
+            {{ $t('common.all') }}
           </button>
           <button
             v-for="cat in categories"
@@ -134,10 +134,9 @@ useSeo(() => {
 
   return {
     title: categorie
-      ? `${categorie.name} — Soins Rosa Beauty`
-      : 'Boutique — Tous nos soins naturels à la rose',
-    description: categorie?.description
-      || "Découvrez tous les soins Rosa Beauty : élixirs, eaux florales, laits corporels et rituels visage à base de rose naturelle. Livraison à Abidjan et dans toute la Côte d'Ivoire.",
+      ? t('products.seoTitleCategory', { category: categorie.name })
+      : t('products.seoTitle'),
+    description: categorie?.description || t('products.seoDescription'),
     canonical: '/products',
     noindex: !!recherche,
     jsonLd: itemListJsonLd(products.value),

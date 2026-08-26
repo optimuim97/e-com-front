@@ -8,11 +8,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/features/auth/auth.store'
 
+const { t }  = useI18n()
 const router = useRouter()
 const auth   = useAuthStore()
-const message = ref('Connexion en cours…')
+const message = ref(t('auth.connecting'))
 
 onMounted(async () => {
   // Le backend renvoie le résultat dans le hash (#<json url-encodé>)
@@ -23,7 +25,7 @@ onMounted(async () => {
   try { data = JSON.parse(decodeURIComponent(raw)) } catch { data = null }
 
   if (!data || data.error || !data.token) {
-    message.value = 'Connexion impossible. Redirection…'
+    message.value = t('auth.socialRedirecting')
     setTimeout(() => router.replace('/login'), 1500)
     return
   }

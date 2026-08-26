@@ -86,7 +86,7 @@
             <p v-if="couponError" class="cart-summary__coupon-error">{{ couponError }}</p>
             <div v-if="cartStore.cart.coupon" class="cart-summary__coupon-applied">
               <span>{{ cartStore.cart.coupon.code }}</span>
-              <button @click="removeCoupon" :disabled="removingCoupon" aria-label="Retirer le code">
+              <button @click="removeCoupon" :disabled="removingCoupon" :aria-label="$t('cart.removeCoupon')">
                 <span v-if="removingCoupon" class="cart-item__spinner"></span>
                 <XMarkIcon v-else class="w-4 h-4" />
               </button>

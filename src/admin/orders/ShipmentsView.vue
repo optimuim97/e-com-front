@@ -208,9 +208,13 @@ function basculer(commande) {
  * rechargement la ferait sortir de l'onglet et refermerait la fiche, alors que
  * l'agent a souvent deux ou trois gestes à enchaîner dessus.
  */
-function apresTraitement(majOrder) {
+function apresTraitement(majOrder, options = {}) {
   const i = commandes.value.findIndex((o) => o.id === majOrder.id)
   if (i >= 0) commandes.value[i] = { ...commandes.value[i], ...majOrder }
+
+  // Une mise à jour partielle — saisir les frais, par exemple — rafraîchit la
+  // ligne sans la déclarer traitée : il reste à notifier ou à expédier.
+  if (options.partial) return
 
   traitees.value = new Set(traitees.value).add(majOrder.id)
 }

@@ -21,7 +21,7 @@
         </ul>
 
         <RouterLink to="/a-propos" class="about-link animate-fade-up animate-fade-up-delay-4">
-          Notre histoire &amp; nos valeurs
+          {{ $t('about.storyLink') }}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>

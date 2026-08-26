@@ -43,9 +43,9 @@
           </div>
           <div class="flex items-center gap-3">
             <span
-              v-if="order.shipping_unknown || !(Number(order.shipping_cost) > 0)"
+              v-if="order.shipping_fee_pending"
               class="badge badge-warning"
-              title="Zone de livraison non identifiée — renseignez les frais via Modifier"
+              title="Le montant n'est pas ferme : renseignez les frais de livraison avant d'annoncer un total à la cliente"
             >Frais livraison à renseigner</span>
             <span :class="statusBadge(order.status)">{{
               statusLabel(order.status)
@@ -112,8 +112,8 @@
                     />
                     <div>
                       <p class="font-medium text-gray-800">{{ item.product_name }}</p>
-                      <p v-if="item.variant_name" class="text-xs text-gray-400">
-                        {{ item.variant_name }}
+                      <p v-if="item.variant_label" class="text-xs text-gray-400">
+                        {{ item.variant_label }}
                       </p>
                       <p class="text-xs text-gray-400 font-mono">
                         SKU: {{ item.sku ?? "—" }}
@@ -222,9 +222,22 @@
             <span>Zone non identifiée — saisir les frais manuellement ci-dessous.</span>
           </div>
 
-          <!-- Saisie frais livraison hors zone -->
-          <div v-if="!order.shipping_zone" class="shipping-cost-block">
-            <label class="label">Frais de livraison (hors zone)</label>
+          <!--
+            Saisie des frais.
+
+            Ouverte dès que la destination est à frais négociés — hors Abidjan
+            et international — et pas seulement quand aucune zone n'a été
+            trouvée. Le transporteur peut revoir son prix entre la commande et
+            l'envoi ; le champ doit rester modifiable jusqu'au départ du colis.
+          -->
+          <div v-if="!order.shipping_zone || order.shipping_fee_editable" class="shipping-cost-block">
+            <label class="label">
+              Frais de livraison
+              <span v-if="order.shipping_fee_editable" class="shipping-cost-tag">
+                {{ order.destination === 'international' ? 'international' : 'hors Abidjan' }}
+              </span>
+              <span v-else>(hors zone)</span>
+            </label>
             <div class="shipping-cost-row">
               <input
                 v-model.number="editForm.shipping_cost"
@@ -726,6 +739,19 @@ onMounted(fetchOrder);
 </script>
 
 <style scoped>
+/* Rappelle pourquoi ce champ est ouvert alors que la zone est connue. */
+.shipping-cost-tag {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
 /* ── Panneau de traitement rapide (embarqué dans le détail) ── */
 .admin-qa-card { padding: 0; overflow: hidden; }
 .admin-qa-ref {

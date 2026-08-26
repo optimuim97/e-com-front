@@ -11,7 +11,7 @@
         <p class="profile-hero__meta">
           <span v-if="user?.phone">{{ user.phone }}</span>
           <span v-if="!user?.is_generated_email && user?.email">{{ user.email }}</span>
-          <span v-else class="profile-hero__quick-badge">Compte rapide</span>
+          <span v-else class="profile-hero__quick-badge">{{ $t('profile.quickAccount') }}</span>
         </p>
       </div>
     </div>
@@ -20,10 +20,10 @@
     <div v-if="user?.is_generated_email" class="profile-setup-banner">
       <div class="profile-setup-banner__icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
       <div class="profile-setup-banner__body">
-        <strong>Sécurisez votre compte</strong>
-        <p>Ajoutez votre vrai email et créez un mot de passe pour accéder à vos commandes depuis n'importe quel appareil.</p>
+        <strong>{{ $t('profile.secureBannerTitle') }}</strong>
+        <p>{{ $t('profile.secureBannerDesc') }}</p>
       </div>
-      <button class="btn btn-primary btn-sm" @click="scrollToSetup">Configurer →</button>
+      <button class="btn btn-primary btn-sm" @click="scrollToSetup">{{ $t('profile.configure') }} →</button>
     </div>
 
     <div class="profile-grid">
@@ -34,27 +34,27 @@
         <!-- Informations personnelles -->
         <section class="profile-card">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">Informations</h2>
+            <h2 class="profile-card__title">{{ $t('profile.infoTitle') }}</h2>
             <button v-if="!editingInfo" class="profile-card__edit-btn" @click="editingInfo = true">
-              Modifier
+              {{ $t('common.edit') }}
             </button>
           </div>
 
           <form v-if="editingInfo" @submit.prevent="saveInfo" class="profile-form">
             <div class="profile-field">
-              <label class="label">Nom complet</label>
-              <input v-model="infoForm.name" type="text" class="input" placeholder="Votre nom" />
+              <label class="label">{{ $t('auth.fullName') }}</label>
+              <input v-model="infoForm.name" type="text" class="input" :placeholder="$t('contact.namePlaceholder')" />
             </div>
             <div class="profile-field">
-              <label class="label">Téléphone</label>
+              <label class="label">{{ $t('auth.phone') }}</label>
               <PhoneInput v-model="infoForm.phone" placeholder="07 00 00 00" />
             </div>
             <div class="profile-form__actions">
               <button type="submit" class="btn btn-primary btn-sm" :disabled="infoSaving">
                 <span v-if="infoSaving" class="profile-spin"></span>
-                <span v-else>Enregistrer</span>
+                <span v-else>{{ $t('common.save') }}</span>
               </button>
-              <button type="button" class="btn btn-outline btn-sm" @click="cancelInfo">Annuler</button>
+              <button type="button" class="btn btn-outline btn-sm" @click="cancelInfo">{{ $t('common.cancel') }}</button>
             </div>
             <p v-if="infoSuccess" class="profile-msg profile-msg--ok">✓ {{ infoSuccess }}</p>
             <p v-if="infoError"   class="profile-msg profile-msg--err">{{ infoError }}</p>
@@ -62,17 +62,17 @@
 
           <dl v-else class="profile-dl">
             <div class="profile-dl__row">
-              <dt>Nom</dt>
+              <dt>{{ $t('fields.lastName') }}</dt>
               <dd>{{ user?.name }}</dd>
             </div>
             <div class="profile-dl__row">
-              <dt>Téléphone</dt>
+              <dt>{{ $t('auth.phone') }}</dt>
               <dd>{{ user?.phone || '—' }}</dd>
             </div>
             <div class="profile-dl__row">
-              <dt>Email</dt>
+              <dt>{{ $t('auth.email') }}</dt>
               <dd v-if="!user?.is_generated_email">{{ user?.email }}</dd>
-              <dd v-else class="profile-dl__no-email">Non renseigné</dd>
+              <dd v-else class="profile-dl__no-email">{{ $t('profile.notProvided') }}</dd>
             </div>
           </dl>
         </section>
@@ -80,12 +80,12 @@
         <!-- Mes commandes récentes -->
         <section class="profile-card">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">Mes commandes</h2>
-            <RouterLink :to="{ name: 'orders' }" class="profile-card__edit-btn">Voir tout →</RouterLink>
+            <h2 class="profile-card__title">{{ $t('common.myOrders') }}</h2>
+            <RouterLink :to="{ name: 'orders' }" class="profile-card__edit-btn">{{ $t('common.seeAll') }} →</RouterLink>
           </div>
-          <div v-if="loadingOrders" class="profile-loading">Chargement…</div>
+          <div v-if="loadingOrders" class="profile-loading">{{ $t('common.loading') }}</div>
           <div v-else-if="recentOrders.length === 0" class="profile-empty">
-            Aucune commande pour l'instant.
+            {{ $t('profile.noOrder') }}
           </div>
           <ul v-else class="profile-orders">
             <li v-for="o in recentOrders" :key="o.id" class="profile-order">
@@ -121,32 +121,32 @@
         <!-- Setup compte rapide -->
         <section v-if="user?.is_generated_email" ref="setupSection" class="profile-card profile-card--accent">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">Configurer mon compte</h2>
+            <h2 class="profile-card__title">{{ $t('profile.setupTitle') }}</h2>
           </div>
           <p class="profile-card__desc">
-            Ajoutez votre email et créez un mot de passe. Vous pourrez ensuite vous connecter normalement depuis n'importe quel appareil.
+            {{ $t('profile.setupDesc') }}
           </p>
 
           <form @submit.prevent="doSetupAccount" class="profile-form">
             <div class="profile-field">
-              <label class="label">Adresse email *</label>
+              <label class="label">{{ $t('profile.emailLabel') }} *</label>
               <input
                 v-model="setupForm.email"
                 type="email"
                 class="input"
-                placeholder="votre@email.com"
+                :placeholder="$t('contact.emailPlaceholder')"
                 autocomplete="email"
                 required
               />
             </div>
             <div class="profile-field">
-              <label class="label">Mot de passe *</label>
+              <label class="label">{{ $t('auth.password') }} *</label>
               <div class="profile-field__pw">
                 <input
                   v-model="setupForm.password"
                   :type="showPw1 ? 'text' : 'password'"
                   class="input"
-                  placeholder="Au moins 8 caractères"
+                  :placeholder="$t('profile.pwPlaceholder')"
                   autocomplete="new-password"
                   required
                 />
@@ -154,16 +154,16 @@
                   <span class="pw-eye" v-html="eyeIcon(showPw1)"></span>
                 </button>
               </div>
-              <p class="profile-field__hint">Minimum 8 caractères, avec lettres et chiffres.</p>
+              <p class="profile-field__hint">{{ $t('profile.pwHint') }}</p>
             </div>
             <div class="profile-field">
-              <label class="label">Confirmer le mot de passe *</label>
+              <label class="label">{{ $t('auth.confirmPassword') }} *</label>
               <div class="profile-field__pw">
                 <input
                   v-model="setupForm.password_confirmation"
                   :type="showPw2 ? 'text' : 'password'"
                   class="input"
-                  placeholder="Répéter le mot de passe"
+                  :placeholder="$t('profile.pwRepeatPlaceholder')"
                   autocomplete="new-password"
                   required
                 />
@@ -180,7 +180,7 @@
 
             <button type="submit" class="btn btn-primary btn-lg profile-form__submit" :disabled="setupSaving">
               <span v-if="setupSaving" class="profile-spin"></span>
-              <span v-else>Sécuriser mon compte</span>
+              <span v-else>{{ $t('profile.secureAccount') }}</span>
             </button>
           </form>
         </section>
@@ -188,19 +188,19 @@
         <!-- Changer le mot de passe (compte normal) -->
         <section v-else class="profile-card">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">Mot de passe</h2>
+            <h2 class="profile-card__title">{{ $t('auth.password') }}</h2>
           </div>
 
           <form @submit.prevent="doChangePassword" class="profile-form">
             <div class="profile-field">
-              <label class="label">Mot de passe actuel *</label>
+              <label class="label">{{ $t('profile.currentPassword') }} *</label>
               <div class="profile-field__pw">
                 <input
                   v-model="pwForm.current_password"
                   :type="showPwCurrent ? 'text' : 'password'"
                   class="input"
                   autocomplete="current-password"
-                  placeholder="Votre mot de passe actuel"
+                  :placeholder="$t('profile.currentPwPlaceholder')"
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPwCurrent = !showPwCurrent">
@@ -209,14 +209,14 @@
               </div>
             </div>
             <div class="profile-field">
-              <label class="label">Nouveau mot de passe *</label>
+              <label class="label">{{ $t('forgot.newPassword') }} *</label>
               <div class="profile-field__pw">
                 <input
                   v-model="pwForm.password"
                   :type="showPw1 ? 'text' : 'password'"
                   class="input"
                   autocomplete="new-password"
-                  placeholder="Au moins 8 caractères"
+                  :placeholder="$t('profile.pwPlaceholder')"
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw1 = !showPw1">
@@ -225,14 +225,14 @@
               </div>
             </div>
             <div class="profile-field">
-              <label class="label">Confirmer le nouveau mot de passe *</label>
+              <label class="label">{{ $t('profile.confirmNewPassword') }} *</label>
               <div class="profile-field__pw">
                 <input
                   v-model="pwForm.password_confirmation"
                   :type="showPw2 ? 'text' : 'password'"
                   class="input"
                   autocomplete="new-password"
-                  placeholder="Répéter le mot de passe"
+                  :placeholder="$t('profile.pwRepeatPlaceholder')"
                   required
                 />
                 <button type="button" class="profile-field__pw-toggle" @click="showPw2 = !showPw2">
@@ -248,7 +248,7 @@
 
             <button type="submit" class="btn btn-primary btn-sm" :disabled="pwSaving">
               <span v-if="pwSaving" class="profile-spin"></span>
-              <span v-else>Modifier le mot de passe</span>
+              <span v-else>{{ $t('profile.changePassword') }}</span>
             </button>
           </form>
         </section>
@@ -256,12 +256,12 @@
         <!-- Déconnexion -->
         <section class="profile-card profile-card--danger">
           <div class="profile-card__header">
-            <h2 class="profile-card__title">Session</h2>
+            <h2 class="profile-card__title">{{ $t('profile.session') }}</h2>
           </div>
-          <p class="profile-card__desc">Vous serez redirigé vers la page d'accueil.</p>
+          <p class="profile-card__desc">{{ $t('profile.logoutDesc') }}</p>
           <button class="btn btn-outline profile-logout-btn" @click="handleLogout" :disabled="logoutLoading">
             <span v-if="logoutLoading" class="profile-spin profile-spin--danger"></span>
-            <span v-else>Déconnexion</span>
+            <span v-else>{{ $t('profile.logout') }}</span>
           </button>
         </section>
 
@@ -272,6 +272,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter, RouterLink } from 'vue-router'
 import api from '@/api'
@@ -279,6 +280,7 @@ import { useAuthStore } from '@/features/auth/auth.store'
 import { storeToRefs } from 'pinia'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 
+const { t }     = useI18n()
 const authStore = useAuthStore()
 const router    = useRouter()
 const { user }  = storeToRefs(authStore)
@@ -311,10 +313,10 @@ async function saveInfo() {
   infoError.value   = ''
   try {
     await authStore.updateInfo(infoForm.value)
-    infoSuccess.value = 'Informations mises à jour.'
+    infoSuccess.value = t('profile.infoUpdated')
     setTimeout(() => { editingInfo.value = false; infoSuccess.value = '' }, 1500)
   } catch (e) {
-    infoError.value = e.response?.data?.message ?? 'Une erreur est survenue.'
+    infoError.value = e.response?.data?.message ?? t('common.error')
   } finally {
     infoSaving.value = false
   }
@@ -339,14 +341,14 @@ async function doSetupAccount() {
   setupSuccess.value = ''
   try {
     await authStore.setupAccount(setupForm.value)
-    setupSuccess.value = 'Compte sécurisé ! Vous pouvez maintenant vous connecter avec votre email.'
+    setupSuccess.value = t('profile.accountSecured')
     setupForm.value = { email: '', password: '', password_confirmation: '' }
   } catch (e) {
     const errs = e.response?.data?.errors
     if (errs) {
       setupErrors.value = Object.values(errs).flat()
     } else {
-      setupErrors.value = [e.response?.data?.message ?? 'Une erreur est survenue.']
+      setupErrors.value = [e.response?.data?.message ?? t('common.error')]
     }
   } finally {
     setupSaving.value = false
@@ -366,14 +368,14 @@ async function doChangePassword() {
   pwSuccess.value = ''
   try {
     await authStore.changePassword(pwForm.value)
-    pwSuccess.value = 'Mot de passe modifié avec succès.'
+    pwSuccess.value = t('profile.passwordChanged')
     pwForm.value = { current_password: '', password: '', password_confirmation: '' }
   } catch (e) {
     const errs = e.response?.data?.errors
     if (errs) {
       pwErrors.value = Object.values(errs).flat()
     } else {
-      pwErrors.value = [e.response?.data?.message ?? 'Une erreur est survenue.']
+      pwErrors.value = [e.response?.data?.message ?? t('common.error')]
     }
   } finally {
     pwSaving.value = false
@@ -419,16 +421,8 @@ async function handleLogout() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const STATUS_LABELS = {
-  pending:    'En attente',
-  confirmed:  'Confirmée',
-  processing: 'En préparation',
-  shipped:    'Expédiée',
-  delivered:  'Livrée',
-  cancelled:  'Annulée',
-  refunded:   'Remboursée',
-}
-function statusLabel(s) { return STATUS_LABELS[s] ?? s }
+const STATUS_KEYS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']
+function statusLabel(s) { return STATUS_KEYS.includes(s) ? t(`orders.status.${s}`) : s }
 
 function fmt(val) {
   return useCurrencyStore().format(val ?? 0)

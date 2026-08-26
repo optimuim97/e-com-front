@@ -1,11 +1,11 @@
 <template>
   <section v-if="loading || lines.length" class="pl-section">
     <div class="container">
-      <SectionHeader eyebrow="Rituels complets">
-        Nos gammes de soins
+      <SectionHeader :eyebrow="$t('productLines.eyebrow')">
+        {{ $t('productLines.sectionTitle') }}
       </SectionHeader>
       <p class="pl-section__sub">
-        Des rituels pensés pour votre peau : chaque gamme combine plusieurs soins complémentaires.
+        {{ $t('productLines.sectionDesc') }}
       </p>
 
       <!-- Skeleton -->
@@ -21,7 +21,7 @@
         <!-- Ouverture vers toutes les gammes -->
         <div class="pl-section__more">
           <RouterLink to="/gammes" class="btn btn-outline pl-section__more-btn">
-            Voir toutes nos gammes
+            {{ $t('productLines.sectionSeeAll') }}
             <span v-if="lines.length > 2" class="pl-section__more-count">{{ lines.length }}</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </RouterLink>

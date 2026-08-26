@@ -15,7 +15,7 @@
         <button
           @click="cartStore.close()"
           class="drawer__close-floating"
-          aria-label="Fermer le panier"
+          :aria-label="$t('drawer.closeCart')"
           type="button"
         >
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -25,7 +25,7 @@
 
         <!-- Stepper bar (shared) -->
         <div class="drawer__topbar">
-          <button v-if="step > 1" @click="step--" class="drawer__icon-btn" aria-label="Étape précédente">
+          <button v-if="step > 1" @click="step--" class="drawer__icon-btn" :aria-label="$t('drawer.prevStep')">
             <ArrowLeftIcon class="w-5 h-5" />
           </button>
           <span v-else class="drawer__icon-spacer"></span>
@@ -52,7 +52,7 @@
             </template>
           </div>
 
-          <button @click="cartStore.close()" class="drawer__icon-btn" aria-label="Fermer">
+          <button @click="cartStore.close()" class="drawer__icon-btn" :aria-label="$t('common.close')">
             <XMarkIcon class="w-5 h-5" />
           </button>
         </div>
@@ -60,16 +60,16 @@
         <!-- ── ÉTAPE 1 : PANIER ── -->
         <template v-if="step === 1">
           <header class="drawer__header">
-            <span class="eyebrow">Votre sélection</span>
-            <h2 class="drawer__title">Mon <em>panier</em></h2>
+            <span class="eyebrow">{{ $t('drawer.yourSelection') }}</span>
+            <h2 class="drawer__title">{{ $t('drawer.myCart') }} <em>{{ $t('drawer.myCartEm') }}</em></h2>
           </header>
 
           <div class="drawer__body">
             <div v-if="cartStore.items.length === 0" class="drawer__empty">
               <div class="drawer__empty-icon"><FlowerMark /></div>
-              <p>Votre panier est encore vide</p>
+              <p>{{ $t('drawer.emptyCart') }}</p>
               <RouterLink to="/products" @click="cartStore.close()" class="btn btn-outline btn-sm">
-                Découvrir nos soins
+                {{ $t('drawer.discoverCare') }}
               </RouterLink>
             </div>
 
@@ -86,22 +86,22 @@
                 </div>
                 <div class="drawer__item-info">
                   <span class="drawer__item-cat">{{ item.product?.category?.name }}</span>
-                  <p class="drawer__item-name">{{ item.product?.name ?? item.name ?? 'Produit' }}</p>
+                  <p class="drawer__item-name">{{ item.product?.name ?? item.name ?? $t('drawer.defaultProduct') }}</p>
                   <p class="drawer__item-price">{{ fmt(Number(item.unit_price ?? item.price ?? 0)) }}</p>
                 </div>
                 <div class="drawer__item-actions">
-                  <button @click="cartStore.remove(item.id)" class="drawer__remove" aria-label="Retirer">
+                  <button @click="cartStore.remove(item.id)" class="drawer__remove" :aria-label="$t('drawer.remove')">
                     <TrashIcon class="w-3.5 h-3.5" />
                   </button>
                   <div class="drawer__qty">
                     <button @click="changeQty(item, -1)" :disabled="loadingItemId === item.id"
-                      class="drawer__qty-btn" aria-label="Diminuer">
+                      class="drawer__qty-btn" :aria-label="$t('drawer.decrease')">
                       <span v-if="loadingItemId === item.id" class="drawer__mini-spin"></span>
                       <MinusIcon v-else class="w-3 h-3" />
                     </button>
                     <span class="drawer__qty-value">{{ item.quantity }}</span>
                     <button @click="changeQty(item, 1)" :disabled="loadingItemId === item.id"
-                      class="drawer__qty-btn drawer__qty-btn--primary" aria-label="Augmenter">
+                      class="drawer__qty-btn drawer__qty-btn--primary" :aria-label="$t('drawer.increase')">
                       <PlusIcon class="w-3 h-3" />
                     </button>
                   </div>
@@ -115,9 +115,9 @@
             <div v-if="showAuthChoice" class="drawer__choice">
               <button class="drawer__choice-back" @click="showAuthChoice = false">
                 <ArrowLeftIcon class="w-4 h-4" />
-                Retour au panier
+                {{ $t('drawer.backToCart') }}
               </button>
-              <p class="drawer__choice-title">Comment souhaitez-vous commander ?</p>
+              <p class="drawer__choice-title">{{ $t('drawer.howToOrder') }}</p>
 
               <!-- Commande rapide (admin setting) -->
               <button
@@ -129,8 +129,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </span>
                 <div class="drawer__choice-card__body">
-                  <strong>Commande rapide</strong>
-                  <span>Sans inscription — juste votre nom et téléphone</span>
+                  <strong>{{ $t('drawer.quickOrder') }}</strong>
+                  <span>{{ $t('drawer.quickOrderDesc') }}</span>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -141,8 +141,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7a4 4 0 1 0-4 4M11 11l-7 7v3h3l7-7"/><circle cx="16.5" cy="7.5" r="4.5"/></svg>
                 </span>
                 <div class="drawer__choice-card__body">
-                  <strong>Se connecter</strong>
-                  <span>Vous avez déjà un compte Rosa Beauty Facial Care</span>
+                  <strong>{{ $t('common.login') }}</strong>
+                  <span>{{ $t('drawer.loginDesc') }}</span>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -153,8 +153,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
                 </span>
                 <div class="drawer__choice-card__body">
-                  <strong>Créer un compte</strong>
-                  <span>Nouveau chez Rosa Beauty Facial Care ? Inscrivez-vous</span>
+                  <strong>{{ $t('common.register') }}</strong>
+                  <span>{{ $t('drawer.registerDesc') }}</span>
                 </div>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
               </button>
@@ -163,7 +163,7 @@
               <!-- Facebook était le seul bouton ici ; il est masqué tant que
                    la configuration côté Meta n'est pas finalisée, et remplacé
                    par Google pour ne pas laisser la section vide. -->
-              <div class="drawer__choice-divider"><span>ou en un clic</span></div>
+              <div class="drawer__choice-divider"><span>{{ $t('drawer.oneClick') }}</span></div>
               <GoogleButton @success="onSocialSuccess" />
             </div>
           </Transition>
@@ -171,21 +171,21 @@
           <footer class="drawer__footer" v-show="!showAuthChoice">
             <div class="drawer__totals">
               <div>
-                <span>Sous-total</span>
+                <span>{{ $t('drawer.subtotal') }}</span>
                 <span>{{ fmt(cartStore.subtotal) }}</span>
               </div>
               <div>
-                <span>Livraison</span>
+                <span>{{ $t('drawer.shipping') }}</span>
                 <span :class="shippingLabelClass">{{ shippingLabel }}</span>
               </div>
               <div class="drawer__totals-final">
-                <span>Total estimé</span>
+                <span>{{ $t('drawer.estimatedTotal') }}</span>
                 <span>{{ fmt(grandTotal) }}</span>
               </div>
             </div>
             <button @click="handleCheckout" :disabled="cartStore.items.length === 0"
               class="btn btn-primary btn-lg drawer__cta">
-              Passer la commande
+              {{ $t('drawer.checkout') }}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -196,48 +196,48 @@
         <!-- ── ÉTAPE 2 : INFORMATIONS PERSONNELLES ── -->
         <template v-if="step === 2">
           <header class="drawer__header">
-            <span class="eyebrow">Vos coordonnées</span>
-            <h2 class="drawer__title">Informations <em>personnelles</em></h2>
+            <span class="eyebrow">{{ $t('drawer.yourContact') }}</span>
+            <h2 class="drawer__title">{{ $t('drawer.personalInfo') }} <em>{{ $t('drawer.personalInfoEm') }}</em></h2>
           </header>
 
           <div class="drawer__body">
-            <p class="drawer__step-hint">Le livreur utilisera ces informations pour vous contacter.</p>
+            <p class="drawer__step-hint">{{ $t('drawer.stepHint') }}</p>
 
             <div class="drawer__group">
-              <label class="label">Nom complet *</label>
-              <input v-model="form.name" type="text" class="input" placeholder="Ex. Fatou Konaté" />
+              <label class="label">{{ $t('drawer.fullName') }}</label>
+              <input v-model="form.name" type="text" class="input" :placeholder="$t('drawer.namePlaceholder')" />
             </div>
             <div class="drawer__group">
-              <label class="label">Numéro WhatsApp *</label>
+              <label class="label">{{ $t('drawer.whatsappNumber') }}</label>
               <PhoneInput v-model="form.phone" placeholder="07 00 00 00" />
             </div>
 
             <!-- CGV -->
             <label class="drawer__cgv">
               <input type="checkbox" v-model="form.cgv" />
-              <span>J'accepte les <a href="#">conditions générales de vente</a> de Rosa Beauty Facial Care.</span>
+              <span>{{ $t('drawer.cgv') }} <a href="#">{{ $t('drawer.cgvLink') }}</a> {{ $t('drawer.cgvSuffix') }}</span>
             </label>
           </div>
 
           <footer class="drawer__footer">
             <div class="drawer__totals">
               <div>
-                <span>Sous-total</span>
+                <span>{{ $t('drawer.subtotal') }}</span>
                 <span>{{ fmt(cartStore.subtotal) }}</span>
               </div>
               <div>
-                <span>Livraison</span>
+                <span>{{ $t('drawer.shipping') }}</span>
                 <span :class="shippingLabelClass">{{ shippingLabel }}</span>
               </div>
               <div class="drawer__totals-final">
-                <span>Total estimé</span>
+                <span>{{ $t('drawer.estimatedTotal') }}</span>
                 <span>{{ fmt(grandTotal) }}</span>
               </div>
             </div>
             <button @click="goToDelivery"
               :disabled="!form.name || !form.phone || !form.cgv"
               class="btn btn-primary btn-lg drawer__cta">
-              Continuer
+              {{ $t('drawer.continue') }}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -248,8 +248,8 @@
         <!-- ── ÉTAPE 3 : LIVRAISON & PAIEMENT ── -->
         <template v-if="step === 3">
           <header class="drawer__header">
-            <span class="eyebrow">Dernière étape</span>
-            <h2 class="drawer__title">Livraison & <em>paiement</em></h2>
+            <span class="eyebrow">{{ $t('drawer.lastStep') }}</span>
+            <h2 class="drawer__title">{{ $t('drawer.deliveryPayment') }} <em>{{ $t('drawer.deliveryPaymentEm') }}</em></h2>
           </header>
 
           <div class="drawer__body">
@@ -257,15 +257,15 @@
             <!-- ── Section adresse ── -->
             <div class="drawer__section">
               <h3 class="drawer__section-title">
-                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span> Adresse de livraison
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span> {{ $t('checkout.shippingAddress') }}
               </h3>
 
               <div class="drawer__group">
-                <label class="label">Pays *</label>
+                <label class="label">{{ $t('drawer.country') }}</label>
                 <AppSelect
                   v-model="form.country"
                   :options="countryOptions"
-                  placeholder="Sélectionner un pays"
+                  :placeholder="$t('drawer.selectCountry')"
                   @update:modelValue="onCountryChange"
                 />
               </div>
@@ -287,40 +287,60 @@
                 <MagnifyingGlassIcon class="drawer__search-icon" />
                 <input v-model="mapSearch" @keydown.enter="searchAddress"
                   type="text" class="input drawer__search-input"
-                  placeholder="Rechercher un lieu, quartier…" />
+                  :placeholder="$t('drawer.searchPlace')" />
               </div>
               <div ref="mapEl" class="drawer__map"></div>
               <button @click="locateMe" :disabled="locating" class="btn btn-outline drawer__locate">
                 <MapPinIcon class="w-4 h-4" />
-                {{ locating ? 'Localisation…' : 'Me localiser' }}
+                {{ locating ? $t('drawer.locating') : $t('drawer.locateMe') }}
               </button>
 
               <div v-if="form.address" class="drawer__address-selected">
                 <MapPinIcon class="w-4 h-4" />
                 <p>{{ form.address }}</p>
               </div>
-              <p v-else class="drawer__address-empty">Votre adresse précise apparaîtra ici</p>
+              <p v-else class="drawer__address-empty">{{ $t('drawer.addressHere') }}</p>
 
               <!-- Hors zone : frais communiqués manuellement -->
               <div v-if="shippingManual" class="drawer__notice drawer__notice--warn">
                 <span class="drawer__notice-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
                 <div>
-                  <strong>Zone non tarifée</strong>
-                  <p>Cette destination n'a pas de tarif fixe. Nos agents vous communiqueront les frais de livraison après validation de votre commande.</p>
+                  <strong>{{ $t('drawer.unpricedZone') }}</strong>
+                  <p>{{ $t('drawer.unpricedZoneDesc') }}</p>
                 </div>
               </div>
 
+              <!--
+                Point de repère — et c'est ici que vit « Ma position ».
+                Le bouton était au-dessus du sélecteur de ville, où un clic
+                pouvait réécrire ville et commune. Il ne remplit plus que ce
+                champ. « Me localiser », juste au-dessus, reste distinct : il
+                déplace le marqueur sur la carte et renseigne l'adresse.
+              -->
               <div class="drawer__group">
-                <label class="label">Point de repère</label>
+                <div class="drawer__group-head">
+                  <label class="label">{{ $t('fields.landmark') }}</label>
+                  <GeoLocateButton
+                    :state="geoState"
+                    :label="geoLabel"
+                    :title="$t('geo.btnIdle')"
+                    @click="geoFill(form, 'instructions')"
+                  />
+                </div>
                 <textarea v-model="form.instructions" class="input drawer__textarea"
-                  placeholder="Ex. Derrière la pharmacie, immeuble bleu…" />
+                  :placeholder="$t('drawer.landmarkPlaceholder')" />
+                <p
+                  v-if="geoMessage"
+                  class="drawer__geo-msg"
+                  :class="`drawer__geo-msg--${geoState}`"
+                >{{ geoMessage }}</p>
               </div>
             </div>
 
             <!-- ── Section paiement ── -->
             <div class="drawer__section">
               <h3 class="drawer__section-title">
-                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span> Mode de paiement
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></span> {{ $t('drawer.paymentMethod') }}
               </h3>
               <div class="drawer__payments">
                 <label v-for="pm in paymentMethods" :key="pm.value"
@@ -341,37 +361,37 @@
             <!-- ── Section récapitulatif + promo ── -->
             <div class="drawer__section drawer__section--recap">
               <h3 class="drawer__section-title">
-                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l2 2 4-4M6 2h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg></span> Récapitulatif
+                <span class="drawer__section-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l2 2 4-4M6 2h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg></span> {{ $t('checkout.summary') }}
               </h3>
 
               <!-- Code promo -->
               <div class="drawer__coupon">
                 <input v-model="couponCode" type="text" class="input drawer__coupon-input"
-                  placeholder="Code promo" :disabled="couponApplied" />
+                  :placeholder="$t('drawer.promoCode')" :disabled="couponApplied" />
                 <button @click="applyPromo" :disabled="couponLoading || couponApplied"
                   class="btn btn-outline btn-sm">
-                  {{ couponApplied ? 'Appliqué' : 'Appliquer' }}
+                  {{ couponApplied ? $t('checkout.applied') : $t('drawer.apply') }}
                 </button>
               </div>
               <p v-if="couponError" class="drawer__msg drawer__msg--error">{{ couponError }}</p>
-              <p v-if="couponApplied" class="drawer__msg drawer__msg--success">Réduction appliquée !</p>
+              <p v-if="couponApplied" class="drawer__msg drawer__msg--success">{{ $t('drawer.discountApplied') }}</p>
 
               <!-- Totaux -->
               <div class="drawer__recap-totals">
                 <div class="drawer__recap-line">
-                  <span>Sous-total</span>
+                  <span>{{ $t('drawer.subtotal') }}</span>
                   <span>{{ fmt(cartStore.subtotal) }}</span>
                 </div>
                 <div v-if="couponApplied && cartStore.subtotal !== cartStore.total" class="drawer__recap-line drawer__recap-line--discount">
-                  <span>Réduction</span>
+                  <span>{{ $t('common.discount') }}</span>
                   <span>- {{ fmt(cartStore.subtotal - cartStore.total) }}</span>
                 </div>
                 <div class="drawer__recap-line">
-                  <span>Livraison</span>
+                  <span>{{ $t('drawer.shipping') }}</span>
                   <span :class="shippingLabelClass">{{ shippingLabel }}</span>
                 </div>
                 <div class="drawer__recap-line drawer__recap-line--total">
-                  <span>Total</span>
+                  <span>{{ $t('drawer.total') }}</span>
                   <span>{{ fmt(grandTotal) }}</span>
                 </div>
               </div>
@@ -384,7 +404,7 @@
               :disabled="!form.city || !form.payment || submitting"
               class="btn btn-primary btn-lg drawer__cta">
               <span v-if="submitting" class="drawer__spinner"></span>
-              <span v-else>Confirmer — {{ fmt(grandTotal) }}</span>
+              <span v-else>{{ $t('drawer.confirmWithTotal', { total: fmt(grandTotal) }) }}</span>
             </button>
             <p v-if="submitError" class="drawer__msg drawer__msg--error drawer__msg--center">{{ submitError }}</p>
           </footer>
@@ -403,9 +423,12 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useCurrencyStore } from '@/stores/currency';
 import CitySelect      from '@/components/shop/CitySelect.vue';
 import CityFree        from '@/components/shop/CityFree.vue';
+import GeoLocateButton from '@/components/shop/GeoLocateButton.vue';
+import { useGeoLandmark } from '@/composables/useGeoLandmark';
 import QuickOrderModal from '@/features/checkout/QuickOrderModal.vue';
 import GoogleButton    from '@/features/auth/GoogleButton.vue';
 import PhoneInput      from '@/components/ui/PhoneInput.vue';
@@ -422,6 +445,7 @@ import { useAuthStore } from '@/features/auth/auth.store';
 const cartStore  = useCartStore();
 const authStore  = useAuthStore();
 const settings   = useSettingsStore();
+const { t }      = useI18n();
 const router     = useRouter();
 
 // ── Frais de livraison : quote API selon la ville/commune ──────────────────
@@ -442,8 +466,8 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value && !shippingPerKg.value) return fmt(shippingQuote.value.price)
-  if (shippingManual.value || shippingPerKg.value) return 'À renseigner par nos agents'
-  return 'À renseigner'
+  if (shippingManual.value || shippingPerKg.value) return t('drawer.shippingByAgents')
+  return t('checkout.shippingToFill')
 })
 
 const shippingLabelClass = computed(() =>
@@ -523,11 +547,11 @@ async function restoreCheckoutDraft() {
   } catch { /* ignore */ }
 }
 
-const steps = [
-  { n: 1, label: 'Panier' },
-  { n: 2, label: 'Infos' },
-  { n: 3, label: 'Commande' },
-];
+const steps = computed(() => [
+  { n: 1, label: t('drawer.stepCart') },
+  { n: 2, label: t('drawer.stepInfo') },
+  { n: 3, label: t('drawer.stepOrder') },
+]);
 
 const step           = ref(1);
 const loadingItemId  = ref(null);
@@ -588,12 +612,12 @@ const ICON_MOBILE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
 const ICON_CARD   = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>'
 const ICON_TRUCK  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
-const paymentMethods = [
-  { value: 'wave',         label: 'Wave',                    icon: ICON_MOBILE, desc: 'Paiement mobile rapide',             badge: 'RAPIDE' },
-  { value: 'orange_money', label: 'Orange Money',            icon: ICON_MOBILE, desc: 'Mobile Money Orange',               badge: null },
-  { value: 'card',         label: 'Carte bancaire',          icon: ICON_CARD,   desc: 'Visa, Mastercard — paiement sécurisé Stripe', badge: null },
-  { value: 'cod',          label: 'Paiement à la livraison', icon: ICON_TRUCK,  desc: 'Payez en recevant votre colis',     badge: null },
-];
+const paymentMethods = computed(() => [
+  { value: 'wave',         label: t('drawer.wave'),        icon: ICON_MOBILE, desc: t('drawer.waveDesc'),   badge: t('drawer.waveBadge') },
+  { value: 'orange_money', label: t('drawer.orangeMoney'), icon: ICON_MOBILE, desc: t('drawer.orangeDesc'), badge: null },
+  { value: 'card',         label: t('drawer.card'),        icon: ICON_CARD,   desc: t('drawer.cardDesc'),   badge: null },
+  { value: 'cod',          label: t('drawer.cod'),         icon: ICON_TRUCK,  desc: t('drawer.codDesc'),    badge: null },
+]);
 
 watch(() => step.value, async (val) => {
   if (val === 3) {
@@ -666,25 +690,10 @@ function onSocialSuccess() {
   step.value = 2;
 }
 
-const countryOptions = [
-  { value: 'CI',    label: '🇨🇮 Côte d\'Ivoire' },
-  { value: 'SN',    label: '🇸🇳 Sénégal' },
-  { value: 'ML',    label: '🇲🇱 Mali' },
-  { value: 'BF',    label: '🇧🇫 Burkina Faso' },
-  { value: 'GN',    label: '🇬🇳 Guinée' },
-  { value: 'TG',    label: '🇹🇬 Togo' },
-  { value: 'BJ',    label: '🇧🇯 Bénin' },
-  { value: 'GH',    label: '🇬🇭 Ghana' },
-  { value: 'NG',    label: '🇳🇬 Nigeria' },
-  { value: 'FR',    label: '🇫🇷 France' },
-  { value: 'BE',    label: '🇧🇪 Belgique' },
-  { value: 'CH',    label: '🇨🇭 Suisse' },
-  { value: 'DE',    label: '🇩🇪 Allemagne' },
-  { value: 'GB',    label: '🇬🇧 Royaume-Uni' },
-  { value: 'CA',    label: '🇨🇦 Canada' },
-  { value: 'US',    label: '🇺🇸 États-Unis' },
-  { value: 'OTHER', label: 'Autre pays' },
-]
+const COUNTRY_CODES = ['CI','SN','ML','BF','GN','TG','BJ','GH','NG','FR','BE','CH','DE','GB','CA','US','OTHER']
+const countryOptions = computed(() =>
+  COUNTRY_CODES.map(code => ({ value: code, label: t(`checkout.countries.${code}`) }))
+)
 
 function onCountryChange() {
   form.value.city    = '';
@@ -759,6 +768,19 @@ async function locateMe() {
   leafletMap.once('locationerror', () => { locating.value = false; });
 }
 
+// ── « Ma position » ──────────────────────────────────────────────────────────
+//
+// Ne remplit que le point de repère. Ni la ville, ni le pays, ni la commune :
+// une aide à la saisie n'a pas à réécrire ce que la cliente a choisi.
+// À ne pas confondre avec « Me localiser » plus haut, qui déplace le marqueur
+// sur la carte et renseigne l'adresse.
+const {
+  state:   geoState,
+  message: geoMessage,
+  label:   geoLabel,
+  fill:    geoFill,
+} = useGeoLandmark();
+
 async function applyPromo() {
   if (!couponCode.value.trim()) return;
   couponLoading.value = true;
@@ -830,7 +852,7 @@ async function submitOrder() {
     }
   } catch (e) {
     if (!e._serverError) {
-      submitError.value = e.response?.data?.message ?? 'Une erreur est survenue.';
+      submitError.value = e.response?.data?.message ?? t('drawer.submitError');
     }
   } finally {
     submitting.value = false;
@@ -1240,6 +1262,29 @@ function fmt(val) {
 
 /* ── Form groups ── */
 .drawer__group { display: flex; flex-direction: column; gap: var(--space-2); }
+
+/* Ligne de label pouvant accueillir le bouton « Ma position » à droite. */
+.drawer__group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.drawer__group-head .label { margin-bottom: 0; }
+
+/* Retour de la détection, sous le champ qu'elle vient de remplir. */
+.drawer__geo-msg {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  background: #f5f5f4;
+  color: #57534e;
+}
+.drawer__geo-msg--success    { background: #dcfce7; color: #15803d; }
+.drawer__geo-msg--partial    { background: #fef9c3; color: #854d0e; }
+.drawer__geo-msg--error      { background: #fef2f2; color: #dc2626; }
 
 .drawer__coupon {
   display: flex;

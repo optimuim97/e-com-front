@@ -10,6 +10,7 @@
  *   loginWith('facebook').then(() => router.push('/'))
  */
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/features/auth/auth.store'
 
 /**
@@ -25,6 +26,7 @@ function apiBase() {
 }
 
 export function useSocialAuth() {
+  const { t }   = useI18n()
   const auth    = useAuthStore()
   const loading = ref(false)
   const error   = ref('')
@@ -45,7 +47,7 @@ export function useSocialAuth() {
 
       if (!popup) {
         loading.value = false
-        error.value = 'Popup bloquée. Autorisez les fenêtres surgissantes.'
+        error.value = t('auth.popupBlocked')
         return reject(new Error('popup_blocked'))
       }
 
@@ -66,7 +68,7 @@ export function useSocialAuth() {
           loading.value = false
           resolve(data)
         } catch (e) {
-          error.value = 'Connexion impossible.'
+          error.value = t('auth.socialFailed')
           loading.value = false
           reject(e)
         }
@@ -94,12 +96,12 @@ export function useSocialAuth() {
 
   function friendly(code) {
     const map = {
-      access_denied:  'Connexion annulée.',
-      invalid_state:  'Session expirée, réessayez.',
-      auth_failed:    'Connexion impossible pour le moment.',
-      unsupported_provider: 'Méthode de connexion indisponible.',
+      access_denied:  t('auth.socialCancelled'),
+      invalid_state:  t('auth.sessionExpired'),
+      auth_failed:    t('auth.socialUnavailable'),
+      unsupported_provider: t('auth.providerUnsupported'),
     }
-    return map[code] ?? 'Connexion impossible.'
+    return map[code] ?? t('auth.socialFailed')
   }
 
   return { loginWith, loading, error }

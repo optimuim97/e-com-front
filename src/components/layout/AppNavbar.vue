@@ -91,7 +91,7 @@
         <!-- À propos -->
         <li>
           <RouterLink to="/a-propos" class="navbar__link" :class="{ 'navbar__link--active': $route.path === '/a-propos' }">
-            À propos
+            {{ $t('common.about') }}
           </RouterLink>
         </li>
 
@@ -251,14 +251,14 @@ const productLines = ref([])
 const navLinks = computed(() => [
   { to: '/',          label: t('common.home') },
   { to: '/products',  label: t('common.products') },
-  { to: '/gammes',    label: 'Gammes de soins' },
-  { to: '/a-propos',  label: 'À propos' },
+  { to: '/gammes',    label: t('common.productLines') },
+  { to: '/a-propos',  label: t('common.a-propos') },
   { to: '/blog',      label: t('common.blog') },
-  { to: '/contact',   label: 'Contact' },
+  { to: '/contact',   label: t('common.contact') },
   { to: '/programme', label: t('common.club') },
   ...(auth.isLoggedIn ? [{ to: '/wishlist', label: t('common.wishlist'), badge: props.wishlistCount > 0 ? props.wishlistCount : null }] : []),
   ...(auth.isLoggedIn ? [{ to: '/orders',   label: t('common.myOrders') }] : []),
-  ...(auth.isLoggedIn ? [{ to: '/profil',   label: 'Mon profil', badge: auth.isQuickOrderUser ? '!' : null }] : []),
+  ...(auth.isLoggedIn ? [{ to: '/profil',   label: t('common.profile'), badge: auth.isQuickOrderUser ? '!' : null }] : []),
   // L'icône d'administration disparaît de la barre sur mobile, faute de place :
   // sans cette entrée, le tableau de bord deviendrait inatteignable au doigt.
   ...(auth.isLoggedIn && auth.isAdmin && auth.isStaff ? [{ to: '/admin', label: t('nav.adminLabel') }] : []),

@@ -22,13 +22,13 @@
         <span v-if="eyebrow" class="hero__eyebrow">{{ eyebrow }}</span>
         <h1 class="hero__title">
           <template v-if="title">{{ title }}</template>
-          <template v-else>Plus qu’une Rose,<br>
-            <em> une Promesse de Beauté.</em>
+          <template v-else>{{ $t('hero.fullscreenTitle') }}<br>
+            <em>{{ $t('hero.fullscreenTitleEm') }}</em>
           </template>
         </h1>
         <div class="hero__ctas">
-          <RouterLink to="/products" class="hero__cta-primary">Découvrir nos soins</RouterLink>
-          <RouterLink to="/a-propos" class="hero__cta-secondary">Notre histoire</RouterLink>
+          <RouterLink to="/products" class="hero__cta-primary">{{ $t('hero.discoverCare') }}</RouterLink>
+          <RouterLink to="/a-propos" class="hero__cta-secondary">{{ $t('hero.ourStory') }}</RouterLink>
         </div>
       </div>
     </div>

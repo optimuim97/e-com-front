@@ -28,10 +28,10 @@
       <div class="container line-hero__inner">
         <RouterLink to="/products" class="line-breadcrumb">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Tous les produits
+          {{ $t('productLines.allProducts') }}
         </RouterLink>
 
-        <div class="line-hero__badge" :style="badgeStyle">Gamme</div>
+        <div class="line-hero__badge" :style="badgeStyle">{{ $t('productLines.badge') }}</div>
 
         <h1 class="line-hero__name">{{ line.name }}</h1>
 
@@ -42,7 +42,7 @@
         <div class="line-hero__actions">
           <!-- Prix : kit s'il est défini, sinon somme des composants -->
           <div v-if="heroPrice > 0" class="line-hero__price-wrap">
-            <span class="line-hero__price-label">Gamme complète</span>
+            <span class="line-hero__price-label">{{ $t('productLines.fullRange') }}</span>
             <span class="line-hero__price">{{ formatPrice(heroPrice) }}</span>
           </div>
 
@@ -57,7 +57,7 @@
               <svg v-else-if="addingToCart" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
               <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             </span>
-            {{ justAdded ? 'Ajouté !' : addingToCart ? 'Ajout…' : 'Ajouter la gamme au panier' }}
+            {{ justAdded ? $t('productLines.added') : addingToCart ? $t('productLines.adding') : $t('productLines.addToCart') }}
           </button>
         </div>
       </div>
@@ -68,9 +68,9 @@
       <header class="kit-head">
         <div class="kit-head__title">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
-          <h2>Cette gamme contient</h2>
+          <h2>{{ $t('productLines.contains') }}</h2>
         </div>
-        <span class="kit-head__count">{{ compositionProducts.length }} soins</span>
+        <span class="kit-head__count">{{ $t('productLines.careCount', { count: compositionProducts.length }, compositionProducts.length) }}</span>
       </header>
 
       <!-- Grille produits -->
@@ -104,18 +104,18 @@
       <!-- Récapitulatif gamme -->
       <div v-if="line.price" class="kit-summary">
         <div class="kit-summary__info">
-          <span class="kit-summary__count">{{ compositionProducts.length }} soins · rituel complet</span>
+          <span class="kit-summary__count">{{ $t('productLines.ritualCount', { count: compositionProducts.length }, compositionProducts.length) }}</span>
           <span v-if="savings > 0" class="kit-summary__value">
-            Valeur à l'unité <s>{{ formatPrice(itemsTotal) }}</s>
+            {{ $t('productLines.unitValue') }} <s>{{ formatPrice(itemsTotal) }}</s>
           </span>
         </div>
         <div class="kit-summary__price">
           <div class="kit-summary__price-block">
-            <span class="kit-summary__price-label">Prix de la gamme</span>
+            <span class="kit-summary__price-label">{{ $t('productLines.rangePrice') }}</span>
             <span class="kit-summary__price-val">{{ formatPrice(line.price) }}</span>
           </div>
           <span v-if="savings > 0" class="kit-summary__badge">
-            Économisez {{ formatPrice(savings) }}
+            {{ $t('productLines.savings', { amount: formatPrice(savings) }) }}
           </span>
         </div>
       </div>
@@ -128,11 +128,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/features/cart/cart.store'
 import { useCurrencyStore } from '@/stores/currency'
 import { useToast } from 'vue-toastification'
 import api from '@/api'
 
+const { t }     = useI18n()
 const route     = useRoute()
 const cartStore = useCartStore()
 const toast     = useToast()
@@ -213,7 +215,7 @@ async function addGameToCart() {
     }
     justAdded.value = true
     toast.success(
-      `✓ Gamme "${line.value.name}" ajoutée — ${toAdd.length} produit${toAdd.length > 1 ? 's' : ''} dans votre panier`,
+      t('productLines.addedToast', { name: line.value.name, count: toAdd.length }, toAdd.length),
       { timeout: 3500 }
     )
     setTimeout(() => { justAdded.value = false }, 3500)

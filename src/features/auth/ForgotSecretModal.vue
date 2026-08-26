@@ -2,7 +2,7 @@
   <Teleport to="body">
   <div class="fs-overlay" @click.self="$emit('close')">
     <div class="fs-modal" role="dialog" aria-modal="true" :aria-label="title">
-      <button class="fs-close" @click="$emit('close')" aria-label="Fermer">
+      <button class="fs-close" @click="$emit('close')" :aria-label="$t('common.close')">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M18 6 6 18M6 6l12 12" />
         </svg>
@@ -23,7 +23,7 @@
       <!-- ── Étape 1 : identifiant + canal ── -->
       <form v-if="step === 'request'" @submit.prevent="askCode" class="fs-form">
         <div class="fs-field">
-          <label class="fs-label" for="fs-identifier">Email ou téléphone</label>
+          <label class="fs-label" for="fs-identifier">{{ $t('forgot.identifier') }}</label>
           <div class="fs-input-wrap">
             <svg class="fs-input-ico" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 6h16v12H4z" />
@@ -34,7 +34,7 @@
               v-model="identifier"
               type="text"
               class="input fs-input"
-              placeholder="moi@exemple.com ou 07 00 00 00"
+              :placeholder="$t('forgot.identifierPlaceholder')"
               autocomplete="username"
               required
               autofocus
@@ -43,8 +43,8 @@
         </div>
 
         <div class="fs-field">
-          <span class="fs-label">Recevoir le code via</span>
-          <div class="fs-channels" role="radiogroup" aria-label="Canal de réception">
+          <span class="fs-label">{{ $t('forgot.channelLabel') }}</span>
+          <div class="fs-channels" role="radiogroup" :aria-label="$t('forgot.channelGroupLabel')">
             <button
               type="button"
               class="fs-channel"
@@ -85,7 +85,7 @@
         <p v-if="error" class="fs-error">{{ error }}</p>
 
         <button type="submit" class="btn btn-primary fs-cta" :disabled="busy || !identifier">
-          {{ busy ? 'Envoi…' : 'Recevoir le code' }}
+          {{ busy ? $t('forgot.sending') : $t('forgot.getCode') }}
         </button>
       </form>
 
@@ -95,11 +95,11 @@
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9" /><path d="M12 8h.01M11 12h1v4h1" />
           </svg>
-          <span>Code envoyé via <strong>{{ channel === 'whatsapp' ? 'WhatsApp' : 'email' }}</strong>. Valable 10&nbsp;min.</span>
+          <span>{{ $t('forgot.codeSentBefore') }} <strong>{{ channel === 'whatsapp' ? 'WhatsApp' : 'email' }}</strong>{{ $t('forgot.codeSentAfter') }}</span>
         </p>
 
         <div class="fs-field">
-          <label class="fs-label" for="fs-code">Code à 6 chiffres</label>
+          <label class="fs-label" for="fs-code">{{ $t('forgot.codeLabel') }}</label>
           <input
             id="fs-code"
             v-model="code"
@@ -116,16 +116,16 @@
         </div>
 
         <div class="fs-field" v-if="mode === 'password'">
-          <label class="fs-label" for="fs-pass">Nouveau mot de passe</label>
-          <input id="fs-pass" v-model="password" type="password" class="input" placeholder="8 caractères minimum" minlength="8" autocomplete="new-password" required />
+          <label class="fs-label" for="fs-pass">{{ $t('forgot.newPassword') }}</label>
+          <input id="fs-pass" v-model="password" type="password" class="input" :placeholder="$t('auth.passwordMinPlaceholder')" minlength="8" autocomplete="new-password" required />
         </div>
         <div class="fs-field" v-if="mode === 'password'">
-          <label class="fs-label" for="fs-pass2">Confirmer le mot de passe</label>
-          <input id="fs-pass2" v-model="passwordConfirm" type="password" class="input" placeholder="Retapez le mot de passe" minlength="8" autocomplete="new-password" required />
+          <label class="fs-label" for="fs-pass2">{{ $t('auth.confirmPassword') }}</label>
+          <input id="fs-pass2" v-model="passwordConfirm" type="password" class="input" :placeholder="$t('forgot.confirmPasswordPlaceholder')" minlength="8" autocomplete="new-password" required />
         </div>
 
         <div class="fs-field" v-if="mode !== 'password'">
-          <label class="fs-label" for="fs-pin">Nouveau code PIN (4 chiffres)</label>
+          <label class="fs-label" for="fs-pin">{{ $t('forgot.newPin') }}</label>
           <input
             id="fs-pin"
             v-model="pin"
@@ -148,9 +148,9 @@
         </p>
 
         <div class="fs-actions">
-          <button type="button" class="btn btn-outline" @click="step = 'request'">Renvoyer un code</button>
+          <button type="button" class="btn btn-outline" @click="step = 'request'">{{ $t('forgot.resend') }}</button>
           <button type="submit" class="btn btn-primary" :disabled="busy">
-            {{ busy ? 'Validation…' : 'Réinitialiser' }}
+            {{ busy ? $t('forgot.validating') : $t('forgot.reset') }}
           </button>
         </div>
       </form>
@@ -160,7 +160,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/api'
 
 const props = defineProps({
@@ -169,10 +170,14 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'reset'])
 
-const title = props.mode === 'pin' ? 'Code PIN oublié' : 'Mot de passe oublié'
-const subtitle = props.mode === 'pin'
-  ? 'Recevez un code par email ou WhatsApp pour définir un nouveau PIN.'
-  : 'Recevez un code par email ou WhatsApp pour définir un nouveau mot de passe.'
+const { t } = useI18n()
+
+const title = computed(() =>
+  props.mode === 'pin' ? t('forgot.titlePin') : t('forgot.titlePassword')
+)
+const subtitle = computed(() =>
+  props.mode === 'pin' ? t('forgot.subtitlePin') : t('forgot.subtitlePassword')
+)
 
 const step      = ref('request') // 'request' | 'reset'
 const identifier = ref('')
@@ -201,7 +206,7 @@ async function askCode() {
   } catch (e) {
     error.value = e.response?.data?.message
       || Object.values(e.response?.data?.errors ?? {})[0]?.[0]
-      || 'Erreur. Réessayez.'
+      || t('forgot.errorRetry')
   } finally {
     busy.value = false
   }
@@ -213,7 +218,7 @@ async function resetSecret() {
   success.value = ''
 
   if (props.mode === 'password' && password.value !== passwordConfirm.value) {
-    error.value = 'Les mots de passe ne correspondent pas.'
+    error.value = t('forgot.passwordMismatch')
     busy.value = false
     return
   }
@@ -231,14 +236,14 @@ async function resetSecret() {
 
     await api.post(endpoints.reset, body)
     success.value = props.mode === 'pin'
-      ? 'Code PIN réinitialisé.'
-      : 'Mot de passe réinitialisé. Reconnectez-vous.'
+      ? t('forgot.pinResetDone')
+      : t('forgot.passwordResetDone')
     emit('reset')
     setTimeout(() => emit('close'), 1500)
   } catch (e) {
     error.value = e.response?.data?.message
       || Object.values(e.response?.data?.errors ?? {})[0]?.[0]
-      || 'Erreur. Vérifiez le code.'
+      || t('forgot.errorCheckCode')
   } finally {
     busy.value = false
   }

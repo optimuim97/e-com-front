@@ -1,7 +1,7 @@
 <template>
   <section v-if="loading || photos.length" class="gallery-section">
     <div class="container">
-      <SectionHeader eyebrow="Univers Rosa Beauty Facial Care">
+      <SectionHeader :eyebrow="$t('gallery.eyebrow')">
         <!-- Nos égéries -->
       </SectionHeader>
       <!-- <p class="gallery-sub">Elles incarnent la beauté naturelle Rosa Beauty — découvrez leurs portraits.</p> -->
@@ -24,11 +24,11 @@
           class="muse-card"
           :class="{ 'muse-card--featured': idx === 0 }"
           @click="openLightbox(idx)"
-          :aria-label="photo.title || 'Photo Rosa Beauty'"
+          :aria-label="photo.title || $t('gallery.photoAlt')"
         >
           <img
             :src="photo.image_url"
-            :alt="photo.title || 'Égérie Rosa Beauty Facial Care'"
+            :alt="photo.title || $t('gallery.museAlt')"
             loading="lazy"
           />
           <!-- Voile dégradé permanent pour lisibilité du texte -->
@@ -71,7 +71,7 @@
           <button
             class="lightbox__close"
             @click="lightboxIndex = null"
-            aria-label="Fermer"
+            :aria-label="$t('common.close')"
           >
             ×
           </button>
@@ -79,7 +79,7 @@
             class="lightbox__prev"
             @click="prevImg"
             v-if="lightboxIndex > 0"
-            aria-label="Précédent"
+            :aria-label="$t('common.previous')"
           >
             ‹
           </button>
@@ -87,7 +87,7 @@
             class="lightbox__next"
             @click="nextImg"
             v-if="lightboxIndex < photos.length - 1"
-            aria-label="Suivant"
+            :aria-label="$t('common.next')"
           >
             ›
           </button>

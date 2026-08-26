@@ -3,11 +3,10 @@
     <!-- Hero éditorial -->
     <header class="pll-hero">
       <div class="container pll-hero__inner">
-        <span class="eyebrow">Rituels complets</span>
-        <h1 class="display-md">Nos gammes de soins</h1>
+        <span class="eyebrow">{{ $t('productLines.eyebrow') }}</span>
+        <h1 class="display-md">{{ $t('productLines.sectionTitle') }}</h1>
         <p class="pll-hero__desc">
-          Chaque gamme Rosa Beauty réunit des soins complémentaires, pensés pour
-          fonctionner ensemble et révéler la beauté naturelle de votre peau.
+          {{ $t('productLines.listDesc') }}
         </p>
       </div>
     </header>
@@ -20,8 +19,8 @@
 
       <!-- Vide -->
       <div v-else-if="lines.length === 0" class="pll-empty">
-        <p>Nos gammes arrivent bientôt.</p>
-        <RouterLink :to="{ name: 'products' }" class="btn btn-primary">Découvrir nos produits</RouterLink>
+        <p>{{ $t('productLines.listEmpty') }}</p>
+        <RouterLink :to="{ name: 'products' }" class="btn btn-primary">{{ $t('common.discoverProducts') }}</RouterLink>
       </div>
 
       <!-- Grille -->

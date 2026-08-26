@@ -36,5 +36,8 @@ export default {
     { path: 'newsletter',                  name: 'admin.newsletter',             meta: { permission: 'newsletter.view' },      component: () => import('./newsletter/NewsletterView.vue') },
     { path: 'deliveries',                  name: 'admin.deliveries',             meta: { permission: 'deliveries.view' },      component: () => import('./deliveries/DeliveriesView.vue') },
     { path: 'delivery-zones',              name: 'admin.delivery-zones',         meta: { permission: 'delivery_zones.view' },  component: () => import('./delivery-zones/DeliveryZonesView.vue') },
+    { path: 'mouvements-stock',            name: 'admin.stock-movements',        meta: { permission: 'stock.view' },           component: () => import('./stock/StockMovementsView.vue') },
+    { path: 'achats',                      name: 'admin.purchase-orders',        meta: { permission: 'purchases.view' },       component: () => import('./purchases/PurchaseOrdersView.vue') },
+    { path: 'fournisseurs',                name: 'admin.suppliers',              meta: { permission: 'suppliers.view' },       component: () => import('./purchases/SuppliersView.vue') },
   ],
 }

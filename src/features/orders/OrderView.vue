@@ -18,7 +18,7 @@
       <div v-else-if="!order" class="order-empty card">
         <div class="order-empty__icon"><FlowerMark /></div>
         <h2 class="display-md">{{ $t('orders.notFound') }}</h2>
-        <RouterLink to="/orders" class="btn btn-primary">Retour</RouterLink>
+        <RouterLink to="/orders" class="btn btn-primary">{{ $t('common.back') }}</RouterLink>
       </div>
 
       <!-- Detail -->
@@ -50,12 +50,12 @@
           <!-- Bannière "Payer maintenant" : commande en ligne non réglée -->
           <div v-if="showPayNow" class="order-pay-banner">
             <div class="order-pay-banner__body">
-              <strong>Paiement en attente</strong>
-              <p>Finalisez le règlement de <strong>{{ formatPrice(order.total) }}</strong> en toute sécurité pour valider votre commande.</p>
+              <strong>{{ $t('orders.payPendingTitle') }}</strong>
+              <p>{{ $t('orders.payPendingDescBefore') }} <strong>{{ formatPrice(order.total) }}</strong> {{ $t('orders.payPendingDescAfter') }}</p>
             </div>
             <button class="order-pay-banner__btn" :disabled="paying" @click="payNow">
               <span v-if="paying" class="order-pay-banner__spin"></span>
-              <span v-else>Payer maintenant</span>
+              <span v-else>{{ $t('orders.payNow') }}</span>
             </button>
           </div>
 
@@ -70,11 +70,11 @@
               <svg width="28" height="28" viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="18" fill="#0E74F5"/><text x="18" y="24" text-anchor="middle" font-size="16" font-weight="bold" fill="white">W</text></svg>
             </div>
             <div class="order-wave-banner__body">
-              <strong>Réglez votre commande avec Wave</strong>
+              <strong>{{ $t('orders.wavePayTitle') }}</strong>
 
               <!-- Montant + bouton inline (hors Abidjan : prépaiement mis en avant) -->
               <div class="order-wave-amount-row">
-                <p>Montant à payer : <strong>{{ formatPrice(order.total) }}</strong></p>
+                <p>{{ $t('orders.amountToPay') }} <strong>{{ formatPrice(order.total) }}</strong></p>
                 <a
                   v-if="wavePayUrl && isOutsideAbidjan"
                   :href="wavePayUrl"
@@ -82,7 +82,7 @@
                   rel="noopener"
                   class="order-wave-pay order-wave-pay--inline"
                 >
-                  Payer avec Wave
+                  {{ $t('orders.payWithWave') }}
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                 </a>
               </div>
@@ -90,7 +90,7 @@
               <!-- 1) Bouton payer avec Wave pleine largeur (cas Abidjan) -->
               <a v-if="wavePayUrl && !isOutsideAbidjan" :href="wavePayUrl" target="_blank" rel="noopener" class="order-wave-pay">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                Payer {{ formatPrice(order.total) }} avec Wave
+                {{ $t('orders.payAmountWithWave', { amount: formatPrice(order.total) }) }}
               </a>
 
               <!-- Fallback : numéro à défaut de lien -->
@@ -98,22 +98,22 @@
                 <p class="order-wave-banner__number">{{ settings.payment_wave_number || settings.payment_mobile_number }}</p>
                 <CopyButton
                   :text="settings.payment_wave_number || settings.payment_mobile_number"
-                  title="Copier le numéro"
-                  copied-text="Copié !"
+                  :title="$t('orders.copyNumber')"
+                  :copied-text="$t('orders.copied')"
                 />
               </div>
 
               <!-- 2) Envoyer la capture via WhatsApp -->
               <div class="order-wave-steps">
-                <p class="order-wave-steps__label">Après le paiement :</p>
+                <p class="order-wave-steps__label">{{ $t('orders.afterPayment') }}</p>
                 <a v-if="paymentProofLink" :href="paymentProofLink" target="_blank" rel="noopener" class="order-wave-proof">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347M12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413A11.815 11.815 0 0012.05 0"/></svg>
-                  Envoyer la capture du paiement sur WhatsApp
+                  {{ $t('orders.sendProofWhatsapp') }}
                 </a>
               </div>
 
-              <p class="order-wave-banner__hint">Indiquez votre numéro de commande
-                <strong>{{ order.number }}</strong> en référence.</p>
+              <p class="order-wave-banner__hint">{{ $t('orders.referenceHintBefore') }}
+                <strong>{{ order.number }}</strong> {{ $t('orders.referenceHintAfter') }}</p>
             </div>
           </div>
 
@@ -145,7 +145,7 @@
               />
               <div class="order-item__info">
                 <p class="order-item__name">{{ item.product_name }}</p>
-                <p v-if="item.variant_name" class="order-item__variant">{{ item.variant_name }}</p>
+                <p v-if="item.variant_label" class="order-item__variant">{{ item.variant_label }}</p>
                 <p class="order-item__qty">{{ $t('common.quantity') }} : {{ item.quantity }}</p>
               </div>
               <p class="order-item__price">
@@ -171,7 +171,7 @@
               <span>{{ $t('common.shipping') }}</span>
               <!-- Pas de livraison gratuite : 0 = frais pas encore renseignés par nos agents -->
               <span :class="{ 'order-shipping--pending': !(Number(order.shipping_cost) > 0) }">
-                {{ Number(order.shipping_cost) > 0 ? formatPrice(order.shipping_cost) : 'À renseigner par nos agents' }}
+                {{ Number(order.shipping_cost) > 0 ? formatPrice(order.shipping_cost) : $t('orders.shippingToBeSet') }}
               </span>
             </li>
             <li class="order-totals__final">
@@ -201,27 +201,180 @@
           <h2 class="order-block__title">{{ $t('orders.paymentMethod') }}</h2>
           <div class="order-pay-detail">
             <div class="order-pay-detail__row">
-              <span class="order-pay-detail__label">Moyen</span>
+              <span class="order-pay-detail__label">{{ $t('orders.payMethodLabel') }}</span>
               <span class="order-pay-detail__value">{{ paymentLabel(order.payment_method ?? order.payments?.[0]?.provider) }}</span>
             </div>
             <div class="order-pay-detail__row">
-              <span class="order-pay-detail__label">Statut</span>
+              <span class="order-pay-detail__label">{{ $t('orders.payStatusLabel') }}</span>
               <span :class="['order-pay-status', order.is_paid ? 'order-pay-status--ok' : 'order-pay-status--pending']">
-                {{ order.is_paid ? 'Payée' : 'En attente de paiement' }}
+                {{ order.is_paid ? $t('orders.paid') : $t('orders.awaitingPayment') }}
               </span>
             </div>
             <div v-if="order.payment_reference" class="order-pay-detail__row">
-              <span class="order-pay-detail__label">Référence</span>
+              <span class="order-pay-detail__label">{{ $t('orders.reference') }}</span>
               <span class="order-pay-detail__ref">
                 {{ order.payment_reference }}
-                <CopyButton :text="order.payment_reference" title="Copier la référence" copied-text="Copié !" />
+                <CopyButton :text="order.payment_reference" :title="$t('orders.copyReference')" :copied-text="$t('orders.copied')" />
               </span>
             </div>
             <div v-if="paidPayment" class="order-pay-detail__row">
-              <span class="order-pay-detail__label">Réglée le</span>
+              <span class="order-pay-detail__label">{{ $t('orders.paidOn') }}</span>
               <span class="order-pay-detail__value">{{ formatDate(paidPayment.paid_at) }}</span>
             </div>
           </div>
+        </section>
+
+        <!--
+          Frais de livraison à convenir — hors Abidjan et international.
+
+          Le transport n'est pas tarifé d'avance sur ces destinations : ni le
+          montant final ni le moyen de règlement ne sont arrêtés. On met donc
+          l'agent en avant plutôt qu'un total provisoire, et le message part
+          déjà rédigé pour que la cliente n'ait rien à ressaisir.
+        -->
+        <section v-if="order.shipping_fee_pending" class="card order-block order-agent">
+          <h2 class="order-block__title">{{ $t('orders.agentTitle') }}</h2>
+          <p class="order-agent__desc">{{ $t('orders.agentDesc') }}</p>
+
+          <ul class="order-agent__points">
+            <li>{{ $t('orders.agentPointFees') }}</li>
+            <li>{{ $t('orders.agentPointPayment') }}</li>
+          </ul>
+
+          <p class="order-agent__subtotal">
+            {{ $t('common.subtotal') }} : <strong>{{ formatPrice(order.subtotal) }}</strong>
+            <span class="order-agent__hint">{{ $t('orders.agentSubtotalHint') }}</span>
+          </p>
+
+          <!--
+            Bascule automatique au retour du tunnel (?agent=1) — pas lors d'une
+            simple consultation : une cliente qui revient voir sa commande ne
+            doit pas être expédiée sur WhatsApp à chaque visite.
+          -->
+          <p v-if="agentRedirect.bloque.value" class="order-agent__redirect">
+            {{ $t('orders.agentBlocked') }}
+          </p>
+
+          <p v-else-if="agentRedirect.active.value" class="order-agent__redirect">
+            {{ $t('orders.agentRedirect', { count: agentRedirect.secondes.value }) }}
+            <button type="button" class="order-agent__stay" @click="agentRedirect.cancel()">
+              {{ $t('orders.agentStay') }}
+            </button>
+          </p>
+
+          <a
+            v-if="waLink"
+            :href="waLink"
+            target="_blank"
+            rel="noopener"
+            class="order-agent__btn"
+            @click="agentRedirect.cancel()"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            {{ $t('orders.agentCta') }}
+          </a>
+        </section>
+
+        <!--
+          Comment payer. La cliente qui revient sur sa commande quelques heures
+          plus tard n'a plus l'écran de confirmation sous les yeux : sans ces
+          consignes, elle ne sait ni quel montant envoyer, ni surtout quelle
+          référence indiquer — et un virement sans référence ne se rattache à
+          aucune commande.
+          Mêmes consignes qu'à la confirmation, construites par le même
+          composable.
+        -->
+        <section v-if="payInstructions" class="card order-block">
+          <div class="order-payhelp__head">
+            <span
+              class="order-payhelp__badge"
+              :class="`order-payhelp__badge--${payInstructions.method}`"
+            >{{ payBadgeLabel }}</span>
+            <h2 class="order-block__title">{{ payInstructions.title }}</h2>
+          </div>
+
+          <div class="order-payhelp__amount">
+            <span>{{ $t('checkout.exactAmount') }}</span>
+            <strong>{{ formatPrice(order.total) }}</strong>
+          </div>
+
+          <!--
+            Le numéro n'est repris ici que pour Orange Money et MTN : la
+            bannière Wave plus haut porte déjà soit son lien de paiement, soit
+            son numéro. L'afficher deux fois inviterait à se demander lequel
+            est le bon.
+          -->
+          <button
+            v-if="!isWavePayment && payInstructions.number"
+            type="button"
+            class="order-payhelp__copy"
+            @click="copyPayValue(payInstructions.number, 'number')"
+          >
+            <span class="order-payhelp__copy-info">
+              <span class="order-payhelp__copy-label">{{ $t('checkout.payNumberLabel') }}</span>
+              <span class="order-payhelp__copy-value">{{ payInstructions.number }}</span>
+            </span>
+            <span class="order-payhelp__copy-action">
+              {{ copiedPay === 'number' ? $t('common.copied') : $t('common.copy') }}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            class="order-payhelp__copy order-payhelp__copy--sm"
+            @click="copyPayValue(order.number, 'ref')"
+          >
+            <span class="order-payhelp__copy-info">
+              <span class="order-payhelp__copy-label">{{ $t('checkout.orderReference') }}</span>
+              <span class="order-payhelp__copy-value order-payhelp__copy-value--sm">{{ order.number }}</span>
+            </span>
+            <span class="order-payhelp__copy-action">
+              {{ copiedPay === 'ref' ? $t('common.copied') : $t('common.copy') }}
+            </span>
+          </button>
+
+          <div class="order-payhelp__steps">
+            <p class="order-payhelp__steps-title">{{ $t('checkout.howToProceed') }}</p>
+            <p class="order-payhelp__steps-text">{{ payInstructions.instructions }}</p>
+          </div>
+        </section>
+
+        <!--
+          Annulation. Le serveur décide seul si elle est ouverte (délai réglable
+          en admin, statut, paiement) : on n'affiche ici que ce qu'il annonce.
+          Le bloc reste visible quand elle est fermée, avec le motif — sans lui,
+          la cliente chercherait un bouton qui n'existe pas.
+        -->
+        <section v-if="showCancelBlock" class="card order-block">
+          <h2 class="order-block__title">{{ $t('orders.cancelTitle') }}</h2>
+
+          <template v-if="order.can_cancel">
+            <p class="order-cancel__window">
+              <span v-if="cancelCountdown">{{ $t('orders.cancelRemaining', { time: cancelCountdown }) }}</span>
+              <span v-else-if="order.cancellable_until">
+                {{ $t('orders.cancelDeadline', { date: formatDate(order.cancellable_until) }) }}
+              </span>
+            </p>
+
+            <label class="order-cancel__reason">
+              <span class="order-cancel__reason-label">{{ $t('orders.cancelReasonLabel') }}</span>
+              <input
+                v-model="cancelReason"
+                type="text"
+                maxlength="255"
+                class="input"
+                :placeholder="$t('orders.cancelReasonPlaceholder')"
+              />
+            </label>
+
+            <p v-if="cancelError" class="order-cancel__error">{{ cancelError }}</p>
+
+            <button class="order-cancel__btn" :disabled="cancelling" @click="cancelOrder">
+              {{ cancelling ? $t('orders.cancelling') : $t('orders.cancelButton') }}
+            </button>
+          </template>
+
+          <p v-else class="order-cancel__blocked">{{ cancelBlockedMessage }}</p>
         </section>
       </div>
     </div>
@@ -230,15 +383,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
 import { buildAdminMessage, buildWaLink } from '@/utils/whatsapp'
 import CopyButton from '@/shared/components/CopyButton.vue'
+import { usePaymentInstructions } from '@/composables/usePaymentInstructions'
+import { useAgentRedirect } from '@/composables/useAgentRedirect'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 
 const order    = ref(null)
@@ -274,6 +429,57 @@ const paidPayment = computed(() =>
   order.value?.payments?.find(p => p.status === 'completed') ?? null
 )
 
+// ── Consignes de règlement ───────────────────────────────────────────────────
+//
+// Uniquement pour les paiements mobiles saisis à la main et pas encore reçus.
+// Une commande déjà réglée, annulée ou remboursée n'a plus rien à payer, et un
+// règlement par passerelle se fait sur le site de la passerelle : dans les deux
+// cas, afficher un mode d'emploi serait au mieux inutile, au pire trompeur.
+const { build: buildPayInstructions, isManual: isManualPayment } = usePaymentInstructions()
+
+const payInstructions = computed(() => {
+  const commande = order.value
+  if (!commande || commande.is_paid) return null
+  if (['cancelled', 'refunded'].includes(commande.status)) return null
+  // Frais de livraison pas encore arrêtés : le total affiché n'est pas ferme.
+  // Donner un « montant exact à envoyer » ici ferait payer la mauvaise somme,
+  // et un virement au mauvais montant est pénible à rattraper des deux côtés.
+  if (commande.shipping_fee_pending) return null
+  if (!isManualPayment(orderProvider.value)) return null
+
+  return buildPayInstructions(settings.value, orderProvider.value, commande.number, commande.total)
+})
+
+// Sigle de l'opérateur affiché dans la pastille.
+const payBadgeLabel = computed(() => ({
+  wave:         'W',
+  orange_money: 'OM',
+  mtn:          'M',
+}[payInstructions.value?.method] ?? ''))
+
+// Bascule vers un agent, uniquement au retour du tunnel de commande.
+const agentRedirect = useAgentRedirect(5)
+
+const copiedPay = ref(null)   // 'number' | 'ref' | null
+
+async function copyPayValue(texte, cle) {
+  if (!texte) return
+  try {
+    await navigator.clipboard.writeText(String(texte))
+  } catch {
+    // `clipboard` exige un contexte sécurisé : sur une page servie en HTTP,
+    // ou sur d'anciens navigateurs mobiles, il faut ce repli.
+    const zone = document.createElement('textarea')
+    zone.value = String(texte)
+    document.body.appendChild(zone)
+    zone.select()
+    try { document.execCommand('copy') } catch { /* rien de plus à tenter */ }
+    document.body.removeChild(zone)
+  }
+  copiedPay.value = cle
+  setTimeout(() => { if (copiedPay.value === cle) copiedPay.value = null }, 1800)
+}
+
 async function payNow() {
   if (!order.value) return
   paying.value = true
@@ -283,7 +489,7 @@ async function payNow() {
       window.location.href = data.payment_url
     }
   } catch (e) {
-    alert(e.response?.data?.message ?? 'Impossible d\'initialiser le paiement.')
+    alert(e.response?.data?.message ?? t('orders.payInitError'))
   } finally {
     paying.value = false
   }
@@ -362,15 +568,16 @@ const isOutsideAbidjan = computed(() => order.value?.is_abidjan === false)
 const paymentProofLink = computed(() => {
   const num = settings.value.whatsapp_admin_number
   if (!num || !order.value) return null
-  const msg =
-    `Bonjour ! Voici la capture du paiement Wave pour ma commande N° ${order.value.number}. ` +
-    `Montant : ${formatPrice(order.value.total)}.`
+  const msg = t('orders.waveProofMessage', {
+    number: order.value.number,
+    amount: formatPrice(order.value.total),
+  })
   return buildWaLink(num, msg)
 })
 
 function formatDate(val) {
   if (!val) return '—'
-  return new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
+  return new Date(val).toLocaleDateString(locale.value, { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 function formatPrice(val) {
@@ -396,7 +603,7 @@ function statusBadge(status) {
 function countryName(code) {
   if (!code) return '—'
   try {
-    return new Intl.DisplayNames(['fr'], { type: 'region' }).of(code) ?? code
+    return new Intl.DisplayNames([locale.value], { type: 'region' }).of(code) ?? code
   } catch {
     return code
   }
@@ -406,19 +613,344 @@ function paymentLabel(method) {
   const map = {
     wave: 'Wave',
     orange_money: 'Orange Money',
-    stripe: 'Stripe / Carte bancaire',
-    virement: 'Virement bancaire',
-    bank_transfer: 'Virement bancaire',
-    delivery: 'Paiement à la livraison',
-    cod: 'Paiement à la livraison',
+    stripe: t('checkout.stripeCard'),
+    virement: t('checkout.bankTransfer'),
+    bank_transfer: t('checkout.bankTransfer'),
+    delivery: t('checkout.cashOnDelivery'),
+    cod: t('checkout.cashOnDelivery'),
   }
   return map[method] ?? method ?? '—'
 }
 
-onMounted(fetchOrder)
+// ── Annulation par la cliente ────────────────────────────────────────────────
+//
+// Aucune règle n'est rejouée ici : le serveur renvoie `can_cancel`,
+// `cancellable_until` et un code de refus. Recalculer le délai côté front
+// donnerait deux vérités pour une même commande, et c'est toujours la mauvaise
+// qui s'affiche.
+
+const cancelReason = ref('')
+const cancelling   = ref(false)
+const cancelError  = ref('')
+
+// Le bloc reste affiché tant que l'annulation a un sens à évoquer. Sur une
+// commande déjà annulée ou livrée, il n'aurait rien à dire.
+const showCancelBlock = computed(() => {
+  if (!order.value) return false
+  if (order.value.can_cancel) return true
+  return ['pending', 'confirmed'].includes(order.value.status)
+})
+
+// Refus traduit dans la langue de l'interface ; le texte du serveur sert de
+// filet si un nouveau code apparaissait sans sa traduction.
+const cancelBlockedMessage = computed(() => {
+  const code = order.value?.cancel_blocked_code
+  if (!code) return ''
+  const cle = `orders.cancelBlocked_${code}`
+  const traduit = t(cle)
+  return traduit === cle ? (order.value.cancel_blocked_reason ?? '') : traduit
+})
+
+// Compte à rebours : « 3 h 20 » se lit et se décide mieux qu'une date.
+const maintenant = ref(Date.now())
+let minuteur = null
+
+const cancelCountdown = computed(() => {
+  const limite = order.value?.cancellable_until
+  if (!limite) return ''
+
+  const restant = new Date(limite).getTime() - maintenant.value
+  if (restant <= 0) return ''
+
+  const heures  = Math.floor(restant / 3600000)
+  const minutes = Math.floor((restant % 3600000) / 60000)
+
+  if (heures <= 0) {
+    return minutes > 0 ? `${minutes} min` : t('orders.cancelExpiresSoon')
+  }
+  return minutes > 0 ? `${heures} h ${minutes} min` : `${heures} h`
+})
+
+async function cancelOrder() {
+  if (!order.value || cancelling.value) return
+  if (!window.confirm(t('orders.cancelConfirm'))) return
+
+  cancelling.value  = true
+  cancelError.value = ''
+  try {
+    const { data } = await api.post(`/orders/${order.value.number}/cancel`, {
+      reason: cancelReason.value || undefined,
+    })
+    // La réponse imbrique la ressource sans enveloppe « data ».
+    order.value = data.order ?? order.value
+    cancelReason.value = ''
+  } catch (e) {
+    cancelError.value = e.response?.data?.message ?? t('orders.cancelError')
+  } finally {
+    cancelling.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchOrder()
+
+  // Retour du tunnel avec des frais encore à fixer : on enchaîne sur l'agent.
+  // Le lien dépend des réglages boutique, chargés en parallèle — d'où la
+  // fonction, évaluée au moment de basculer et non maintenant.
+  if (route.query.agent && order.value?.shipping_fee_pending) {
+    agentRedirect.start(() => waLink.value)
+  }
+
+  // Une minute suffit : le compte à rebours s'affiche en heures et minutes.
+  minuteur = setInterval(() => { maintenant.value = Date.now() }, 60000)
+})
+
+onBeforeUnmount(() => clearInterval(minuteur))
 </script>
 
 <style scoped>
+/* ── Frais à convenir avec un agent ── */
+.order-agent__redirect {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  font-size: 13px;
+  color: #15803d;
+  line-height: 1.5;
+}
+.order-agent__stay {
+  display: block;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.order-agent { border-left: 3px solid #25d366; }
+
+.order-agent__desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b5f58;
+  margin-bottom: 12px;
+}
+
+.order-agent__points {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.order-agent__points li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 13.5px;
+  color: #6b5f58;
+}
+.order-agent__points li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #25d366;
+}
+
+.order-agent__subtotal {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #f9f4f1;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.order-agent__hint {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #a89a92;
+}
+
+.order-agent__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 999px;
+  background: #25d366;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background .15s ease;
+}
+.order-agent__btn:hover { background: #1eb85a; }
+
+/* ── Comment payer ── */
+.order-payhelp__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.order-payhelp__head .order-block__title { margin-bottom: 0; }
+
+.order-payhelp__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+  color: #fff;
+  flex-shrink: 0;
+  line-height: 1;
+  background: #9ca3af;
+}
+.order-payhelp__badge--wave         { background: #1dc3f0; }
+.order-payhelp__badge--orange_money { background: #ff6600; }
+.order-payhelp__badge--mtn          { background: #ffcb00; color: #333; }
+
+.order-payhelp__amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f9f4f1;
+  margin-bottom: 12px;
+}
+.order-payhelp__amount span { font-size: 13px; color: #8a7f78; }
+.order-payhelp__amount strong { font-size: 20px; font-weight: 700; }
+
+.order-payhelp__copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid #f0e8e3;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+.order-payhelp__copy:hover { border-color: #d9c4b8; background: #fffaf8; }
+
+.order-payhelp__copy-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.order-payhelp__copy-label { font-size: 11px; color: #a89a92; }
+.order-payhelp__copy-value {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.order-payhelp__copy-value--sm { font-size: 14px; letter-spacing: .04em; }
+.order-payhelp__copy--sm { padding: 10px 14px; }
+
+.order-payhelp__copy-action {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b5876a;
+  white-space: nowrap;
+}
+
+.order-payhelp__steps {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f9f4f1;
+}
+.order-payhelp__steps-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+/* Les consignes de la boutique sont saisies avec des retours à la ligne :
+   sans `pre-line`, tout s'afficherait en un seul paragraphe. */
+.order-payhelp__steps-text {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #6b5f58;
+  white-space: pre-line;
+}
+
+/* ── Annulation ── */
+.order-cancel__window {
+  font-size: 14px;
+  color: #6b5f58;
+  margin-bottom: 14px;
+}
+
+.order-cancel__reason {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.order-cancel__reason-label {
+  display: block;
+  font-size: 13px;
+  color: #8a7f78;
+  margin-bottom: 6px;
+}
+
+.order-cancel__btn {
+  border: 1px solid #e5b4b4;
+  background: #fff;
+  color: #b91c1c;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+
+.order-cancel__btn:hover:not(:disabled) {
+  background: #fee2e2;
+  border-color: #b91c1c;
+}
+
+.order-cancel__btn:disabled {
+  opacity: .6;
+  cursor: default;
+}
+
+.order-cancel__error {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.order-cancel__blocked {
+  font-size: 14px;
+  color: #6b5f58;
+  line-height: 1.6;
+}
+
 .order-page {
   min-height: 100vh;
   background: var(--color-bg);

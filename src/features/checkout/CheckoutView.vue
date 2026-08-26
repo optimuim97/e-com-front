@@ -32,7 +32,7 @@
         </div>
 
         <RouterLink to="/cart" class="co-header__back">
-          ← Panier
+          ← {{ $t('drawer.stepCart') }}
         </RouterLink>
       </div>
 
@@ -66,11 +66,11 @@
             </li>
           </ul>
           <div class="co-mini-total">
-            <span>Livraison</span>
+            <span>{{ $t('common.shipping') }}</span>
             <span :class="shippingPending ? 'co-summary__pending' : ''">{{ shippingLabel }}</span>
           </div>
           <div class="co-mini-total co-mini-total--bold">
-            <span>Total</span>
+            <span>{{ $t('common.total') }}</span>
             <span>{{ formatPrice(orderTotal) }}</span>
           </div>
         </div>
@@ -102,7 +102,7 @@
               <span class="co-section__icon" v-html="paymentInstructions.icon"></span>
               <div>
                 <h2 class="co-section__title">{{ paymentInstructions.title }}</h2>
-                <p class="co-section__hint">Commande n° <strong>{{ confirmedOrderNumber }}</strong></p>
+                <p class="co-section__hint">{{ $t('checkout.orderNo') }} <strong>{{ confirmedOrderNumber }}</strong></p>
               </div>
             </header>
             <div class="co-section__body">
@@ -121,7 +121,7 @@
                 class="pay-instr__wave-btn"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                Payer {{ formatPrice(confirmedOrderTotal) }} avec Wave
+                {{ $t('orders.payAmountWithWave', { amount: formatPrice(confirmedOrderTotal) }) }}
               </a>
 
               <!-- Numéro de paiement — copiable (masqué si lien Wave dispo) -->
@@ -138,7 +138,7 @@
                 <span class="pay-instr__copy-action">
                   <svg v-if="copied === 'number'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  {{ copied === 'number' ? 'Copié' : 'Copier' }}
+                  {{ copied === 'number' ? $t('common.copied') : $t('common.copy') }}
                 </span>
               </button>
 
@@ -155,16 +155,17 @@
                 <span class="pay-instr__copy-action">
                   <svg v-if="copied === 'ref'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                   <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  {{ copied === 'ref' ? 'Copié' : 'Copier' }}
+                  {{ copied === 'ref' ? $t('common.copied') : $t('common.copy') }}
                 </span>
               </button>
 
               <!-- Instructions étape par étape -->
               <div class="pay-instr__steps">
-                <p class="pay-instr__steps-title">Comment procéder :</p>
+                <p class="pay-instr__steps-title">{{ $t('checkout.howToProceed') }}</p>
                 <p class="pay-instr__steps-text">{{ paymentInstructions.instructions }}</p>
               </div>
 
+              {{ adminWhatsappLink ?? '-------------------' }}
               <!-- Bouton WhatsApp admin -->
               <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
                 class="btn btn-whatsapp pay-instr__wa">
@@ -216,17 +217,17 @@
             <div class="co-section__body">
               <div class="co-grid-2">
                 <CheckoutField :def="FIELDS.first_name" :error="fe('first_name')">
-                  <input v-model="form.first_name" type="text" class="input" required placeholder="Prénom" />
+                  <input v-model="form.first_name" type="text" class="input" required :placeholder="$t('checkout.firstNamePlaceholder')" />
                 </CheckoutField>
                 <CheckoutField :def="FIELDS.last_name" :error="fe('last_name')" optional>
-                  <input v-model="form.last_name" type="text" class="input" placeholder="Nom" />
+                  <input v-model="form.last_name" type="text" class="input" :placeholder="$t('checkout.lastNamePlaceholder')" />
                 </CheckoutField>
               </div>
               <CheckoutField :def="FIELDS.phone" :error="fe('phone')">
                 <PhoneInput v-model="form.phone" placeholder="07 00 00 00" :required="true" />
               </CheckoutField>
               <CheckoutField :def="FIELDS.email" :error="fe('email')">
-                <input v-model="form.email" type="email" class="input" placeholder="client@exemple.com" />
+                <input v-model="form.email" type="email" class="input" :placeholder="$t('checkout.emailPlaceholder')" />
               </CheckoutField>
             </div>
             <div class="co-section__foot">
@@ -273,7 +274,6 @@
                 <CitySelect
                   v-model:city="form.shipping_city"
                   v-model:commune="form.shipping_commune"
-                  @geo-fill="onGeoFill"
                 />
               </template>
               <template v-else-if="form.shipping_country">
@@ -294,11 +294,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                   </span>
                   <div class="co-outzone__body">
-                    <strong>Livraison hors Abidjan</strong>
+                    <strong>{{ $t('checkout.outsideAbidjanTitle') }}</strong>
                     <p>
-                      Votre commande doit être <b>réglée d'avance</b> (Wave, Orange Money ou carte) :
-                      nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>.
-                      Le paiement à la livraison est réservé à Abidjan.
+                      {{ $t('checkout.outsideAbidjanP1') }} <b>{{ $t('checkout.outsideAbidjanB1') }}</b>
+                      {{ $t('checkout.outsideAbidjanP2') }} <b>{{ $t('checkout.outsideAbidjanB2') }}</b>{{ $t('checkout.outsideAbidjanP3') }}
                     </p>
                   </div>
                 </div>
@@ -309,21 +308,39 @@
                 <input v-model="form.shipping_address_line1" type="text" class="input" :placeholder="$t('checkout.addressPlaceholder')" />
               </CheckoutField>
 
-              <!-- Point de repère (petit textarea) -->
+              <!--
+                Point de repère — et c'est ici que vit « Ma position ».
+                Le bouton était au-dessus du sélecteur de ville, loin du champ
+                que la détection remplit vraiment. Contre ce label, on voit
+                immédiatement ce qu'il fait.
+              -->
               <CheckoutField :def="FIELDS.landmark" optional>
+                <template #label-aside>
+                  <GeoLocateButton
+                    :state="geoState"
+                    :label="geoLabel"
+                    :title="$t('geo.btnIdle')"
+                    @click="geoFill(form, 'landmark')"
+                  />
+                </template>
                 <textarea
                   v-model="form.landmark"
                   class="input co-landmark"
                   rows="2"
                   :placeholder="$t('checkout.landmarkPlaceholder')"
                 />
+                <p
+                  v-if="geoMessage"
+                  class="co-geo-msg"
+                  :class="`co-geo-msg--${geoState}`"
+                >{{ geoMessage }}</p>
               </CheckoutField>
 
               <!-- Numéro du receveur -->
               <div class="co-receiver">
                 <label class="co-receiver__toggle">
                   <input type="checkbox" v-model="form.receiver_different" class="co-receiver__cb" />
-                  <span>Le receveur est différent de moi</span>
+                  <span>{{ $t('checkout.receiverDifferent') }}</span>
                 </label>
                 <Transition name="fade">
                   <CheckoutField
@@ -381,9 +398,7 @@
               <!-- INTERNATIONAL : pas de paiement en ligne, on passe par un agent -->
               <div v-if="isInternational" class="co-intl">
                 <p class="co-intl__lead">
-                  Pour une livraison hors de Côte d'Ivoire, la commande se finalise
-                  avec un de nos agents : il calcule les frais de transport vers
-                  votre pays et vous indique comment régler.
+                  {{ $t('checkout.intlLead') }}
                 </p>
                 <a
                   v-if="internationalWhatsappLink"
@@ -395,26 +410,23 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
-                  Finaliser ma commande sur WhatsApp
+                  {{ $t('checkout.intlWhatsappCta') }}
                 </a>
                 <p v-else class="co-msg co-msg--error">
-                  Le numéro WhatsApp de la boutique n'est pas configuré — contactez-nous
-                  par e-mail pour finaliser votre commande.
+                  {{ $t('checkout.intlNoWhatsapp') }}
                 </p>
                 <p class="co-intl__note">
-                  Votre panier est repris automatiquement dans le message.
+                  {{ $t('checkout.intlNote') }}
                 </p>
               </div>
 
               <!-- HORS ZONE : frais inconnus → nos agents fixent aussi le règlement -->
               <div v-else-if="shippingManual" class="co-intl">
                 <p class="co-intl__lead">
-                  Votre zone de livraison n'est pas encore tarifée. Nos agents
-                  vous contactent pour vous confirmer les frais de livraison,
-                  puis le mode de règlement — vous n'avez rien à choisir ici.
+                  {{ $t('checkout.manualZoneLead') }}
                 </p>
                 <p class="co-intl__note">
-                  Validez votre commande : nous revenons vers vous rapidement.
+                  {{ $t('checkout.manualZoneNote') }}
                 </p>
               </div>
 
@@ -437,17 +449,16 @@
                 </div>
 
                 <p v-if="!paymentMethods.length" class="co-msg co-msg--error">
-                  Aucun moyen de paiement n'est disponible pour cette destination.
-                  Contactez-nous pour finaliser votre commande.
+                  {{ $t('checkout.noPaymentMethod') }}
                 </p>
 
                 <p v-if="destination === 'abidjan'" class="co-shipping-note">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  À Abidjan, vous réglez directement au livreur en recevant votre colis.
+                  {{ $t('checkout.abidjanNote') }}
                 </p>
                 <p v-else-if="form.shipping_city" class="co-shipping-note">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  À l'intérieur du pays, la commande doit être réglée d'avance : nous n'expédions que les commandes déjà payées.
+                  {{ $t('checkout.insideCountryNote') }}
                 </p>
               </template>
 
@@ -489,17 +500,17 @@
               <span>{{ formatPrice(Number(cartStore.subtotal)) }}</span>
             </li>
             <li v-if="couponApplied" class="co-summary__discount">
-              <span>Réduction{{ couponLabelSuffix }}</span>
+              <span>{{ $t('common.discount') }}{{ couponLabelSuffix }}</span>
               <span>-{{ formatPrice(discountAmount) }}</span>
             </li>
             <li>
-              <span>Livraison</span>
+              <span>{{ $t('common.shipping') }}</span>
               <span :class="shippingPending ? 'co-summary__pending' : ''">
                 {{ shippingLabel }}
               </span>
             </li>
             <li class="co-summary__total">
-              <span>Total</span>
+              <span>{{ $t('common.total') }}</span>
               <span>{{ formatPrice(orderTotal) }}</span>
             </li>
           </ul>
@@ -523,11 +534,11 @@
                 <template v-if="couponApplied">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                 </template>
-                <template v-else>Appliquer</template>
+                <template v-else>{{ $t('common.apply') }}</template>
               </button>
             </div>
             <p v-if="couponError" class="co-msg co-msg--error">{{ couponError }}</p>
-            <p v-if="couponApplied" class="co-msg co-msg--success">Réduction appliquée !</p>
+            <p v-if="couponApplied" class="co-msg co-msg--success">{{ $t('drawer.discountApplied') }}</p>
           </div>
 
           <!-- Bouton confirmer — visible uniquement à l'étape 3 -->
@@ -541,7 +552,7 @@
               class="btn btn-primary btn-lg co-summary__cta"
             >
               <span v-if="submitting" class="co-spinner"></span>
-              <span v-else>Confirmer — {{ formatPrice(orderTotal) }}</span>
+              <span v-else>{{ $t('drawer.confirmWithTotal', { total: formatPrice(orderTotal) }) }}</span>
             </button>
           </Transition>
 
@@ -559,7 +570,7 @@
         <div v-if="currentStep === 3 && cartStore.itemCount && !paymentInstructions && !isInternational" class="co-mobile-cta hide-desktop">
           <div class="co-mobile-cta__inner">
             <div class="co-mobile-cta__total">
-              <span>Total</span>
+              <span>{{ $t('common.total') }}</span>
               <strong>{{ formatPrice(orderTotal) }}</strong>
             </div>
             <button
@@ -568,7 +579,7 @@
               class="btn btn-primary co-mobile-cta__btn"
             >
               <span v-if="submitting" class="co-spinner"></span>
-              <span v-else>Confirmer la commande</span>
+              <span v-else>{{ $t('checkout.confirmOrder') }}</span>
             </button>
           </div>
         </div>
@@ -597,6 +608,9 @@ import AppSelect            from '@/components/ui/AppSelect.vue'
 import PhoneInput           from '@/components/ui/PhoneInput.vue'
 import CitySelect           from '@/components/shop/CitySelect.vue'
 import CityFree             from '@/components/shop/CityFree.vue'
+import GeoLocateButton     from '@/components/shop/GeoLocateButton.vue'
+import { useGeoLandmark }  from '@/composables/useGeoLandmark'
+import { usePaymentInstructions } from '@/composables/usePaymentInstructions'
 import { isAbidjan }        from '@/data/cities-ci'
 import api                              from '@/api'
 import { checkoutApi }                  from './checkout.api'
@@ -606,6 +620,15 @@ import FlowerMark                       from '@/components/ui/FlowerMark.vue'
 
 const { t }        = useI18n()
 const router       = useRouter()
+// « Ma position » : ne remplit que le point de repère, jamais la ville,
+// le pays ni la commune — voir useGeoLandmark.
+const {
+  state:   geoState,
+  message: geoMessage,
+  label:   geoLabel,
+  fill:    geoFill,
+} = useGeoLandmark()
+
 const cartStore    = useCartStore()
 const authStore    = useAuthStore()
 const settings     = useSettingsStore()
@@ -641,13 +664,10 @@ watch(
 function onAuthenticated() {}
 
 // ── Géolocalisation : pré-remplir la rue depuis CitySelect ───────────────────
-function onGeoFill({ road } = {}) {
-  if (road && !form.value.shipping_address_line1) {
-    form.value.shipping_address_line1 = road
-  }
-}
 
 // ── Instructions de paiement manuel (post-commande) ──────────────────────────
+const { build: buildInstructions } = usePaymentInstructions()
+
 const paymentInstructions = ref(null)   // { title, icon, number, instructions }
 const confirmedOrderNumber = ref(null)
 const confirmedOrderTotal  = ref(0)
@@ -673,67 +693,19 @@ function buildPaymentInstructions(method, orderNumber, orderTotal) {
   confirmedOrderNumber.value = orderNumber
   confirmedOrderTotal.value  = orderTotal
 
-  // Lecture robuste des settings bruts (insensible au déballage Pinia)
-  const s = (settings.data?.value ?? settings.data ?? {})
-  const sget = (k) => (s[k] ?? '').toString().trim()
-  const fallbackNumber = sget('payment_mobile_number')
-
-  const CONFIGS = {
-    wave: {
-      title: 'Paiement Wave',
-      icon: '<span class="pm-badge pm-badge--wave pm-badge--lg">W</span>',
-      number: sget('payment_wave_number') || fallbackNumber,
-      instructions: sget('payment_wave_instructions'),
-      ussd: "Ouvrez l'application Wave",
-    },
-    orange_money: {
-      title: 'Paiement Orange Money',
-      icon: '<span class="pm-badge pm-badge--orange pm-badge--lg">OM</span>',
-      number: sget('payment_orange_money_number') || fallbackNumber,
-      instructions: sget('payment_orange_money_instructions'),
-      ussd: 'Composez #144# (ou ouvrez Orange Money)',
-    },
-    mtn: {
-      title: 'Paiement MTN MoMo',
-      icon: '<span class="pm-badge pm-badge--mtn pm-badge--lg">M</span>',
-      number: sget('payment_mtn_number') || fallbackNumber,
-      instructions: sget('payment_mtn_instructions'),
-      ussd: 'Composez *133# (MTN Mobile Money)',
-    },
-  }
-
-  const cfg = CONFIGS[method]
-  if (!cfg) { paymentInstructions.value = null; return }
-
-  // Lien « Payer avec Wave » : lien marchand + montant en paramètre
-  let payUrl = null
-  if (method === 'wave') {
-    const base = sget('payment_wave_link')
-    if (base) {
-      const amount = Math.round(Number(orderTotal) || 0)
-      const sep = base.includes('?') ? (base.endsWith('?') || base.endsWith('&') ? '' : '&') : '?'
-      payUrl = amount ? `${base}${sep}amount=${amount}` : base
-    }
-  }
-
-  paymentInstructions.value = {
-    title:  cfg.title,
-    icon:   cfg.icon,
-    number: cfg.number,
-    method,
-    payUrl,
-    instructions: cfg.instructions
-      || `1. ${cfg.ussd}.\n2. Envoyez exactement ${formatPrice(orderTotal)} au numéro ${cfg.number || 'indiqué ci-dessus'}.\n3. Indiquez la référence ${orderNumber} dans le motif.\n4. Confirmez-nous le paiement via WhatsApp ci-dessous.`,
-  }
+  // Consignes construites par le composable partagé : la page de suivi de
+  // commande affiche exactement les mêmes, montant et référence compris.
+  paymentInstructions.value = buildInstructions(settings.data, method, orderNumber, orderTotal)
 }
 
 const adminWhatsappLink = computed(() => {
   const s = (settings.data?.value ?? settings.data ?? {})
   const phone = (s.whatsapp_admin_number ?? '').toString().trim()
   if (!phone || !confirmedOrderNumber.value) return null
-  const msg = encodeURIComponent(
-    `Bonjour ! J'ai effectué un paiement pour ma commande N° ${confirmedOrderNumber.value}. Montant : ${formatPrice(confirmedOrderTotal.value)}.`
-  )
+  const msg = encodeURIComponent(t('checkout.waPaidMessage', {
+    number: confirmedOrderNumber.value,
+    amount: formatPrice(confirmedOrderTotal.value),
+  }))
   return `https://wa.me/${phone.replace(/\D/g, '')}?text=${msg}`
 })
 
@@ -752,24 +724,24 @@ const internationalWhatsappLink = computed(() => {
     ?? form.value.shipping_country
 
   const articles = cartStore.items.map(i => {
-    const nom = i.product?.name ?? i.name ?? 'Produit'
+    const nom = i.product?.name ?? i.name ?? t('checkout.defaultProduct')
     return `• ${nom} × ${i.quantity}`
   })
 
   const lignes = [
-    'Bonjour ! Je souhaite passer une commande à livrer hors de Côte d\'Ivoire.',
+    t('checkout.waIntlIntro'),
     '',
-    `Destination : ${pays}`,
-    form.value.shipping_city ? `Ville : ${form.value.shipping_city}` : null,
-    `Nom : ${[form.value.first_name, form.value.last_name].filter(Boolean).join(' ')}`,
-    form.value.phone ? `Téléphone : ${form.value.phone}` : null,
+    `${t('checkout.waDestination')} : ${pays}`,
+    form.value.shipping_city ? `${t('fields.city')} : ${form.value.shipping_city}` : null,
+    `${t('fields.lastName')} : ${[form.value.first_name, form.value.last_name].filter(Boolean).join(' ')}`,
+    form.value.phone ? `${t('auth.phone')} : ${form.value.phone}` : null,
     '',
-    'Articles :',
+    `${t('checkout.waItems')} :`,
     ...articles,
     '',
-    `Sous-total : ${formatPrice(Number(cartStore.subtotal))}`,
+    `${t('common.subtotal')} : ${formatPrice(Number(cartStore.subtotal))}`,
     '',
-    'Pouvez-vous me communiquer les frais de livraison et les instructions de paiement ?',
+    t('checkout.waIntlAsk'),
   ].filter(l => l !== null)
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(lignes.join('\n'))}`
@@ -881,13 +853,13 @@ const paymentMethods = computed(() => {
   // Grand Abidjan : paiement à la livraison uniquement — nos livreurs encaissent.
   if (destination.value === 'abidjan') {
     if (isOff(s.payment_delivery_enabled)) return []
-    return [{ value: 'cod', label: 'À la livraison', icon: ICON_TRUCK, desc: 'Payez en recevant votre colis' }]
+    return [{ value: 'cod', label: t('checkout.onDelivery'), icon: ICON_TRUCK, desc: t('drawer.codDesc') }]
   }
 
   // Intérieur de la CI : prépaiement mobile obligatoire.
   const list = []
-  if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: 'Wave',         icon: ICON_WAVE,   desc: 'Paiement mobile rapide' })
-  if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: 'Orange Money', icon: ICON_ORANGE, desc: 'Mobile Money Orange' })
+  if (!isOff(s.payment_wave_enabled))         list.push({ value: 'wave',         label: t('drawer.wave'),        icon: ICON_WAVE,   desc: t('drawer.waveDesc') })
+  if (!isOff(s.payment_orange_money_enabled)) list.push({ value: 'orange_money', label: t('drawer.orangeMoney'), icon: ICON_ORANGE, desc: t('drawer.orangeDesc') })
   return list
 })
 
@@ -946,8 +918,8 @@ const shippingCost = computed(() => {
 
 const shippingLabel = computed(() => {
   if (shippingFound.value && !shippingPerKg.value) return formatPrice(shippingQuote.value.price)
-  if (shippingManual.value || shippingPerKg.value) return 'À renseigner par nos agents'
-  return 'À renseigner'
+  if (shippingManual.value || shippingPerKg.value) return t('drawer.shippingByAgents')
+  return t('checkout.shippingToFill')
 })
 
 // Livraison « à renseigner » : hors zone, ou tarif au kilo sans poids connu
@@ -1078,6 +1050,15 @@ async function placeOrder(payload) {
       return
     }
 
+    // Frais de livraison encore à fixer (hors Abidjan, international) : le
+    // total n'est pas ferme, donner des instructions de paiement ferait régler
+    // la mauvaise somme. La commande se finit avec un agent — la page de suivi
+    // affiche le numéro puis bascule sur WhatsApp.
+    if (data.shipping_fee_pending) {
+      router.push({ name: 'order', params: { number: data.number }, query: { agent: '1' } })
+      return
+    }
+
     // Paiement manuel Wave / Orange Money / MTN → instructions
     if (['wave', 'orange_money', 'mtn'].includes(payload.payment_method)) {
       buildPaymentInstructions(payload.payment_method, data.number, data.total ?? orderTotal.value)
@@ -1087,7 +1068,7 @@ async function placeOrder(payload) {
     // Carte (Stripe) : un payment_url est attendu. Absent → l'initialisation a échoué.
     if (['card', 'stripe'].includes(payload.payment_method)) {
       submitError.value = data.payment_error
-        || "Le paiement par carte n'a pas pu démarrer. Réessayez ou choisissez un autre moyen de paiement."
+        || t('checkout.cardPaymentError')
       return
     }
 
@@ -1432,6 +1413,20 @@ function formatPrice(val) {
 .co-summary__pending { color: #b45309; font-weight: 500; }
 
 /* ── Point de repère ── */
+/* Retour de la géolocalisation, sous le champ qu'elle vient de remplir. */
+.co-geo-msg {
+  margin-top: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  background: #f5f5f4;
+  color: #57534e;
+}
+.co-geo-msg--success    { background: #dcfce7; color: #15803d; }
+.co-geo-msg--partial    { background: #fef9c3; color: #854d0e; }
+.co-geo-msg--error      { background: #fef2f2; color: #dc2626; }
+
 .co-landmark {
   resize: none;
   min-height: 52px;

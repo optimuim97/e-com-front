@@ -6,13 +6,13 @@
         <span v-if="eyebrow" class="hs__eyebrow">{{ eyebrow }}</span>
         <h1 class="hs__title">
           <template v-if="title">{{ title }}</template>
-          <template v-else>Révélez l'<em>éclat naturel</em> de votre peau</template>
+          <template v-else>{{ $t('hero.splitTitle') }}<em>{{ $t('hero.splitTitleEm') }}</em>{{ $t('hero.splitTitleSuffix') }}</template>
         </h1>
         <p v-if="subtitle" class="hs__subtitle">{{ subtitle }}</p>
 
         <div class="hs__ctas">
-          <RouterLink to="/products" class="hs__cta-primary">Découvrir nos soins</RouterLink>
-          <RouterLink to="/a-propos" class="hs__cta-text">Notre histoire →</RouterLink>
+          <RouterLink to="/products" class="hs__cta-primary">{{ $t('hero.discoverCare') }}</RouterLink>
+          <RouterLink to="/a-propos" class="hs__cta-text">{{ $t('hero.ourStory') }} →</RouterLink>
         </div>
 
         <!-- Pastilles de réassurance -->
@@ -47,7 +47,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useHeroPhotos } from './useHeroPhotos'
 
 defineProps({
@@ -56,13 +58,14 @@ defineProps({
   subtitle:{ type: String, default: '' },
 })
 
+const { t } = useI18n()
 const { heroPhotos, currentPhoto, onPhotoError } = useHeroPhotos()
 
-const pills = [
-  { label: 'Ingrédients naturels', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>' },
-  { label: 'Testé dermatologiquement', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' },
-  { label: 'Cruelty-free', icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>' },
-]
+const pills = computed(() => [
+  { label: t('hero.naturalIngredients'), icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>' },
+  { label: t('hero.dermTested'), icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' },
+  { label: t('hero.crueltyFree'), icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>' },
+])
 </script>
 
 <style scoped>

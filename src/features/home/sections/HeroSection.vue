@@ -11,14 +11,14 @@
 
     <!-- Switcher flottant — visible uniquement pour l'admin connecté -->
     <div v-if="auth.isAdmin" class="hero-switch" :class="{ 'hero-switch--saving': saving }">
-      <span class="hero-switch__label">Style accueil</span>
+      <span class="hero-switch__label">{{ $t('hero.adminStyleLabel') }}</span>
       <div class="hero-switch__btns">
         <button
           v-for="opt in variants"
           :key="opt.value"
           class="hero-switch__btn"
           :class="{ 'hero-switch__btn--active': currentVariant === opt.value }"
-          :title="opt.label"
+          :title="$t(opt.labelKey)"
           @click="selectVariant(opt.value)"
         >{{ opt.value }}</button>
       </div>
@@ -61,11 +61,11 @@ const title    = computed(() => props.heroTitle)
 const subtitle = computed(() => props.heroSubtitle)
 
 const variants = [
-  { value: '1', label: 'Plein écran',  component: HeroVariantFullscreen },
-  { value: '2', label: 'Split',        component: HeroVariantSplit },
-  { value: '3', label: 'Classique',    component: HeroVariantClassic },
-  { value: '4', label: 'Best-sellers', component: HeroVariantBestSellers },
-  { value: '5', label: 'Vitrine',      component: HeroVariantShowcase },
+  { value: '1', labelKey: 'hero.variantFullscreen',  component: HeroVariantFullscreen },
+  { value: '2', labelKey: 'hero.variantSplit',       component: HeroVariantSplit },
+  { value: '3', labelKey: 'hero.variantClassic',     component: HeroVariantClassic },
+  { value: '4', labelKey: 'hero.variantBestSellers', component: HeroVariantBestSellers },
+  { value: '5', labelKey: 'hero.variantShowcase',    component: HeroVariantShowcase },
 ]
 const VALID = variants.map(v => v.value)
 

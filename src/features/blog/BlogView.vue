@@ -111,12 +111,12 @@ import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
 const { t } = useI18n()
 
 useSeo(() => ({
-  title: 'Blog beauté — Conseils soins du visage',
-  description: "Conseils beauté, routines visage et vertus de l'eau de rose par Rosa Beauty Facial Care. Nos experts partagent leurs rituels pour une peau saine sous le climat ivoirien.",
+  title: t('blog.seoTitle'),
+  description: t('blog.seoDescription'),
   canonical: '/blog',
   jsonLd: breadcrumbJsonLd([
-    { name: 'Accueil', path: '/' },
-    { name: 'Blog', path: '/blog' },
+    { name: t('common.home'), path: '/' },
+    { name: t('common.blog'), path: '/blog' },
   ]),
 }))
 

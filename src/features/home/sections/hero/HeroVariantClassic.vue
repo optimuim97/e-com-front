@@ -23,12 +23,12 @@
           <span v-if="eyebrow" class="hc__eyebrow">{{ eyebrow }}</span>
           <h1 class="hc__title">
             <template v-if="title">{{ title }}</template>
-            <template v-else>Votre rituel beauté <em>à la rose</em></template>
+            <template v-else>{{ $t('hero.classicTitle') }} <em>{{ $t('hero.classicTitleEm') }}</em></template>
           </h1>
           <p v-if="subtitle" class="hc__subtitle">{{ subtitle }}</p>
           <div class="hc__ctas">
-            <RouterLink to="/products" class="hc__cta-primary">Acheter maintenant</RouterLink>
-            <RouterLink to="/products" class="hc__cta-ghost">Voir tous les produits</RouterLink>
+            <RouterLink to="/products" class="hc__cta-primary">{{ $t('hero.buyNow') }}</RouterLink>
+            <RouterLink to="/products" class="hc__cta-ghost">{{ $t('common.viewAllProducts') }}</RouterLink>
           </div>
         </div>
       </div>
@@ -50,7 +50,9 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useHeroPhotos } from './useHeroPhotos'
 
 defineProps({
@@ -59,14 +61,15 @@ defineProps({
   subtitle:{ type: String, default: '' },
 })
 
+const { t } = useI18n()
 const { heroPhotos, currentPhoto, onPhotoError } = useHeroPhotos()
 
-const strip = [
-  { label: '100% naturel', sub: 'Rose de Damas', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>' },
-  { label: 'Livraison rapide', sub: 'Partout en CI', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' },
-  { label: 'Paiement sécurisé', sub: 'Wave · OM · CB', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>' },
-  { label: 'Satisfait ou remboursé', sub: 'Sous 14 jours', icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' },
-]
+const strip = computed(() => [
+  { label: t('hero.natural'), sub: t('hero.naturalSub'), icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>' },
+  { label: t('hero.fastDelivery'), sub: t('hero.fastDeliverySub'), icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>' },
+  { label: t('common.securePay'), sub: t('hero.securePaySub'), icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg>' },
+  { label: t('hero.moneyBack'), sub: t('hero.moneyBackSub'), icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>' },
+])
 </script>
 
 <style scoped>

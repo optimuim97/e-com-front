@@ -5,28 +5,28 @@
     <section class="program-hero">
       <div class="container program-hero__inner">
         <div class="program-hero__text">
-          <span class="eyebrow">Votre espace exclusif</span>
+          <span class="eyebrow">{{ $t('program.eyebrow') }}</span>
           <h1 class="display-lg program-hero__title">
             Rosa <em>Beauty Club</em>
           </h1>
           <p class="program-hero__desc">
-            Rejoignez notre programme beauté : accumulez des points, suivez votre routine et échangez avec nos conseillers beauté experts.
+            {{ $t('program.heroDesc') }}
           </p>
           <div v-if="!authStore.user" class="program-hero__cta">
-            <RouterLink :to="{ name: 'register' }" class="btn btn-primary btn-lg">Rejoindre gratuitement</RouterLink>
-            <RouterLink :to="{ name: 'login' }"    class="btn btn-ghost btn-lg">Se connecter</RouterLink>
+            <RouterLink :to="{ name: 'register' }" class="btn btn-primary btn-lg">{{ $t('program.joinFree') }}</RouterLink>
+            <RouterLink :to="{ name: 'login' }"    class="btn btn-ghost btn-lg">{{ $t('common.login') }}</RouterLink>
           </div>
           <div v-else-if="!isMember" class="program-hero__cta">
             <button @click="joinProgram" :disabled="joining" class="btn btn-primary btn-lg">
-              <span v-if="joining">Inscription…</span>
-              <span v-else>Rejoindre le club</span>
+              <span v-if="joining">{{ $t('program.joining') }}</span>
+              <span v-else>{{ $t('program.joinClub') }}</span>
             </button>
           </div>
           <div v-else class="program-hero__badge">
             <span class="tier-badge" :class="`tier-badge--${membership.tier}`">
-              <span class="tier-badge__ico" v-html="tierIcon(membership.tier)"></span> Membre {{ tierLabel(membership.tier) }}
+              <span class="tier-badge__ico" v-html="tierIcon(membership.tier)"></span> {{ $t('program.memberTier', { tier: tierLabel(membership.tier) }) }}
             </span>
-            <span class="points-display">{{ membership.points ?? 0 }} pts</span>
+            <span class="points-display">{{ membership.points ?? 0 }} {{ $t('program.pts') }}</span>
           </div>
         </div>
         <div class="program-hero__visual">
@@ -35,13 +35,13 @@
           <div class="program-hero__card-stack">
             <div class="loyalty-card loyalty-card--gold">
               <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty Facial Care</span>
-              <span class="loyalty-card__tier">Club Or</span>
-              <span class="loyalty-card__pts">2 500 pts</span>
+              <span class="loyalty-card__tier">{{ $t('program.tierNameGold') }}</span>
+              <span class="loyalty-card__pts">2 500 {{ $t('program.pts') }}</span>
             </div>
             <div class="loyalty-card loyalty-card--silver">
               <span class="loyalty-card__logo"><FlowerMark /> Rosa Beauty Facial Care</span>
-              <span class="loyalty-card__tier">Club Argent</span>
-              <span class="loyalty-card__pts">1 200 pts</span>
+              <span class="loyalty-card__tier">{{ $t('program.tierNameSilver') }}</span>
+              <span class="loyalty-card__pts">1 200 {{ $t('program.pts') }}</span>
             </div>
           </div>
         </div>
@@ -52,7 +52,7 @@
 
       <!-- ── Dashboard membre ── -->
       <section v-if="authStore.user && isMember" class="program-section">
-        <h2 class="program-section__title">Mon espace membre</h2>
+        <h2 class="program-section__title">{{ $t('program.memberSpace') }}</h2>
         <div class="member-dashboard">
 
           <!-- Points & niveau -->
@@ -60,7 +60,7 @@
             <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></div>
             <div>
               <p class="member-card__value">{{ membership.points ?? 0 }}</p>
-              <p class="member-card__label">Points fidélité</p>
+              <p class="member-card__label">{{ $t('program.loyaltyPoints') }}</p>
             </div>
             <div class="tier-progress">
               <p class="tier-progress__label">
@@ -72,7 +72,7 @@
               <div class="tier-progress__bar">
                 <div class="tier-progress__fill" :style="{ width: tierProgressPct + '%' }"></div>
               </div>
-              <p class="text-xs text-gray-400 mt-1">{{ pointsToNextTier }} pts pour le niveau suivant</p>
+              <p class="text-xs text-gray-400 mt-1">{{ $t('program.ptsToNextTier', { count: pointsToNextTier }) }}</p>
             </div>
           </div>
 
@@ -81,7 +81,7 @@
             <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div>
             <div>
               <p class="member-card__value">{{ membership.orders_count ?? 0 }}</p>
-              <p class="member-card__label">Commandes passées</p>
+              <p class="member-card__label">{{ $t('program.ordersPlaced') }}</p>
             </div>
           </div>
 
@@ -89,10 +89,10 @@
           <div class="member-card card">
             <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L19.5 9l-4.5 3.4L16.5 18 12 14.7 7.5 18l1.5-5.6L4.5 9l5.6-.2z"/></svg></div>
             <div>
-              <p class="member-card__value">{{ trackerStreak }} j</p>
-              <p class="member-card__label">Jours de routine</p>
+              <p class="member-card__value">{{ trackerStreak }} {{ $t('program.dayShort') }}</p>
+              <p class="member-card__label">{{ $t('program.routineDays') }}</p>
             </div>
-            <button @click="showTracker = true" class="btn btn-outline btn-sm mt-2">Voir mon suivi</button>
+            <button @click="showTracker = true" class="btn btn-outline btn-sm mt-2">{{ $t('program.viewTracker') }}</button>
           </div>
 
           <!-- Consultations -->
@@ -100,9 +100,9 @@
             <div class="member-card__icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
             <div>
               <p class="member-card__value">{{ myConsultations.length }}</p>
-              <p class="member-card__label">Consultations</p>
+              <p class="member-card__label">{{ $t('program.consultations') }}</p>
             </div>
-            <button @click="showConsultationForm = true" class="btn btn-primary btn-sm mt-2">Nouveau rendez-vous</button>
+            <button @click="showConsultationForm = true" class="btn btn-primary btn-sm mt-2">{{ $t('program.newAppointment') }}</button>
           </div>
 
         </div>
@@ -113,13 +113,13 @@
         <div v-if="showTracker" class="modal-overlay" @click.self="showTracker = false">
           <div class="modal-card card">
             <div class="modal-card__header">
-              <h3>Mon suivi de routine</h3>
+              <h3>{{ $t('program.trackerTitle') }}</h3>
               <button @click="showTracker = false" class="modal-card__close">✕</button>
             </div>
             <div class="tracker-body">
               <div class="tracker-streak">
                 <span class="tracker-streak__num">{{ trackerStreak }}</span>
-                <span class="tracker-streak__label">jours consécutifs</span>
+                <span class="tracker-streak__label">{{ $t('program.consecutiveDays') }}</span>
               </div>
               <div class="tracker-week">
                 <div
@@ -142,9 +142,9 @@
                   :disabled="checkingIn"
                   class="btn btn-primary w-full"
                 >
-                  {{ checkingIn ? 'Enregistrement…' : 'Valider ma routine du jour (+5 pts)' }}
+                  {{ checkingIn ? $t('program.saving') : $t('program.validateRoutine') }}
                 </button>
-                <p v-else class="text-green-600 text-center font-medium">✓ Routine validée aujourd'hui !</p>
+                <p v-else class="text-green-600 text-center font-medium">{{ $t('program.routineDone') }}</p>
               </div>
             </div>
           </div>
@@ -156,19 +156,19 @@
         <div v-if="showConsultationForm" class="modal-overlay" @click.self="showConsultationForm = false">
           <div class="modal-card card">
             <div class="modal-card__header">
-              <h3>Demande de consultation</h3>
+              <h3>{{ $t('program.consultTitle') }}</h3>
               <button @click="showConsultationForm = false" class="modal-card__close">✕</button>
             </div>
 
             <form @submit.prevent="submitConsultation" class="consultation-form">
               <FormField :def="CONSULTATION_FIELDS.type" :error="consultErrors.type">
-                <AppSelect v-model="consultForm.type" :options="CONSULTATION_TYPES" placeholder="Choisir un sujet…" />
+                <AppSelect v-model="consultForm.type" :options="consultationTypes" :placeholder="$t('program.chooseTopic')" />
               </FormField>
 
               <FormField :def="CONSULTATION_FIELDS.channel" :error="consultErrors.channel">
                 <div class="channel-grid">
                   <label
-                    v-for="ch in CONSULTATION_CHANNELS"
+                    v-for="ch in consultationChannels"
                     :key="ch.value"
                     class="channel-option"
                     :class="{ 'channel-option--active': consultForm.channel === ch.value }"
@@ -189,14 +189,14 @@
 
               <FormField :def="CONSULTATION_FIELDS.message" :error="consultErrors.message" optional>
                 <textarea v-model="consultForm.message" rows="3" class="input resize-none"
-                  placeholder="Décrivez votre besoin, votre type de peau, vos produits actuels…"></textarea>
+                  :placeholder="$t('program.requestPlaceholder')"></textarea>
               </FormField>
 
-              <p v-if="consultSuccess" class="text-green-600 text-sm">✓ Demande envoyée ! Notre conseillère vous contactera dans les 24h.</p>
+              <p v-if="consultSuccess" class="text-green-600 text-sm">{{ $t('program.consultSent') }}</p>
               <p v-if="consultError"   class="text-red-500 text-sm">{{ consultError }}</p>
 
               <button type="submit" :disabled="consultSending" class="btn btn-primary w-full">
-                {{ consultSending ? 'Envoi…' : 'Envoyer ma demande' }}
+                {{ consultSending ? $t('program.sending') : $t('program.sendRequest') }}
               </button>
             </form>
           </div>
@@ -205,10 +205,10 @@
 
       <!-- ── Niveaux du programme ── -->
       <section class="program-section">
-        <h2 class="program-section__title">Les niveaux du Club</h2>
+        <h2 class="program-section__title">{{ $t('program.tiersTitle') }}</h2>
         <div class="tiers-grid">
           <div
-            v-for="tier in programData.tiers"
+            v-for="tier in tiers"
             :key="tier.slug"
             class="tier-card card"
             :class="`tier-card--${tier.slug}`"
@@ -216,7 +216,7 @@
             <div class="tier-card__header">
               <span class="tier-card__icon" v-html="tier.icon"></span>
               <h3 class="tier-card__name">{{ tier.name }}</h3>
-              <p class="tier-card__range">{{ tier.points_min }} – {{ tier.points_max ?? '∞' }} pts</p>
+              <p class="tier-card__range">{{ tier.points_min }} – {{ tier.points_max ?? '∞' }} {{ $t('program.pts') }}</p>
             </div>
             <ul class="tier-card__benefits">
               <li v-for="benefit in tier.benefits" :key="benefit">
@@ -224,7 +224,7 @@
               </li>
             </ul>
             <div v-if="authStore.user && membership.tier === tier.slug" class="tier-card__current">
-              Votre niveau actuel
+              {{ $t('program.currentTier') }}
             </div>
           </div>
         </div>
@@ -234,30 +234,30 @@
       <section class="program-section">
         <div class="advisor-section">
           <div class="advisor-section__text">
-            <span class="eyebrow">Accompagnement personnalisé</span>
-            <h2 class="program-section__title">Votre conseillère beauté</h2>
+            <span class="eyebrow">{{ $t('program.advisorEyebrow') }}</span>
+            <h2 class="program-section__title">{{ $t('program.advisorTitle') }}</h2>
             <p class="advisor-section__desc">
-              Nos expertes Rosa Beauty Facial Care sont là pour vous guider dans le choix de vos soins, créer votre routine idéale et répondre à toutes vos questions — en WhatsApp, vidéo ou en boutique.
+              {{ $t('program.advisorDesc') }}
             </p>
             <ul class="advisor-section__features">
-              <li>Consultation WhatsApp sous 24h</li>
-              <li>Appel vidéo sur rendez-vous</li>
-              <li>Bilan peau gratuit pour les membres</li>
-              <li>Recommandations personnalisées</li>
+              <li>{{ $t('program.advisorFeature1') }}</li>
+              <li>{{ $t('program.advisorFeature2') }}</li>
+              <li>{{ $t('program.advisorFeature3') }}</li>
+              <li>{{ $t('program.advisorFeature4') }}</li>
             </ul>
             <button
               v-if="authStore.user && isMember"
               @click="showConsultationForm = true"
               class="btn btn-primary btn-lg mt-4"
             >
-              Prendre rendez-vous
+              {{ $t('program.bookAppointment') }}
             </button>
             <RouterLink
               v-else-if="!authStore.user"
               :to="{ name: 'register' }"
               class="btn btn-primary btn-lg mt-4"
             >
-              Rejoindre pour accéder
+              {{ $t('program.joinToAccess') }}
             </RouterLink>
             <button
               v-else
@@ -265,28 +265,28 @@
               :disabled="joining"
               class="btn btn-primary btn-lg mt-4"
             >
-              Rejoindre le club
+              {{ $t('program.joinClub') }}
             </button>
           </div>
           <div class="advisor-section__visual">
             <div class="advisor-card">
               <div class="advisor-card__avatar"><FlowerMark /></div>
               <div>
-                <p class="advisor-card__name">Équipe Rosa Beauty Facial Care</p>
-                <p class="advisor-card__role">Conseillers beauté certifiés</p>
+                <p class="advisor-card__name">{{ $t('program.advisorTeam') }}</p>
+                <p class="advisor-card__role">{{ $t('program.advisorRole') }}</p>
                 <p class="advisor-card__status">
-                  <span class="status-dot"></span> Disponible maintenant
+                  <span class="status-dot"></span> {{ $t('program.availableNow') }}
                 </p>
               </div>
             </div>
             <div class="advisor-bubbles">
               <div class="advisor-bubble advisor-bubble--in">
-                Bonjour ! Quel est votre type de peau ?               </div>
+                {{ $t('program.bubble1') }}</div>
               <div class="advisor-bubble advisor-bubble--out">
-                Mixte, avec quelques rougeurs…
+                {{ $t('program.bubble2') }}
               </div>
               <div class="advisor-bubble advisor-bubble--in">
-                Parfait ! Je vous recommande notre Eau de Rose Pure               </div>
+                {{ $t('program.bubble3') }}</div>
             </div>
           </div>
         </div>
@@ -294,13 +294,13 @@
 
       <!-- ── Comment gagner des points ── -->
       <section class="program-section">
-        <h2 class="program-section__title">Comment gagner des points ?</h2>
+        <h2 class="program-section__title">{{ $t('program.earnTitle') }}</h2>
         <div class="earn-grid">
           <div v-for="action in earnActions" :key="action.label" class="earn-card card">
             <span class="earn-card__icon" v-html="action.icon"></span>
             <div>
               <p class="earn-card__label">{{ action.label }}</p>
-              <p class="earn-card__pts">+ {{ action.pts }} pts</p>
+              <p class="earn-card__pts">+ {{ action.pts }} {{ $t('program.pts') }}</p>
             </div>
           </div>
         </div>
@@ -308,7 +308,7 @@
 
       <!-- ── Mes consultations (membres connectés) ── -->
       <section v-if="authStore.user && isMember && myConsultations.length" class="program-section">
-        <h2 class="program-section__title">Mes demandes de consultation</h2>
+        <h2 class="program-section__title">{{ $t('program.myConsultations') }}</h2>
         <div class="consultations-list">
           <div v-for="c in myConsultations" :key="c.id" class="consultation-item card">
             <div class="consultation-item__info">
@@ -332,6 +332,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/features/auth/auth.store'
 import FormField  from '@/shared/components/ui/FormField.vue'
 import AppSelect  from '@/components/ui/AppSelect.vue'
@@ -345,6 +346,7 @@ import {
   mapConsultationErrors,
 } from './program.fields'
 
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 
 // ── Programme data (public) ────────────────────────────────────────────────
@@ -357,34 +359,61 @@ const ICON_GIFT   = SVG_ICON('<rect x="3" y="8" width="18" height="4"/><path d="
 const ICON_PHONE  = SVG_ICON('<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>')
 const ICON_CHAT   = SVG_ICON('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>')
 
-const programData = ref({
-  tiers: [
-    {
-      slug: 'bronze', name: 'Club Bronze', icon: MEDAL(3),
-      points_min: 0, points_max: 499,
-      benefits: ['5% de réduction sur vos achats', 'Accès aux offres membres', 'Newsletter beauté exclusive'],
-    },
-    {
-      slug: 'silver', name: 'Club Argent', icon: MEDAL(2),
-      points_min: 500, points_max: 1999,
-      benefits: ['10% de réduction', 'Consultation conseillère (1/mois)', 'Cadeau d\'anniversaire', 'Livraison prioritaire'],
-    },
-    {
-      slug: 'gold', name: 'Club Or', icon: MEDAL(1),
-      points_min: 2000, points_max: null,
-      benefits: ['15% de réduction', 'Consultations illimitées', 'Avant-premières produits', 'Cadeaux exclusifs', 'Livraison offerte'],
-    },
-  ],
-})
+// Niveaux : ceux de l'admin s'ils existent, sinon les niveaux par défaut ci-dessous
+const programData = ref({ tiers: null })
 
-const earnActions = [
-  { icon: ICON_BAG,   label: 'Chaque achat',             pts: '1 par 100 FCFA' },
-  { icon: ICON_SPARK, label: 'Routine quotidienne',       pts: '5' },
-  { icon: ICON_STAR,  label: 'Laisser un avis produit',   pts: '20' },
-  { icon: ICON_GIFT,  label: 'Anniversaire',               pts: '100' },
-  { icon: ICON_PHONE, label: 'Parrainer un(e) amie',      pts: '150' },
-  { icon: ICON_CHAT,  label: 'Première consultation',     pts: '50' },
-]
+const defaultTiers = computed(() => [
+  {
+    slug: 'bronze', name: t('program.tierNameBronze'), icon: MEDAL(3),
+    points_min: 0, points_max: 499,
+    benefits: [
+      t('program.tierBronzeBenefit1'),
+      t('program.tierBronzeBenefit2'),
+      t('program.tierBronzeBenefit3'),
+    ],
+  },
+  {
+    slug: 'silver', name: t('program.tierNameSilver'), icon: MEDAL(2),
+    points_min: 500, points_max: 1999,
+    benefits: [
+      t('program.tierSilverBenefit1'),
+      t('program.tierSilverBenefit2'),
+      t('program.tierSilverBenefit3'),
+      t('program.tierSilverBenefit4'),
+    ],
+  },
+  {
+    slug: 'gold', name: t('program.tierNameGold'), icon: MEDAL(1),
+    points_min: 2000, points_max: null,
+    benefits: [
+      t('program.tierGoldBenefit1'),
+      t('program.tierGoldBenefit2'),
+      t('program.tierGoldBenefit3'),
+      t('program.tierGoldBenefit4'),
+      t('program.tierGoldBenefit5'),
+    ],
+  },
+])
+
+const tiers = computed(() =>
+  programData.value.tiers?.length ? programData.value.tiers : defaultTiers.value
+)
+
+const earnActions = computed(() => [
+  { icon: ICON_BAG,   label: t('program.earnPurchase'),     pts: t('program.earnPurchasePts') },
+  { icon: ICON_SPARK, label: t('program.earnRoutine'),      pts: '5' },
+  { icon: ICON_STAR,  label: t('program.earnReview'),       pts: '20' },
+  { icon: ICON_GIFT,  label: t('program.earnBirthday'),     pts: '100' },
+  { icon: ICON_PHONE, label: t('program.earnReferral'),     pts: '150' },
+  { icon: ICON_CHAT,  label: t('program.earnConsultation'), pts: '50' },
+])
+
+const consultationTypes = computed(() =>
+  CONSULTATION_TYPES.map(o => ({ ...o, label: t(o.labelKey) }))
+)
+const consultationChannels = computed(() =>
+  CONSULTATION_CHANNELS.map(o => ({ ...o, label: t(o.labelKey) }))
+)
 
 // ── Membership ──────────────────────────────────────────────────────────────
 const membership    = ref({})
@@ -392,15 +421,15 @@ const isMember      = ref(false)
 const joining       = ref(false)
 
 const TIER_THRESHOLDS = { bronze: 0, silver: 500, gold: 2000 }
-const TIER_LABELS     = { bronze: 'Bronze', silver: 'Argent', gold: 'Or' }
+const TIER_LABEL_KEYS = { bronze: 'program.tierBronze', silver: 'program.tierSilver', gold: 'program.tierGold' }
 const TIER_NEXT       = { bronze: 'silver', silver: 'gold', gold: null }
 
-const tierLabel  = (t) => TIER_LABELS[t] ?? t
-const tierIcon   = (t) => ({ bronze: MEDAL(3), silver: MEDAL(2), gold: MEDAL(1) }[t] ?? MEDAL(''))
+const tierLabel  = (tier) => (TIER_LABEL_KEYS[tier] ? t(TIER_LABEL_KEYS[tier]) : tier)
+const tierIcon   = (tier) => ({ bronze: MEDAL(3), silver: MEDAL(2), gold: MEDAL(1) }[tier] ?? MEDAL(''))
 
 const nextTierLabel = computed(() => {
   const next = TIER_NEXT[membership.value.tier]
-  return next ? TIER_LABELS[next] : 'Niveau maximum !'
+  return next ? tierLabel(next) : t('program.maxTier')
 })
 
 const tierProgressPct = computed(() => {
@@ -441,7 +470,10 @@ const todayCheckedIn = ref(false)
 const trackerStreak = computed(() => trackerData.value?.streak ?? 0)
 
 const trackerWeek = computed(() => {
-  const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']
+  const days = [
+    t('program.days.mon'), t('program.days.tue'), t('program.days.wed'), t('program.days.thu'),
+    t('program.days.fri'), t('program.days.sat'), t('program.days.sun'),
+  ]
   const checkins = trackerData.value?.week ?? []
   const today = new Date().getDay() // 0=Sun,1=Mon…
   const todayIdx = today === 0 ? 6 : today - 1 // Mon=0…Sun=6
@@ -492,23 +524,23 @@ async function submitConsultation() {
     if (e.response?.status === 422) {
       consultErrors.value = mapConsultationErrors(e.response.data?.errors ?? {})
     }
-    consultError.value = e.response?.data?.message ?? 'Une erreur est survenue.'
+    consultError.value = e.response?.data?.message ?? t('common.error')
   } finally {
     consultSending.value = false
   }
 }
 
-const consultationTypeLabel   = (v) => CONSULTATION_TYPES.find(t => t.value === v)?.label ?? v
-const consultationChannelLabel= (v) => CONSULTATION_CHANNELS.find(c => c.value === v)?.label ?? v
+const consultationTypeLabel   = (v) => consultationTypes.value.find(o => o.value === v)?.label ?? v
+const consultationChannelLabel= (v) => consultationChannels.value.find(o => o.value === v)?.label ?? v
 const consultationStatusLabel = (s) => ({
-  pending:   '⏳ En attente',
-  confirmed: 'Confirmée',
-  done:      '✓ Terminée',
-  cancelled: '✕ Annulée',
+  pending:   t('program.status.pending'),
+  confirmed: t('program.status.confirmed'),
+  done:      t('program.status.done'),
+  cancelled: t('program.status.cancelled'),
 }[s] ?? s)
 
 function formatDate(dt) {
-  return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(dt))
+  return new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(dt))
 }
 
 // ── Init ─────────────────────────────────────────────────────────────────────

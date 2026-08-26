@@ -12,7 +12,7 @@
         <h2 class="gate__title">{{ $t('authGate.title') }}</h2>
         <p class="gate__hint">{{ $t('authGate.hint') }}</p>
       </div>
-      <button class="gate__close" @click="$emit('close')" type="button" aria-label="Fermer">
+      <button class="gate__close" @click="$emit('close')" type="button" :aria-label="$t('common.close')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M18 6L6 18M6 6l12 12"/>
         </svg>
@@ -72,7 +72,7 @@
     <form v-if="tab === 'login'" key="login" @submit.prevent="doLogin" class="gate__form">
       <div class="gate__field">
         <label class="label">{{ $t('auth.email') }}</label>
-        <input v-model="loginForm.email" type="email" class="input" placeholder="vous@exemple.com" required autocomplete="email" />
+        <input v-model="loginForm.email" type="email" class="input" :placeholder="$t('auth.emailPlaceholder')" required autocomplete="email" />
       </div>
       <div class="gate__field">
         <label class="label">{{ $t('auth.password') }}</label>
@@ -89,7 +89,7 @@
     <form v-else key="register" @submit.prevent="doRegister" class="gate__form">
       <div class="gate__field">
         <label class="label">{{ $t('auth.name') }}</label>
-        <input v-model="regForm.name" type="text" class="input" placeholder="Fatou Konaté" required autocomplete="name" />
+        <input v-model="regForm.name" type="text" class="input" :placeholder="$t('auth.namePlaceholder')" required autocomplete="name" />
       </div>
       <div class="gate__field">
         <label class="label">{{ $t('auth.phone') }}</label>
@@ -97,11 +97,11 @@
       </div>
       <div class="gate__field">
         <label class="label">{{ $t('auth.email') }}</label>
-        <input v-model="regForm.email" type="email" class="input" placeholder="vous@exemple.com" required autocomplete="email" />
+        <input v-model="regForm.email" type="email" class="input" :placeholder="$t('auth.emailPlaceholder')" required autocomplete="email" />
       </div>
       <div class="gate__field">
         <label class="label">{{ $t('auth.password') }}</label>
-        <input v-model="regForm.password" type="password" class="input" placeholder="8 caractères min." required autocomplete="new-password" minlength="8" />
+        <input v-model="regForm.password" type="password" class="input" :placeholder="$t('auth.passwordMinPlaceholder')" required autocomplete="new-password" minlength="8" />
       </div>
       <p v-if="regError" class="gate__error">{{ regError }}</p>
       <button type="submit" :disabled="regLoading" class="btn btn-outline gate__submit">
@@ -144,7 +144,7 @@ async function doLogin() {
     await nextTick()
     emit('authenticated')
   } catch (e) {
-    loginError.value = e.response?.data?.message ?? 'Email ou mot de passe incorrect'
+    loginError.value = e.response?.data?.message ?? t('auth.badCredentials')
   } finally {
     loginLoading.value = false
   }
@@ -171,7 +171,7 @@ async function doRegister() {
     const errs = e.response?.data?.errors
     regError.value = errs
       ? Object.values(errs).flat().join(' ')
-      : (e.response?.data?.message ?? 'Erreur lors de la création du compte')
+      : (e.response?.data?.message ?? t('auth.registerError'))
   } finally {
     regLoading.value = false
   }

@@ -4,9 +4,9 @@
       <header class="explore__head">
         <span class="explore__eyebrow">
           <span class="explore__eyebrow-line"></span>
-          DÉCOUVRIR ROSABEAUTY
+          {{ $t('explore.eyebrow') }}
         </span>
-        <h2 class="explore__title">Allez plus loin avec nous</h2>
+        <h2 class="explore__title">{{ $t('explore.title') }}</h2>
       </header>
 
       <div class="explore__grid">
@@ -47,38 +47,40 @@
 <script setup>
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
 
+const { t }    = useI18n()
 const settings = useSettingsStore()
 
 const cards = computed(() => [
   {
     key: 'about',
     to: { name: 'about' },
-    kicker: 'Notre histoire',
-    title: 'La passion de la rose',
-    desc: "Née d'une histoire personnelle, Rosabeauty met l'éclat naturel de la rose au service de votre peau.",
-    cta: 'Lire notre histoire',
+    kicker: t('explore.about.kicker'),
+    title: t('explore.about.title'),
+    desc: t('explore.about.desc'),
+    cta: t('explore.about.cta'),
     image: settings.aboutHistoryImage || '/image_site/DSC_7553.jpeg',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
   },
   {
     key: 'club',
     to: { name: 'program' },
-    kicker: 'Club fidélité',
-    title: 'Gagnez des récompenses',
-    desc: 'Cumulez des points à chaque achat et profitez d’avantages exclusifs réservés aux membres.',
-    cta: 'Rejoindre le club',
+    kicker: t('explore.club.kicker'),
+    title: t('explore.club.title'),
+    desc: t('explore.club.desc'),
+    cta: t('explore.club.cta'),
     image: settings.aboutClubImage || '/image_site/FLS_8111.jpeg',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
   },
   {
     key: 'blog',
     to: { name: 'blog' },
-    kicker: 'Le Journal',
-    title: 'Conseils & routines beauté',
-    desc: 'Astuces de soin, routines et secrets de la rose pour sublimer votre peau au quotidien.',
-    cta: 'Lire le blog',
+    kicker: t('explore.blog.kicker'),
+    title: t('explore.blog.title'),
+    desc: t('explore.blog.desc'),
+    cta: t('explore.blog.cta'),
     image: settings.aboutBlogImage || '/image_site/FLS_8130.jpeg',
     icon: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
   },

@@ -4,49 +4,49 @@
       <!-- Loading -->
       <template v-if="checking">
         <div class="pay-return__icon pay-return__icon--spin"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><path d="M1 10h22"/></svg></div>
-        <h1 class="display-sm">Vérification du paiement…</h1>
-        <p class="pay-return__desc">Merci de patienter, nous confirmons votre paiement.</p>
+        <h1 class="display-sm">{{ $t('paymentReturn.checkingTitle') }}</h1>
+        <p class="pay-return__desc">{{ $t('paymentReturn.checkingDesc') }}</p>
         <div class="pay-return__spinner"></div>
       </template>
 
       <!-- Succès -->
       <template v-else-if="paid">
         <div class="pay-return__icon pay-return__icon--ok"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></div>
-        <h1 class="display-sm">Paiement confirmé !</h1>
+        <h1 class="display-sm">{{ $t('paymentReturn.paidTitle') }}</h1>
         <p class="pay-return__desc">
-          Votre commande <strong>{{ orderNumber }}</strong> a bien été payée.<br>
-          Vous recevrez une confirmation sous peu.
+          {{ $t('paymentReturn.paidDescBefore') }} <strong>{{ orderNumber }}</strong> {{ $t('paymentReturn.paidDescAfter') }}<br>
+          {{ $t('paymentReturn.paidDescMore') }}
         </p>
         <RouterLink :to="`/orders/${orderNumber}`" class="btn btn-primary">
-          Suivre ma commande
+          {{ $t('paymentReturn.trackOrder') }}
         </RouterLink>
       </template>
 
       <!-- En attente (paiement en cours de vérification) -->
       <template v-else-if="pending">
         <div class="pay-return__icon pay-return__icon--wait"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
-        <h1 class="display-sm">Paiement en cours de vérification</h1>
+        <h1 class="display-sm">{{ $t('paymentReturn.pendingTitle') }}</h1>
         <p class="pay-return__desc">
-          Votre paiement est en cours de traitement. Vous recevrez une confirmation dès que le paiement sera validé.
+          {{ $t('paymentReturn.pendingDesc') }}
         </p>
         <RouterLink :to="`/orders/${orderNumber}`" class="btn btn-primary">
-          Voir ma commande
+          {{ $t('paymentReturn.viewOrder') }}
         </RouterLink>
       </template>
 
       <!-- Échec -->
       <template v-else>
         <div class="pay-return__icon pay-return__icon--err"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg></div>
-        <h1 class="display-sm">Paiement non abouti</h1>
+        <h1 class="display-sm">{{ $t('paymentReturn.failedTitle') }}</h1>
         <p class="pay-return__desc">
-          Le paiement n'a pas pu être traité. Votre commande est conservée — vous pouvez réessayer ou choisir un autre mode de paiement.
+          {{ $t('paymentReturn.failedDesc') }}
         </p>
         <div class="pay-return__actions">
           <RouterLink :to="`/orders/${orderNumber}`" class="btn btn-outline">
-            Voir ma commande
+            {{ $t('paymentReturn.viewOrder') }}
           </RouterLink>
           <RouterLink to="/" class="btn btn-primary">
-            Retour à l'accueil
+            {{ $t('paymentReturn.backHome') }}
           </RouterLink>
         </div>
       </template>

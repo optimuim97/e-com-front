@@ -54,6 +54,19 @@
               <td class="admin-table__total">{{ formatPrice(p.price) }}</td>
               <td>
                 <span :class="p.stock <= 5 ? 'badge badge-danger' : 'badge badge-success'">{{ p.stock }}</span>
+                <!--
+                  Le compteur est déjà net des commandes en cours : le stock est
+                  décompté à la création, pas à la confirmation. On rappelle donc
+                  ce qui est vendu mais pas encore parti, sans quoi le comptage
+                  en rayon ne retomberait jamais sur ses pieds.
+                -->
+                <span
+                  v-if="p.reserved > 0"
+                  class="stock-reserve"
+                  :title="`${p.reserved} réservé(s) par des commandes non expédiées — ${p.physical_stock} en rayon`"
+                >
+                  +{{ p.reserved }} réservé{{ p.reserved > 1 ? 's' : '' }}
+                </span>
               </td>
               <td>
                 <span :class="p.is_active ? 'badge badge-success' : 'badge badge-gray'">
@@ -140,6 +153,17 @@ onMounted(load)
 </script>
 
 <style scoped>
+/* Réservé : indication discrète à côté du compteur, pas un second chiffre
+   concurrent — c'est le stock qui reste l'information principale. */
+.stock-reserve {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  color: #a89a92;
+  white-space: nowrap;
+  cursor: help;
+}
+
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
 
 .page-header__sub {

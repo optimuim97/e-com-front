@@ -4,26 +4,26 @@
  */
 
 export const CONSULTATION_FIELDS = {
-  type:        { api: 'type',        label: 'Type de consultation',       type: 'select',   required: true  },
-  channel:     { api: 'channel',     label: 'Mode de contact préféré',    type: 'select',   required: true  },
-  preferred_at:{ api: 'preferred_at',label: 'Créneau souhaité',           type: 'datetime', required: false },
-  message:     { api: 'message',     label: 'Votre demande',              type: 'textarea', required: false },
-  phone:       { api: 'phone',       label: 'Téléphone (WhatsApp)',        type: 'tel',      required: false },
+  type:        { api: 'type',        labelKey: 'fields.consultationType', type: 'select',   required: true  },
+  channel:     { api: 'channel',     labelKey: 'fields.contactChannel',   type: 'select',   required: true  },
+  preferred_at:{ api: 'preferred_at',labelKey: 'fields.preferredSlot',    type: 'datetime', required: false },
+  message:     { api: 'message',     labelKey: 'fields.yourRequest',      type: 'textarea', required: false },
+  phone:       { api: 'phone',       labelKey: 'fields.phoneWhatsapp',    type: 'tel',      required: false },
 }
 
 export const CONSULTATION_TYPES = [
-  { value: 'skincare',  label: '🌿 Routine soin de peau' },
-  { value: 'product',   label: '💄 Conseil produit' },
-  { value: 'routine',   label: '✨ Routine complète' },
-  { value: 'gift',      label: '🎁 Idée cadeau' },
-  { value: 'other',     label: '💬 Autre question' },
+  { value: 'skincare',  labelKey: 'program.consultationTypes.skincare' },
+  { value: 'product',   labelKey: 'program.consultationTypes.product' },
+  { value: 'routine',   labelKey: 'program.consultationTypes.routine' },
+  { value: 'gift',      labelKey: 'program.consultationTypes.gift' },
+  { value: 'other',     labelKey: 'program.consultationTypes.other' },
 ]
 
 export const CONSULTATION_CHANNELS = [
-  { value: 'whatsapp', label: '💬 WhatsApp' },
-  { value: 'video',    label: '📹 Appel vidéo' },
-  { value: 'email',    label: '📧 Email' },
-  { value: 'store',    label: '🏪 En boutique' },
+  { value: 'whatsapp', labelKey: 'program.consultationChannels.whatsapp' },
+  { value: 'video',    labelKey: 'program.consultationChannels.video' },
+  { value: 'email',    labelKey: 'program.consultationChannels.email' },
+  { value: 'store',    labelKey: 'program.consultationChannels.store' },
 ]
 
 export function makeConsultationForm() {

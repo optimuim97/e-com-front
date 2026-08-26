@@ -101,8 +101,12 @@ import {
   ShoppingCartIcon,
   SwatchIcon,
   PhotoIcon,
+  ArrowsRightLeftIcon,
+  BuildingStorefrontIcon,
+  ReceiptPercentIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
+import { useSettingsStore } from '@/stores/settings';
 import { useAdminNotificationsStore } from '@/admin/stores/adminNotifications.store';
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store';
 import NotificationBell from '@/admin/components/NotificationBell.vue';
@@ -159,6 +163,18 @@ const NAV_GROUPS = [
       { to: '/admin/products',      label: 'Produits',    icon: ShoppingBagIcon, permission: 'products.view'      },
       { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon,      permission: 'categories.view'    },
       { to: '/admin/product-lines', label: 'Gammes',      icon: SwatchIcon,      permission: 'product_lines.view' },
+      { to: '/admin/mouvements-stock', label: 'Mouvements de stock', icon: ArrowsRightLeftIcon, permission: 'stock.view' },
+    ],
+  },
+  {
+    // Groupe entier conditionné à l'interrupteur du module : afficher « Achats »
+    // sur une boutique qui ne l'a pas activé mènerait à un 403.
+    key: 'purchases',
+    label: 'Achats',
+    requiresSetting: 'module_purchases_enabled',
+    items: [
+      { to: '/admin/achats',        label: "Bons d'achat", icon: ReceiptPercentIcon,      permission: 'purchases.view' },
+      { to: '/admin/fournisseurs',  label: 'Fournisseurs', icon: BuildingStorefrontIcon,  permission: 'suppliers.view' },
     ],
   },
   {
@@ -206,6 +222,9 @@ const TITLES = {
   'admin.expeditions':         'Expéditions',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
+  'admin.stock-movements':     'Mouvements de stock',
+  'admin.purchase-orders':     "Bons d'achat",
+  'admin.suppliers':           'Fournisseurs',
   'admin.promotions':          'Opérations commerciales',
   'admin.coupons':             'Coupons & promotions',
   'admin.programme':           'Club fidélité',
@@ -224,11 +243,19 @@ const TITLES = {
   'admin.product-lines.edit':  'Modifier la gamme',
 };
 
+const settingsStore = useSettingsStore();
+settingsStore.fetch();
+
 const visibleGroups = computed(() =>
-  NAV_GROUPS.map(group => ({
-    ...group,
-    items: group.items.filter(item => !item.permission || auth.can(item.permission)),
-  })).filter(group => group.items.length > 0)
+  NAV_GROUPS
+    // Un groupe peut dépendre d'un module désactivé : l'afficher mènerait à un
+    // écran qui refuse l'accès, ce qui se lit comme une panne.
+    .filter(group => !group.requiresSetting || settingsStore.data[group.requiresSetting] === 'true')
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.permission || auth.can(item.permission)),
+    }))
+    .filter(group => group.items.length > 0)
 );
 
 const currentTitle = computed(() => TITLES[route.name] ?? 'Admin');

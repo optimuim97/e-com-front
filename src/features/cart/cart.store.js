@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { cartApi } from './cart.api'
 import api from '@/api'
 import { useToast } from 'vue-toastification'
+import i18n from '@/i18n'
 
 // ── Clé localStorage pour le panier invité ──────────────────────────────────
 const GUEST_KEY = 'rosa_guest_cart'
@@ -93,7 +94,7 @@ export const useCartStore = defineStore('cart', () => {
       }
       saveLocalItems(localItems)
       buildFromLocal()
-      if (!silent) toast.success('✓ Ajouté au panier', { timeout: 2000 })
+      if (!silent) toast.success(i18n.global.t('cart.addedToast'), { timeout: 2000 })
       return
     }
 
@@ -101,9 +102,9 @@ export const useCartStore = defineStore('cart', () => {
     try {
       const { data } = await cartApi.addItem(productId, quantity, variantId)
       cart.value = data
-      if (!silent) toast.success('✓ Ajouté au panier', { timeout: 2000 })
+      if (!silent) toast.success(i18n.global.t('cart.addedToast'), { timeout: 2000 })
     } catch (e) {
-      const msg = e.response?.data?.message ?? 'Impossible d\'ajouter au panier'
+      const msg = e.response?.data?.message ?? i18n.global.t('cart.addError')
       toast.error(msg)
     }
   }

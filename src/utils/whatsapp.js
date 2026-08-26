@@ -33,6 +33,11 @@ export function buildAdminMessage(order, settings = {}) {
         waveLine = `💳 Paiement Wave → ${settings.payment_mobile_number}`
     }
 
+    // Frais de livraison encore à fixer (hors Abidjan, international) : le
+    // total n'est pas ferme. L'annoncer comme définitif obligerait à se dédire
+    // ensuite — autant poser la question dans le message.
+    const fraisEnAttente = !!order.shipping_fee_pending
+
     return [
         `🌹 Nouvelle commande Rosa Beauty Facial Care`,
         `N°: ${order.number}`,
@@ -43,9 +48,15 @@ export function buildAdminMessage(order, settings = {}) {
         '🛒 Articles:',
         ...itemLines,
         '',
-        `💰 Total: ${formatPrice(order.total)}`,
-        methodLabel ? `Paiement: ${methodLabel}` : null,
-        waveLine,
+        fraisEnAttente
+            ? `💰 Sous-total: ${formatPrice(order.subtotal)} (livraison à confirmer)`
+            : `💰 Total: ${formatPrice(order.total)}`,
+        fraisEnAttente ? null : (methodLabel ? `Paiement: ${methodLabel}` : null),
+        fraisEnAttente ? null : waveLine,
+        fraisEnAttente ? '' : null,
+        fraisEnAttente
+            ? '📦 Merci de me confirmer les frais de livraison et le moyen de paiement.'
+            : null,
     ].filter(l => l !== null).join('\n')
 }
 

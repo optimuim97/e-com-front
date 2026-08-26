@@ -6,7 +6,7 @@
         <span v-if="eyebrow" class="hv__eyebrow">{{ eyebrow }}</span>
         <h1 class="hv__title">
           <template v-if="title">{{ title }}</template>
-          <template v-else>Le meilleur de la <em>nature</em> pour vous</template>
+          <template v-else>{{ $t('hero.showcaseTitle') }} <em>{{ $t('hero.showcaseTitleEm') }}</em> {{ $t('hero.showcaseTitleSuffix') }}</template>
         </h1>
         <p v-if="subtitle" class="hv__subtitle">{{ subtitle }}</p>
 
@@ -18,7 +18,7 @@
           </li>
         </ul>
 
-        <RouterLink to="/products" class="hv__cta">{{ ctaLabel }}</RouterLink>
+        <RouterLink to="/products" class="hv__cta">{{ ctaLabel || $t('hero.discoverShop') }}</RouterLink>
       </div>
 
       <!-- Visuel -->
@@ -53,16 +53,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useHeroPhotos } from './useHeroPhotos'
 
 defineProps({
   eyebrow:  { type: String, default: '' },
   title:    { type: String, default: '' },
   subtitle: { type: String, default: '' },
-  ctaLabel: { type: String, default: 'Découvrir la boutique' },
+  ctaLabel: { type: String, default: '' },
 })
 
+const { t } = useI18n()
 const { heroPhotos, currentPhoto, onPhotoError } = useHeroPhotos()
 
 const leaf = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6"/></svg>'
@@ -70,18 +73,18 @@ const flask = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" strok
 const check = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>'
 const heart = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>'
 
-const features = [
-  { label: '100% naturel',         icon: leaf },
-  { label: 'Ingrédients choisis',  icon: flask },
-  { label: 'Sûr & efficace',       icon: check },
-  { label: 'Sans produits nocifs', icon: heart },
-]
-const strip = [
-  { label: 'Inspiré de la nature', icon: leaf },
-  { label: 'Ingrédients sélectionnés', icon: flask },
-  { label: 'Bien-être holistique', icon: heart },
-  { label: 'Approuvé par des milliers', icon: check },
-]
+const features = computed(() => [
+  { label: t('hero.natural'),           icon: leaf },
+  { label: t('hero.chosenIngredients'), icon: flask },
+  { label: t('hero.safeEffective'),     icon: check },
+  { label: t('hero.noHarmful'),         icon: heart },
+])
+const strip = computed(() => [
+  { label: t('hero.natureInspired'),       icon: leaf },
+  { label: t('hero.selectedIngredients'),  icon: flask },
+  { label: t('hero.holisticWellbeing'),    icon: heart },
+  { label: t('hero.approvedByThousands'),  icon: check },
+])
 </script>
 
 <style scoped>

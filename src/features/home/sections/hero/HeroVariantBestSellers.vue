@@ -6,12 +6,12 @@
         <span v-if="eyebrow" class="hb__eyebrow">{{ eyebrow }}</span>
         <h1 class="hb__title">
           <template v-if="title">{{ title }}</template>
-          <template v-else>Révélez votre <em>plus bel éclat</em></template>
+          <template v-else>{{ $t('hero.bsTitle') }} <em>{{ $t('hero.bsTitleEm') }}</em></template>
         </h1>
         <p v-if="subtitle" class="hb__subtitle">{{ subtitle }}</p>
         <div class="hb__ctas">
-          <RouterLink to="/products" class="hb__cta-primary">Acheter maintenant</RouterLink>
-          <RouterLink to="/a-propos" class="hb__cta-text">En savoir plus</RouterLink>
+          <RouterLink to="/products" class="hb__cta-primary">{{ $t('hero.buyNow') }}</RouterLink>
+          <RouterLink to="/a-propos" class="hb__cta-text">{{ $t('hero.learnMore') }}</RouterLink>
         </div>
       </div>
 
@@ -31,7 +31,7 @@
           <div class="hb-card__body">
             <div class="hb-card__head">
               <strong class="hb-card__name">{{ p.name }}</strong>
-              <button class="hb-card__buy" @click="$emit('add-to-cart', p)" title="Ajouter au panier">+ Acheter</button>
+              <button class="hb-card__buy" @click="$emit('add-to-cart', p)" :title="$t('common.addToCart')">{{ $t('hero.buyShort') }}</button>
             </div>
             <span class="hb-card__price">{{ fmt(p.price) }}</span>
           </div>

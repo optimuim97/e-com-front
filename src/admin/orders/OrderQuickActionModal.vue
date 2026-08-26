@@ -41,13 +41,66 @@
         </div>
       </div>
 
+      <!--
+        Frais de livraison — hors Abidjan et international uniquement.
+
+        Placé avant tout le reste, et bloquant tant qu'il est vide : chacune
+        des actions qui suivent annonce un montant à la cliente (lien de
+        paiement, notification, expédition). Un total annoncé puis corrigé à la
+        hausse, une cliente le refuse — et le serveur refuse d'ailleurs ces
+        actions de son côté, ceci n'est que le raccourci de saisie.
+
+        Le champ reste modifiable même une fois rempli : le transporteur peut
+        revoir son prix avant l'envoi.
+      -->
+      <div
+        v-if="feeEditable"
+        class="modal__section fee-section"
+        :class="{ 'fee-section--blocking': feePending }"
+      >
+        <h4>
+          Frais de livraison
+          <span v-if="feePending" class="fee-flag">à renseigner</span>
+        </h4>
+
+        <p v-if="feePending" class="fee-warn">
+          {{ feeMessage }}
+        </p>
+
+        <div class="action-row">
+          <input
+            v-model.number="fee"
+            type="number"
+            min="0"
+            step="100"
+            class="input fee-input"
+            placeholder="Ex. 3000"
+            :disabled="busy === 'fee'"
+            @keyup.enter="saveFee"
+          />
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="busy === 'fee' || fee === '' || fee === null || Number(fee) < 0"
+            @click="saveFee"
+          >
+            {{ busy === 'fee' ? 'Enregistrement…' : 'Enregistrer les frais' }}
+          </button>
+        </div>
+
+        <p class="modal__hint">
+          Sous-total {{ fmt(order.subtotal) }} · Nouveau total :
+          <strong>{{ fmt(totalWithFee) }}</strong>
+        </p>
+      </div>
+
       <!-- Action paiement -->
       <div class="modal__section" v-if="!order.paid_at">
         <h4>1. Paiement</h4>
         <div class="action-row">
           <button
             class="btn btn-success"
-            :disabled="busy === 'mark-paid'"
+            :disabled="busy === 'mark-paid' || feePending"
             @click="markPaid"
           >
             {{ busy === 'mark-paid' ? 'Validation…' : 'Marquer comme payée (cash / COD)' }}
@@ -62,10 +115,59 @@
          
           <button
             class="btn btn-outline"
+            :disabled="feePending"
             @click="generateMerchantLink"
           >
             Générer lien marchand Wave
           </button>
+        </div>
+
+        <!--
+          Tous les moyens actifs, d'un coup.
+
+          La cliente n'a pas forcément le compte qu'on lui propose : lui
+          envoyer le seul Wave, c'est l'obliger à répondre « je n'ai que
+          Orange » et refaire un aller-retour. On lui donne le choix.
+          Les moyens désactivés dans les Paramètres n'apparaissent pas.
+        -->
+        <div v-if="payOptions.length" class="pay-options">
+          <div class="pay-options__head">
+            <span>Moyens de paiement à proposer</span>
+            <a
+              v-if="waAllOptionsLink && !feePending"
+              :href="waAllOptionsLink"
+              target="_blank"
+              rel="noopener"
+              class="btn btn-xs btn-primary"
+            >
+              Tout envoyer via WhatsApp
+            </a>
+          </div>
+
+          <ul class="pay-options__list">
+            <li v-for="opt in payOptions" :key="opt.key" class="pay-option">
+              <span class="pay-option__badge" :class="`pay-option__badge--${opt.key}`">{{ opt.sigle }}</span>
+              <span class="pay-option__info">
+                <strong>{{ opt.label }}</strong>
+                <span class="pay-option__value">{{ opt.value }}</span>
+              </span>
+              <span class="pay-option__actions">
+                <button class="btn btn-xs btn-outline" @click="copy(opt.value)">Copier</button>
+                <a
+                  v-if="opt.waLink && !feePending"
+                  :href="opt.waLink"
+                  target="_blank"
+                  rel="noopener"
+                  class="btn btn-xs btn-outline"
+                >Envoyer</a>
+              </span>
+            </li>
+          </ul>
+
+          <p v-if="feePending" class="modal__hint">
+            Renseignez d'abord les frais de livraison : le montant à régler
+            n'est pas encore arrêté.
+          </p>
         </div>
         <div v-if="paymentLink" class="payment-link-box">
           <p>Lien généré (CinetPay) :</p>
@@ -117,7 +219,7 @@
           </button>
           <button
             class="btn btn-primary"
-            :disabled="!tracking.trim() || busy === 'tracking'"
+            :disabled="!tracking.trim() || busy === 'tracking' || feePending"
             @click="saveTracking()"
           >
             {{ busy === 'tracking' ? 'Enregistrement…' : 'Confirmer + marquer expédiée' }}
@@ -135,7 +237,7 @@
           <button
             class="btn btn-primary"
             type="button"
-            :disabled="!clientPhone || busy === 'notify'"
+            :disabled="!clientPhone || busy === 'notify' || feePending"
             @click="notifyNow"
             title="Envoie le récapitulatif et la facture par WhatsApp"
           >
@@ -214,6 +316,56 @@ const error         = ref('');
 const success       = ref('');
 const paymentLink   = ref(null);
 const merchantLink  = ref(null);
+
+// ── Frais de livraison ───────────────────────────────────────────────────────
+//
+// L'état vient du serveur (`shipping_fee_pending` / `shipping_fee_editable`),
+// qui applique la même règle que ses garde-fous. On en garde une copie locale
+// pour que le panneau se débloque dès l'enregistrement, sans attendre que le
+// parent recharge sa liste.
+const feeEditable = computed(() => !!props.order.shipping_fee_editable);
+const feePending  = ref(!!props.order.shipping_fee_pending);
+const fee         = ref(Number(props.order.shipping_cost) || '');
+
+const feeMessage = computed(() =>
+  props.order.destination === 'international'
+    ? "Commande internationale : renseignez les frais avant d'annoncer un montant à la cliente."
+    : "Livraison hors Abidjan : renseignez les frais avant d'annoncer un montant à la cliente."
+);
+
+const totalWithFee = computed(() => {
+  const sousTotal = Number(props.order.subtotal) || 0;
+  const remise    = Number(props.order.discount_amount) || 0;
+  return Math.max(0, sousTotal - remise + (Number(fee.value) || 0));
+});
+
+async function saveFee() {
+  if (busy.value) return;
+  busy.value = 'fee';
+  error.value = '';
+  success.value = '';
+  try {
+    const { data } = await api.put(`/admin/orders/${props.order.id}`, {
+      shipping_cost: Number(fee.value) || 0,
+    });
+    const majOrder = data.data ?? data;
+
+    // Zéro n'est pas un tarif : le serveur continue de considérer les frais
+    // comme non fixés, le panneau doit le refléter.
+    feePending.value = !!majOrder.shipping_fee_pending;
+    success.value = feePending.value
+      ? 'Frais enregistrés à 0 — le montant reste considéré comme non fixé.'
+      : `Frais enregistrés. Nouveau total : ${fmt(majOrder.total)}`;
+
+    // `partial` : la ligne doit refléter le nouveau total, mais la commande
+    // n'est pas traitée pour autant — il reste à notifier ou à expédier.
+    emit('updated', majOrder, { partial: true });
+  } catch (e) {
+    error.value = e.response?.data?.message ?? "Les frais n'ont pas pu être enregistrés.";
+  } finally {
+    busy.value = null;
+  }
+}
 
 const clientName = computed(() => {
   const addr = props.order.shipping_address || {};
@@ -331,6 +483,99 @@ function generateMerchantLink() {
   success.value = 'Lien marchand Wave généré. Tu peux l\'envoyer au client.';
 }
 
+/**
+ * Moyens de paiement à proposer à la cliente.
+ *
+ * Seuls ceux activés dans les Paramètres, avec leur numéro (ou le lien
+ * marchand pour Wave). Un moyen sans numéro renseigné n'est pas proposé :
+ * envoyer « Orange Money : » suivi de rien ne rend service à personne.
+ */
+const payOptions = computed(() => {
+  const s = (settings.data?.value ?? settings.data ?? {});
+  const lire = (k) => (s[k] ?? '').toString().trim();
+  const actif = (k) => ['1', 'true', 'on'].includes(lire(k).toLowerCase());
+  const numeroParDefaut = lire('payment_mobile_number');
+
+  const lienWave = (lire('payment_wave_link') || WAVE_MERCHANT_DEFAULT).trim();
+  const montant  = Math.round(Number(props.order.total) || 0);
+  const sep      = lienWave.includes('?')
+    ? (lienWave.endsWith('?') || lienWave.endsWith('&') ? '' : '&')
+    : '?';
+
+  const candidats = [
+    {
+      key: 'wave', sigle: 'W', label: 'Wave',
+      actif: actif('payment_wave_enabled'),
+      value: montant ? `${lienWave}${sep}amount=${montant}` : lienWave,
+    },
+    {
+      key: 'orange', sigle: 'OM', label: 'Orange Money',
+      actif: actif('payment_orange_money_enabled'),
+      value: lire('payment_orange_money_number') || numeroParDefaut,
+    },
+    {
+      key: 'mtn', sigle: 'M', label: 'MTN MoMo',
+      actif: actif('payment_mtn_enabled'),
+      value: lire('payment_mtn_number') || numeroParDefaut,
+    },
+  ];
+
+  return candidats
+    .filter((o) => o.actif && o.value)
+    .map((o) => ({
+      ...o,
+      waLink: buildWaLink(clientPhone.value, messagePourUnMoyen(o)),
+    }));
+});
+
+/** Message d'un seul moyen — la cliente en a demandé un en particulier. */
+function messagePourUnMoyen(opt) {
+  const prenom = clientName.value.split(' ')[0];
+  const consigne = opt.key === 'wave'
+    ? `Cliquez sur ce lien pour payer directement :\n${opt.value}`
+    : `Envoyez ${fmt(props.order.total)} au ${opt.value}.\nIndiquez la référence ${props.order.number} dans le motif.`;
+
+  return [
+    `Bonjour ${prenom} 🌹`,
+    '',
+    `Paiement de votre commande ${props.order.number} — ${fmt(props.order.total)}`,
+    '',
+    `${opt.label} :`,
+    consigne,
+    '',
+    'Envoyez-nous la capture une fois le paiement fait.',
+    '',
+    'Merci de votre confiance.',
+    'Rosabeauty Facial Care',
+  ].join('\n');
+}
+
+/**
+ * Message reprenant tous les moyens actifs : la cliente choisit celui qu'elle
+ * possède, sans avoir à nous le demander.
+ */
+const waAllOptionsLink = computed(() => {
+  const options = payOptions.value;
+  if (!options.length) return null;
+
+  const prenom = clientName.value.split(' ')[0];
+  const lignes = options.map((o) => `• ${o.label} : ${o.value}`);
+
+  return buildWaLink(clientPhone.value, [
+    `Bonjour ${prenom} 🌹`,
+    '',
+    `Paiement de votre commande ${props.order.number} — ${fmt(props.order.total)}`,
+    '',
+    'Choisissez le moyen qui vous arrange :',
+    ...lignes,
+    '',
+    `Indiquez la référence ${props.order.number} dans le motif, puis envoyez-nous la capture.`,
+    '',
+    'Merci de votre confiance.',
+    'Rosabeauty Facial Care',
+  ].join('\n'));
+});
+
 const waMerchantLink = computed(() => buildWaLink(
   clientPhone.value,
   `Bonjour ${clientName.value.split(' ')[0]} 🌹\n\nVoici votre lien de paiement Wave pour la commande ${props.order.number} (${fmt(props.order.total)}) :\n${merchantLink.value}\n\nCliquez sur le lien pour payer directement avec Wave.\n\nMerci de votre confiance.\nRosabeauty Facial Care`,
@@ -408,6 +653,93 @@ function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
 </script>
 
 <style scoped>
+/* ── Moyens de paiement proposés ── */
+.pay-options {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #f0e8e3;
+  border-radius: 12px;
+  background: #fffdfc;
+}
+
+.pay-options__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a7f78;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.pay-options__list { list-style: none; margin: 0; padding: 0; }
+
+.pay-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #faf6f4;
+}
+.pay-option:last-child { border-bottom: none; }
+
+.pay-option__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+.pay-option__badge--wave   { background: #1dc3f0; }
+.pay-option__badge--orange { background: #ff6600; }
+.pay-option__badge--mtn    { background: #ffcb00; color: #333; }
+
+.pay-option__info { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.pay-option__value {
+  font-size: 12px;
+  color: #8a7f78;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pay-option__actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Frais de livraison ── */
+.fee-section--blocking {
+  border-left: 3px solid #f59e0b;
+  background: #fffbeb;
+}
+
+.fee-flag {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fde68a;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.fee-warn {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+.fee-input { max-width: 180px; }
+
 .modal-overlay {
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,0.45);

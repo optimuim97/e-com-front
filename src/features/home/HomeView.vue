@@ -31,7 +31,7 @@
     <FlashSaleSection
       v-if="homeStats.flash_sales && homeStats.flash_sales.length"
       :products="homeStats.flash_sales"
-      :label="settings.homeFlashLabel || 'Ventes flash'"
+      :label="settings.homeFlashLabel || $t('flashSale.defaultLabel')"
       @add-to-cart="addToCart"
     />
 
@@ -112,9 +112,8 @@ const FALLBACK_TAGLINE = computed(() => t('about.defaultTagline'))
 useSeo(() => ({
   title: settings.homeHeroTitle
     ? `${settings.shopName || 'Rosa Beauty Facial Care'} — ${settings.homeHeroTitle}`
-    : 'Rosa Beauty Facial Care — Soins du coprs naturels à base de roses',
-  description: settings.shopTagline
-    || "Soins du visage naturels à base d'eau de rose, formulés et fabriqués en Côte d'Ivoire. Élixirs, eaux florales et laits corporels livrés à Abidjan et dans tout le pays.",
+    : t('home.seoTitle'),
+  description: settings.shopTagline || t('home.seoDescription'),
   canonical: '/',
   image: '/rosa-beauty-facial-care.jpg',
   jsonLd: [
@@ -137,13 +136,13 @@ const heroProduct  = computed(() => homeStats.value.best_seller ?? featured.valu
 const flashProduct = computed(() => homeStats.value.flash_sales?.[0] ?? null)
 
 /* ── Témoignages ─────────────────────────────────────────────────────────── */
-const FALLBACK_TESTIMONIALS = [
-  { name: 'Aminata K.',    location: 'Abidjan', quote: "L'élixir de roses a transformé ma peau en deux semaines. Mon teint est plus unifié et ma peau respire vraiment.", rating: 5 },
-  { name: 'Fatoumata D.', location: 'Abidjan', quote: "L'eau de rose pure est incroyable. Je l'utilise matin et soir et ma peau est tellement plus douce.", rating: 5 },
-  { name: 'Nathalie B.',  location: 'Bouaké',  quote: 'Le lait corporel à la rose sent divinement bon et hydrate vraiment. Ma peau est soyeuse toute la journée.', rating: 5 },
-]
+const FALLBACK_TESTIMONIALS = computed(() => [
+  { name: 'Aminata K.',   location: 'Abidjan', quote: t('testimonials.fallback1'), rating: 5 },
+  { name: 'Fatoumata D.', location: 'Abidjan', quote: t('testimonials.fallback2'), rating: 5 },
+  { name: 'Nathalie B.',  location: 'Bouaké',  quote: t('testimonials.fallback3'), rating: 5 },
+])
 const testimonials = computed(() =>
-  homeStats.value.testimonials?.length ? homeStats.value.testimonials : FALLBACK_TESTIMONIALS
+  homeStats.value.testimonials?.length ? homeStats.value.testimonials : FALLBACK_TESTIMONIALS.value
 )
 
 /* ── Panier ─────────────────────────────────────────────────────────────── */
@@ -170,7 +169,7 @@ const benefits = computed(() => [
   },
   {
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
-    title: t('benefits.deliveryTitle', { delay: settings.shippingDelay || 'rapide' }),
+    title: t('benefits.deliveryTitle', { delay: settings.shippingDelay }),
     // Pas de promesse de livraison gratuite (aucune n'existe réellement → risque de litige)
     desc:  t('benefits.deliveryDesc'),
   },
@@ -198,7 +197,7 @@ const dynamicStats = computed(() => [
     label: t('about.careRanges'),
   },
   {
-    value: settings.shippingDelay || '48h',
+    value: settings.shippingDelay,
     label: t('about.deliveryDelay'),
   },
 ])

@@ -25,14 +25,14 @@
           :class="{ 'featured-tab--active': activeTab === 'products' }"
           @click="activeTab = 'products'"
         >
-          Nos produits
+          {{ $t('bestSellers.tabProducts') }}
         </button>
         <button
           class="featured-tab"
           :class="{ 'featured-tab--active': activeTab === 'lines' }"
           @click="activeTab = 'lines'"
         >
-          Nos gammes
+          {{ $t('bestSellers.tabLines') }}
         </button>
       </div>
 
@@ -81,7 +81,7 @@
                   <li
                     v-if="line.item_names.length > 4"
                     class="line-card__deco-item line-card__deco-item--more"
-                  >+{{ line.item_names.length - 4 }} autres</li>
+                  >{{ $t('bestSellers.moreItems', { count: line.item_names.length - 4 }) }}</li>
                 </ul>
                 <span v-else class="line-card__deco-name">{{ line.name }}</span>
               </div>
@@ -89,8 +89,8 @@
             <div class="line-card__body">
               <h3 class="line-card__name">{{ line.name }}</h3>
               <p v-if="line.tagline" class="line-card__tagline">{{ line.tagline }}</p>
-              <span class="line-card__count">{{ line.products_count ?? 0 }} produit{{ (line.products_count ?? 0) > 1 ? 's' : '' }}</span>
-              <span class="line-card__cta">Découvrir →</span>
+              <span class="line-card__count">{{ line.products_count ?? 0 }} {{ $t('products.product', line.products_count ?? 0) }}</span>
+              <span class="line-card__cta">{{ $t('bestSellers.discover') }} →</span>
             </div>
           </RouterLink>
         </div>

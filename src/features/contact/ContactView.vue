@@ -5,11 +5,10 @@
     <section class="cp-hero">
       <div class="container cp-hero__inner">
         <div class="cp-hero__text">
-          <span class="eyebrow">Nous contacter</span>
-          <h1 class="display-lg cp-hero__title">Parlons-nous</h1>
+          <span class="eyebrow">{{ $t('contact.eyebrow') }}</span>
+          <h1 class="display-lg cp-hero__title">{{ $t('contact.title') }}</h1>
           <p class="cp-hero__desc">
-            Une question sur un produit, une commande ou simplement envie d'en savoir plus ?
-            Notre équipe vous répond dans les plus brefs délais.
+            {{ $t('contact.desc') }}
           </p>
 
         <!-- ── Coordonnées visibles + copier ── -->
@@ -23,11 +22,11 @@
               class="cp-coord__copy"
               :class="{ 'cp-coord__copy--done': copied === 'phone' }"
               @click="copyToClipboard(settings.whatsappNumber, 'phone')"
-              :title="copied === 'phone' ? 'Copié !' : 'Copier le numéro'"
+              :title="copied === 'phone' ? $t('orders.copied') : $t('orders.copyNumber')"
             >
               <svg v-if="copied !== 'phone'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-              {{ copied === 'phone' ? 'Copié !' : 'Copier' }}
+              {{ copied === 'phone' ? $t('orders.copied') : $t('contact.copy') }}
             </button>
           </div>
           <div class="cp-coord__sep" v-if="settings.whatsappNumber && shopEmail">·</div>
@@ -41,11 +40,11 @@
               class="cp-coord__copy"
               :class="{ 'cp-coord__copy--done': copied === 'email' }"
               @click="copyToClipboard(shopEmail, 'email')"
-              :title="copied === 'email' ? 'Copié !' : 'Copier l\'email'"
+              :title="copied === 'email' ? $t('orders.copied') : $t('contact.copyEmail')"
             >
               <svg v-if="copied !== 'email'" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-              {{ copied === 'email' ? 'Copié !' : 'Copier' }}
+              {{ copied === 'email' ? $t('orders.copied') : $t('contact.copy') }}
             </button>
           </div>
         </div>
@@ -75,7 +74,7 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 1.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.7a16 16 0 0 0 6.34 6.34l.88-.88a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
             </svg>
-            Appeler
+            {{ $t('contact.call') }}
           </a>
 
           <a
@@ -87,7 +86,7 @@
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
-            Envoyer un email
+            {{ $t('contact.sendEmail') }}
           </a>
         </div>
         </div><!-- /cp-hero__text -->
@@ -98,7 +97,7 @@
           <div class="cp-hero__img-overlay"></div>
           <div class="cp-hero__img-badge">
             <span><FlowerMark /></span>
-            <span>Réponse sous 24h</span>
+            <span>{{ $t('contact.reply24h') }}</span>
           </div>
         </div>
 
@@ -110,15 +109,15 @@
 
         <!-- ── Formulaire ── -->
         <div class="cp-form-wrap">
-          <h2 class="cp-section-title">Envoyez-nous un message</h2>
+          <h2 class="cp-section-title">{{ $t('contact.formTitle') }}</h2>
 
           <!-- Succès -->
           <Transition name="fade">
             <div v-if="success" class="cp-success">
               <div class="cp-success__icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></div>
-              <h3>Message envoyé !</h3>
-              <p>Merci <strong>{{ sentName }}</strong>, nous vous répondrons très rapidement.</p>
-              <button class="btn btn-outline" @click="resetForm">Envoyer un autre message</button>
+              <h3>{{ $t('contact.successTitle') }}</h3>
+              <p>{{ $t('contact.successThanks') }} <strong>{{ sentName }}</strong>{{ $t('contact.successDesc') }}</p>
+              <button class="btn btn-outline" @click="resetForm">{{ $t('contact.sendAnother') }}</button>
             </div>
           </Transition>
 
@@ -126,27 +125,27 @@
             <!-- Nom + Email -->
             <div class="cp-form__row">
               <div class="cp-field">
-                <label for="cf-name">Nom complet <span class="req">*</span></label>
+                <label for="cf-name">{{ $t('auth.fullName') }} <span class="req">*</span></label>
                 <input
                   id="cf-name"
                   v-model="form.name"
                   class="input"
                   :class="{ 'input--error': errors.name }"
                   type="text"
-                  placeholder="Votre nom"
+                  :placeholder="$t('contact.namePlaceholder')"
                   autocomplete="name"
                 />
                 <span v-if="errors.name" class="cp-error">{{ errors.name }}</span>
               </div>
               <div class="cp-field">
-                <label for="cf-email">Email <span class="req">*</span></label>
+                <label for="cf-email">{{ $t('auth.email') }} <span class="req">*</span></label>
                 <input
                   id="cf-email"
                   v-model="form.email"
                   class="input"
                   :class="{ 'input--error': errors.email }"
                   type="email"
-                  placeholder="votre@email.com"
+                  :placeholder="$t('contact.emailPlaceholder')"
                   autocomplete="email"
                 />
                 <span v-if="errors.email" class="cp-error">{{ errors.email }}</span>
@@ -156,7 +155,7 @@
             <!-- Téléphone + Sujet -->
             <div class="cp-form__row">
               <div class="cp-field">
-                <label for="cf-phone">Téléphone</label>
+                <label for="cf-phone">{{ $t('auth.phone') }}</label>
                 <PhoneInput
                   id="cf-phone"
                   v-model="form.phone"
@@ -164,15 +163,15 @@
                 />
               </div>
               <div class="cp-field">
-                <label for="cf-subject">Sujet <span class="req">*</span></label>
+                <label for="cf-subject">{{ $t('contact.subject') }} <span class="req">*</span></label>
                 <select
                   id="cf-subject"
                   v-model="form.subject"
                   class="input"
                   :class="{ 'input--error': errors.subject }"
                 >
-                  <option value="" disabled>Choisir un sujet</option>
-                  <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
+                  <option value="" disabled>{{ $t('contact.chooseSubject') }}</option>
+                  <option v-for="s in subjects" :key="s.value" :value="s.value">{{ s.label }}</option>
                 </select>
                 <span v-if="errors.subject" class="cp-error">{{ errors.subject }}</span>
               </div>
@@ -180,13 +179,13 @@
 
             <!-- Message -->
             <div class="cp-field">
-              <label for="cf-message">Message <span class="req">*</span></label>
+              <label for="cf-message">{{ $t('contact.message') }} <span class="req">*</span></label>
               <textarea
                 id="cf-message"
                 v-model="form.message"
                 class="input cp-textarea"
                 :class="{ 'input--error': errors.message }"
-                placeholder="Décrivez votre demande..."
+                :placeholder="$t('contact.messagePlaceholder')"
                 rows="5"
               ></textarea>
               <div class="cp-char">{{ form.message.length }}/3000</div>
@@ -197,12 +196,12 @@
             <div v-if="globalError" class="cp-global-error">{{ globalError }}</div>
 
             <button type="submit" class="btn btn-primary cp-submit" :disabled="submitting">
-              <span v-if="!submitting">Envoyer le message</span>
+              <span v-if="!submitting">{{ $t('contact.submit') }}</span>
               <span v-else class="cp-loading">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
                 </svg>
-                Envoi en cours…
+                {{ $t('contact.submitting') }}
               </span>
             </button>
           </form>
@@ -210,7 +209,7 @@
 
         <!-- ── Infos de contact ── -->
         <div class="cp-info">
-          <h2 class="cp-section-title">Retrouvez-nous</h2>
+          <h2 class="cp-section-title">{{ $t('contact.findUs') }}</h2>
 
           <div class="cp-info__cards">
             <!-- WhatsApp -->
@@ -230,7 +229,7 @@
               <div class="cp-info-card__body">
                 <p class="cp-info-card__label">WhatsApp</p>
                 <p class="cp-info-card__val">{{ settings.whatsappNumber }}</p>
-                <span class="cp-info-card__sub">Réponse rapide · Cliquer pour ouvrir</span>
+                <span class="cp-info-card__sub">{{ $t('contact.whatsappSub') }}</span>
               </div>
               <svg class="cp-info-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -247,9 +246,9 @@
                 </svg>
               </span>
               <div class="cp-info-card__body">
-                <p class="cp-info-card__label">Téléphone</p>
+                <p class="cp-info-card__label">{{ $t('auth.phone') }}</p>
                 <p class="cp-info-card__val">{{ settings.whatsappNumber }}</p>
-                <span class="cp-info-card__sub">Appel direct · Tap pour appeler</span>
+                <span class="cp-info-card__sub">{{ $t('contact.callSub') }}</span>
               </div>
               <svg class="cp-info-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -269,7 +268,7 @@
               <div class="cp-info-card__body">
                 <p class="cp-info-card__label">Email</p>
                 <p class="cp-info-card__val">{{ shopEmail }}</p>
-                <span class="cp-info-card__sub">Réponse sous 24h · Cliquer pour écrire</span>
+                <span class="cp-info-card__sub">{{ $t('contact.emailSub') }}</span>
               </div>
               <svg class="cp-info-card__arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
@@ -278,9 +277,9 @@
             <div class="cp-info-card">
               <span class="cp-info-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
               <div class="cp-info-card__body">
-                <p class="cp-info-card__label">Horaires</p>
-                <p class="cp-info-card__val">Lundi — Vendredi</p>
-                <span class="cp-info-card__sub">8h00 – 21h00</span>
+                <p class="cp-info-card__label">{{ $t('contact.hours') }}</p>
+                <p class="cp-info-card__val">{{ $t('contact.hoursDays') }}</p>
+                <span class="cp-info-card__sub">{{ $t('contact.hoursRange') }}</span>
               </div>
             </div>
 
@@ -288,16 +287,16 @@
             <div class="cp-info-card">
               <span class="cp-info-card__icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>
               <div class="cp-info-card__body">
-                <p class="cp-info-card__label">Localisation</p>
-                <p class="cp-info-card__val">Abidjan, Côte d'Ivoire</p>
-                <span class="cp-info-card__sub">Livraison nationale</span>
+                <p class="cp-info-card__label">{{ $t('contact.location') }}</p>
+                <p class="cp-info-card__val">{{ $t('contact.locationVal') }}</p>
+                <span class="cp-info-card__sub">{{ $t('contact.locationSub') }}</span>
               </div>
             </div>
           </div>
 
           <!-- FAQ rapide -->
           <div class="cp-faq">
-            <h3 class="cp-faq__title">Questions fréquentes</h3>
+            <h3 class="cp-faq__title">{{ $t('contact.faqTitle') }}</h3>
             <div
               v-for="(faq, i) in faqs"
               :key="i"
@@ -325,20 +324,22 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/api'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
 import { useSeo, breadcrumbJsonLd } from '@/composables/useSeo'
 
+const { t }    = useI18n()
 const settings = useSettingsStore()
 
 useSeo(() => ({
-  title: 'Contact — Rosa Beauty Facial Care',
-  description: "Une question sur nos soins ou votre commande ? Contactez Rosa Beauty Facial Care par WhatsApp, téléphone ou e-mail. Réponse rapide, livraison partout en Côte d'Ivoire.",
+  title: t('contact.seoTitle'),
+  description: t('contact.seoDescription'),
   canonical: '/contact',
   jsonLd: breadcrumbJsonLd([
-    { name: 'Accueil', path: '/' },
-    { name: 'Contact', path: '/contact' },
+    { name: t('common.home'), path: '/' },
+    { name: t('contact.breadcrumb'), path: '/contact' },
   ]),
 }))
 
@@ -356,33 +357,22 @@ const shopEmail = computed(() =>
   settings.shopEmail || ''
 )
 
-const subjects = [
-  'Question sur un produit',
-  'Suivi de commande',
-  'Retour / remboursement',
-  'Partenariat',
-  'Presse & médias',
-  'Autre',
-]
+// La valeur envoyée à l'API reste en français : seul le libellé est traduit.
+const subjects = computed(() => [
+  { value: 'Question sur un produit', label: t('contact.subjects.product') },
+  { value: 'Suivi de commande',       label: t('contact.subjects.orderTracking') },
+  { value: 'Retour / remboursement',  label: t('contact.subjects.returnRefund') },
+  { value: 'Partenariat',             label: t('contact.subjects.partnership') },
+  { value: 'Presse & médias',         label: t('contact.subjects.press') },
+  { value: 'Autre',                   label: t('contact.subjects.other') },
+])
 
-const faqs = [
-  {
-    q: 'Quels sont vos délais de livraison ?',
-    a: 'Nous livrons à Abidjan sous 24–48h et dans le reste de la Côte d\'Ivoire sous 2–5 jours ouvrés.',
-  },
-  {
-    q: 'Puis-je retourner un produit ?',
-    a: "Nous n'acceptons pas de retour après livraison. Nous vous invitons à vérifier votre commande dès la réception, en présence du livreur, afin de signaler tout problème immédiatement.",
-  },
-  {
-    q: 'Vos produits sont-ils testés sur les peaux noires ?',
-    a: 'Absolument. Nos formules sont développées et testées spécifiquement pour les peaux africaines et leurs besoins.',
-  },
-  {
-    q: 'Comment passer une commande ?',
-    a: 'Directement sur notre site en ajoutant vos produits au panier, ou via WhatsApp pour une commande rapide.',
-  },
-]
+const faqs = computed(() => [
+  { q: t('contact.faq1q'), a: t('contact.faq1a') },
+  { q: t('contact.faq2q'), a: t('contact.faq2a') },
+  { q: t('contact.faq3q'), a: t('contact.faq3a') },
+  { q: t('contact.faq4q'), a: t('contact.faq4a') },
+])
 
 const form = reactive({
   name:    '',
@@ -421,12 +411,12 @@ async function copyToClipboard(text, key) {
 function validate() {
   Object.keys(errors).forEach(k => delete errors[k])
   let ok = true
-  if (!form.name.trim())    { errors.name    = 'Le nom est requis.'; ok = false }
-  if (!form.email.trim())   { errors.email   = 'L\'email est requis.'; ok = false }
-  else if (!/\S+@\S+\.\S+/.test(form.email)) { errors.email = 'Email invalide.'; ok = false }
-  if (!form.subject)        { errors.subject = 'Choisissez un sujet.'; ok = false }
-  if (!form.message.trim()) { errors.message = 'Le message est requis.'; ok = false }
-  else if (form.message.length > 3000) { errors.message = 'Message trop long (max 3000 caractères).'; ok = false }
+  if (!form.name.trim())    { errors.name    = t('contact.errNameRequired'); ok = false }
+  if (!form.email.trim())   { errors.email   = t('contact.errEmailRequired'); ok = false }
+  else if (!/\S+@\S+\.\S+/.test(form.email)) { errors.email = t('contact.errEmailInvalid'); ok = false }
+  if (!form.subject)        { errors.subject = t('contact.errSubjectRequired'); ok = false }
+  if (!form.message.trim()) { errors.message = t('contact.errMessageRequired'); ok = false }
+  else if (form.message.length > 3000) { errors.message = t('contact.errMessageTooLong'); ok = false }
   return ok
 }
 
@@ -439,7 +429,7 @@ async function submit() {
     sentName.value = form.name
     success.value  = true
   } catch (err) {
-    globalError.value = err?.response?.data?.message ?? 'Une erreur est survenue. Réessayez.'
+    globalError.value = err?.response?.data?.message ?? t('checkout.submitError')
   } finally {
     submitting.value = false
   }

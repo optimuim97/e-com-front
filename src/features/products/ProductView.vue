@@ -259,7 +259,7 @@
 
       <!-- ─── Produits similaires ─────────────────────────────────── -->
       <section v-if="related.length" class="related-section">
-        <h2 class="related-section__title">Vous aimerez aussi</h2>
+        <h2 class="related-section__title">{{ $t('product.related') }}</h2>
         <div class="related-grid">
           <ProductCard
             v-for="p in related"

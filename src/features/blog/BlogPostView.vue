@@ -75,7 +75,7 @@
                   {{ $t('blog.backToBlog') }}
                 </RouterLink>
                 <div class="post-share">
-                  <span class="post-share__label">Partager</span>
+                  <span class="post-share__label">{{ $t('blog.share') }}</span>
                   <a :href="`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(pageUrl)}`"
                     target="_blank" rel="noopener" class="post-share__btn" title="Twitter/X">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -96,8 +96,8 @@
           <!-- Sticky sidebar -->
           <aside class="post-sidebar">
             <div class="card p-5 space-y-4">
-              <h3 class="post-sidebar__title">Articles récents</h3>
-              <div v-if="related.length === 0" class="text-sm text-gray-400">Aucun article pour l'instant.</div>
+              <h3 class="post-sidebar__title">{{ $t('blog.recentPosts') }}</h3>
+              <div v-if="related.length === 0" class="text-sm text-gray-400">{{ $t('blog.noPosts') }}</div>
               <div v-for="r in related" :key="r.id" class="post-related">
                 <RouterLink :to="{ name: 'blog.post', params: { slug: r.slug } }" class="post-related__img-wrap">
                   <img v-if="r.cover_image" :src="r.cover_image" :alt="r.title" class="post-related__img" />

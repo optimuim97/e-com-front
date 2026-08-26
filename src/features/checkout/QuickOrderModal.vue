@@ -17,23 +17,62 @@
             <h2 class="qo-confirmed__title">{{ $t('quickOrder.confirmedTitle') }}</h2>
             <p class="qo-confirmed__number">{{ $t('quickOrder.confirmedNumber') }} <strong>{{ confirmedOrder.number }}</strong></p>
 
+            <!--
+              Hors Abidjan et international : ni les frais ni le règlement ne
+              sont arrêtés. On met l'agent en avant et on tait le total, qui
+              n'est qu'un sous-total — l'afficher comme définitif obligerait à
+              se dédire dès le premier message.
+            -->
+            <div v-if="needsAgent" class="qo-agent">
+              <p class="qo-agent__title">{{ $t('orders.agentTitle') }}</p>
+              <p class="qo-agent__desc">{{ $t('orders.agentDesc') }}</p>
+              <p class="qo-agent__subtotal">
+                {{ $t('common.subtotal') }} : <strong>{{ fmtPrice(confirmedOrder.subtotal ?? confirmedOrder.total) }}</strong>
+                <span>{{ $t('orders.agentSubtotalHint') }}</span>
+              </p>
+
+              <!--
+                Bascule automatique, annulable. Le délai laisse le temps de
+                relever le numéro de commande : si WhatsApp n'aboutit pas,
+                c'est tout ce qui reste à la cliente pour nous retrouver.
+              -->
+              <p v-if="needsAgent && !adminWhatsappLink" class="qo-agent__redirect">
+                {{ $t('orders.agentNoWhatsapp') }}
+                <strong v-if="settingsStore.shopPhone">{{ settingsStore.shopPhone }}</strong>
+              </p>
+
+              <p v-if="agentRedirect.bloque.value" class="qo-agent__redirect">
+                {{ $t('orders.agentBlocked') }}
+              </p>
+
+              <p v-else-if="agentRedirect.active.value" class="qo-agent__redirect">
+                {{ $t('orders.agentRedirect', { count: agentRedirect.secondes.value }) }}
+                <button type="button" class="qo-agent__stay" @click="agentRedirect.cancel()">
+                  {{ $t('orders.agentStay') }}
+                </button>
+              </p>
+            </div>
+
             <!-- Paiement Wave : montant + bouton payer -->
-            <div v-if="isWavePayment" class="qo-wave-box">
+            <div v-if="isWavePayment && !needsAgent" class="qo-wave-box">
               <p class="qo-wave-box__label">{{ $t('quickOrder.wavePayLabel') }}</p>
               <p class="qo-wave-box__total">{{ $t('quickOrder.waveAmount') }} <strong>{{ fmtPrice(confirmedOrder.total) }}</strong></p>
               <p v-if="!wavePayUrl && waveNumber" class="qo-wave-box__number">{{ waveNumber }}</p>
 
               <a v-if="wavePayUrl" :href="wavePayUrl" target="_blank" rel="noopener" class="qo-wave-pay">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-                Payer {{ fmtPrice(confirmedOrder.total) }} avec Wave
+                {{ $t('orders.payAmountWithWave', { amount: fmtPrice(confirmedOrder.total) }) }}
               </a>
             </div>
 
             <!-- Étape 2 : envoyer la capture du paiement sur WhatsApp -->
             <a v-if="adminWhatsappLink" :href="adminWhatsappLink" target="_blank" rel="noopener"
-              class="btn btn-whatsapp qo-wa-btn">
+              class="btn btn-whatsapp qo-wa-btn" :class="{ 'qo-wa-btn--primary': needsAgent }"
+              @click="agentRedirect.cancel()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              {{ isWavePayment ? 'Envoyer la capture du paiement' : $t('quickOrder.whatsapp') }}
+              {{ needsAgent
+                ? $t('orders.agentCta')
+                : (isWavePayment ? $t('quickOrder.sendProof') : $t('quickOrder.whatsapp')) }}
             </a>
 
             <!-- ── Widget complétion profil ──────────────────────── -->
@@ -46,12 +85,12 @@
 
               <!-- Cas : compte rapide → ajouter email + mot de passe -->
               <form v-if="profileNudge.type === 'setup'" @submit.prevent="doSetup" class="qo-nudge__form">
-                <input v-model="nudgeForm.email" type="email" class="input input--sm" placeholder="votre@email.com" required />
-                <input v-model="nudgeForm.password" type="password" class="input input--sm" placeholder="Mot de passe (8 car. min)" required minlength="8" />
+                <input v-model="nudgeForm.email" type="email" class="input input--sm" :placeholder="$t('contact.emailPlaceholder')" required />
+                <input v-model="nudgeForm.password" type="password" class="input input--sm" :placeholder="$t('quickOrder.pwPlaceholder')" required minlength="8" />
                 <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
                 <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">
                   <span v-if="nudgeSaving" class="qo-geo-spin"></span>
-                  <span v-else>Sécuriser →</span>
+                  <span v-else>{{ $t('quickOrder.secure') }} →</span>
                 </button>
                 <p v-if="nudgeSuccess" class="qo-nudge__ok">✓ {{ nudgeSuccess }}</p>
               </form>
@@ -62,7 +101,7 @@
                 <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
                 <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">
                   <span v-if="nudgeSaving" class="qo-geo-spin"></span>
-                  <span v-else>Enregistrer →</span>
+                  <span v-else>{{ $t('common.save') }} →</span>
                 </button>
                 <p v-if="nudgeSuccess" class="qo-nudge__ok">✓ {{ nudgeSuccess }}</p>
               </form>
@@ -89,7 +128,7 @@
 
           <!-- ── Formulaire commande rapide ────────────────────────────── -->
           <template v-else>
-            <button class="qo-close" @click="$emit('close')" aria-label="Fermer">
+            <button class="qo-close" @click="$emit('close')" :aria-label="$t('common.close')">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
 
@@ -98,11 +137,52 @@
               <h2 class="qo-title">{{ $t('quickOrder.subtitle') }} <em>{{ $t('quickOrder.subtitleEm') }}</em> {{ $t('quickOrder.subtitleSuffix') }}</h2>
             </div>
 
-            <div class="qo-items-summary">
-              <span v-for="item in cartItems" :key="item.id" class="qo-item-chip">
-                {{ item.product?.name ?? 'Produit' }} ×{{ item.quantity }}
-              </span>
-            </div>
+            <!--
+              Récapitulatif modifiable. Les chips en lecture seule obligeaient à
+              fermer la commande rapide, rouvrir le panier, corriger, puis tout
+              ressaisir : une quantité mal choisie faisait perdre le formulaire.
+              Une ligne par article, un pas de quantité, rien de plus — la
+              modale reste courte.
+            -->
+            <ul class="qo-items">
+              <li v-for="item in cartItems" :key="item.id" class="qo-item">
+                <span class="qo-item__name">{{ item.product?.name ?? item.name ?? $t('drawer.defaultProduct') }}</span>
+
+                <div class="qo-item__qty">
+                  <button
+                    type="button"
+                    class="qo-qty-btn"
+                    :disabled="ligneEnCours === item.id"
+                    :aria-label="$t('drawer.decrease')"
+                    @click="changerQuantite(item, -1)"
+                  >−</button>
+                  <span class="qo-qty-value">{{ item.quantity }}</span>
+                  <button
+                    type="button"
+                    class="qo-qty-btn qo-qty-btn--plus"
+                    :disabled="ligneEnCours === item.id"
+                    :aria-label="$t('drawer.increase')"
+                    @click="changerQuantite(item, 1)"
+                  >+</button>
+                </div>
+
+                <span class="qo-item__total">{{ fmtPrice(ligneTotal(item)) }}</span>
+
+                <button
+                  type="button"
+                  class="qo-item__remove"
+                  :disabled="ligneEnCours === item.id"
+                  :aria-label="$t('drawer.remove')"
+                  @click="retirerLigne(item)"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </li>
+            </ul>
+
+            <p v-if="erreurLigne" class="qo-items-error">{{ erreurLigne }}</p>
+
+            <p v-if="!cartItems.length" class="qo-items-empty">{{ $t('quickOrder.emptyCart') }}</p>
 
             <!--
               novalidate : la validation est faite en JavaScript. Le navigateur
@@ -116,7 +196,7 @@
                   <label class="label">{{ $t('quickOrder.name') }} *</label>
                   <span v-if="prefilled.name" class="qo-prefilled-badge">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    Profil
+                    {{ $t('quickOrder.profileBadge') }}
                   </span>
                 </div>
                 <input
@@ -135,7 +215,7 @@
                   <label class="label">{{ $t('quickOrder.phone') }} *</label>
                   <span v-if="prefilled.phone" class="qo-prefilled-badge">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    Profil
+                    {{ $t('quickOrder.profileBadge') }}
                   </span>
                 </div>
                 <PhoneInput
@@ -155,7 +235,7 @@
                   </label>
                   <span v-if="prefilled.email" class="qo-prefilled-badge">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                    Profil
+                    {{ $t('quickOrder.profileBadge') }}
                   </span>
                 </div>
                 <input v-model="form.email" type="email" class="input" :class="{ 'input--prefilled': prefilled.email }" :placeholder="$t('quickOrder.emailPlaceholder')" />
@@ -164,21 +244,6 @@
               <div class="qo-field" data-field="commune">
                 <div class="qo-field-head">
                   <label class="label">{{ $t('quickOrder.commune') }} *</label>
-                  <button
-                    type="button"
-                    class="qo-geo-btn"
-                    :class="`qo-geo-btn--${qoGeoState}`"
-                    :disabled="qoGeoState === 'loading'"
-                    @click="doQoGeo"
-                  >
-                    <span v-if="qoGeoState === 'loading'" class="qo-geo-spin"></span>
-                    <svg v-else width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                      stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <circle cx="12" cy="12" r="3"/>
-                      <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-                    </svg>
-                    <span>{{ qoGeoLabel }}</span>
-                  </button>
                 </div>
                 <!--
                   Destination affichée en premier, et non plus cachée au fond
@@ -187,7 +252,7 @@
                   reste présélectionné, la majorité des clientes ne perd donc
                   aucun geste.
                 -->
-                <div class="qo-dest" role="radiogroup" aria-label="Destination de livraison">
+                <div class="qo-dest" role="radiogroup" :aria-label="$t('quickOrder.destinationLabel')">
                   <button
                     v-for="d in DESTINATIONS"
                     :key="d.value"
@@ -229,7 +294,7 @@
                       v-model="communeSearch"
                       type="text"
                       class="qo-combobox__search"
-                      placeholder="Rechercher..."
+                      :placeholder="$t('quickOrder.searchPlaceholder')"
                       @click.stop
                       @keydown.enter.prevent="onCommuneEnter"
                       @keydown.esc.prevent="closeCommune"
@@ -244,10 +309,10 @@
                       >{{ c }}</li>
                       <li class="qo-combobox__option qo-combobox__option--other" @click="selectCommune('__autre__')">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Saisir manuellement
+                        {{ $t('quickOrder.enterManually') }}
                       </li>
                       <li v-if="filteredCommunes.length === 0 && communeSearch" class="qo-combobox__empty">
-                        Aucun résultat
+                        {{ $t('common.noResults') }}
                       </li>
                     </ul>
                   </div>
@@ -261,59 +326,111 @@
                   class="input qo-commune-manuel"
                   :class="{ 'input--error': fieldErrors.commune }"
                   :aria-invalid="!!fieldErrors.commune"
-                  placeholder="Ex : Koumassi extension, Songon Agban..."
+                  :placeholder="$t('quickOrder.communeManualPlaceholder')"
                 />
 
                 <p v-if="fieldErrors.commune" class="qo-required">{{ $t('quickOrder.required') }}</p>
 
-                <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
-              <!-- Ville obligatoire hors Abidjan -->
+              <!-- Pays, uniquement à l'international -->
+              <div v-if="estInternational" class="qo-field" data-field="country">
+                <label class="label">{{ $t('fields.country') }} *</label>
+                <select
+                  v-model="form.country"
+                  class="input"
+                  :class="{ 'input--error': fieldErrors.country }"
+                  :aria-invalid="!!fieldErrors.country"
+                >
+                  <option value="" disabled>{{ $t('quickOrder.chooseCountry') }}</option>
+                  <option v-for="p in PAYS_INTERNATIONAUX" :key="p.code" :value="p.code">{{ p.nom }}</option>
+                </select>
+                <p v-if="fieldErrors.country" class="qo-required">{{ $t('quickOrder.required') }}</p>
+              </div>
+
+              <!-- Ville obligatoire dès qu'on sort d'Abidjan -->
               <div v-if="showCityField" class="qo-field" data-field="city">
-                <label class="label">Ville *</label>
+                <label class="label">{{ $t('fields.city') }} *</label>
                 <!--
-                  Liste fermée et non plus saisie libre : une ville mal
-                  orthographiée ne se rattache à aucune zone de livraison, et
-                  les frais deviennent alors « à renseigner par nos agents ».
+                  Liste fermée en Côte d'Ivoire : une ville mal orthographiée ne
+                  se rattache à aucune zone et les frais partent en traitement
+                  manuel. À l'international, aucune liste ne tiendrait — et les
+                  frais s'y négocient de toute façon au cas par cas.
                 -->
                 <select
+                  v-if="!estInternational"
                   v-model="form.city"
                   class="input"
                   :class="{ 'input--error': fieldErrors.city }"
                   :aria-invalid="!!fieldErrors.city"
                 >
-                  <option value="" disabled>Choisir votre ville…</option>
+                  <option value="" disabled>{{ $t('quickOrder.chooseCity') }}</option>
                   <option v-for="name in citySuggestions" :key="name" :value="name">{{ name }}</option>
                 </select>
+                <input
+                  v-else
+                  v-model="form.city"
+                  type="text"
+                  class="input"
+                  :class="{ 'input--error': fieldErrors.city }"
+                  :aria-invalid="!!fieldErrors.city"
+                  :placeholder="$t('quickOrder.cityPlaceholder')"
+                />
                 <p v-if="fieldErrors.city" class="qo-required">{{ $t('quickOrder.required') }}</p>
-                <p class="qo-city-hint">Toutes les villes de Côte d'Ivoire desservies, hors Abidjan.</p>
+                <p v-if="!estInternational" class="qo-city-hint">{{ $t('quickOrder.cityHint') }}</p>
               </div>
 
               <!-- Bannière hors Abidjan -->
-              <div v-if="showCityField" class="qo-outzone">
+              <div v-if="showCityField && !estInternational" class="qo-outzone">
                 <span class="qo-outzone__icon">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 </span>
                 <div>
-                  <strong>Livraison hors Abidjan</strong>
-                  <p>Commande à <b>régler d'avance</b> (Wave ou Orange Money) : nous n'expédions hors Abidjan que les commandes <b>déjà payées</b>. Le paiement à la livraison est réservé à Abidjan.</p>
+                  <strong>{{ $t('checkout.outsideAbidjanTitle') }}</strong>
+                  <p>{{ $t('quickOrder.outzoneP1') }} <b>{{ $t('quickOrder.outzoneB1') }}</b> {{ $t('quickOrder.outzoneP2') }} <b>{{ $t('checkout.outsideAbidjanB2') }}</b>{{ $t('checkout.outsideAbidjanP3') }}</p>
                 </div>
               </div>
 
+              <!-- Bannière internationale -->
+              <div v-if="estInternational" class="qo-outzone">
+                <span class="qo-outzone__icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>
+                </span>
+                <div>
+                  <strong>{{ $t('quickOrder.intlTitle') }}</strong>
+                  <p>{{ $t('quickOrder.intlP1') }} <b>{{ $t('quickOrder.intlB1') }}</b>{{ $t('quickOrder.intlP2') }} <b>{{ $t('quickOrder.intlB2') }}</b></p>
+                </div>
+              </div>
+
+              <!--
+                Indication de livraison — et c'est ici que vit « Ma position ».
+                Le bouton était contre le label « Commune » ; la détection
+                remplit pourtant commune, ville ET cette indication. Contre ce
+                champ-ci, on voit ce qu'elle a écrit.
+              -->
               <div class="qo-field">
-                <label class="label">
-                  {{ $t('quickOrder.indication') }} <span class="qo-optional">({{ $t('quickOrder.indicationOptional') }})</span>
-                </label>
+                <div class="qo-field-head">
+                  <label class="label">
+                    {{ $t('quickOrder.indication') }} <span class="qo-optional">({{ $t('quickOrder.indicationOptional') }})</span>
+                  </label>
+                  <GeoLocateButton
+                    :state="qoGeoState"
+                    :label="qoGeoLabel"
+                    :title="$t('geo.btnIdle')"
+                    @click="doQoGeo"
+                  />
+                </div>
                 <textarea
                   v-model="form.indication"
                   class="input qo-indication"
                   rows="2"
                   :placeholder="$t('quickOrder.indicationPlaceholder')"
                 />
+                <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
-              <div class="qo-field" data-field="payment">
+              <!-- Aucun règlement en ligne à l'international : rien à choisir. -->
+              <div v-if="paymentMethods.length" class="qo-field" data-field="payment">
                 <label class="label">{{ $t('quickOrder.payment') }} *</label>
                 <div class="qo-payments" :class="{ 'qo-payments--error': fieldErrors.payment }">
                   <label v-for="pm in paymentMethods" :key="pm.value"
@@ -340,7 +457,7 @@
               elle vit maintenant à la fin du formulaire, là où on la cherche.
             -->
             <RouterLink :to="{ name: 'checkout' }" class="qo-checkout-link" @click="$emit('close')">
-              Voir mon panier →
+              {{ $t('quickOrder.viewCart') }} →
             </RouterLink>
           </template>
 
@@ -354,19 +471,42 @@
           l'écran où il y en a le moins.
         -->
         <div v-if="!confirmed" class="qo-footer">
-          <div class="qo-total">
-            <span>Total</span>
-            <strong>{{ fmtPrice(cartTotal) }}</strong>
+          <!--
+            Détail plutôt qu'un total sec : hors Abidjan, la cliente réglait par
+            Wave un montant qu'elle n'avait jamais vu, la livraison n'étant
+            ajoutée que par le serveur au moment de créer la commande.
+          -->
+          <div class="qo-total qo-total--lignes">
+            <div class="qo-total__ligne">
+              <span>{{ $t('quickOrder.itemsLine') }}</span>
+              <span>{{ fmtPrice(cartTotal) }}</span>
+            </div>
+            <div class="qo-total__ligne">
+              <span>{{ $t('common.shipping') }}</span>
+              <span :class="{ 'qo-total__attente': shippingPending }">{{ shippingLabel }}</span>
+            </div>
           </div>
-          <button
-            type="submit"
-            form="qo-form"
-            class="btn btn-primary qo-submit"
-            :disabled="submitting"
-          >
-            <span v-if="submitting" class="qo-spinner"></span>
-            <span v-else>{{ $t('quickOrder.submit') }}</span>
-          </button>
+
+          <!--
+            Total et action sur leur propre rangée. Les aligner à côté du détail
+            mettait trois blocs sur une seule ligne : le bouton finissait rogné,
+            donc inatteignable — le défaut le plus coûteux sur un tunnel d'achat.
+          -->
+          <div class="qo-footer__action">
+            <div class="qo-total qo-total--final">
+              <span>Total</span>
+              <strong>{{ fmtPrice(cartTotal + shippingCost) }}</strong>
+            </div>
+            <button
+              type="submit"
+              form="qo-form"
+              class="btn btn-primary qo-submit"
+              :disabled="submitting || !cartItems.length"
+            >
+              <span v-if="submitting" class="qo-spinner"></span>
+              <span v-else>{{ $t('quickOrder.submit') }}</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -383,7 +523,9 @@ import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan, citiesCI } from '@/data/cities-ci'
-import { reverseGeocodeCI, getCurrentPosition, geoErrorMessage } from '@/composables/useGeolocation.js'
+import { useGeoLandmark } from '@/composables/useGeoLandmark'
+import GeoLocateButton from '@/components/shop/GeoLocateButton.vue'
+import { useAgentRedirect } from '@/composables/useAgentRedirect'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
 import PhoneInput from '@/components/ui/PhoneInput.vue'
@@ -399,7 +541,7 @@ const settingsStore = useSettingsStore()
 
 const cartItems  = computed(() => cartStore.items)
 const cartTotal  = computed(() => cartStore.total)
-const waveNumber = computed(() => settingsStore.paymentMobileNumber.value)
+const waveNumber = computed(() => settingsStore.paymentMobileNumber)
 
 // Déclaré tôt : de nombreux computeds/watchers dépendent de `form`
 const prefilled = ref({ name: false, phone: false, email: false })
@@ -410,34 +552,52 @@ const form = ref({
   commune: '',
   communeManuel: '',
   city: '',
+  country: 'CI',
   indication: '',
   payment: 'wave',
   note: '',
 })
 
+// Destination dont les frais ne sont pas tarifés d'avance : la commande se
+// finalise avec un agent. `destination` est le choix fait plus haut dans le
+// formulaire — abidjan | interior | international.
+const needsAgent = computed(() => destination.value !== 'abidjan')
+
+// Bascule vers WhatsApp après confirmation sur ces destinations : la commande
+// n'est pas finie tant qu'un agent n'a pas chiffré le transport.
+const agentRedirect = useAgentRedirect(5)
+
 const adminWhatsappLink = computed(() => {
   const order = confirmedOrder.value
   if (!order) return null
-  const adminNumber = settingsStore.whatsappNumber?.value
+  const adminNumber = settingsStore.whatsappNumber
   if (!adminNumber) return null
 
   const phone = form.value.phone
-  const methodMap = { wave: 'Wave', orange_money: 'Orange Money', delivery: 'À la livraison' }
+  const methodMap = {
+    wave:         t('drawer.wave'),
+    orange_money: t('drawer.orangeMoney'),
+    delivery:     t('checkout.onDelivery'),
+  }
   const method = methodMap[form.value.payment] ?? form.value.payment
 
   const msg = [
-    `🌹 Nouvelle commande Rosa Beauty Facial Care`,
-    `N°: ${order.number}`,
-    `Client: ${form.value.name} (${phone})`,
-    showCityField.value ? `Ville: ${form.value.city.trim()} (hors Abidjan)` : null,
-    `Commune: ${effectiveCommune.value}`,
-    form.value.indication?.trim() ? `📍 Indication: ${form.value.indication.trim()}` : null,
-    `Paiement: ${method}`,
-    `Total: ${fmtPrice(order.total)}`,
-    isWavePayment.value ? `\n📸 Je vous envoie la capture du paiement Wave.` : null,
-    form.value.note ? `📝 Note: ${form.value.note}` : null,
+    `🌹 ${t('quickOrder.waNewOrder')}`,
+    `${t('quickOrder.waNumber')}: ${order.number}`,
+    `${t('quickOrder.waCustomer')}: ${form.value.name} (${phone})`,
+    showCityField.value ? `${t('fields.city')}: ${form.value.city.trim()} (${t('quickOrder.waOutsideAbidjan')})` : null,
+    `${t('fields.commune')}: ${effectiveCommune.value}`,
+    form.value.indication?.trim() ? `📍 ${t('quickOrder.indication')}: ${form.value.indication.trim()}` : null,
+    needsAgent.value ? null : `${t('common.payment')}: ${method}`,
+    needsAgent.value
+      ? `${t('common.subtotal')}: ${fmtPrice(order.subtotal ?? order.total)}`
+      : `${t('common.total')}: ${fmtPrice(order.total)}`,
+    needsAgent.value ? `
+📦 ${t('quickOrder.waAskFees')}` : null,
+    isWavePayment.value ? `\n📸 ${t('quickOrder.waSendingProof')}` : null,
+    form.value.note ? `📝 ${t('quickOrder.note')}: ${form.value.note}` : null,
     ``,
-    `Répondre au client sur ce numéro: ${phone}`,
+    `${t('quickOrder.waReplyTo')}: ${phone}`,
   ].filter(l => l !== null).join('\n')
 
   const clean = adminNumber.replace(/\D/g, '')
@@ -487,6 +647,7 @@ const isAbidjanQuick = computed(() => {
 // Champ Ville + bannière : affichés dès qu'on est hors Abidjan
 const showCityField = computed(() => !!form.value.commune && !isAbidjanQuick.value)
 
+
 // Villes hors Abidjan proposées dans la liste, triées alphabétiquement
 const citySuggestions = citiesCI
   .filter(c => c.name !== 'Abidjan')
@@ -527,90 +688,26 @@ const vClickOutside = {
 }
 
 // ── Géolocalisation (commande rapide) ────────────────────────────────────────
-// 'idle' | 'loading' | 'success' | 'error' | 'outside'
-const qoGeoState = ref('idle')
-const qoGeoMsg   = ref('')
+// ── « Ma position » ──────────────────────────────────────────────────────────
+//
+// La détection ne remplit plus que l'indication de livraison. Elle ne touche
+// ni à la commune, ni à la destination Abidjan / hors Abidjan, ni à la ville,
+// ni au pays.
+//
+// Elle le faisait, et c'était le problème : un clic pouvait basculer la
+// commande sur « Hors Abidjan » et réécrire la ville. La cliente voyait ses
+// réponses changer seules — et avec elles les frais de livraison et les moyens
+// de paiement proposés, puisque tout en dépend. Une aide à la saisie n'a pas à
+// décider de la commande.
+const {
+  state:   qoGeoState,
+  message: qoGeoMsg,
+  label:   qoGeoLabel,
+  fill:    qoGeoFill,
+} = useGeoLandmark()
 
-const qoGeoLabel = computed(() => ({
-  idle:    t('geo.btnIdle'),
-  loading: t('geo.btnLoading'),
-  success: t('geo.btnSuccess'),
-  error:   t('geo.btnError'),
-  outside: t('geo.btnOutsideCI'),
-}[qoGeoState.value] ?? t('geo.btnIdle')))
-
-function normQo(s) {
-  return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[-\s]/g, '').trim()
-}
-
-async function doQoGeo() {
-  qoGeoState.value = 'loading'
-  qoGeoMsg.value   = ''
-  try {
-    const pos    = await getCurrentPosition()
-    const result = await reverseGeocodeCI(pos.coords.latitude, pos.coords.longitude)
-
-    // Pré-remplit l'indication (rue + repères) si le champ est vide
-    const fillIndication = (extra = []) => {
-      const parts = [...extra, result.road].filter(Boolean)
-      if (parts.length && !form.value.indication.trim()) {
-        form.value.indication = parts.join(', ')
-      }
-    }
-
-    // ── 1) Hors Côte d'Ivoire ────────────────────────────────────────────────
-    if (!result.inCI) {
-      form.value.commune = 'Hors Abidjan'           // → affiche le champ Ville
-      if (result.cityName) form.value.city = result.cityName
-      fillIndication([result.region])
-      qoGeoState.value = 'outside'
-      qoGeoMsg.value = result.cityName
-        ? `Position hors Côte d'Ivoire : ${result.cityName}. Vérifiez et complétez votre adresse.`
-        : `Position hors Côte d'Ivoire. Renseignez votre ville manuellement.`
-      return
-    }
-
-    const cityName        = result.city?.name ?? ''
-    const detectedCommune = result.commune ?? ''
-
-    // Cette commune correspond-elle à une commune d'Abidjan de notre liste ?
-    const communeMatch = detectedCommune
-      ? (COMMUNES.find(c => normQo(c) === normQo(detectedCommune))
-         ?? COMMUNES.find(c => normQo(c).includes(normQo(detectedCommune)) || normQo(detectedCommune).includes(normQo(c))))
-      : null
-    const abidjanCommune = communeMatch && communeMatch !== 'Hors Abidjan' ? communeMatch : null
-    const isAbj = cityName.toLowerCase() === 'abidjan' || !!abidjanCommune
-
-    // ── 2) Abidjan : remplir la commune ──────────────────────────────────────
-    if (isAbj) {
-      if (abidjanCommune) {
-        form.value.commune = abidjanCommune
-        fillIndication()
-        qoGeoState.value = 'success'
-        qoGeoMsg.value   = t('geo.communeFound', { commune: abidjanCommune })
-        setTimeout(() => { qoGeoMsg.value = '' }, 6000)
-      } else {
-        // Abidjan détecté mais commune non identifiée → on laisse la main
-        qoGeoState.value = 'outside'
-        qoGeoMsg.value   = "Abidjan détecté, mais commune non identifiée. Sélectionnez-la ci-dessus."
-      }
-      return
-    }
-
-    // ── 3) Côte d'Ivoire, hors Abidjan : remplir ville + indication ──────────
-    form.value.commune = 'Hors Abidjan'             // → affiche le champ Ville, force le prépaiement
-    if (cityName) form.value.city = cityName
-    fillIndication([detectedCommune])
-    qoGeoState.value = 'success'
-    qoGeoMsg.value = cityName
-      ? `Ville détectée : ${cityName} (hors Abidjan). Vérifiez votre adresse ci-dessous.`
-      : "Position hors Abidjan détectée. Renseignez votre ville ci-dessous."
-    setTimeout(() => { qoGeoMsg.value = '' }, 8000)
-
-  } catch (err) {
-    qoGeoState.value = 'error'
-    qoGeoMsg.value   = geoErrorMessage(err.code)
-  }
+function doQoGeo() {
+  return qoGeoFill(form, 'indication')
 }
 
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
@@ -618,10 +715,19 @@ const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"
 
 const ICON_CITY = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l5-4v18"/><path d="M19 21V11l-9-4"/><path d="M9 9v.01M9 12v.01M9 15v.01M9 18v.01"/></svg>'
 
-const DESTINATIONS = [
-  { value: 'abidjan',  label: 'Abidjan',      icon: ICON_CITY },
-  { value: 'interior', label: 'Hors Abidjan', icon: ICON_TRUCK },
-]
+const ICON_GLOBE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18z"/></svg>'
+
+const DESTINATIONS = computed(() => [
+  { value: 'abidjan',       label: t('quickOrder.destAbidjan'),       icon: ICON_CITY },
+  { value: 'interior',      label: t('quickOrder.destInterior'),      icon: ICON_TRUCK },
+  { value: 'international', label: t('quickOrder.destInternational'), icon: ICON_GLOBE },
+])
+
+/** Pays desservis hors Côte d'Ivoire, repris de la liste du champ téléphone. */
+const INTERNATIONAL_CODES = ['SN', 'ML', 'BF', 'GN', 'TG', 'BJ', 'GH', 'NG', 'CM', 'MA', 'FR', 'BE', 'CH', 'CA', 'US']
+const PAYS_INTERNATIONAUX = computed(() =>
+  INTERNATIONAL_CODES.map(code => ({ code, nom: t(`countryNames.${code}`) }))
+)
 
 /*
  * Destination et commune restent synchronisées dans les deux sens : le bouton
@@ -631,20 +737,99 @@ const DESTINATIONS = [
  */
 const destination = ref('abidjan')
 
+const estInternational = computed(() => destination.value === 'international')
+
+/* ── Frais de livraison ───────────────────────────────────────────────────────
+ *
+ * Même source que le tunnel classique : le tarif vient de la zone, par
+ * /shipping/quote. Rien n'est gratuit dans le système. Une zone non reconnue,
+ * un tarif au kilo ou une destination internationale laissent le montant à la
+ * charge des agents — et il ne doit alors surtout pas être compté comme zéro
+ * dans le total affiché, sous peine d'annoncer un prix qu'on ne tiendra pas.
+ */
+const shippingQuote = ref(null)
+
+const shippingFound   = computed(() => !!shippingQuote.value && !shippingQuote.value.not_found)
+const shippingPerKg   = computed(() => shippingFound.value && shippingQuote.value.unit === 'per_kg')
+
+const shippingPending = computed(() =>
+  destination.value === 'international'
+  || shippingPerKg.value
+  || shippingQuote.value?.not_found === true
+)
+
+const shippingCost = computed(() =>
+  shippingFound.value && !shippingPerKg.value ? Number(shippingQuote.value.price) || 0 : 0
+)
+
+const shippingLabel = computed(() => {
+  if (destination.value === 'international') return t('quickOrder.shippingWithAgent')
+  if (!effectiveCommune.value) return t('quickOrder.shippingByDestination')
+  if (showCityField.value && !form.value.city) return t('quickOrder.shippingChooseCity')
+  if (shippingFound.value && !shippingPerKg.value) return fmtPrice(shippingCost.value)
+  if (shippingPending.value) return t('drawer.shippingByAgents')
+  return '…'
+})
+
+let quoteTimer = null
+
+async function refreshShippingQuote() {
+  // L'international ne se tarife pas à la zone : inutile d'interroger le serveur.
+  if (destination.value === 'international') { shippingQuote.value = null; return }
+
+  const commune = effectiveCommune.value
+  if (!commune) { shippingQuote.value = null; return }
+  if (showCityField.value && !form.value.city) { shippingQuote.value = null; return }
+
+  try {
+    const { data } = await api.get('/shipping/quote', {
+      params: {
+        city:     showCityField.value ? form.value.city : 'Abidjan',
+        commune,
+        country:  'CI',
+        subtotal: cartStore.subtotal,
+      },
+    })
+    shippingQuote.value = data?.found ? data : { not_found: true }
+  } catch (e) {
+    shippingQuote.value = e.response?.status === 404 ? { not_found: true } : null
+  }
+}
+
+watch(
+  () => [effectiveCommune.value, form.value.city, destination.value, cartStore.subtotal],
+  () => {
+    clearTimeout(quoteTimer)
+    quoteTimer = setTimeout(refreshShippingQuote, 250)
+  },
+  { immediate: true },
+)
+
 watch(destination, (d) => {
   if (d === 'interior') {
     form.value.commune = 'Hors Abidjan'
     form.value.communeManuel = ''
+    form.value.country = 'CI'
     return
   }
-  if (form.value.commune === 'Hors Abidjan') {
+  if (d === 'international') {
+    form.value.commune = 'International'
+    form.value.communeManuel = ''
+    form.value.city = ''
+    form.value.country = ''
+    return
+  }
+  // Retour sur Abidjan : on efface ce que les deux autres avaient posé.
+  if (['Hors Abidjan', 'International'].includes(form.value.commune)) {
     form.value.commune = ''
     form.value.city = ''
   }
+  form.value.country = 'CI'
 })
 
 watch(() => form.value.commune, (c) => {
   if (c === 'Hors Abidjan') destination.value = 'interior'
+  else if (c === 'International') destination.value = 'international'
   else if (c) destination.value = 'abidjan'
 })
 
@@ -653,9 +838,12 @@ watch(() => form.value.commune, (c) => {
  * que le serveur applique de son côté (QuickOrderController).
  *   Abidjan            → paiement à la livraison uniquement
  *   Intérieur de la CI → prépaiement Wave ou Orange Money
- * (la commande rapide est réservée à la Côte d'Ivoire : pas d'international)
+ *   International      → aucun : frais, délais et douane se négocient au cas
+ *                        par cas, la commande se finalise avec un agent.
  */
 const paymentMethods = computed(() => {
+  if (destination.value === 'international') return []
+
   if (isAbidjanQuick.value) {
     return [{ value: 'delivery', label: t('quickOrder.payDelivery'), icon: ICON_TRUCK }]
   }
@@ -718,7 +906,7 @@ async function downloadInvoice() {
     link.remove()
     URL.revokeObjectURL(url)
   } catch {
-    invoiceError.value = "La facture n'a pas pu être téléchargée. Réessayez, ou retrouvez-la dans le détail de votre commande."
+    invoiceError.value = t('quickOrder.invoiceError')
   } finally {
     downloadingInvoice.value = false
   }
@@ -741,9 +929,11 @@ function requiredFields() {
     { key: 'name',    ok: () => !!form.value.name.trim() },
     { key: 'phone',   ok: () => !!form.value.phone.trim() },
     { key: 'commune', ok: () => !!effectiveCommune.value.trim() },
-    // La ville n'est demandée qu'en dehors d'Abidjan.
+    // Le pays n'est demandé qu'à l'international, la ville dès qu'on sort d'Abidjan.
+    { key: 'country', ok: () => !estInternational.value || !!form.value.country },
     { key: 'city',    ok: () => !showCityField.value || !!form.value.city.trim() },
-    { key: 'payment', ok: () => !!form.value.payment },
+    // À l'international il n'y a rien à choisir : ne pas l'exiger.
+    { key: 'payment', ok: () => !paymentMethods.value.length || !!form.value.payment },
   ]
 }
 
@@ -805,15 +995,15 @@ const profileNudge = computed(() => {
   if (u.is_generated_email) {
     return {
       type:  'setup',
-      title: 'Sécurisez votre compte',
-      desc:  'Ajoutez votre email et un mot de passe pour retrouver vos commandes depuis n\'importe quel appareil.',
+      title: t('profile.secureBannerTitle'),
+      desc:  t('quickOrder.nudgeSetupDesc'),
     }
   }
   if (!u.phone) {
     return {
       type:  'phone',
-      title: 'Ajoutez votre numéro',
-      desc:  'Enregistrez votre numéro pour un suivi de commande plus rapide.',
+      title: t('quickOrder.nudgePhoneTitle'),
+      desc:  t('quickOrder.nudgePhoneDesc'),
     }
   }
   return null
@@ -828,11 +1018,11 @@ async function doSetup() {
       password:              nudgeForm.value.password,
       password_confirmation: nudgeForm.value.password,
     })
-    nudgeSuccess.value = 'Compte sécurisé ! Vous pouvez maintenant vous connecter avec votre email.'
+    nudgeSuccess.value = t('profile.accountSecured')
     nudgeDone.value = true
   } catch (e) {
     const errs = e.response?.data?.errors
-    nudgeError.value = errs ? Object.values(errs).flat()[0] : (e.response?.data?.message ?? 'Une erreur est survenue.')
+    nudgeError.value = errs ? Object.values(errs).flat()[0] : (e.response?.data?.message ?? t('common.error'))
   } finally {
     nudgeSaving.value = false
   }
@@ -844,10 +1034,10 @@ async function doSavePhone() {
   nudgeError.value  = ''
   try {
     await authStore.updateInfo({ phone: nudgeForm.value.phone })
-    nudgeSuccess.value = 'Numéro enregistré !'
+    nudgeSuccess.value = t('quickOrder.phoneSaved')
     nudgeDone.value = true
   } catch (e) {
-    nudgeError.value = e.response?.data?.message ?? 'Une erreur est survenue.'
+    nudgeError.value = e.response?.data?.message ?? t('common.error')
   } finally {
     nudgeSaving.value = false
   }
@@ -859,7 +1049,7 @@ const isWavePayment = computed(() =>
 
 // Lien « Payer avec Wave » : lien marchand + montant en paramètre
 const wavePayUrl = computed(() => {
-  const base = (settingsStore.paymentWaveLink?.value || '').trim()
+  const base = (settingsStore.paymentWaveLink || '').trim()
   if (!base || !isWavePayment.value || !confirmedOrder.value) return null
   const amount = Math.round(Number(confirmedOrder.value.total) || 0)
   if (!amount) return base
@@ -900,9 +1090,12 @@ async function submit() {
       phone:          form.value.phone,
       email:          form.value.email?.trim() || null,
       commune:        effectiveCommune.value,
+      country:        estInternational.value ? form.value.country : 'CI',
       city:           isAbidjanQuick.value ? 'Abidjan' : (form.value.city.trim() || null),
       landmark:       form.value.indication?.trim() || null,
-      payment_method: form.value.payment,
+      // À l'international, aucun règlement n'est choisi ici : c'est l'agent qui
+      // le fixe après avoir arrêté les frais et la douane avec la cliente.
+      payment_method: estInternational.value ? null : form.value.payment,
       note:           form.value.note || null,
       items,
     })
@@ -922,6 +1115,12 @@ async function submit() {
     confirmedOrder.value = data
     confirmed.value = true
 
+    // Le compte à rebours part une fois la confirmation affichée : la cliente
+    // voit son numéro de commande avant que WhatsApp ne prenne la main.
+    if (needsAgent.value) {
+      nextTick(() => agentRedirect.start(() => adminWhatsappLink.value))
+    }
+
   } catch (e) {
     error.value = e.response?.data?.message ?? t('quickOrder.errorOccurred')
   } finally {
@@ -937,6 +1136,57 @@ function viewOrder() {
 function goToProfile() {
   emit('close')
   router.push({ name: 'profile' })
+}
+
+// ── Récapitulatif modifiable ─────────────────────────────────────────────────
+//
+// Le panier reste la source unique : on ne tient pas de copie locale des
+// quantités, sinon la modale et le tiroir finiraient par afficher deux totaux
+// différents pour le même panier.
+
+const ligneEnCours = ref(null)
+const erreurLigne  = ref('')
+
+function ligneTotal(item) {
+  return Number(item.unit_price ?? item.price ?? 0) * item.quantity
+}
+
+async function changerQuantite(item, delta) {
+  if (ligneEnCours.value) return
+
+  const nouvelle = item.quantity + delta
+
+  // Descendre à zéro, c'est retirer l'article : on le dit plutôt que de le
+  // faire disparaître sur un clic de trop.
+  if (nouvelle <= 0) {
+    await retirerLigne(item)
+    return
+  }
+
+  ligneEnCours.value = item.id
+  erreurLigne.value  = ''
+  try {
+    await cartStore.update(item.id, nouvelle)
+  } catch (e) {
+    // Stock insuffisant, article désactivé… le message vient du serveur.
+    erreurLigne.value = e.response?.data?.message ?? t('quickOrder.qtyError')
+  } finally {
+    ligneEnCours.value = null
+  }
+}
+
+async function retirerLigne(item) {
+  if (ligneEnCours.value) return
+
+  ligneEnCours.value = item.id
+  erreurLigne.value  = ''
+  try {
+    await cartStore.remove(item.id)
+  } catch (e) {
+    erreurLigne.value = e.response?.data?.message ?? t('quickOrder.qtyError')
+  } finally {
+    ligneEnCours.value = null
+  }
 }
 
 function fmtPrice(val) {
@@ -981,16 +1231,33 @@ function fmtPrice(val) {
 }
 
 /* ── Footer collé en bas : total + bouton ── */
+/*
+ * Deux rangées : le détail des montants au-dessus, le total et l'action en
+ * dessous. Tout mettre sur une seule ligne rognait le bouton dès que la ligne
+ * « Livraison » portait autre chose qu'un montant court.
+ */
 .qo-footer {
   flex-shrink: 0;
   padding: var(--space-3) var(--space-6);
   border-top: 1px solid var(--cream-200);
   background: #fff;
   display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  flex-direction: column;
+  gap: var(--space-2);
   /* Ombre vers le haut pour signaler que ça scrolle */
   box-shadow: 0 -6px 16px rgba(0,0,0,.06);
+}
+
+.qo-footer__action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* Le total prend la place restante, le bouton garde la sienne. */
+.qo-total--final {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* ── Bouton fermer ── */
@@ -1022,21 +1289,167 @@ function fmtPrice(val) {
 .qo-title em { font-style: italic; color: var(--rose-500); }
 .qo-subtitle { font-size: 0.875rem; color: var(--gray-400); }
 
-/* ── Items résumé ── */
-.qo-items-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-5);
-}
-.qo-item-chip {
+/* ── Frais à convenir avec un agent ── */
+.qo-agent__redirect {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #bbf7d0;
   font-size: 0.75rem;
-  font-weight: 500;
-  padding: 4px 10px;
-  background: var(--rose-50);
+  color: #15803d;
+  line-height: 1.5;
+}
+.qo-agent__stay {
+  display: block;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.qo-agent {
+  margin: 0 0 var(--space-4);
+  padding: 14px 16px;
+  border-radius: var(--radius-lg, 14px);
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  text-align: left;
+}
+.qo-agent__title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #15803d;
+  margin-bottom: 4px;
+}
+.qo-agent__desc {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #4b5563;
+  margin-bottom: 10px;
+}
+.qo-agent__subtotal {
+  font-size: 0.875rem;
+  color: #374151;
+}
+.qo-agent__subtotal span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Dans ce cas, WhatsApp n'est pas une option : c'est la suite du parcours. */
+.qo-wa-btn--primary {
+  font-size: 0.9375rem;
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+/* ── Récapitulatif modifiable ──
+   Une ligne par article, compacte : la modale contient déjà un formulaire
+   complet, le récapitulatif ne doit pas repousser « Commander » hors écran. */
+.qo-items {
+  list-style: none;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.qo-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--rose-50);
+}
+
+.qo-item:last-child { border-bottom: none; }
+
+.qo-item__name {
+  font-size: 0.8125rem;
+  color: var(--gray-700, #3f3a37);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qo-item__qty {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.qo-qty-btn {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--rose-100);
+  background: #fff;
   color: var(--rose-600);
   border-radius: var(--radius-full);
-  border: 1px solid var(--rose-100);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.qo-qty-btn:hover:not(:disabled) { background: var(--rose-50); }
+.qo-qty-btn--plus { background: var(--rose-50); }
+.qo-qty-btn:disabled { opacity: .45; cursor: default; }
+
+.qo-qty-value {
+  min-width: 20px;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.qo-item__total {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.qo-item__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: var(--gray-400);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+
+.qo-item__remove:hover:not(:disabled) { background: #fee2e2; color: #ef4444; }
+.qo-item__remove:disabled { opacity: .45; cursor: default; }
+
+.qo-items-error {
+  margin: 0 0 var(--space-4);
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 10px);
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 0.75rem;
+}
+
+.qo-items-empty {
+  margin: 0 0 var(--space-4);
+  font-size: 0.8125rem;
+  color: var(--gray-400);
 }
 
 /* ── Formulaire ── */
@@ -1187,31 +1600,11 @@ function fmtPrice(val) {
   justify-content: space-between;
   gap: var(--space-2);
 }
-.qo-geo-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  padding: 3px 8px 3px 6px;
-  border-radius: var(--radius-full, 999px);
-  border: 1.5px solid var(--rose-200);
-  background: var(--rose-50);
-  color: var(--rose-600);
-  cursor: pointer;
-  transition: all 0.15s;
-  line-height: 1;
-  white-space: nowrap;
-}
-.qo-geo-btn:hover:not(:disabled) {
-  background: var(--rose-100);
-  border-color: var(--rose-300);
-}
-.qo-geo-btn:disabled { opacity: 0.6; cursor: default; }
-.qo-geo-btn--success { background: #dcfce7; border-color: #86efac; color: #15803d; }
-.qo-geo-btn--outside { background: #fef9c3; border-color: #fde047; color: #854d0e; }
-.qo-geo-btn--error   { background: #fef2f2; border-color: #fca5a5; color: #dc2626; }
-
+/*
+  Indicateur de chargement. Le nom vient de la géolocalisation, mais il sert
+  aussi au bouton d'invitation et au téléchargement de facture — d'où son
+  maintien alors que le bouton « Ma position » a déménagé.
+*/
 .qo-geo-spin {
   display: inline-block;
   width: 10px; height: 10px;
@@ -1229,7 +1622,7 @@ function fmtPrice(val) {
   margin-top: 2px;
 }
 .qo-geo-msg--success { background: #dcfce7; color: #15803d; }
-.qo-geo-msg--outside { background: #fef9c3; color: #854d0e; }
+.qo-geo-msg--partial { background: #fef9c3; color: #854d0e; }
 .qo-geo-msg--error   { background: #fef2f2; color: #dc2626; }
 
 /* ── Paiement ── */
@@ -1278,11 +1671,20 @@ function fmtPrice(val) {
 }
 
 /* ── Choix de destination ─────────────────────────────────────────────────── */
+/*
+ * Deux colonnes, et le troisième bouton occupe toute la largeur. Sur trois
+ * colonnes, « Hors Abidjan » et « International » se coupent ; laissé seul dans
+ * une grille à deux colonnes, le troisième a l'air d'un oubli. Étendu, il se lit
+ * comme le cas particulier qu'il est.
+ */
 .qo-dest {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-2);
   margin-bottom: var(--space-2);
+}
+.qo-dest__btn:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 .qo-dest__btn {
   display: flex;
@@ -1317,6 +1719,33 @@ function fmtPrice(val) {
      rogner un texte qui porte toute la décision. */
   .qo-dest { grid-template-columns: 1fr; }
   .qo-dest__btn { justify-content: flex-start; }
+}
+
+/* Détail articles / livraison, au-dessus du total */
+.qo-total--lignes {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin-bottom: 0;
+  background: transparent;
+  padding: 0 var(--space-1);
+  font-size: 0.8125rem;
+}
+.qo-total__ligne {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.qo-total__ligne > span:last-child {
+  font-weight: 600;
+  color: var(--gray-700);
+  text-align: right;
+}
+/* Montant non chiffrable : il ne doit pas se lire comme un prix ferme. */
+.qo-total__attente {
+  font-weight: 500 !important;
+  font-style: italic;
+  color: var(--gray-500) !important;
 }
 
 .qo-total strong {

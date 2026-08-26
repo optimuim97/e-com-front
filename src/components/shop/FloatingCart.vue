@@ -3,12 +3,12 @@
     <Transition name="fcart">
       <div v-if="isVisible" class="fcart-wrap">
         <!-- Fermer / masquer -->
-        <button class="floating-cart__dismiss" @click="dismiss" aria-label="Masquer le panier">×</button>
+        <button class="floating-cart__dismiss" @click="dismiss" :aria-label="$t('floatingCart.dismiss')">×</button>
 
         <button
           class="floating-cart"
           @click="showModal = true"
-          aria-label="Voir le panier et commander"
+          :aria-label="$t('floatingCart.open')"
         >
           <!-- Icône panier -->
           <span class="floating-cart__icon">
@@ -23,14 +23,14 @@
           <!-- Texte -->
           <span class="floating-cart__body">
             <span class="floating-cart__label">
-              {{ itemCount }} article{{ itemCount > 1 ? 's' : '' }}
+              {{ itemCount }} {{ $t('common.article', itemCount) }}
             </span>
             <span class="floating-cart__total">{{ formattedTotal }}</span>
           </span>
 
           <!-- Flèche -->
           <span class="floating-cart__cta">
-            Commander
+            {{ $t('floatingCart.cta') }}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -39,7 +39,7 @@
 
         <!-- Lien checkout classique -->
         <RouterLink :to="{ name: 'checkout' }" class="floating-cart-alt">
-          Voir mon panier
+          {{ $t('floatingCart.viewCart') }}
         </RouterLink>
       </div>
     </Transition>

@@ -2,6 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/api'
 import { useCurrencyStore } from '@/stores/currency'
+// Hors composant : la langue courante et les traductions se lisent sur
+// l'instance globale (voir cart.store.js, même convention).
+import i18n from '@/i18n'
 
 /* ─── Icônes SVG des réseaux sociaux ──────────────────────────────────────── */
 const SOCIAL_ICONS = {
@@ -54,7 +57,27 @@ export const useSettingsStore = defineStore('settings', () => {
   /* ── Livraison ────────────────────────────────────────────────────────── */
   const shippingDefaultCost   = computed(() => Number(data.value.shipping_default_cost   || 0))
   const shippingFreeThreshold = computed(() => Number(data.value.shipping_free_threshold || 0))
-  const shippingDelay         = get('shipping_delay', '2 à 5 jours ouvrés')
+  /**
+   * Délai de livraison affiché en boutique.
+   *
+   * C'est une phrase saisie par la boutique, pas une donnée calculable : elle
+   * existe donc en deux versions. Sans la version anglaise, l'accueil traduit
+   * affichait « 2 à 5 jours ouvrés delivery & tracked ».
+   *
+   * Repli en cascade : version de la langue courante → version française →
+   * valeur par défaut traduite. La boutique qui ne remplit que le français
+   * garde ainsi un affichage cohérent des deux côtés.
+   */
+  const shippingDelay = computed(() => {
+    const enAnglais = (data.value['shipping_delay_en'] ?? '').trim()
+    const enFrancais = (data.value['shipping_delay'] ?? '').trim()
+
+    if (i18n.global.locale.value === 'en') {
+      return enAnglais || enFrancais || i18n.global.t('benefits.deliveryDelayDefault')
+    }
+
+    return enFrancais || i18n.global.t('benefits.deliveryDelayDefault')
+  })
   const shippingZones         = get('shipping_zones', '')
   const shippingPickupEnabled = bool('shipping_pickup_enabled', false)
 

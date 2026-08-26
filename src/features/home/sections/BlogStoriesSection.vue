@@ -2,9 +2,9 @@
   <section v-if="posts.length" class="blog-stories">
     <div class="container">
       <div class="blog-stories__head">
-        <h2 class="blog-stories__title">Nouveautés &amp; Conseils</h2>
+        <h2 class="blog-stories__title">{{ $t('blogStories.title') }}</h2>
         <RouterLink to="/blog" class="blog-stories__see-all">
-          Voir tout
+          {{ $t('common.seeAll') }}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </RouterLink>
       </div>
@@ -16,7 +16,7 @@
           v-if="authStore.isAdmin || authStore.isStaff"
           class="story-bubble story-bubble--add"
           @click="router.push({ name: 'admin.blog.create' })"
-          aria-label="Ajouter une story"
+          :aria-label="$t('blogStories.addStory')"
         >
           <span class="story-bubble__ring story-bubble__ring--add">
             <span class="story-bubble__add-inner">
@@ -26,7 +26,7 @@
               </svg>
             </span>
           </span>
-          <span class="story-bubble__label">Ajouter</span>
+          <span class="story-bubble__label">{{ $t('common.add') }}</span>
         </button>
 
         <!-- Story skeleton -->
@@ -94,7 +94,7 @@
             <img :src="LOGO_PLACEHOLDER" alt="Rosa Beauty" class="sv-header__logo" />
             <span class="sv-header__brand">Rosa Beauty</span>
             <span class="sv-header__time">{{ formatDate(currentPost.published_at) }}</span>
-            <button class="sv-header__close" @click="closeStory" aria-label="Fermer">
+            <button class="sv-header__close" @click="closeStory" :aria-label="$t('common.close')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -131,8 +131,8 @@
             />
 
             <!-- Zones tap gauche / droite -->
-            <button class="sv-media__zone sv-media__zone--prev" @click.stop="prevStory" aria-label="Précédent"></button>
-            <button class="sv-media__zone sv-media__zone--next" @click.stop="nextStory" aria-label="Suivant"></button>
+            <button class="sv-media__zone sv-media__zone--prev" @click.stop="prevStory" :aria-label="$t('common.previous')"></button>
+            <button class="sv-media__zone sv-media__zone--next" @click.stop="nextStory" :aria-label="$t('common.next')"></button>
           </div>
 
           <!-- Footer -->
@@ -144,7 +144,7 @@
               class="sv-footer__cta"
               @click="closeStory"
             >
-              Lire l'article
+              {{ $t('blog.readArticle') }}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </RouterLink>
           </div>
