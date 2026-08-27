@@ -55,7 +55,9 @@
               @mousemove="cityHighlight = i"
             >
               <span class="cs-option__name">{{ city.name }}</span>
-              <span class="cs-option__sub">{{ city.communes.length }} commune{{ city.communes.length > 1 ? 's' : '' }}</span>
+              <span class="cs-option__sub">
+                {{ city.matchedCommune || `${city.communes.length} commune${city.communes.length > 1 ? 's' : ''}` }}
+              </span>
             </li>
           </ul>
           <div v-else-if="cityOpen && cityQuery && !filteredCities.length" class="cs-empty">
@@ -179,8 +181,22 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { citiesCI } from '@/data/cities-ci.js'
+import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc } from '@/data/abidjan-communes.js'
+
+/*
+ * Les communes d'Abidjan viennent de l'administration, pas du fichier de
+ * découpage administratif : le district livré comprend des quartiers qui ne
+ * sont pas des communes officielles — Abatta, Faya, Riviera, Angré. Ils
+ * étaient absents du sélecteur alors qu'ils sont tarifés, et une cliente
+ * d'Abatta se retrouvait en saisie manuelle, donc classée hors Abidjan.
+ */
+onMounted(chargerCommunesAbidjan)
+
+const villes = computed(() => citiesCI.map(v =>
+  v.name === 'Abidjan' ? { ...v, communes: communesAbidjan.value } : v
+))
 
 
 // ── Props / Emits ────────────────────────────────────────────────────────────
@@ -246,10 +262,23 @@ let cityTimer    = null
 let communeTimer = null
 
 // ── Filtered lists ───────────────────────────────────────────────────────────
+/*
+ * Chercher « Abatta » doit trouver Abidjan. Sans ça la recherche ne rendait
+ * rien, la cliente basculait en saisie manuelle et son adresse partait en
+ * « ville inconnue » — donc en prépaiement obligatoire, pour une commune
+ * qu'on livre tous les jours. La commune trouvée est retenue pour être
+ * sélectionnée en même temps que la ville.
+ */
 const filteredCities = computed(() => {
-  const q = cityQuery.value.trim().toLowerCase()
-  if (!q) return citiesCI
-  return citiesCI.filter(c => c.name.toLowerCase().includes(q))
+  const q = normalizeLoc(cityQuery.value)
+  if (!q) return villes.value
+
+  return villes.value.flatMap((c) => {
+    if (normalizeLoc(c.name).includes(q)) return [c]
+
+    const commune = c.communes.find(m => normalizeLoc(m).includes(q))
+    return commune ? [{ ...c, matchedCommune: commune }] : []
+  })
 })
 
 const filteredCommunes = computed(() => {
@@ -288,8 +317,12 @@ function onCityInput() {
 }
 
 function selectCity(city) {
-  selectedCity.value   = city
-  cityQuery.value      = city.name
+  // On repart de l'entrée d'origine : la version filtrée porte en plus la
+  // commune trouvée, qui n'a rien à faire dans l'état du composant.
+  const base = villes.value.find(v => v.id === city.id) ?? city
+
+  selectedCity.value   = base
+  cityQuery.value      = base.name
   cityOpen.value       = false
   cityHighlight.value  = -1
 
@@ -298,8 +331,12 @@ function selectCity(city) {
   emit('update:city', city.name)
   emit('update:commune', '')
 
-  if (city.communes.length === 1) {
-    selectCommune(city.communes[0])
+  // « Abatta » cherché dans le champ ville vaut Abidjan + Abatta : la
+  // cliente a déjà donné l'information, on ne la lui redemande pas.
+  if (city.matchedCommune) {
+    selectCommune(city.matchedCommune)
+  } else if (base.communes.length === 1) {
+    selectCommune(base.communes[0])
   } else {
     nextTick(() => communeInput.value?.focus())
   }
@@ -392,7 +429,7 @@ watch(() => props.city, (val) => {
     communeQuery.value    = ''
     return
   }
-  const found = citiesCI.find(c => c.name.toLowerCase() === val.toLowerCase())
+  const found = villes.value.find(c => c.name.toLowerCase() === val.toLowerCase())
   if (found && found.id !== selectedCity.value?.id) {
     selectedCity.value = found
     cityQuery.value    = found.name

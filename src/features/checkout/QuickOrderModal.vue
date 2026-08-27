@@ -516,6 +516,7 @@ import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan, citiesCI } from '@/data/cities-ci'
+import { communesAbidjan, chargerCommunesAbidjan } from '@/data/abidjan-communes.js'
 import { useAgentRedirect } from '@/composables/useAgentRedirect'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -607,30 +608,7 @@ const adminWhatsappLink = computed(() => {
  * Repli sur les treize communes officielles si l'appel échoue : mieux vaut un
  * choix incomplet qu'un sélecteur vide.
  */
-const COMMUNES_DE_SECOURS = [
-  'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville',
-  'Cocody', 'Koumassi', 'Marcory', 'Plateau', 'Port-Bouët',
-  'Songon', 'Treichville', 'Yopougon',
-]
-
-const COMMUNES = ref([...COMMUNES_DE_SECOURS])
-
-async function chargerCommunes() {
-  try {
-    const { data } = await api.get('/shipping/destinations')
-    const noms = (data.data ?? [])
-      .filter(z => z.is_abidjan)
-      .map(z => z.name)
-      .filter(Boolean)
-
-    // Doublons possibles quand deux zones portent le même nom à des tarifs
-    // différents : la cliente n'a pas à voir deux fois « Cocody ».
-    const uniques = [...new Set(noms)].sort((a, b) => a.localeCompare(b, 'fr'))
-    if (uniques.length) COMMUNES.value = uniques
-  } catch {
-    // On garde le repli.
-  }
-}
+const COMMUNES = communesAbidjan
 
 // ── Combobox commune ──────────────────────────────────────────────────────────
 const communeOpen        = ref(false)
@@ -860,7 +838,7 @@ watch(paymentMethods, (methods) => {
 
 // Pré-remplir depuis le profil si l'utilisateur est connecté
 onMounted(() => {
-  chargerCommunes()
+  chargerCommunesAbidjan()
 
   const u = authStore.user
   if (!u) return

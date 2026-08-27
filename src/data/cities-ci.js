@@ -301,30 +301,16 @@ export const citiesCI = [
   }
 ]
 
-/** Communes du district autonome d'Abidjan (normalisées, sans accents). */
-const ABIDJAN_COMMUNES = (citiesCI.find(c => c.name === 'Abidjan')?.communes ?? [])
-  .map(normalizeLoc)
-
-function normalizeLoc(v) {
-  return String(v || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // retire les accents
-}
-
 /**
- * Détecte si une adresse est dans Abidjan (ville OU commune).
- * Règle métier : hors Abidjan, pas de paiement à la livraison
- * (on n'expédie que ce qui est déjà payé).
+ * Détection « Abidjan », déléguée au module des zones de livraison.
+ *
+ * La liste vivait ici, dérivée des treize communes officielles ci-dessus.
+ * Elle ignorait les quartiers pourtant desservis — Abatta, Faya, Riviera —
+ * et les faisait traiter comme l'intérieur du pays. C'est désormais
+ * l'administration qui décide, via les zones du groupe « Grand Abidjan ».
+ *
+ * Réexporté pour que les écrans existants n'aient rien à changer.
  */
-export function isAbidjan(city, commune) {
-  const c = normalizeLoc(city)
-  const q = normalizeLoc(commune)
-  if (c && c.includes('abidjan')) return true
-  if (q && ABIDJAN_COMMUNES.includes(q)) return true
-  if (c && ABIDJAN_COMMUNES.includes(c)) return true
-  return false
-}
+export { isAbidjan } from './abidjan-communes.js'
 
 export default citiesCI
