@@ -602,6 +602,10 @@
     "seoDescription": "Découvrez tous les soins Rosa Beauty : élixirs, eaux florales, laits corporels et rituels visage à base de rose naturelle. Livraison à Abidjan et dans toute la Côte d'Ivoire."
   },
   "orders": {
+    "cancelDialogTitle": "Annuler cette commande ?",
+    "cancelDialogBody": "Les articles retournent en stock et la commande ne sera pas préparée. Cette action est définitive.",
+    "cancelDialogKeep": "Garder ma commande",
+    "cancelBlocked_shipped": "Cette commande est déjà partie. Une annulation reste possible en nous contactant, mais les frais de livraison resteront à votre charge.",
     "agentBlocked": "Votre navigateur a bloqué l'ouverture automatique. Touchez le bouton ci-dessous pour joindre un agent.",
     "agentNoWhatsapp": "Contactez-nous pour finaliser votre commande :",
     "agentRedirect": "Ouverture de WhatsApp dans {count} s pour finaliser avec un agent…",
@@ -653,6 +657,7 @@
     "sendToSellerDesc": "Cliquez pour ouvrir WhatsApp avec les détails de votre commande.",
     "phone": "Tél",
     "status": {
+      "awaiting_payment": "En attente de paiement",
       "pending": "En attente",
       "processing": "En cours",
       "shipped": "Expédiée",

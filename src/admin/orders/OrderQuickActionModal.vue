@@ -35,7 +35,7 @@
           </div>
           <div>
             <span class="recap-label">Statut</span>
-            <strong>{{ statusLabel(order.status) }}</strong>
+            <strong>{{ order.status_label ?? statusLabel(order.status) }}</strong>
             <span v-if="order.tracking_number" class="recap-sub">Suivi : {{ order.tracking_number }}</span>
           </div>
         </div>

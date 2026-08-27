@@ -315,25 +315,12 @@
                 immédiatement ce qu'il fait.
               -->
               <CheckoutField :def="FIELDS.landmark" optional>
-                <template #label-aside>
-                  <GeoLocateButton
-                    :state="geoState"
-                    :label="geoLabel"
-                    :title="$t('geo.btnIdle')"
-                    @click="geoFill(form, 'landmark')"
-                  />
-                </template>
                 <textarea
                   v-model="form.landmark"
                   class="input co-landmark"
                   rows="2"
                   :placeholder="$t('checkout.landmarkPlaceholder')"
                 />
-                <p
-                  v-if="geoMessage"
-                  class="co-geo-msg"
-                  :class="`co-geo-msg--${geoState}`"
-                >{{ geoMessage }}</p>
               </CheckoutField>
 
               <!-- Numéro du receveur -->
@@ -608,8 +595,6 @@ import AppSelect            from '@/components/ui/AppSelect.vue'
 import PhoneInput           from '@/components/ui/PhoneInput.vue'
 import CitySelect           from '@/components/shop/CitySelect.vue'
 import CityFree             from '@/components/shop/CityFree.vue'
-import GeoLocateButton     from '@/components/shop/GeoLocateButton.vue'
-import { useGeoLandmark }  from '@/composables/useGeoLandmark'
 import { usePaymentInstructions } from '@/composables/usePaymentInstructions'
 import { isAbidjan }        from '@/data/cities-ci'
 import api                              from '@/api'
@@ -620,14 +605,6 @@ import FlowerMark                       from '@/components/ui/FlowerMark.vue'
 
 const { t }        = useI18n()
 const router       = useRouter()
-// « Ma position » : ne remplit que le point de repère, jamais la ville,
-// le pays ni la commune — voir useGeoLandmark.
-const {
-  state:   geoState,
-  message: geoMessage,
-  label:   geoLabel,
-  fill:    geoFill,
-} = useGeoLandmark()
 
 const cartStore    = useCartStore()
 const authStore    = useAuthStore()
@@ -1413,20 +1390,6 @@ function formatPrice(val) {
 .co-summary__pending { color: #b45309; font-weight: 500; }
 
 /* ── Point de repère ── */
-/* Retour de la géolocalisation, sous le champ qu'elle vient de remplir. */
-.co-geo-msg {
-  margin-top: 6px;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm, 6px);
-  font-size: 0.75rem;
-  line-height: 1.45;
-  background: #f5f5f4;
-  color: #57534e;
-}
-.co-geo-msg--success    { background: #dcfce7; color: #15803d; }
-.co-geo-msg--partial    { background: #fef9c3; color: #854d0e; }
-.co-geo-msg--error      { background: #fef2f2; color: #dc2626; }
-
 .co-landmark {
   resize: none;
   min-height: 52px;

@@ -369,13 +369,38 @@
 
             <p v-if="cancelError" class="order-cancel__error">{{ cancelError }}</p>
 
-            <button class="order-cancel__btn" :disabled="cancelling" @click="cancelOrder">
+            <button class="order-cancel__btn" :disabled="cancelling" @click="cancelDialog = true">
               {{ cancelling ? $t('orders.cancelling') : $t('orders.cancelButton') }}
             </button>
           </template>
 
           <p v-else class="order-cancel__blocked">{{ cancelBlockedMessage }}</p>
         </section>
+      </div>
+    </div>
+
+    <!--
+      Confirmation d'annulation.
+
+      `window.confirm` était bloquant, non traduit et non stylé — et sur
+      certains navigateurs mobiles il n'apparaît tout simplement pas, ce qui
+      rendait le bouton muet.
+    -->
+    <div v-if="cancelDialog" class="order-dialog" @click.self="cancelDialog = false">
+      <div class="order-dialog__panel" role="dialog" aria-modal="true">
+        <h3 class="order-dialog__title">{{ $t('orders.cancelDialogTitle') }}</h3>
+        <p class="order-dialog__body">{{ $t('orders.cancelDialogBody') }}</p>
+
+        <p v-if="cancelError" class="order-dialog__error">{{ cancelError }}</p>
+
+        <div class="order-dialog__actions">
+          <button class="order-dialog__keep" :disabled="cancelling" @click="cancelDialog = false">
+            {{ $t('orders.cancelDialogKeep') }}
+          </button>
+          <button class="order-dialog__confirm" :disabled="cancelling" @click="cancelOrder">
+            {{ cancelling ? $t('orders.cancelling') : $t('orders.cancelButton') }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -392,8 +417,10 @@ import { buildAdminMessage, buildWaLink } from '@/utils/whatsapp'
 import CopyButton from '@/shared/components/CopyButton.vue'
 import { usePaymentInstructions } from '@/composables/usePaymentInstructions'
 import { useAgentRedirect } from '@/composables/useAgentRedirect'
+import { useToast } from 'vue-toastification'
 
 const { t, locale } = useI18n()
+const toast = useToast()
 const route = useRoute()
 
 const order    = ref(null)
@@ -585,6 +612,11 @@ function formatPrice(val) {
 }
 
 function statusLabel(status) {
+  // Le serveur distingue l'attente de paiement de l'attente de traitement ;
+  // ici on traduit, la boutique étant bilingue.
+  if (order.value?.awaiting_payment && status === 'pending') {
+    return t('orders.status.awaiting_payment')
+  }
   return t(`orders.status.${status}`) || status
 }
 
@@ -632,6 +664,7 @@ function paymentLabel(method) {
 const cancelReason = ref('')
 const cancelling   = ref(false)
 const cancelError  = ref('')
+const cancelDialog = ref(false)
 
 // Le bloc reste affiché tant que l'annulation a un sens à évoquer. Sur une
 // commande déjà annulée ou livrée, il n'aurait rien à dire.
@@ -673,7 +706,6 @@ const cancelCountdown = computed(() => {
 
 async function cancelOrder() {
   if (!order.value || cancelling.value) return
-  if (!window.confirm(t('orders.cancelConfirm'))) return
 
   cancelling.value  = true
   cancelError.value = ''
@@ -684,6 +716,11 @@ async function cancelOrder() {
     // La réponse imbrique la ressource sans enveloppe « data ».
     order.value = data.order ?? order.value
     cancelReason.value = ''
+    cancelDialog.value = false
+
+    // La page se met à jour en silence : sans notification, la cliente peut
+    // douter que le clic ait été pris en compte et recommencer.
+    toast.success(t('orders.cancelSuccess'))
   } catch (e) {
     cancelError.value = e.response?.data?.message ?? t('orders.cancelError')
   } finally {
@@ -709,6 +746,84 @@ onBeforeUnmount(() => clearInterval(minuteur))
 </script>
 
 <style scoped>
+/* ── Boîte de dialogue d'annulation ── */
+.order-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(30, 20, 16, .5);
+}
+
+.order-dialog__panel {
+  width: 100%;
+  max-width: 400px;
+  padding: 26px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .25);
+}
+
+.order-dialog__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.order-dialog__body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #6b5f58;
+}
+
+.order-dialog__error {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+.order-dialog__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.order-dialog__keep,
+.order-dialog__confirm {
+  flex: 1;
+  padding: 11px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+/* Garder sa commande est l'issue la plus probable : c'est elle qu'on met en
+   avant, l'annulation reste possible mais ne s'attrape pas par mégarde. */
+.order-dialog__keep {
+  border: none;
+  background: #2d2d2d;
+  color: #fff;
+}
+.order-dialog__keep:hover:not(:disabled) { background: #000; }
+
+.order-dialog__confirm {
+  border: 1px solid #e5b4b4;
+  background: #fff;
+  color: #b91c1c;
+}
+.order-dialog__confirm:hover:not(:disabled) { background: #fee2e2; }
+
+.order-dialog__keep:disabled,
+.order-dialog__confirm:disabled { opacity: .6; cursor: default; }
+
 /* ── Frais à convenir avec un agent ── */
 .order-agent__redirect {
   margin-bottom: 12px;

@@ -318,22 +318,9 @@
                 déplace le marqueur sur la carte et renseigne l'adresse.
               -->
               <div class="drawer__group">
-                <div class="drawer__group-head">
-                  <label class="label">{{ $t('fields.landmark') }}</label>
-                  <GeoLocateButton
-                    :state="geoState"
-                    :label="geoLabel"
-                    :title="$t('geo.btnIdle')"
-                    @click="geoFill(form, 'instructions')"
-                  />
-                </div>
+                <label class="label">{{ $t('fields.landmark') }}</label>
                 <textarea v-model="form.instructions" class="input drawer__textarea"
                   :placeholder="$t('drawer.landmarkPlaceholder')" />
-                <p
-                  v-if="geoMessage"
-                  class="drawer__geo-msg"
-                  :class="`drawer__geo-msg--${geoState}`"
-                >{{ geoMessage }}</p>
               </div>
             </div>
 
@@ -427,8 +414,6 @@ import { useI18n } from 'vue-i18n';
 import { useCurrencyStore } from '@/stores/currency';
 import CitySelect      from '@/components/shop/CitySelect.vue';
 import CityFree        from '@/components/shop/CityFree.vue';
-import GeoLocateButton from '@/components/shop/GeoLocateButton.vue';
-import { useGeoLandmark } from '@/composables/useGeoLandmark';
 import QuickOrderModal from '@/features/checkout/QuickOrderModal.vue';
 import GoogleButton    from '@/features/auth/GoogleButton.vue';
 import PhoneInput      from '@/components/ui/PhoneInput.vue';
@@ -767,19 +752,6 @@ async function locateMe() {
   });
   leafletMap.once('locationerror', () => { locating.value = false; });
 }
-
-// ── « Ma position » ──────────────────────────────────────────────────────────
-//
-// Ne remplit que le point de repère. Ni la ville, ni le pays, ni la commune :
-// une aide à la saisie n'a pas à réécrire ce que la cliente a choisi.
-// À ne pas confondre avec « Me localiser » plus haut, qui déplace le marqueur
-// sur la carte et renseigne l'adresse.
-const {
-  state:   geoState,
-  message: geoMessage,
-  label:   geoLabel,
-  fill:    geoFill,
-} = useGeoLandmark();
 
 async function applyPromo() {
   if (!couponCode.value.trim()) return;
@@ -1211,6 +1183,58 @@ function fmt(val) {
 }
 
 /* ── Sections (étape 3) ── */
+.drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--cream-200);
+}
+.drawer__section--recap {
+  background: var(--cream-50);
+}
+
+.drawer__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--cream-200);
+}
+
+/* ── Récapitulatif totaux ── */
+.drawer__recap-totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.drawer__recap-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--gray-600);
+}
+.drawer__recap-line--discount { color: #15803d; }
+.drawer__recap-line--total {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--cream-300);
+}
+.drawer__recap-line--total span:last-child { color: var(--rose-600); }
+
+/* ── Form groups ── */
+.drawer__group { display: flex; flex-direction: column; gap: var(--space-2); }
+
 .drawer__section {
   display: flex;
   flex-direction: column;

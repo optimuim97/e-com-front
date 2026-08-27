@@ -413,20 +413,13 @@
                   <label class="label">
                     {{ $t('quickOrder.indication') }} <span class="qo-optional">({{ $t('quickOrder.indicationOptional') }})</span>
                   </label>
-                  <GeoLocateButton
-                    :state="qoGeoState"
-                    :label="qoGeoLabel"
-                    :title="$t('geo.btnIdle')"
-                    @click="doQoGeo"
-                  />
-                </div>
+</div>
                 <textarea
                   v-model="form.indication"
                   class="input qo-indication"
                   rows="2"
                   :placeholder="$t('quickOrder.indicationPlaceholder')"
                 />
-                <p v-if="qoGeoMsg" class="qo-geo-msg" :class="`qo-geo-msg--${qoGeoState}`">{{ qoGeoMsg }}</p>
               </div>
 
               <!-- Aucun règlement en ligne à l'international : rien à choisir. -->
@@ -523,8 +516,6 @@ import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan, citiesCI } from '@/data/cities-ci'
-import { useGeoLandmark } from '@/composables/useGeoLandmark'
-import GeoLocateButton from '@/components/shop/GeoLocateButton.vue'
 import { useAgentRedirect } from '@/composables/useAgentRedirect'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -604,14 +595,42 @@ const adminWhatsappLink = computed(() => {
   return `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`
 })
 
-// « Hors Abidjan » n'y figure plus : c'est devenu un choix de destination à
-// part entière, au-dessus de la liste. Le reste du code continue d'utiliser
-// cette valeur comme commune, la géolocalisation comprise.
-const COMMUNES = [
+/**
+ * Communes et quartiers d'Abidjan proposés au choix.
+ *
+ * Alimentés par les zones de livraison de l'administration, pas par une liste
+ * figée : le district compte des quartiers desservis qui ne sont pas des
+ * communes officielles — Abatta, Faya, Gonzagueville, Riviera, N'Dotré. La
+ * liste en dur les ignorait, alors qu'ils sont bien tarifés en admin. Ajouter
+ * une zone suffit désormais à la proposer à la cliente.
+ *
+ * Repli sur les treize communes officielles si l'appel échoue : mieux vaut un
+ * choix incomplet qu'un sélecteur vide.
+ */
+const COMMUNES_DE_SECOURS = [
   'Abobo', 'Adjamé', 'Anyama', 'Attécoubé', 'Bingerville',
   'Cocody', 'Koumassi', 'Marcory', 'Plateau', 'Port-Bouët',
   'Songon', 'Treichville', 'Yopougon',
 ]
+
+const COMMUNES = ref([...COMMUNES_DE_SECOURS])
+
+async function chargerCommunes() {
+  try {
+    const { data } = await api.get('/shipping/destinations')
+    const noms = (data.data ?? [])
+      .filter(z => z.is_abidjan)
+      .map(z => z.name)
+      .filter(Boolean)
+
+    // Doublons possibles quand deux zones portent le même nom à des tarifs
+    // différents : la cliente n'a pas à voir deux fois « Cocody ».
+    const uniques = [...new Set(noms)].sort((a, b) => a.localeCompare(b, 'fr'))
+    if (uniques.length) COMMUNES.value = uniques
+  } catch {
+    // On garde le repli.
+  }
+}
 
 // ── Combobox commune ──────────────────────────────────────────────────────────
 const communeOpen        = ref(false)
@@ -620,8 +639,8 @@ const communeSearchInput = ref(null)
 
 const filteredCommunes = computed(() => {
   const q = communeSearch.value.trim().toLowerCase()
-  if (!q) return COMMUNES
-  return COMMUNES.filter(c => c.toLowerCase().includes(q))
+  if (!q) return COMMUNES.value
+  return COMMUNES.value.filter(c => c.toLowerCase().includes(q))
 })
 
 const communeDisplay = computed(() => {
@@ -688,28 +707,6 @@ const vClickOutside = {
 }
 
 // ── Géolocalisation (commande rapide) ────────────────────────────────────────
-// ── « Ma position » ──────────────────────────────────────────────────────────
-//
-// La détection ne remplit plus que l'indication de livraison. Elle ne touche
-// ni à la commune, ni à la destination Abidjan / hors Abidjan, ni à la ville,
-// ni au pays.
-//
-// Elle le faisait, et c'était le problème : un clic pouvait basculer la
-// commande sur « Hors Abidjan » et réécrire la ville. La cliente voyait ses
-// réponses changer seules — et avec elles les frais de livraison et les moyens
-// de paiement proposés, puisque tout en dépend. Une aide à la saisie n'a pas à
-// décider de la commande.
-const {
-  state:   qoGeoState,
-  message: qoGeoMsg,
-  label:   qoGeoLabel,
-  fill:    qoGeoFill,
-} = useGeoLandmark()
-
-function doQoGeo() {
-  return qoGeoFill(form, 'indication')
-}
-
 const ICON_MOBILE = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>'
 const ICON_TRUCK  = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>'
 
@@ -863,6 +860,8 @@ watch(paymentMethods, (methods) => {
 
 // Pré-remplir depuis le profil si l'utilisateur est connecté
 onMounted(() => {
+  chargerCommunes()
+
   const u = authStore.user
   if (!u) return
   if (u.name) { form.value.name = u.name; prefilled.value.name = true }

@@ -59,7 +59,7 @@
                 <span v-if="o.shipping_unknown" class="ship__flag">à tarifer</span>
               </td>
               <td>
-                {{ STATUTS[o.status] ?? o.status }}
+                {{ o.status_label ?? STATUTS[o.status] ?? o.status }}
                 <span v-if="traitees.has(o.id)" class="ship__done">traitée</span>
               </td>
               <td class="admin-table__total">{{ formatPrice(o.total) }}</td>

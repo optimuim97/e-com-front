@@ -602,6 +602,10 @@
     "seoDescription": "Discover all Rosa Beauty skincare: elixirs, floral waters, body lotions and facial rituals based on natural rose. Delivery in Abidjan and across Côte d'Ivoire."
   },
   "orders": {
+    "cancelDialogTitle": "Cancel this order?",
+    "cancelDialogBody": "The items go back into stock and the order will not be prepared. This cannot be undone.",
+    "cancelDialogKeep": "Keep my order",
+    "cancelBlocked_shipped": "This order has already shipped. It can still be cancelled by contacting us, but the delivery fees will remain payable.",
     "agentBlocked": "Your browser blocked the automatic opening. Tap the button below to reach an agent.",
     "agentNoWhatsapp": "Contact us to finalise your order:",
     "agentRedirect": "Opening WhatsApp in {count}s to finalise with an agent…",
@@ -653,6 +657,7 @@
     "sendToSellerDesc": "Click to open WhatsApp with your order details.",
     "phone": "Phone",
     "status": {
+      "awaiting_payment": "Awaiting payment",
       "pending": "Pending",
       "processing": "Processing",
       "shipped": "Shipped",

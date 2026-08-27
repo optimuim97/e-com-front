@@ -1,11 +1,16 @@
 # ══════════════════════════════════════════════════════════════════════
 # Frontend — construction de l'image, déploiement
 #
-#   push sur main    →  image GHCR → RECETTE → vérification → PRODUCTION
+#   push sur main    →  image GHCR → PRODUCTION → vérification
 #   « Run workflow » →  rejoue une image précise en production
 #
-# La production suit la recette automatiquement, et seulement si celle-ci
-# répond correctement après déploiement.
+# La recette est DESACTIVEE : son VPS est suspendu par LWS. La production
+# ne dépend plus d'elle et se déploie dès que l'image est construite.
+# Pour la rétablir : Settings → Variables → STAGING_ENABLED = true.
+#
+# ATTENTION : ce dépôt n'a aucun test. Sans recette, plus rien ne s'in-
+# terpose entre un push sur main et la boutique. La vérification finale
+# constate la panne, elle ne l'évite pas. Relire avant de pousser.
 #
 # L'image ne contient aucune référence au domaine : la même image sert la
 # recette et la production. Pour revenir en arrière, relancer le workflow
@@ -82,7 +87,11 @@ jobs:
   # ── Recette : automatique à chaque push sur main ────────────────────
   deploy-staging:
     needs: build
-    if: github.event_name == 'push'
+    # Désactivée : le VPS de recette est suspendu par LWS. La production
+    # ne dépend donc plus d'elle. Pour la rétablir le jour où une recette
+    # existe de nouveau : Settings → Variables → STAGING_ENABLED = true.
+    # Rien d'autre à changer — le garde-fou ci-dessous se réactive seul.
+    if: github.event_name == 'push' && vars.STAGING_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -121,15 +130,20 @@ jobs:
           done
 
   # ── Production ──────────────────────────────────────────────────────
-  # Suit la recette dès qu'elle est vérifiée. Reste déclenchable à la main
-  # pour rejouer une image précise (retour arrière).
+  # Déploie dès que l'image est construite. Si la recette est active, elle
+  # doit d'abord passer ; si elle est désactivée (job « skipped »), la
+  # production suit directement le build. Un échec de recette bloque
+  # toujours — « skipped » et « failure » ne sont pas la même chose.
+  # Reste déclenchable à la main pour rejouer une image (retour arrière).
   deploy-production:
     needs: [build, deploy-staging]
     if: >-
       always()
       && needs.build.result == 'success'
       && (
-        (github.event_name == 'push' && needs.deploy-staging.result == 'success')
+        (github.event_name == 'push'
+          && (needs.deploy-staging.result == 'success'
+              || needs.deploy-staging.result == 'skipped'))
         || (github.event_name == 'workflow_dispatch' && inputs.deploy_production)
       )
     runs-on: ubuntu-latest
@@ -168,3 +182,15 @@ jobs:
             echo "  ${chemin} -> ${code}"
             [ "$code" = "200" ] || { echo "::error::Production en échec sur ${chemin} (HTTP ${code})"; exit 1; }
           done
+
+      # Sans recette, la panne se découvre en production. Le retour arrière
+      # doit donc être immédiat : le tag précédent est rappelé ici pour
+      # n'avoir ni à le chercher ni à se connecter au serveur.
+      - name: Retour arrière — marche à suivre
+        if: failure()
+        run: |
+          echo "::error::La boutique ne répond pas. Revenir au tag précédent :"
+          echo "  Actions → CI/CD → Run workflow"
+          echo "  tag = le sha-xxxxxxx du dernier run vert"
+          echo "  cocher « Déployer en production »"
+          echo "Tag qui vient d'être déployé : ${{ inputs.tag || needs.build.outputs.tag }}"
