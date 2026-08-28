@@ -252,7 +252,7 @@ const navLinks = computed(() => [
   { to: '/',          label: t('common.home') },
   { to: '/products',  label: t('common.products') },
   { to: '/gammes',    label: t('common.productLines') },
-  { to: '/a-propos',  label: t('common.a-propos') },
+  { to: '/a-propos',  label: t('common.about') },
   { to: '/blog',      label: t('common.blog') },
   { to: '/contact',   label: t('common.contact') },
   { to: '/programme', label: t('common.club') },
