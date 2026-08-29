@@ -98,6 +98,7 @@ import {
   KeyIcon,
   MapPinIcon,
   ClipboardDocumentListIcon,
+  ClipboardDocumentCheckIcon,
   ShoppingCartIcon,
   SwatchIcon,
   PhotoIcon,
@@ -152,6 +153,7 @@ const NAV_GROUPS = [
       // « Opérations » : ce n'est pas une seconde liste de commandes, c'est
       // le poste de travail de qui prépare les envois hors Abidjan.
       { to: '/admin/expeditions',     label: 'Expéditions',       icon: PaperAirplaneIcon, permission: 'orders.view' },
+      { to: '/admin/tournees',        label: 'Tournées',          icon: ClipboardDocumentCheckIcon, permission: 'rounds.view' },
       { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon,  permission: 'deliveries.view'     },
       { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon, permission: 'delivery_zones.view' },
     ],
@@ -220,6 +222,7 @@ const TITLES = {
   'admin.pos':                 'Caisse / POS',
   'admin.whatsapp':            'Messages WhatsApp',
   'admin.expeditions':         'Expéditions',
+  'admin.rounds':              'Tournées',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
   'admin.stock-movements':     'Mouvements de stock',

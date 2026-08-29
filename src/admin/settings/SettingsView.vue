@@ -1087,25 +1087,6 @@
             <label class="settings-toggle">
               <button
                 type="button"
-                @click="toggle('module_purchases_enabled')"
-                class="toggle"
-                :class="{ 'toggle--on': form.module_purchases_enabled === 'true' }"
-              >
-                <span class="toggle__dot"></span>
-              </button>
-              <div class="settings-toggle__text">
-                <strong>Module Achats</strong>
-                <span
-                  >Fournisseurs, bons d'achat, prix de revient et coût moyen
-                  pondéré. Désactivé par défaut, et réservé aux comptes
-                  administrateurs : ces montants sont la base de la marge.</span
-                >
-              </div>
-            </label>
-
-            <label class="settings-toggle">
-              <button
-                type="button"
                 @click="toggle('stock_alert_notify_admin')"
                 class="toggle"
                 :class="{ 'toggle--on': form.stock_alert_notify_admin === 'true' }"
@@ -1121,6 +1102,51 @@
                 >
               </div>
             </label>
+          </div>
+        </section>
+
+        <!-- ── Modules ───────────────────────────────────────────── -->
+        <section v-show="activeTab === 'modules'" class="settings-section card">
+          <div class="settings-section__head">
+            <div class="settings-section__icon" style="background: #ede9fe; color: #6d28d9">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="settings-section__title">Modules</h2>
+              <p class="settings-section__sub">
+                Ce que la boutique utilise, et ce qu'elle n'utilise pas. Un module
+                éteint disparaît du menu et ses écrans se ferment — pour tout le
+                monde, vous compris. Rien n'est effacé : le rallumer remet tout
+                en place, données comprises.
+              </p>
+            </div>
+          </div>
+
+          <div class="settings-section__body">
+            <p v-if="modulesErreur" class="msg msg--error">{{ modulesErreur }}</p>
+
+            <label v-for="m in modules" :key="m.key" class="settings-toggle">
+              <button
+                type="button"
+                @click="toggle(moduleCle(m.key))"
+                class="toggle"
+                :class="{ 'toggle--on': form[moduleCle(m.key)] === 'true' }"
+              >
+                <span class="toggle__dot"></span>
+              </button>
+              <div class="settings-toggle__text">
+                <strong>{{ m.label }}</strong>
+                <span>{{ m.description }}</span>
+              </div>
+            </label>
+
+            <p class="settings-modules__note">
+              L'effet n'est visible qu'après enregistrement, et il faut recharger
+              la page pour que le menu se mette à jour.
+            </p>
           </div>
         </section>
 
@@ -1212,6 +1238,12 @@ const tabs = [
     label: "SEO",
     icon:
       '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.35-4.35"/></svg>',
+  },
+  {
+    id: "modules",
+    label: "Modules",
+    icon:
+      '<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>',
   },
   {
     id: "whatsapp",
@@ -1477,6 +1509,32 @@ function toggle(key) {
   form.value[key] = form.value[key] === "true" ? "false" : "true";
 }
 
+// ── Modules ────────────────────────────────────────────────────────────────
+// La liste, les libellés et l'état effectif viennent du serveur : c'est lui
+// qui tient le registre. Un module ajouté au code apparaît donc ici sans
+// qu'il faille penser à insérer une ligne dans cet écran.
+const modules = ref([]);
+const modulesErreur = ref("");
+
+const moduleCle = (cle) => `module_${cle}_enabled`;
+
+async function chargerModules() {
+  try {
+    const { data } = await api.get("/admin/modules");
+    modules.value = data.data ?? [];
+
+    // L'état effectif fait foi, y compris pour un module dont le réglage n'a
+    // jamais été enregistré : il vaut alors le défaut du registre, et non
+    // « éteint ».
+    modules.value.forEach((m) => {
+      form.value[moduleCle(m.key)] = m.enabled ? "true" : "false";
+    });
+  } catch (e) {
+    modulesErreur.value =
+      e.response?.data?.message ?? "La liste des modules n'a pas pu être chargée.";
+  }
+}
+
 async function fetchSettings() {
   try {
     const { data } = await api.get("/admin/settings");
@@ -1506,7 +1564,12 @@ async function save() {
   }
 }
 
-onMounted(fetchSettings);
+onMounted(async () => {
+  await fetchSettings();
+  // Après les réglages : l'état renvoyé par le registre prime sur la valeur
+  // brute stockée, defaults compris.
+  await chargerModules();
+});
 </script>
 
 <style scoped>
@@ -1724,6 +1787,12 @@ onMounted(fetchSettings);
 }
 
 /* Toggle */
+.settings-modules__note {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin: var(--space-2) 0 0;
+  line-height: 1.5;
+}
 .settings-toggle {
   display: flex;
   align-items: flex-start;

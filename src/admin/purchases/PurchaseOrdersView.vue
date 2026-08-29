@@ -3,8 +3,8 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Bons d'achat</h1>
-        <p class="page-subtitle">
+        <h1 class="page-header__title">Bons d'achat</h1>
+        <p class="page-header__sub">
           Ce qu'on commande, ce qu'on paie. La réception fait entrer le stock,
           fige le prix de revient et met à jour le coût moyen.
         </p>
@@ -28,10 +28,21 @@
       </select>
     </div>
 
-    <div class="table-card">
-      <div v-if="loading" class="table-empty">Chargement…</div>
-      <div v-else-if="bons.length === 0" class="table-empty">Aucun bon d'achat.</div>
-      <table v-else class="data-table">
+    <div class="card table-scroll">
+      <div v-if="loading" class="empty-state">Chargement…</div>
+      <!--
+        Un échec de chargement ne doit pas se lire « aucun bon d'achat » : le
+        module peut simplement être éteint, et l'écran affirmait alors le
+        contraire de la vérité.
+      -->
+      <div v-else-if="chargementErreur" class="empty-state">
+        <p>{{ chargementErreur }}</p>
+        <RouterLink v-if="moduleEteint" class="btn btn-outline btn-sm" :to="{ name: 'admin.settings' }">
+          Ouvrir les paramètres
+        </RouterLink>
+      </div>
+      <div v-else-if="bons.length === 0" class="empty-state">Aucun bon d'achat.</div>
+      <table v-else class="admin-table">
         <thead>
           <tr>
             <th>Numéro</th>
@@ -43,7 +54,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="bon in bons" :key="bon.id" class="data-table__row">
+          <tr v-for="bon in bons" :key="bon.id">
             <td class="font-medium">{{ bon.number }}</td>
             <td class="text-muted">{{ bon.supplier?.name ?? '—' }}</td>
             <td class="text-muted text-sm">{{ formatDate(bon.ordered_at) }}</td>
@@ -232,6 +243,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useCurrencyStore } from '@/stores/currency'
@@ -241,6 +253,10 @@ const meta    = ref(null)
 const loading = ref(false)
 const page    = ref(1)
 const filtres = ref({ search: '', status: '' })
+
+/** Pourquoi la liste est vide, quand elle l'est pour une mauvaise raison. */
+const chargementErreur = ref('')
+const moduleEteint     = ref(false)
 
 const fournisseurs = ref([])
 
@@ -255,15 +271,17 @@ function formatDate(valeur) {
 
 function badgeEtat(statut) {
   return {
-    draft:     'badge--warning',
-    received:  'badge--success',
-    cancelled: 'badge--muted',
-  }[statut] ?? 'badge--muted'
+    draft:     'badge-warning',
+    received:  'badge-success',
+    cancelled: 'badge-gray',
+  }[statut] ?? 'badge-gray'
 }
 
 async function charger(p = 1) {
   page.value    = p
   loading.value = true
+  chargementErreur.value = ''
+  moduleEteint.value     = false
   try {
     const params = { page: p }
     if (filtres.value.search) params.search = filtres.value.search
@@ -271,6 +289,14 @@ async function charger(p = 1) {
     const { data } = await api.get('/admin/purchase-orders', { params })
     bons.value = data.data
     meta.value = data.meta
+  } catch (e) {
+    bons.value = []
+    meta.value = null
+    // Le module Achats est éteint par défaut : c'est la cause la plus
+    // fréquente, et celle qu'on peut corriger soi-même.
+    moduleEteint.value     = e.response?.status === 403
+    chargementErreur.value = e.response?.data?.message
+      ?? "Les bons d'achat n'ont pas pu être chargés."
   } finally {
     loading.value = false
   }
@@ -432,6 +458,11 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Espacement vertical de l'écran, comme les autres pages de l'admin. */
+.purchase-orders { display: flex; flex-direction: column; gap: var(--space-4); }
+.purchase-orders > .page-header { margin-bottom: 0; }
+.purchase-orders > .filters-bar { margin-bottom: 0; }
+.purchase-orders > .stats-grid  { margin-bottom: 0; }
 .page-header {
   display: flex;
   align-items: flex-start;

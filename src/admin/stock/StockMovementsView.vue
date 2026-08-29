@@ -4,8 +4,8 @@
     <!-- En-tête -->
     <div class="page-header">
       <div>
-        <h1 class="page-title">Mouvements de stock</h1>
-        <p class="page-subtitle">
+        <h1 class="page-header__title">Mouvements de stock</h1>
+        <p class="page-header__sub">
           Toutes les entrées et sorties, avec leur origine. Un écart de comptage
           se retrouve ici.
         </p>
@@ -82,12 +82,19 @@
     </div>
 
     <!-- Tableau -->
-    <div class="table-card">
-      <div v-if="loading" class="table-empty">Chargement…</div>
-      <div v-else-if="mouvements.length === 0" class="table-empty">
+    <div class="card table-scroll">
+      <div v-if="loading" class="empty-state">Chargement…</div>
+      <!--
+        Un échec de chargement ne doit pas se lire comme une liste vide : la
+        cause est ailleurs, et l'écran affirmait le contraire de la vérité.
+      -->
+      <div v-else-if="chargementErreur" class="empty-state">
+        <p>{{ chargementErreur }}</p>
+      </div>
+      <div v-else-if="mouvements.length === 0" class="empty-state">
         Aucun mouvement pour ces critères.
       </div>
-      <table v-else class="data-table">
+      <table v-else class="admin-table">
         <thead>
           <tr>
             <th>Date</th>
@@ -100,7 +107,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="m in mouvements" :key="m.id" class="data-table__row">
+          <tr v-for="m in mouvements" :key="m.id">
             <td class="text-muted text-sm">{{ formatDate(m.created_at) }}</td>
             <td>
               <span class="font-medium">{{ m.product?.name ?? '—' }}</span>
@@ -229,6 +236,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { useAuthStore } from '@/features/auth/auth.store'
@@ -253,6 +261,9 @@ const meta       = ref(null)
 const loading    = ref(false)
 const page       = ref(1)
 
+/** Pourquoi la liste est vide, quand elle l'est pour une mauvaise raison. */
+const chargementErreur = ref('')
+
 const filtres = ref({ search: '', type: '', direction: '', from: '', to: '' })
 
 function parametres() {
@@ -266,10 +277,15 @@ function parametres() {
 async function charger(p = 1) {
   page.value    = p
   loading.value = true
+  chargementErreur.value = ''
   try {
     const { data } = await api.get('/admin/stock-movements', { params: { ...parametres(), page: p } })
     mouvements.value = data.data
     meta.value       = data.meta
+  } catch (e) {
+    mouvements.value = []
+    meta.value = null
+    chargementErreur.value = e.response?.data?.message ?? "Les mouvements de stock n'ont pas pu être chargés."
   } finally {
     loading.value = false
   }
@@ -290,14 +306,14 @@ function reinitialiser() {
 
 function badgeMotif(type) {
   return {
-    sale:         'badge--rose',
-    cancellation: 'badge--warning',
-    purchase:     'badge--success',
-    adjustment:   'badge--blue',
-    return:       'badge--blue',
-    import:       'badge--muted',
-    loss:         'badge--danger',
-  }[type] ?? 'badge--muted'
+    sale:         'badge-rose',
+    cancellation: 'badge-warning',
+    purchase:     'badge-success',
+    adjustment:   'badge-blue',
+    return:       'badge-blue',
+    import:       'badge-gray',
+    loss:         'badge-danger',
+  }[type] ?? 'badge-gray'
 }
 
 function formatDate(valeur) {
@@ -408,6 +424,11 @@ onMounted(() => charger(1))
 </script>
 
 <style scoped>
+/* Espacement vertical de l'écran, comme les autres pages de l'admin. */
+.stock-movements { display: flex; flex-direction: column; gap: var(--space-4); }
+.stock-movements > .page-header { margin-bottom: 0; }
+.stock-movements > .filters-bar { margin-bottom: 0; }
+.stock-movements > .stats-grid  { margin-bottom: 0; }
 .page-header {
   display: flex;
   align-items: flex-start;

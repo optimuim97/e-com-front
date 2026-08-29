@@ -18,6 +18,8 @@ import paymentRoutes from '@/features/payment/payment.routes'
 
 // ── Admin routes ──────────────────────────────────────────────────────────────
 import adminRoutes from '@/admin/admin.routes'
+import courierRoutes from '@/features/courier/courier.routes'
+import { isStandalone } from '@/pwa'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -45,6 +47,9 @@ const router = createRouter({
       ],
     },
 
+    // Espace livreur (sans layout — écran de terrain, sur téléphone)
+    ...courierRoutes,
+
     // Admin (dans AdminLayout)
     adminRoutes,
 
@@ -63,10 +68,24 @@ router.beforeEach(async (to) => {
     })
   }
 
+  // L'application installée s'ouvre sur `start_url` (/?source=pwa). Pour un
+  // livreur, ce point d'entrée est la boutique : il devrait naviguer à la main
+  // vers ses tournées à chaque lancement. On le dépose directement chez lui.
+  //
+  // Uniquement en mode installé : dans un navigateur ordinaire, il garde le
+  // droit de consulter la boutique comme n'importe qui.
+  if (to.path === '/' && auth.user && auth.can('rounds.point') && !auth.isStaff && isStandalone()) {
+    return { name: 'courier.rounds' }
+  }
+
   if (to.meta.requiresAuth  && !auth.user)    return { name: 'login', query: { redirect: to.fullPath } }
   if (to.meta.requiresAdmin && !auth.isAdmin) return { name: 'home' }
   // Espace admin : réservé au personnel (admin / manager / staff)
   if (to.meta.requiresStaff && !auth.isStaff) return { name: 'home' }
+  // Espace livreur : ouvert à qui peut pointer une tournée. Le renvoi se fait
+  // vers l'accueil et non vers le tableau de bord — un livreur n'y a pas accès.
+  if (to.meta.requiresCourier && !auth.can('rounds.point')) return { name: 'home' }
+
   // Contrôle fin par permission : si l'agent n'a pas la permission requise,
   // on le renvoie vers le tableau de bord (accessible à tout le staff).
   if (to.meta.permission && !auth.can(to.meta.permission)) {

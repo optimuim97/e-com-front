@@ -211,6 +211,7 @@
       :label="exportPreview.label"
       :orders="exportPreview.orders"
       :formats="exportPreview.formats"
+      @created="apresTournee"
       @close="exportPreview = null"
     />
 
@@ -320,6 +321,50 @@
           </button>
         </div>
 
+        <!--
+          Barre d'action de la sélection. Elle n'apparaît qu'une fois une case
+          cochée : hors de ce moment-là, elle ne ferait qu'occuper la place
+          au-dessus de la liste.
+        -->
+        <div v-if="cochees.size" class="orders__bulk">
+          <span class="orders__bulk-count">
+            <strong>{{ cochees.size }}</strong> commande(s) sélectionnée(s)
+          </span>
+          <button type="button" class="orders__bulk-link" @click="viderSelection">Tout décocher</button>
+          <span class="orders__bulk-spacer"></span>
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            :disabled="expedition"
+            title="Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité"
+            @click="expedierSelection(false)"
+          >
+            {{ expedition ? 'Envoi…' : 'Marquer comme expédiée' }}
+          </button>
+        </div>
+
+        <!-- Compte rendu de l'expédition en masse -->
+        <div v-if="bilanExpedition" class="orders__bulk-result">
+          <p class="orders__bulk-msg">{{ bilanExpedition.message }}</p>
+          <div v-if="bilanExpedition.rejected.length" class="orders__bulk-rejected">
+            <p><strong>{{ bilanExpedition.rejected.length }}</strong> commande(s) non expédiée(s) :</p>
+            <ul>
+              <li v-for="r in bilanExpedition.rejected" :key="r.id">
+                <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
+              </li>
+            </ul>
+            <button
+              v-if="bilanExpedition.forceable"
+              type="button"
+              class="orders__bulk-link"
+              @click="expedierSelection(true)"
+            >
+              Expédier quand même
+            </button>
+          </div>
+          <button type="button" class="orders__bulk-close" @click="bilanExpedition = null">✕</button>
+        </div>
+
         <div v-if="ordersVisibles.length === 0" class="empty-state">
           Toutes les commandes de cette page sont mises de côté.
         </div>
@@ -328,6 +373,14 @@
         <table class="admin-table">
           <thead>
             <tr>
+              <th class="orders__th-check">
+                <input
+                  type="checkbox"
+                  :checked="toutesCochees"
+                  title="Tout cocher / tout décocher"
+                  @change="basculerToutes"
+                />
+              </th>
               <th>N° commande</th>
               <th>Client</th>
               <th>Date</th>
@@ -343,6 +396,13 @@
                 'admin-table__row--expanded': expandedId === order.id,
                 'orders__row--revue': revue === order.id,
               }">
+                <td class="orders__th-check">
+                  <input
+                    type="checkbox"
+                    :checked="cochees.has(order.id)"
+                    @click.stop="basculerUne(order.id)"
+                  />
+                </td>
                 <td class="admin-table__mono">
                   {{ order.number }}
                   <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
@@ -387,7 +447,7 @@
                 </td>
               </tr>
               <tr v-if="expandedId === order.id" class="admin-table__detail-row">
-                <td :colspan="7">
+                <td :colspan="8">
                   <OrderQuickActionModal
                     :order="order"
                     inline
@@ -481,6 +541,70 @@ const decote = ref(new Set(JSON.parse(sessionStorage.getItem(CLE_DECOTE) ?? '[]'
 const revue = ref(null)
 
 const ordersVisibles = computed(() => orders.value.filter(o => !decote.value.has(o.id)))
+
+// ── Sélection multiple & expédition en masse ────────────────────────────────
+// Le pendant de la tournée pour les envois qui n'en forment pas une : un dépôt
+// chez un transporteur, une série de colis pour l'intérieur. Le backend
+// applique exactement les garde-fous de l'expédition à l'unité.
+const cochees          = ref(new Set())
+const expedition       = ref(false)
+const bilanExpedition  = ref(null)
+
+const toutesCochees = computed(() =>
+  ordersVisibles.value.length > 0 && ordersVisibles.value.every(o => cochees.value.has(o.id))
+)
+
+function basculerUne(id) {
+  const s = new Set(cochees.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  cochees.value = s
+}
+
+function basculerToutes() {
+  const s = new Set(cochees.value)
+  if (toutesCochees.value) ordersVisibles.value.forEach(o => s.delete(o.id))
+  else                     ordersVisibles.value.forEach(o => s.add(o.id))
+  cochees.value = s
+}
+
+function viderSelection() {
+  cochees.value = new Set()
+}
+
+async function expedierSelection(force = false) {
+  if (expedition.value || !cochees.value.size) return
+  expedition.value = true
+
+  try {
+    const { data } = await api.post('/admin/orders/bulk-ship', {
+      order_ids: [...cochees.value],
+      force,
+    })
+
+    const refuses = data.rejected ?? []
+    bilanExpedition.value = {
+      message:   data.message,
+      rejected:  refuses,
+      // « Expédier quand même » n'a de sens que sur les refus qui se lèvent :
+      // une commande annulée le resterait.
+      forceable: refuses.some(r => r.forceable),
+    }
+
+    // Ne restent cochées que les commandes refusées : l'agent voit sa
+    // sélection se réduire à ce qui demande encore une décision.
+    cochees.value = new Set(refuses.map(r => r.id))
+
+    await fetchOrders()
+  } catch (e) {
+    bilanExpedition.value = {
+      message:   e.response?.data?.message ?? "L'expédition en masse a échoué.",
+      rejected:  [],
+      forceable: false,
+    }
+  } finally {
+    expedition.value = false
+  }
+}
 
 function persisterDecote() {
   sessionStorage.setItem(CLE_DECOTE, JSON.stringify([...decote.value]))
@@ -713,6 +837,16 @@ const exportPreview = ref(null) // { label, orders } | null
 
 function openExportPreview(group) {
   exportPreview.value = { label: group.label, orders: group.orders }
+}
+
+/**
+ * Une tournée vient de partir : les commandes qu'elle emporte sont passées en
+ * « expédiée ». La liste affichée date d'avant, et laisserait croire qu'elles
+ * sont encore à préparer — de quoi les embarquer une seconde fois.
+ */
+async function apresTournee() {
+  if (groupBy.value) await fetchAllForGrouping()
+  else await fetchOrders()
 }
 
 // ── Modal itinéraire ─────────────────────────────────────────────────────────
@@ -1477,4 +1611,37 @@ onMounted(async () => {
 .pagination p { font-size: 0.8125rem; color: var(--gray-400); }
 .pagination__actions { display: flex; gap: var(--space-2); }
 .pagination__actions .btn { padding: 6px 12px; }
+/* ── Sélection multiple ── */
+.orders__th-check { width: 34px; }
+.orders__th-check input { cursor: pointer; accent-color: var(--rose-500); }
+
+.orders__bulk {
+  display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;
+  padding: var(--space-3) var(--space-4);
+  background: var(--rose-50); border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+.orders__bulk-count { font-size: 0.8125rem; color: var(--gray-700); }
+.orders__bulk-spacer { flex: 1; }
+.orders__bulk-link {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.75rem; font-weight: 500; color: var(--rose-600);
+}
+.orders__bulk-link:hover { text-decoration: underline; }
+
+.orders__bulk-result {
+  position: relative;
+  padding: var(--space-3) var(--space-4);
+  background: var(--cream-50); border-radius: var(--radius-md);
+  margin-bottom: var(--space-3); font-size: 0.8125rem;
+}
+.orders__bulk-msg { margin: 0; font-weight: 600; color: var(--gray-800); }
+.orders__bulk-rejected { margin-top: var(--space-2); color: #92400e; }
+.orders__bulk-rejected p { margin: 0 0 4px; }
+.orders__bulk-rejected ul { margin: 0 0 6px; padding-left: 18px; }
+.orders__bulk-close {
+  position: absolute; top: 8px; right: 10px;
+  background: none; border: none; cursor: pointer; color: var(--gray-400);
+}
+
 </style>

@@ -509,12 +509,23 @@ watch(() => route.params.slug, () => {
 .product-breadcrumb a:hover { color: var(--rose-500); }
 .product-breadcrumb > span:last-child { color: var(--gray-700); font-weight: 500; }
 
+/*
+ * minmax(0, 1fr) et non 1fr : une piste de grille prend par défaut la largeur
+ * minimale de son contenu, et le bouton « Ajouter au panier » est en
+ * white-space: nowrap. Sur un écran de 360px, la colonne se résolvait à 402px
+ * dans un conteneur de 328 — la fiche et le bouton favori sortaient de l'écran,
+ * sans même une barre de défilement pour aller les chercher.
+ */
 .product-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-12);
   align-items: start;
 }
+
+/* Même raison : sans ça, un enfant large repousse toute la colonne. */
+.product-gallery,
+.product-info { min-width: 0; }
 
 /* ── Galerie ── */
 .product-gallery { display: flex; flex-direction: column; gap: var(--space-3); }
@@ -543,7 +554,11 @@ watch(() => route.params.slug, () => {
   gap: var(--space-2);
   overflow-x: auto;
   padding-bottom: 4px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
+.product-gallery__thumb { scroll-snap-align: start; }
 .product-gallery__thumb {
   width: 76px;
   height: 76px;
@@ -600,6 +615,11 @@ watch(() => route.params.slug, () => {
   text-decoration: line-through;
 }
 
+/*
+ * Contenu libre saisi en administration : une URL sans espace, une image ou un
+ * tableau collé depuis Word suffisent à faire déborder la page sur mobile.
+ * On contient tout ça ici plutôt que d'espérer une saisie propre.
+ */
 .product-info__desc {
   color: var(--gray-500);
   line-height: 1.75;
@@ -607,7 +627,15 @@ watch(() => route.params.slug, () => {
   padding: var(--space-4) 0;
   border-top: 1px solid var(--cream-200);
   border-bottom: 1px solid var(--cream-200);
+  overflow-wrap: anywhere;
 }
+.product-info__desc :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+}
+.product-info__desc :deep(table) { width: 100%; display: block; overflow-x: auto; }
+.product-info__desc :deep(pre)   { white-space: pre-wrap; }
 
 .product-info__group { display: flex; flex-direction: column; gap: var(--space-2); }
 
@@ -728,11 +756,6 @@ watch(() => route.params.slug, () => {
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
-
-/* ── Responsive ── */
-@media (max-width: 900px) {
-  .product-grid { grid-template-columns: 1fr; gap: var(--space-8); }
-}
 
 /* ── Reviews Section ── */
 .reviews-section {
@@ -953,6 +976,125 @@ watch(() => route.params.slug, () => {
   grid-template-columns: repeat(4, 1fr);
   gap: var(--space-5);
 }
-@media (max-width: 1024px) { .related-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px)  { .related-grid { grid-template-columns: 1fr; } }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Responsive
+
+   Regroupé en fin de feuille : ces règles doivent l'emporter sur toutes les
+   précédentes. Le bloc vivait au milieu du fichier et les styles des avis,
+   écrits plus bas, reprenaient le dessus sur mobile.
+
+   Paliers alignés sur le site : 1024 tablette large, 900 rupture des deux
+   colonnes, 768 mobile (celui du design system), 560 petit écran.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .product-grid { gap: var(--space-8); }
+  .related-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Deux colonnes côte à côte deviennent trop étroites : la fiche passe dessous. */
+@media (max-width: 900px) {
+  .product-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-8);
+  }
+  /* L'image occupait tout l'écran en hauteur avant qu'on lise le prix. */
+  .product-gallery__main { aspect-ratio: 4 / 3; }
+}
+
+@media (max-width: 768px) {
+  .product-breadcrumb { margin-bottom: var(--space-5); }
+
+  /* Respirations pensées pour le bureau : sur un téléphone, elles obligent
+     à faire défiler dans le vide entre chaque section. */
+  .reviews-section,
+  .related-section {
+    margin-top: var(--space-10);
+    padding-top: var(--space-8);
+  }
+  .reviews-section__title,
+  .related-section__title { font-size: 1.25rem; }
+  .related-section__title { margin-bottom: var(--space-5); }
+  .reviews-section__header { margin-bottom: var(--space-5); }
+
+  /* Note moyenne : le bloc rose prend toute la largeur plutôt que de se
+     coincer à côté du titre. */
+  .reviews-section__avg { width: 100%; justify-content: center; }
+
+  .review-form-card { padding: var(--space-5); margin-bottom: var(--space-6); }
+
+  /* Le libellé « Connectez-vous pour laisser un avis » réclamait 346px sans
+     pouvoir se replier : sur un écran de 360, il sortait de la carte. */
+  .review-form-card--guest { padding: var(--space-6) var(--space-4); }
+  .review-form-card--guest .btn {
+    white-space: normal;
+    width: 100%;
+    justify-content: center;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+  .review-card { padding: var(--space-4) var(--space-5); }
+
+  /* La date était poussée à droite par margin-left:auto ; une fois la ligne
+     repliée elle se retrouvait seule et cadrée à droite. */
+  .review-card__header { gap: var(--space-2); }
+  .review-card__date { margin-left: 0; width: 100%; }
+
+  /* Cibles tactiles : 32px est en dessous du seuil confortable. */
+  .product-info__qty-btn { width: 40px; height: 40px; }
+  .product-info__qty { padding: 3px; }
+
+  .product-gallery__thumb { width: 64px; height: 64px; }
+}
+
+@media (max-width: 560px) {
+  .product-info { gap: var(--space-4); }
+  .product-info__price-current { font-size: 1.75rem; }
+
+  /*
+   * Le libellé porte le prix : « Ajouter au panier · 8 000 FCFA ». Avec le
+   * white-space: nowrap du design system et 40px de marge intérieure de
+   * chaque côté, il réclamait 342px à lui seul. On le laisse se replier sur
+   * deux lignes ici, et on resserre — plutôt que de sacrifier le prix, qui
+   * est justement ce qu'on veut montrer sur le bouton.
+   */
+  .product-info__cta {
+    white-space: normal;
+    padding: 14px var(--space-4);
+    line-height: 1.3;
+    min-height: 52px;
+  }
+
+  /* Deux colonnes lisibles au lieu d'un repli irrégulier à quatre éléments. */
+  .product-info__trust {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+
+  .review-form__footer { gap: var(--space-2); }
+  .review-form__footer .btn { width: 100%; justify-content: center; }
+
+  .reviews-pagination { gap: var(--space-3); }
+}
+
+@media (max-width: 480px) {
+  .related-grid { grid-template-columns: 1fr; }
+}
+
+/*
+ * Très petits écrans : le bouton favori et le panier ne tiennent plus côte à
+ * côte sans écraser le libellé. Le favori passe sous le panier, pleine
+ * largeur — il reste atteignable, ce qui n'était pas le cas quand il sortait
+ * de l'écran.
+ */
+@media (max-width: 380px) {
+  .product-info__actions { flex-wrap: wrap; }
+  .product-info__cta { flex: 1 1 100%; }
+  .product-info__wish {
+    width: 100% !important;
+    border-radius: var(--radius-full);
+  }
+}
 </style>

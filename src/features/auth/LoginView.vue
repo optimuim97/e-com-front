@@ -9,8 +9,26 @@
   >
     <form @submit.prevent="handleSubmit" class="auth-form">
       <div>
-        <label class="label">{{ $t('auth.email') }}</label>
-        <input v-model="form.email" type="email" class="input" :placeholder="$t('auth.emailPlaceholder')" required />
+        <label class="label">{{ $t('auth.identifier') }}</label>
+        <!--
+          `type="text"` et non `email` : le champ accepte aussi un identifiant
+          court (« souattara »), pour les comptes sans adresse. En `email`, le
+          navigateur refusait la saisie avant même l'envoi.
+          `autocapitalize` : un clavier de téléphone met sinon une majuscule au
+          premier caractère, et la saisie échoue sans que rien ne l'explique.
+        -->
+        <input
+          v-model="form.email"
+          type="text"
+          inputmode="email"
+          autocomplete="username"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+          class="input"
+          :placeholder="$t('auth.identifierPlaceholder')"
+          required
+        />
       </div>
       <div>
         <div class="auth-row">
@@ -65,7 +83,7 @@ async function handleSubmit() {
   loading.value = true;
   try {
     const user = await auth.login(form.value.email, form.value.password);
-    const redirect = route.query.redirect || (user.roles?.includes('admin') ? '/admin' : '/');
+    const redirect = route.query.redirect || auth.landingPath(user);
     router.push(redirect);
   } catch (e) {
     if (!e._serverError) {
@@ -80,7 +98,7 @@ async function handleSubmit() {
 // composable useSocialAuth via auth.setSession(). On redirige comme après login.
 function onSocialSuccess() {
   const user = auth.user;
-  const redirect = route.query.redirect || (user?.roles?.includes('admin') ? '/admin' : '/');
+  const redirect = route.query.redirect || auth.landingPath(user);
   router.push(redirect);
 }
 </script>

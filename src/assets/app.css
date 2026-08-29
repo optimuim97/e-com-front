@@ -186,6 +186,9 @@
   .badge-gold    { background: var(--gold-200);  color: var(--gold-600);}
   .badge-dark    { background: var(--gray-800);  color: #fff;           }
   .badge-cream   { background: var(--cream-200); color: var(--gray-600);}
+  /* Informatif, sans jugement : un ajustement d'inventaire ou un retour
+     ne sont ni un succès ni une alerte. */
+  .badge-blue    { background: #dbeafe;          color: #1d4ed8;        }
 
   /* ── Nav links (admin sidebar) ── */
   .nav-link {
@@ -440,6 +443,87 @@
     color: #2d2a28;
     margin: 0;
   }
+  /* Sous-titre d'écran : à quoi sert la page, en une phrase. */
+  .page-header__sub {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    max-width: 66ch;
+    margin: 4px 0 0;
+    line-height: 1.5;
+  }
+
+  /* ── Cartes de chiffres (en-tête d'écran) ──
+     Le motif existait déjà, redéfini dans chaque écran qui s'en sert. Posé ici
+     pour que le suivant n'ait plus à le recopier — et parce que l'écran des
+     mouvements de stock, lui, avait oublié de le faire : ses quatre cartes
+     s'affichaient sans mise en forme. */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+  }
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+  }
+  .stat-card__icon {
+    flex: none;
+    width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 10px;
+    background: var(--cream-100);
+    color: var(--gray-500);
+  }
+  .stat-card__icon--green  { background: #dcfce7; color: #15803d; }
+  .stat-card__icon--rose   { background: #fee2e2; color: #b91c1c; }
+  .stat-card__icon--blue   { background: #dbeafe; color: #1d4ed8; }
+  .stat-card__icon--purple { background: #ede9fe; color: #6d28d9; }
+  .stat-card__body { min-width: 0; }
+  .stat-card__value {
+    margin: 0;
+    font-size: 1.25rem; font-weight: 700; color: #2d2a28;
+    line-height: 1.2;
+  }
+  .stat-card__label {
+    margin: 2px 0 0;
+    font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--gray-400);
+  }
+
+  /* ── Barre de filtres (au-dessus d'un tableau) ── */
+  .filters-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-3);
+  }
+
+  /* ── Utilitaires de tableau ──
+     Le vocabulaire que les écrans Achats et Mouvements de stock employaient
+     sans qu'il existe nulle part : leurs tableaux s'affichaient bruts. */
+  .text-right   { text-align: right; }
+  .text-muted   { color: var(--gray-400); }
+  .text-sm      { font-size: 0.75rem; }
+  .font-medium  { font-weight: 500; color: #2d2a28; }
+  .font-semibold{ font-weight: 600; color: #2d2a28; }
+
+  /* ── Champs de formulaire en grille (modales de saisie) ── */
+  .field { display: flex; flex-direction: column; }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  @media (max-width: 560px) {
+    .grid-2 { grid-template-columns: 1fr; }
+  }
 
   /* ── Pagination admin (compacte) ── */
   .pagination {
@@ -606,6 +690,20 @@ select.input {
     background   var(--transition-fast),
     box-shadow   var(--transition-fast);
 }
+/* Variante compacte, pour les barres de filtres au-dessus d'un tableau.
+   Définie ici et non dans @layer : `.input` l'est aussi, et une regle en
+   couche perdrait contre son `width: 100%` — les filtres s'empilaient alors
+   sur toute la largeur de l'écran. */
+.input--sm,
+input.input--sm,
+select.input--sm {
+  width: auto;
+  min-width: 150px;
+  max-width: 220px;
+  padding: 7px 14px;
+  font-size: 0.8125rem;
+}
+
 .input::placeholder {
   color: var(--gray-400);
   font-style: italic;

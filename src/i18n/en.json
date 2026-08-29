@@ -264,7 +264,9 @@
     "providerUnsupported": "This sign-in method is unavailable.",
     "popupBlocked": "Popup blocked. Please allow pop-up windows.",
     "badCredentials": "Incorrect email or password",
-    "registerError": "Could not create the account"
+    "registerError": "Could not create the account",
+    "identifier": "Email or username",
+    "identifierPlaceholder": "you{'@'}example.com or jsmith"
   },
   "cart": {
     "eyebrow": "My cart",

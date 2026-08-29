@@ -1,13 +1,15 @@
 <template>
   <RouterView />
   <WhatsAppButton
-    v-if="!isAdminRoute && settings.whatsappNumber"
+    v-if="!isAdminRoute && !isCourierRoute && settings.whatsappNumber"
     :phone="settings.whatsappNumber"
   />
-  <FloatingCart v-if="!isAdminRoute" />
+  <FloatingCart v-if="!isAdminRoute && !isCourierRoute" />
   <!-- Installation / mise à jour PWA — hors back-office : l'invite
-       « installez la boutique » n'a aucun sens pour un agent. -->
-  <PwaPrompts v-if="!isAdminRoute" />
+       « installez la boutique » n'a aucun sens pour un agent.
+       L'espace livreur porte la sienne, formulée pour lui : bouton d'achat,
+       panier flottant et invite boutique n'y ont rien à faire. -->
+  <PwaPrompts v-if="!isAdminRoute" :install="!isCourierRoute" />
 </template>
 
 <script setup>
@@ -28,7 +30,8 @@ const settings = useSettingsStore();
 // Charger les settings dès le démarrage de l'app (tous les layouts en profitent)
 settings.fetch().catch(() => {})
 
-const isAdminRoute = computed(() => route.path.startsWith('/admin'));
+const isAdminRoute   = computed(() => route.path.startsWith('/admin'));
+const isCourierRoute = computed(() => route.path.startsWith('/livreur'));
 
 function onServerError() {
   toast.error(

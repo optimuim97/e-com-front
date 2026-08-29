@@ -3,8 +3,8 @@
 
     <div class="page-header">
       <div>
-        <h1 class="page-title">Fournisseurs</h1>
-        <p class="page-subtitle">
+        <h1 class="page-header__title">Fournisseurs</h1>
+        <p class="page-header__sub">
           Chez qui la boutique s'approvisionne. Un fournisseur rattaché à des
           bons d'achat est désactivé plutôt que supprimé — ses pièces justifient
           les coûts déjà entrés.
@@ -27,12 +27,22 @@
       </label>
     </div>
 
-    <div class="table-card">
-      <div v-if="loading" class="table-empty">Chargement…</div>
-      <div v-else-if="fournisseurs.length === 0" class="table-empty">
+    <div class="card table-scroll">
+      <div v-if="loading" class="empty-state">Chargement…</div>
+      <!--
+        Un échec de chargement ne doit pas se lire comme une liste vide : la
+        cause est ailleurs, et l'écran affirmait le contraire de la vérité.
+      -->
+      <div v-else-if="chargementErreur" class="empty-state">
+        <p>{{ chargementErreur }}</p>
+        <RouterLink v-if="moduleEteint" class="btn btn-outline btn-sm" :to="{ name: 'admin.settings' }">
+          Ouvrir les paramètres
+        </RouterLink>
+      </div>
+      <div v-else-if="fournisseurs.length === 0" class="empty-state">
         Aucun fournisseur enregistré.
       </div>
-      <table v-else class="data-table">
+      <table v-else class="admin-table">
         <thead>
           <tr>
             <th>Nom</th>
@@ -44,13 +54,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="f in fournisseurs" :key="f.id" class="data-table__row">
+          <tr v-for="f in fournisseurs" :key="f.id">
             <td class="font-medium">{{ f.name }}</td>
             <td class="text-muted">{{ f.contact_name || '—' }}</td>
             <td class="text-muted">{{ f.phone || '—' }}</td>
             <td class="text-right">{{ f.orders_count ?? 0 }}</td>
             <td>
-              <span class="badge" :class="f.is_active ? 'badge--success' : 'badge--muted'">
+              <span class="badge" :class="f.is_active ? 'badge-success' : 'badge-gray'">
                 {{ f.is_active ? 'Actif' : 'Archivé' }}
               </span>
             </td>
@@ -125,12 +135,17 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 
 const fournisseurs = ref([])
 const meta         = ref(null)
 const loading      = ref(false)
+
+/** Pourquoi la liste est vide, quand elle l'est pour une mauvaise raison. */
+const chargementErreur = ref('')
+const moduleEteint     = ref(false)
 const page         = ref(1)
 const recherche    = ref('')
 const actifsSeuls  = ref(false)
@@ -138,6 +153,8 @@ const actifsSeuls  = ref(false)
 async function charger(p = 1) {
   page.value    = p
   loading.value = true
+  chargementErreur.value = ''
+  moduleEteint.value     = false
   try {
     const params = { page: p }
     if (recherche.value)   params.search      = recherche.value
@@ -145,6 +162,11 @@ async function charger(p = 1) {
     const { data } = await api.get('/admin/suppliers', { params })
     fournisseurs.value = data.data
     meta.value         = data.meta
+  } catch (e) {
+    fournisseurs.value = []
+    meta.value = null
+    moduleEteint.value     = e.response?.status === 403
+    chargementErreur.value = e.response?.data?.message ?? "Les fournisseurs n'ont pas pu être chargés."
   } finally {
     loading.value = false
   }
@@ -211,6 +233,11 @@ onMounted(() => charger(1))
 </script>
 
 <style scoped>
+/* Espacement vertical de l'écran, comme les autres pages de l'admin. */
+.suppliers { display: flex; flex-direction: column; gap: var(--space-4); }
+.suppliers > .page-header { margin-bottom: 0; }
+.suppliers > .filters-bar { margin-bottom: 0; }
+.suppliers > .stats-grid  { margin-bottom: 0; }
 .page-header {
   display: flex;
   align-items: flex-start;

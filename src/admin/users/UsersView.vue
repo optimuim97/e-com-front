@@ -27,7 +27,9 @@
       <select v-model="roleFilter" @change="() => { page = 1; fetchUsers() }" class="input filters-bar__select">
         <option value="">Tous les rôles</option>
         <option value="admin">Admin</option>
+        <option value="manager">Gérant</option>
         <option value="staff">Staff</option>
+        <option value="livreur">Livreur</option>
         <option value="customer">Client</option>
       </select>
     </div>
@@ -69,6 +71,7 @@
               <td>{{ user.email || '—' }}</td>
               <td>
                 <span :class="roleBadgeClass(user.role)">{{ roleLabel(user.role) }}</span>
+                <span v-if="user.username" class="users__login">{{ user.username }}</span>
               </td>
               <td class="text-center">{{ user.orders_count ?? 0 }}</td>
               <td class="admin-table__total">{{ formatPrice(user.orders_sum_total ?? 0) }}</td>
@@ -128,10 +131,27 @@
                 <input v-model="form.phone" type="text" class="input" placeholder="+225 07 00 00 00 00" />
               </div>
               <div>
+                <!--
+                  Laissé vide, il se déduit du nom : « Sidik Ouattara » donne
+                  « souattara ». C'est ce que saisit un livreur qui n'a pas
+                  d'adresse électronique.
+                -->
+                <label class="label">Identifiant de connexion</label>
+                <input
+                  v-model="form.username"
+                  type="text"
+                  class="input"
+                  autocapitalize="none"
+                  placeholder="déduit du nom si vide"
+                />
+              </div>
+              <div>
                 <label class="label">Rôle *</label>
                 <select v-model="form.role" class="input" required>
                   <option value="customer">Client</option>
+                  <option value="livreur">Livreur</option>
                   <option value="staff">Staff</option>
+                  <option value="manager">Gérant</option>
                   <option value="admin">Admin</option>
                 </select>
               </div>
@@ -229,7 +249,7 @@ const formError   = ref('')
 const deleteTarget = ref(null)
 
 const form = reactive({
-  name: '', email: '', phone: '', role: 'customer', password: '', permissions: [],
+  name: '', email: '', username: '', phone: '', role: 'customer', password: '', permissions: [],
 })
 
 /* ── Permissions (for direct assignment) ── */
@@ -275,7 +295,7 @@ async function fetchUsers() {
 /* ── Modal ── */
 function openCreate() {
   editingUser.value = null
-  Object.assign(form, { name: '', email: '', phone: '', role: 'customer', password: '', permissions: [] })
+  Object.assign(form, { name: '', email: '', username: '', phone: '', role: 'customer', password: '', permissions: [] })
   formError.value = ''
   showModal.value = true
 }
@@ -286,6 +306,7 @@ function openEdit(user) {
     name:        user.name,
     email:       user.email || '',
     phone:       user.phone || '',
+    username:    user.username || '',
     role:        user.role || 'customer',
     password:    '',
     permissions: [...(user.permissions || [])],
@@ -304,6 +325,7 @@ async function saveUser() {
       name:  form.name,
       email: form.email,
       phone: form.phone || null,
+      username: form.username || null,
       role:  form.role,
     }
     if (form.password) payload.password = form.password
@@ -349,13 +371,18 @@ function initials(name) {
 }
 
 function roleLabel(role) {
-  return { admin: 'Admin', staff: 'Staff', customer: 'Client' }[role] ?? role
+  return {
+    admin: 'Admin', manager: 'Gérant', staff: 'Staff',
+    livreur: 'Livreur', customer: 'Client',
+  }[role] ?? role
 }
 
 function roleBadgeClass(role) {
   return {
     admin:    'badge badge-primary',
+    manager:  'badge badge-primary',
     staff:    'badge badge-warning',
+    livreur:  'badge badge-success',
     customer: 'badge badge-gray',
   }[role] ?? 'badge badge-gray'
 }
@@ -373,6 +400,15 @@ onMounted(() => { fetchUsers(); loadPermissions() })
 </script>
 
 <style scoped>
+/* L'identifiant de connexion, sous le rôle : c'est lui qu'on dicte au
+   téléphone, pas l'adresse de service. */
+.users__login {
+  display: block;
+  margin-top: 3px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+}
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
 
 .header-actions { display: flex; align-items: center; gap: var(--space-3); }

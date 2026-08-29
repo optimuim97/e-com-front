@@ -54,8 +54,14 @@ onMounted(() => {
   refuse.value = depuis > 0 && Date.now() < expire
 })
 
+const props = defineProps({
+  // L'espace livreur porte sa propre invite, formulée pour lui. Deux
+  // bandeaux d'installation sur le même écran, c'est un de trop.
+  install: { type: Boolean, default: true },
+})
+
 const showInstall = computed(() =>
-  !!installPrompt.value && !refuse.value && !isStandalone()
+  props.install && !!installPrompt.value && !refuse.value && !isStandalone()
 )
 
 function dismiss() {

@@ -10,12 +10,60 @@
         <button class="zep__close" @click="$emit('close')" aria-label="Fermer">✕</button>
       </header>
 
+      <!--
+        Une fois la tournée créée, l'écran ne sert plus qu'à une chose : donner
+        le code et la feuille. Laisser la sélection affichée inviterait à
+        cliquer une seconde fois, et à créer une tournée en double.
+      -->
+      <section v-if="roundResult" class="zep__done">
+        <span class="eyebrow">Tournée créée</span>
+        <p class="zep__done-code">{{ roundResult.code }}</p>
+        <p class="zep__done-meta">
+          {{ roundResult.orders_count }} livraison(s)
+          <span v-if="roundResult.expected_total > 0">
+            · <strong>{{ formatPrice(roundResult.expected_total) }}</strong> à encaisser
+          </span>
+          <span v-else>· rien à encaisser (tout est déjà réglé)</span>
+        </p>
+        <p class="zep__done-hint">
+          Les commandes sont passées en « expédiée ». Reportez ce code sur la
+          feuille : c'est par lui qu'on retrouvera la tournée au retour.
+        </p>
+
+        <div v-if="roundRejected.length" class="zep__rejected">
+          <p class="zep__rejected-title">
+            {{ roundRejected.length }} commande(s) restée(s) à quai
+          </p>
+          <ul>
+            <li v-for="r in roundRejected" :key="r.id">
+              <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="zep__done-actions">
+          <button class="btn btn-primary btn-sm" :disabled="busy" @click="downloadRoundSheet">
+            {{ busy === 'sheet' ? '…' : 'Télécharger la feuille' }}
+          </button>
+          <button class="btn btn-outline btn-sm" @click="$emit('close')">Fermer</button>
+        </div>
+      </section>
+
       <!-- Options d'ajustement -->
-      <div class="zep__options">
-        <label class="zep__field">
-          <span>Titre du document</span>
-          <input v-model="titleEdit" type="text" class="input" maxlength="120" />
-        </label>
+      <div v-if="!roundResult" class="zep__options">
+        <div class="zep__row">
+          <label class="zep__field">
+            <span>Titre du document</span>
+            <input v-model="titleEdit" type="text" class="input" maxlength="120" />
+          </label>
+          <label class="zep__field zep__field--courier">
+            <span>Livreur</span>
+            <select v-model="courierId" class="input">
+              <option :value="null">— à affecter plus tard —</option>
+              <option v-for="c in couriers" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </label>
+        </div>
 
         <div class="zep__toggles">
           <button type="button" class="zep__chip" :class="{ active: onlyPaid }" @click="onlyPaid = !onlyPaid">
@@ -44,7 +92,7 @@
       </div>
 
       <!-- Tableau de prévisualisation -->
-      <div class="zep__body">
+      <div v-if="!roundResult" class="zep__body">
         <table class="zep__table">
           <thead>
             <tr>
@@ -95,7 +143,24 @@
       </div>
 
       <!-- Récapitulatif + actions -->
-      <footer class="zep__foot">
+      <footer v-if="!roundResult" class="zep__foot">
+        <!--
+          Le refus s'affiche ici, avec le motif commande par commande : l'agent
+          doit savoir quoi corriger. Un « échec » sec le laisserait recommencer
+          la même sélection.
+        -->
+        <div v-if="roundError" class="zep__error">
+          <p class="zep__error-msg">{{ roundError }}</p>
+          <ul v-if="roundRejected.length">
+            <li v-for="r in roundRejected" :key="r.id">
+              <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
+            </li>
+          </ul>
+          <button v-if="roundForceable" type="button" class="zep__link" @click="createRound(true)">
+            Expédier quand même
+          </button>
+        </div>
+
         <div class="zep__summary">
           <strong>{{ selectedOrders.length }}</strong> commande(s) sélectionnée(s)
           <span v-if="showItemCounts && selectedItems">{{ selectedItems }} article(s)</span>
@@ -125,11 +190,24 @@
           </button>
           <button
             v-if="has('pdf')"
-            class="btn btn-primary btn-sm"
+            class="btn btn-outline btn-sm"
             :disabled="!selectedOrders.length || busy"
             @click="downloadPDF"
           >
-            {{ busy === 'pdf' ? 'Génération…' : 'Télécharger le PDF' }}
+            {{ busy === 'pdf' ? 'Génération…' : 'PDF' }}
+          </button>
+          <!--
+            L'action principale : elle enregistre la sortie, expédie les
+            commandes et rend le code. Le simple téléchargement reste à côté
+            pour les cas où l'on veut la feuille sans engager la tournée.
+          -->
+          <button
+            class="btn btn-primary btn-sm"
+            :disabled="!selectedOrders.length || busy"
+            title="Enregistre la tournée, passe les commandes en « expédiée » et génère la feuille"
+            @click="createRound(false)"
+          >
+            {{ busy === 'round' ? 'Création…' : 'Créer la tournée' }}
           </button>
         </div>
       </footer>
@@ -138,7 +216,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '@/api'
 
 const props = defineProps({
@@ -147,14 +225,38 @@ const props = defineProps({
   // Formats proposés : 'xlsx' (Excel, backend) · 'pdf' (feuille de livraison) · 'csv' (client)
   formats: { type: Array, default: () => ['pdf', 'csv'] },
 })
-defineEmits(['close'])
+const emit = defineEmits(['close', 'created'])
 
 const has = (f) => props.formats.includes(f)
 
 const titleEdit     = ref(props.label)
 const onlyPaid      = ref(false)
 const hideOutOfZone = ref(false)
-const busy          = ref(null)   // null | 'pdf' | 'xlsx' | 'txt'
+const busy          = ref(null)   // null | 'pdf' | 'xlsx' | 'txt' | 'round' | 'sheet'
+
+// ── Tournée ─────────────────────────────────────────────────────────────────
+// Le livreur reste facultatif : une tournée peut partir avant qu'on sache qui
+// la prend, et l'affectation se corrige ensuite.
+const couriers      = ref([])
+const courierId     = ref(null)
+const roundResult   = ref(null)   // { code, orders_count, expected_total, … }
+const roundRejected = ref([])
+const roundError    = ref('')
+
+// « Expédier quand même » n'a de sens que sur les refus qui se lèvent : une
+// commande annulée le resterait, et le bouton ne ferait que rejouer l'échec.
+const roundForceable = computed(() => roundRejected.value.some(r => r.forceable))
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/admin/delivery-rounds/couriers')
+    couriers.value = data.data ?? []
+  } catch {
+    // Liste indisponible : la tournée part sans livreur affecté plutôt que
+    // de bloquer la préparation sur un détail rattrapable.
+    couriers.value = []
+  }
+})
 
 // Blocs récapitulatifs du document — cochés par défaut (même défaut côté backend)
 const showProductTotals = ref(true)
@@ -274,6 +376,74 @@ const downloadXlsx = () => downloadBlob({
   mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   ext:  'xlsx',
 })
+
+// ── Tournée ─────────────────────────────────────────────────────────────────
+
+/**
+ * Enregistre la tournée et expédie les commandes cochées.
+ *
+ * Les trois effets tombent ensemble côté serveur : le code, les lignes de
+ * tournée et le passage en « expédiée ». Le téléchargement de la feuille suit,
+ * et peut être rejoué autant de fois qu'il le faut à partir du code.
+ *
+ * @param force lève les garde-fous d'expédition, après que l'agent a vu ce
+ *              qu'ils reprochaient à chaque commande.
+ */
+async function createRound(force = false) {
+  if (busy.value || !selectedOrders.value.length) return
+  busy.value    = 'round'
+  roundError.value = ''
+
+  try {
+    const { data } = await api.post('/admin/delivery-rounds', {
+      order_ids:  selectedOrders.value.map(o => o.id),
+      label:      titleEdit.value || props.label,
+      courier_id: courierId.value,
+      force,
+    })
+
+    roundResult.value   = data.data
+    roundRejected.value = data.rejected ?? []
+
+    // La feuille part sans second clic : c'est elle qu'on emporte, et l'agent
+    // n'a aucune raison de créer une tournée pour ne pas l'imprimer.
+    await downloadRoundSheet()
+
+    // Les commandes viennent de changer de statut : la liste derrière le modal
+    // ne le sait pas encore.
+    emit('created', roundResult.value)
+  } catch (e) {
+    const payload = e.response?.data ?? {}
+    roundRejected.value = payload.rejected ?? []
+    roundError.value    = payload.message ?? "La tournée n'a pas pu être créée."
+  } finally {
+    busy.value = null
+  }
+}
+
+/** Feuille de route de la tournée créée — réimprimable par son code. */
+async function downloadRoundSheet() {
+  if (!roundResult.value) return
+  const precedent = busy.value
+  busy.value = 'sheet'
+  try {
+    const res  = await api.get(
+      `/admin/delivery-rounds/${encodeURIComponent(roundResult.value.code)}/sheet`,
+      { responseType: 'blob' },
+    )
+    const href = URL.createObjectURL(new Blob([res.data], { type: 'text/plain;charset=utf-8' }))
+    const a    = document.createElement('a')
+    a.href     = href
+    a.download = `tournee_${roundResult.value.code}.txt`
+    document.body.appendChild(a); a.click(); a.remove()
+    URL.revokeObjectURL(href)
+  } catch (e) {
+    console.error('Feuille de tournée indisponible', e)
+    roundError.value = "La tournée est bien créée, mais la feuille n'a pas pu être téléchargée. Réessayez depuis son code."
+  } finally {
+    busy.value = precedent === 'round' ? 'round' : null
+  }
+}
 
 // ── Export CSV (client-side) ────────────────────────────────────────────────
 function downloadCSV() {
@@ -415,6 +585,53 @@ function downloadCSV() {
 .zep__summary-total { font-weight: 700; color: var(--rose-600); }
 .zep__warn { color: #92400e; font-weight: 500; }
 .zep__actions { display: flex; gap: var(--space-2); }
+
+/* Ligne d'en-tête des options : titre + livreur côte à côte */
+.zep__row { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.zep__row .zep__field { flex: 1 1 240px; }
+.zep__field--courier { flex: 0 1 220px; }
+
+/* Tournée créée */
+.zep__done {
+  flex: 1; overflow-y: auto;
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+.zep__done-code {
+  font-family: ui-monospace, monospace;
+  font-size: 2rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--rose-600);
+  margin: var(--space-2) 0 var(--space-1);
+}
+.zep__done-meta { font-size: 0.875rem; color: var(--gray-700); margin: 0 0 var(--space-3); }
+.zep__done-hint {
+  font-size: 0.8125rem; color: var(--gray-500);
+  max-width: 46ch; margin: 0 auto var(--space-4);
+}
+.zep__done-actions {
+  display: flex; gap: var(--space-2); justify-content: center; flex-wrap: wrap;
+}
+
+/* Commandes restées à quai */
+.zep__rejected {
+  text-align: left; max-width: 52ch; margin: 0 auto var(--space-4);
+  padding: var(--space-3);
+  background: #fef3c7; border-radius: var(--radius-md);
+  font-size: 0.8125rem; color: #92400e;
+}
+.zep__rejected-title { font-weight: 600; margin: 0 0 6px; }
+.zep__rejected ul { margin: 0; padding-left: 18px; }
+.zep__rejected li { margin-bottom: 2px; }
+
+/* Refus au moment de créer la tournée */
+.zep__error {
+  flex-basis: 100%;
+  padding: var(--space-3);
+  background: #fee2e2; border-radius: var(--radius-md);
+  font-size: 0.8125rem; color: #991b1b;
+}
+.zep__error-msg { font-weight: 600; margin: 0 0 6px; }
+.zep__error ul { margin: 0 0 6px; padding-left: 18px; }
 
 @media (max-width: 640px) {
   .zep__addr { display: none; }

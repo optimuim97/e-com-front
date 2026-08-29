@@ -23,15 +23,36 @@ export const useAuthStore = defineStore('auth', () => {
   const permissions = computed(() => user.value?.permissions ?? []);
 
   /**
-   * Teste une permission. L'admin passe toujours. On accepte une chaîne
-   * ou un tableau (dans ce cas : au moins une permission suffit).
+   * Préfixes de permission appartenant à un module éteint par la boutique.
+   * Fournis par le serveur : c'est lui qui tient le registre.
+   */
+  const disabledModules = computed(() => user.value?.disabled_modules ?? []);
+
+  /** La permission relève-t-elle d'un module qu'on a éteint ? */
+  function moduleEteint(permission) {
+    return disabledModules.value.some(prefixe => permission.startsWith(prefixe));
+  }
+
+  /**
+   * Teste une permission. On accepte une chaîne ou un tableau (dans ce cas :
+   * au moins une permission suffit).
+   *
+   * Un module éteint fait échouer le test avant tout le reste, l'admin
+   * compris. C'est ce qui fait disparaître ses écrans du menu et ferme ses
+   * routes : sans cette ligne, éteindre un module laisserait ses entrées en
+   * place et l'agent découvrirait la coupure sur un 403.
    */
   function can(permission) {
-    if (isAdmin.value) return true;
     if (!permission) return true;
-    const list = permissions.value;
-    if (Array.isArray(permission)) return permission.some(p => list.includes(p));
-    return list.includes(permission);
+
+    const liste = Array.isArray(permission) ? permission : [permission];
+    const ouvertes = liste.filter(p => !moduleEteint(p));
+
+    if (ouvertes.length === 0) return false;
+    if (isAdmin.value) return true;
+
+    const acquises = permissions.value;
+    return ouvertes.some(p => acquises.includes(p));
   }
 
   async function fetchUser() {
@@ -107,6 +128,30 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isQuickOrderUser = computed(() => user.value?.is_generated_email === true);
 
+  /**
+   * Où envoyer quelqu'un qui vient de se connecter.
+   *
+   * Le livreur passe avant la boutique : il ouvre l'application pour faire sa
+   * tournée, pas pour acheter. Le déposer sur la page d'accueil l'obligerait à
+   * connaître une URL qu'on ne lui a jamais donnée.
+   *
+   * @param {object|null} compte  profil renvoyé par le login (le store n'est
+   *                              pas encore à jour au moment de l'appel)
+   */
+  function landingPath(compte = null) {
+    const u     = compte ?? user.value;
+    const roles = u?.roles ?? [];
+
+    // Même repli que `isStaff` : la réponse du login ne porte pas toujours
+    // `is_staff`, et un agent atterrissait alors sur la boutique.
+    const personnel = u?.is_staff
+      ?? ['admin', 'manager', 'staff'].some((r) => roles.includes(r));
+
+    if (personnel) return '/admin';
+    if (roles.includes('livreur')) return '/livreur';
+    return '/';
+  }
+
   // Initialisation : si un token existe, récupérer l'utilisateur ; sinon checked = true immédiatement
   if (localStorage.getItem('auth_token')) {
     fetchUser();
@@ -116,7 +161,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     user, checked, isAdmin, isStaff, isLoggedIn, isQuickOrderUser,
-    permissions, can,
+    permissions, can, landingPath, disabledModules,
     fetchUser, login, register, logout, setSession,
     updateInfo, setupAccount, changePassword,
   };

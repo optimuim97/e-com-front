@@ -264,7 +264,9 @@
     "providerUnsupported": "Méthode de connexion indisponible.",
     "popupBlocked": "Popup bloquée. Autorisez les fenêtres surgissantes.",
     "badCredentials": "Email ou mot de passe incorrect",
-    "registerError": "Erreur lors de la création du compte"
+    "registerError": "Erreur lors de la création du compte",
+    "identifier": "Email ou identifiant",
+    "identifierPlaceholder": "vous{'@'}exemple.com ou souattara"
   },
   "cart": {
     "eyebrow": "Mon panier",
