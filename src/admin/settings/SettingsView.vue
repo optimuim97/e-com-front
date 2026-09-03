@@ -463,6 +463,25 @@
             <label class="settings-toggle">
               <button
                 type="button"
+                @click="toggle('whatsapp_button_enabled')"
+                class="toggle"
+                :class="{ 'toggle--on': form.whatsapp_button_enabled === 'true' }"
+              >
+                <span class="toggle__dot"></span>
+              </button>
+              <div class="settings-toggle__text">
+                <strong>Bouton "Support WhatsApp"</strong>
+                <span>
+                  Affiche la pastille WhatsApp en bas de chaque page de la boutique.
+                  Indépendant du numéro : le désactiver n'enlève pas WhatsApp des
+                  liens de commande ni de la mise en relation avec un agent.
+                </span>
+              </div>
+            </label>
+
+            <label class="settings-toggle">
+              <button
+                type="button"
                 @click="toggle('floating_cart_enabled')"
                 class="toggle"
                 :class="{ 'toggle--on': form.floating_cart_enabled === 'true' }"
@@ -1299,6 +1318,7 @@ const form = ref({
   enable_quick_order: "true",
   order_cancellation_delay_hours: "",
   floating_cart_enabled: "true",
+  whatsapp_button_enabled: "true",
   // Réseaux sociaux
   social_instagram: "",
   social_facebook: "",

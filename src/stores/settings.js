@@ -101,6 +101,10 @@ export const useSettingsStore = defineStore('settings', () => {
   /* ── Tunnel de commande ───────────────────────────────────────────────── */
   const enableQuickOrder          = bool('enable_quick_order',           true)
   const floatingCartEnabled       = bool('floating_cart_enabled',        true)
+  // Pastille d'assistance WhatsApp de la vitrine. Distincte du numéro : la
+  // boutique peut garder le numéro pour les liens de commande sans afficher
+  // la pastille sur chaque page. Allumée par défaut, comme avant le réglage.
+  const whatsappButtonEnabled     = bool('whatsapp_button_enabled',      true)
 
   /* ── Page d'accueil ───────────────────────────────────────────────────── */
   const heroImageUrl              = get('home_hero_image_url',           '')
@@ -215,7 +219,7 @@ export const useSettingsStore = defineStore('settings', () => {
     paymentMtnEnabled, paymentMtnNumber, paymentMtnInstructions,
     paymentGeniuspayEnabled,
     // Tunnel
-    enableQuickOrder, floatingCartEnabled,
+    enableQuickOrder, floatingCartEnabled, whatsappButtonEnabled,
     // Hero
     heroImageUrl, heroImages,
     // Announce

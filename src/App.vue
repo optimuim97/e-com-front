@@ -1,7 +1,7 @@
 <template>
   <RouterView />
   <WhatsAppButton
-    v-if="!isAdminRoute && !isCourierRoute && settings.whatsappNumber"
+    v-if="!isAdminRoute && !isCourierRoute && settings.whatsappButtonEnabled && settings.whatsappNumber"
     :phone="settings.whatsappNumber"
   />
   <FloatingCart v-if="!isAdminRoute && !isCourierRoute" />
