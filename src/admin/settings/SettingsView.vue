@@ -463,25 +463,6 @@
             <label class="settings-toggle">
               <button
                 type="button"
-                @click="toggle('whatsapp_button_enabled')"
-                class="toggle"
-                :class="{ 'toggle--on': form.whatsapp_button_enabled === 'true' }"
-              >
-                <span class="toggle__dot"></span>
-              </button>
-              <div class="settings-toggle__text">
-                <strong>Bouton "Support WhatsApp"</strong>
-                <span>
-                  Affiche la pastille WhatsApp en bas de chaque page de la boutique.
-                  Indépendant du numéro : le désactiver n'enlève pas WhatsApp des
-                  liens de commande ni de la mise en relation avec un agent.
-                </span>
-              </div>
-            </label>
-
-            <label class="settings-toggle">
-              <button
-                type="button"
                 @click="toggle('floating_cart_enabled')"
                 class="toggle"
                 :class="{ 'toggle--on': form.floating_cart_enabled === 'true' }"
@@ -1052,6 +1033,25 @@
             <label class="settings-toggle">
               <button
                 type="button"
+                @click="toggle('whatsapp_button_hidden')"
+                class="toggle"
+                :class="{ 'toggle--on': form.whatsapp_button_hidden === 'true' }"
+              >
+                <span class="toggle__dot"></span>
+              </button>
+              <div class="settings-toggle__text">
+                <strong>Masquer le bouton WhatsApp support flottant</strong>
+                <span>
+                  Retire la pastille WhatsApp affichée en bas de chaque page de la
+                  boutique. Sans effet sur le numéro ci-dessus : les liens de commande
+                  et la mise en relation avec un agent continuent de fonctionner.
+                </span>
+              </div>
+            </label>
+
+            <label class="settings-toggle">
+              <button
+                type="button"
                 @click="toggle('whatsapp_notify_customer')"
                 class="toggle"
                 :class="{ 'toggle--on': form.whatsapp_notify_customer === 'true' }"
@@ -1318,7 +1318,6 @@ const form = ref({
   enable_quick_order: "true",
   order_cancellation_delay_hours: "",
   floating_cart_enabled: "true",
-  whatsapp_button_enabled: "true",
   // Réseaux sociaux
   social_instagram: "",
   social_facebook: "",
@@ -1341,6 +1340,7 @@ const form = ref({
   home_hero_variant: "1",
   // WhatsApp
   whatsapp_admin_number: "",
+  whatsapp_button_hidden: "false",
   whatsapp_notify_customer: "false",
   // Envois : actifs par défaut, comme le lit le serveur pour un réglage jamais
   // renseigné. Les afficher éteints ici ferait croire à une boutique muette
