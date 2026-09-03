@@ -31,6 +31,7 @@
         <table class="admin-table">
           <thead>
             <tr>
+              <th class="admin-table__grip-col"></th>
               <th>Produit</th>
               <th>Catégorie</th>
               <th>Prix</th>
@@ -40,7 +41,32 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="p in products" :key="p.id">
+            <!--
+              Glisser-déposer : l'ordre de cette liste est celui de la vitrine.
+              La poignée porte le `draggable`, pas la ligne entière — sinon
+              sélectionner un nom de produit démarre un déplacement.
+            -->
+            <tr
+              v-for="(p, index) in products"
+              :key="p.id"
+              class="admin-table__row--sortable"
+              :class="{
+                'admin-table__row--dragged': dragIndex === index,
+                'admin-table__row--over': overIndex === index && dragIndex !== index,
+              }"
+              @dragover.prevent="overIndex = index"
+              @drop.prevent="deposer(index)"
+              @dragend="finDeplacement"
+            >
+              <td class="admin-table__grip-col">
+                <span
+                  class="admin-table__grip"
+                  :class="{ 'admin-table__grip--busy': rangeant }"
+                  :draggable="!rangeant"
+                  :title="rangeant ? 'Enregistrement en cours…' : 'Glisser pour ranger'"
+                  @dragstart="debutDeplacement(index, $event)"
+                >⠿</span>
+              </td>
               <td>
                 <div class="admin-table__product">
                   <div class="admin-table__thumb">
@@ -137,6 +163,50 @@ async function load() {
   }
 }
 
+// ── Rangement par glisser-déposer ────────────────────────────────────────────
+//
+// L'ordre de cette liste est celui de la vitrine. Le déplacement est appliqué
+// à l'écran tout de suite puis envoyé au serveur : attendre la réponse ferait
+// « sauter » la vignette sous le doigt.
+const dragIndex = ref(null)
+const overIndex = ref(null)
+const rangeant  = ref(false)
+
+function debutDeplacement(index, evenement) {
+  dragIndex.value = index
+  // Firefox n'amorce pas le déplacement sans données transportées.
+  evenement.dataTransfer.effectAllowed = 'move'
+  evenement.dataTransfer.setData('text/plain', String(index))
+}
+
+function finDeplacement() {
+  dragIndex.value = null
+  overIndex.value = null
+}
+
+async function deposer(cible) {
+  const source = dragIndex.value
+  finDeplacement()
+
+  if (source === null || source === cible || rangeant.value) return
+
+  const avant = [...products.value]
+  const liste = [...products.value]
+  liste.splice(cible, 0, ...liste.splice(source, 1))
+  products.value = liste
+
+  rangeant.value = true
+  try {
+    await api.put('/admin/products/reorder', { ids: liste.map((p) => p.id) })
+  } catch {
+    // Le serveur a refusé : on remet la liste telle qu'elle était, sans quoi
+    // l'écran afficherait un ordre que la vitrine n'a pas.
+    products.value = avant
+  } finally {
+    rangeant.value = false
+  }
+}
+
 async function deleteProduct(p) {
   if (!confirm(`Archiver "${p.name}" ?`)) return
   try {
@@ -153,6 +223,36 @@ onMounted(load)
 </script>
 
 <style scoped>
+/* ── Rangement par glisser-déposer ── */
+.admin-table__grip-col { width: 34px; padding-right: 0; }
+
+.admin-table__grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 26px;
+  border-radius: 6px;
+  color: #c4b8b1;
+  font-size: 15px;
+  line-height: 1;
+  cursor: grab;
+  user-select: none;
+  transition: color .15s ease, background .15s ease;
+}
+.admin-table__grip:hover { color: #8a7f78; background: #f5efec; }
+.admin-table__grip:active { cursor: grabbing; }
+.admin-table__grip--busy { opacity: .4; cursor: progress; }
+
+/* La ligne déplacée s'efface : c'est l'emplacement d'arrivée qui compte. */
+.admin-table__row--dragged { opacity: .4; }
+
+/* Trait d'insertion sous le curseur, plutôt qu'un fond coloré : il montre où
+   la ligne va se poser, pas seulement qu'on la survole. */
+.admin-table__row--over td {
+  box-shadow: inset 0 2px 0 var(--rose-400, #e8869f);
+}
+
 /* Réservé : indication discrète à côté du compteur, pas un second chiffre
    concurrent — c'est le stock qui reste l'information principale. */
 .stock-reserve {

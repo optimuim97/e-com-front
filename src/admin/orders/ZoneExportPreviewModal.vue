@@ -196,6 +196,15 @@
           >
             {{ busy === 'pdf' ? 'Génération…' : 'PDF' }}
           </button>
+
+          <button
+            class="btn btn-outline btn-sm"
+            :disabled="!selectedOrders.length || busy"
+            title="Copie la feuille dans le presse-papiers, prête à coller dans WhatsApp"
+            @click="copierPourWhatsapp"
+          >
+            {{ copie ? 'Copié !' : (busy === 'copie' ? '…' : 'Copier texte pour WhatsApp') }}
+          </button>
           <!--
             L'action principale : elle enregistre la sortie, expédie les
             commandes et rend le code. Le simple téléchargement reste à côté
@@ -232,7 +241,7 @@ const has = (f) => props.formats.includes(f)
 const titleEdit     = ref(props.label)
 const onlyPaid      = ref(false)
 const hideOutOfZone = ref(false)
-const busy          = ref(null)   // null | 'pdf' | 'xlsx' | 'txt' | 'round' | 'sheet'
+const busy          = ref(null)   // null | 'pdf' | 'xlsx' | 'txt' | 'copie' | 'round' | 'sheet'
 
 // ── Tournée ─────────────────────────────────────────────────────────────────
 // Le livreur reste facultatif : une tournée peut partir avant qu'on sache qui
@@ -359,6 +368,67 @@ const downloadPDF = () => downloadBlob({
   ext:    'pdf',
   prefix: 'livraison',
 })
+
+const copie = ref(false)
+
+/**
+ * Copie la feuille dans le presse-papiers, prête à coller dans WhatsApp.
+ *
+ * Le texte est encadré de trois accents graves : c'est ce qui fait passer
+ * WhatsApp en police monospace. Sans eux, il affiche le message dans sa police
+ * proportionnelle et les colonnes de montants, calées au caractère près, se
+ * décalent toutes — la feuille devient illisible à l'arrivée.
+ *
+ * Le BOM est retiré : invisible dans un fichier, il apparaît comme un
+ * caractère parasite en tête de message.
+ */
+async function copierPourWhatsapp() {
+  if (busy.value || !selectedOrders.value.length) return
+  busy.value = 'copie'
+  try {
+    const params = new URLSearchParams()
+    selectedOrders.value.forEach(o => params.append('order_ids[]', o.id))
+    params.append('label', titleEdit.value || props.label)
+    params.append('show_product_totals', showProductTotals.value ? '1' : '0')
+    params.append('show_item_counts',    showItemCounts.value    ? '1' : '0')
+
+    const res = await api.get(`/admin/orders/export-by-zone-txt?${params.toString()}`, {
+      responseType: 'text',
+    })
+
+    const feuille = String(res.data).replace(/^\uFEFF/, '').trimEnd()
+    await ecrireDansPressePapiers('```\n' + feuille + '\n```')
+
+    copie.value = true
+    setTimeout(() => { copie.value = false }, 2500)
+  } catch (e) {
+    console.error('Copie WhatsApp échouée', e)
+  } finally {
+    busy.value = null
+  }
+}
+
+/**
+ * `navigator.clipboard` exige un contexte sécurisé : sur une recette servie en
+ * HTTP, ou sur d'anciens navigateurs, il faut ce repli.
+ */
+async function ecrireDansPressePapiers(texte) {
+  try {
+    await navigator.clipboard.writeText(texte)
+    return
+  } catch {
+    // On tente la méthode historique.
+  }
+
+  const zone = document.createElement('textarea')
+  zone.value = texte
+  zone.style.position = 'fixed'
+  zone.style.opacity  = '0'
+  document.body.appendChild(zone)
+  zone.select()
+  try { document.execCommand('copy') } catch { /* rien de plus à tenter */ }
+  document.body.removeChild(zone)
+}
 
 // TXT : même feuille, en texte brut annotable (case « [ ] LIVRÉ » par commande)
 const downloadTxt = () => downloadBlob({
