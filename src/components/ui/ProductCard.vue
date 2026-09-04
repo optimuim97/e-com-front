@@ -104,11 +104,11 @@
       <!-- Footer : prix + bouton panier -->
       <div class="product-card__footer">
         <div class="product-card__price">
-          <span v-if="product.compare_price" class="product-card__price-old">
-            {{ formatPrice(product.compare_price) }}
+          <span v-if="referencePrice" class="product-card__price-old">
+            {{ formatPrice(referencePrice) }}
           </span>
           <span class="product-card__price-current">{{
-            formatPrice(product.price)
+            formatPrice(sellingPrice)
           }}</span>
         </div>
 
@@ -164,6 +164,7 @@ import { RouterLink } from "vue-router";
 import { useI18n } from "vue-i18n";
 import WishlistButton from "@/features/wishlist/WishlistButton.vue";
 import { useCurrencyStore } from "@/stores/currency";
+import * as pricing from "@/utils/pricing";
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -181,12 +182,10 @@ const added = ref(false);
 const cover = computed(() => props.product.images?.[0]?.url ?? null);
 const coverAlt = computed(() => props.product.images?.[1]?.url ?? null);
 
-/* Remise calculée depuis compare_price */
-const discountPercent = computed(() => {
-  const { price, compare_price } = props.product;
-  if (!compare_price || !price || compare_price <= price) return null;
-  return Math.round((1 - price / compare_price) * 100);
-});
+/* Price shown to the customer: promotions and flash sales included. */
+const sellingPrice = computed(() => pricing.sellingPrice(props.product));
+const referencePrice = computed(() => pricing.referencePrice(props.product));
+const discountPercent = computed(() => pricing.discountPercent(props.product));
 
 function formatPrice(val) {
   return currency.format(val);
