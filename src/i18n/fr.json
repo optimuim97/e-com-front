@@ -178,6 +178,15 @@
     "minShort": "m",
     "secShort": "s"
   },
+  "promoBanner": {
+    "upTo": "Jusqu'à",
+    "discountOf": "Remise de",
+    "wholeCatalogue": "Sur tout le catalogue",
+    "selection": "Sur une sélection de {count} articles",
+    "endsIn": "Se termine dans",
+    "cta": "J'en profite",
+    "imageAlt": "Rosa Beauty Facial Care — soins du visage"
+  },
   "testimonials": {
     "eyebrow": "Témoignages",
     "title": "Ce que disent nos clientes",
@@ -547,6 +556,8 @@
     "outOfStock": "Rupture de stock",
     "addToCart": "Ajouter au panier",
     "addToCartWithPrice": "Ajouter au panier · {price}",
+    "youSave": "Vous économisez {amount}",
+    "promoUntil": "jusqu'au {date}",
     "addToWishlist": "Ajouter aux favoris",
     "addedToCart": "✓ Produit ajouté au panier",
     "natural": "100% naturel",

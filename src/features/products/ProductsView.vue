@@ -156,6 +156,9 @@ const filters = reactive({
   sort:      '',
   page:      1,
   featured:  route.query.featured ?? null,
+  // Arrivée depuis la bannière d'accueil : n'afficher que les articles de
+  // l'opération en cours.
+  promotion: route.query.promotion ?? null,
 })
 
 function setCategory(slug) {
@@ -186,7 +189,7 @@ async function loadProducts() {
 }
 
 watch(
-  () => [filters.category, filters.min_price, filters.max_price, filters.sort, filters.featured],
+  () => [filters.category, filters.min_price, filters.max_price, filters.sort, filters.featured, filters.promotion],
   () => { filters.page = 1; loadProducts() }
 )
 watch(() => filters.page, loadProducts)
@@ -196,7 +199,7 @@ function scrollTop() { window.scrollTo({ top: 0, behavior: 'smooth' }) }
 function resetFilters() {
   Object.assign(filters, {
     category: null, search: null, min_price: null, max_price: null,
-    sort: '', page: 1, featured: null,
+    sort: '', page: 1, featured: null, promotion: null,
   })
 }
 

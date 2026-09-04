@@ -15,8 +15,8 @@
       </div>
 
       <!-- Discount badge -->
-      <div v-if="product.discount_percent" class="absolute top-3 left-3 z-10 mt-0" :class="{'mt-7': product.stock === 0 || product.is_featured}">
-        <span class="badge badge-warning font-bold">-{{ product.discount_percent }}%</span>
+      <div v-if="discountBadge" class="absolute top-3 left-3 z-10 mt-0" :class="{'mt-7': product.stock === 0 || product.is_featured}">
+        <span class="badge badge-warning font-bold">{{ discountBadge }}</span>
       </div>
 
       <!-- Wishlist button (top-right) -->
@@ -49,9 +49,9 @@
 
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-baseline gap-1.5">
-          <span class="text-primary-500 font-bold text-base">{{ formatPrice(product.price) }}</span>
-          <span v-if="product.compare_price" class="text-xs text-gray-400 line-through">
-            {{ formatPrice(product.compare_price) }}
+          <span class="text-primary-500 font-bold text-base">{{ formatPrice(sellingPrice) }}</span>
+          <span v-if="referencePrice" class="text-xs text-gray-400 line-through">
+            {{ formatPrice(referencePrice) }}
           </span>
         </div>
         <div v-if="product.stock > 0 && product.stock <= 5"
@@ -68,12 +68,18 @@ import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 import { useCurrencyStore } from '@/stores/currency'
+import * as pricing from '@/utils/pricing'
 
 const props = defineProps({ product: { type: Object, required: true } })
 
 const imgError = ref(false)
 const cover    = computed(() => props.product.images?.[0]?.url ?? null)
 const currency = useCurrencyStore()
+
+/* Price shown to the customer: promotions and flash sales included. */
+const sellingPrice   = computed(() => pricing.sellingPrice(props.product))
+const referencePrice = computed(() => pricing.referencePrice(props.product))
+const discountBadge  = computed(() => pricing.discountBadge(props.product))
 
 function formatPrice(price) {
   return currency.format(price)

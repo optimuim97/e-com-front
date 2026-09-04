@@ -14,6 +14,14 @@
       @add-to-cart="addToCart"
     />
 
+    <!-- 1b. Opération en cours — juste sous l'accroche, le créneau standard
+         d'une campagne : visible sans repousser la marque. Rien ne s'affiche
+         hors période de promotion. -->
+    <PromoBannerSection
+      v-if="homeStats.promo_campaign"
+      :campaign="homeStats.promo_campaign"
+    />
+
     <!-- 2. Bande de réassurance — rassure dès le 1er scroll (naturel, livraison…) -->
     <BenefitsSection :items="benefits" />
 
@@ -83,6 +91,7 @@ import ProductLinesSection  from '@/features/home/sections/ProductLinesSection.v
 import BestSellersSection   from '@/features/home/sections/BestSellersSection.vue'
 import NewCollectionSection from '@/features/home/sections/NewCollectionSection.vue'
 import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
+import PromoBannerSection   from '@/features/home/sections/PromoBannerSection.vue'
 import AboutSection         from '@/features/home/sections/AboutSection.vue'
 import ExploreSection       from '@/features/home/sections/ExploreSection.vue'
 import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'

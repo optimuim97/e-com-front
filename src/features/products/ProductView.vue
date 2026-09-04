@@ -29,8 +29,8 @@
         <div class="product-gallery">
           <div class="product-gallery__main">
             <img :src="activeImage" :alt="product.name" class="product-gallery__img" />
-            <span v-if="discountPercent > 0" class="product-gallery__discount badge badge-rose">
-              -{{ discountPercent }}%
+            <span v-if="discountBadge" class="product-gallery__discount badge badge-rose">
+              {{ discountBadge }}
             </span>
           </div>
           <div v-if="product.images && product.images.length > 1" class="product-gallery__thumbs">
@@ -64,10 +64,21 @@
 
           <!-- Price -->
           <div class="product-info__price">
-            <span class="product-info__price-current">{{ formatPrice(product.price) }}</span>
-            <span v-if="product.compare_price && product.compare_price > product.price"
-              class="product-info__price-old">{{ formatPrice(product.compare_price) }}</span>
+            <span class="product-info__price-current">{{ formatPrice(sellingPrice) }}</span>
+            <span v-if="referencePrice"
+              class="product-info__price-old">{{ formatPrice(referencePrice) }}</span>
+            <span v-if="savedAmount" class="product-info__price-saving">
+              {{ $t('product.youSave', { amount: formatPrice(savedAmount) }) }}
+            </span>
           </div>
+
+          <!-- Origin of the discount: a named campaign reassures more than a
+               bare struck-through price. -->
+          <p v-if="product.promotion?.name" class="product-info__promo">
+            <SparklesIcon class="w-4 h-4" />
+            <span>{{ product.promotion.name }}</span>
+            <span v-if="promoEndsLabel" class="product-info__promo-until">{{ promoEndsLabel }}</span>
+          </p>
 
           <!-- Description -->
           <div v-if="product.description" class="product-info__desc" v-html="product.description"></div>
@@ -114,7 +125,7 @@
             <button @click="addToCart" :disabled="product.stock === 0 || cartLoading"
               class="btn btn-primary btn-lg product-info__cta">
               <span v-if="cartLoading" class="product-info__spinner"></span>
-              <span v-else>{{ $t('product.addToCartWithPrice', { price: formatPrice(product.price * qty) }) }}</span>
+              <span v-else>{{ $t('product.addToCartWithPrice', { price: formatPrice(sellingPrice * qty) }) }}</span>
             </button>
             <WishlistButton
               v-if="product?.id"
@@ -278,7 +289,8 @@ import { useCurrencyStore } from '@/stores/currency'
 import { useRoute, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/api'
-import { MinusIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { MinusIcon, PlusIcon, SparklesIcon } from '@heroicons/vue/24/outline'
+import * as pricing from '@/utils/pricing'
 import { useCartStore } from '@/features/cart/cart.store'
 import { useAuthStore } from '@/features/auth/auth.store'
 import StarRating from '@/features/reviews/StarRating.vue'
@@ -287,7 +299,7 @@ import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 import ProductCard from '@/components/shop/ProductCard.vue'
 import { useSeo, productJsonLd, breadcrumbJsonLd } from '@/composables/useSeo'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const cartStore = useCartStore()
 const authStore = useAuthStore()
@@ -326,9 +338,32 @@ const reviewLoading      = ref(false)
 const reviewSubmitted    = ref(false)
 const reviewAlreadyExists = ref(false)
 
-const discountPercent = computed(() => {
-  if (!product.value?.compare_price || product.value.compare_price <= product.value.price) return 0
-  return Math.round((1 - product.value.price / product.value.compare_price) * 100)
+/* Prices come from the shared rule so the sheet, the cards and the cart
+   always agree on what the customer pays. */
+const sellingPrice   = computed(() => pricing.sellingPrice(product.value))
+const referencePrice = computed(() => pricing.referencePrice(product.value))
+const discountBadge  = computed(() => pricing.discountBadge(product.value))
+
+const savedAmount = computed(() => {
+  const reference = referencePrice.value
+  return reference ? reference - sellingPrice.value : 0
+})
+
+/* End date of the campaign, when there is one. An open-ended promotion says
+   nothing here rather than inventing an urgency it does not have. */
+const promoEndsLabel = computed(() => {
+  const endsAt = product.value?.promotion?.ends_at
+  if (!endsAt) return null
+
+  const date = new Date(endsAt)
+  if (Number.isNaN(date.getTime())) return null
+
+  return t('product.promoUntil', {
+    date: date.toLocaleDateString(locale.value === 'en' ? 'en-GB' : 'fr-FR', {
+      day: 'numeric',
+      month: 'long',
+    }),
+  })
 })
 
 const trustBadges = computed(() => [
@@ -613,6 +648,31 @@ watch(() => route.params.slug, () => {
   font-size: 1.125rem;
   color: var(--gray-400);
   text-decoration: line-through;
+}
+/* L'économie réalisée, en clair : « −1 500 FCFA » parle plus qu'un pourcentage. */
+.product-info__price-saving {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--rose-600);
+  background: var(--rose-50);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.product-info__promo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: calc(var(--space-3) * -1);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--rose-600);
+}
+.product-info__promo-until {
+  font-weight: 400;
+  color: var(--gray-500);
 }
 
 /*
