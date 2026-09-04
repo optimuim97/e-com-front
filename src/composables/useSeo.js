@@ -1,5 +1,6 @@
 import { watchEffect, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { sellingPrice } from '@/utils/pricing'
 
 /**
  * Gestion des balises SEO par page (titre, description, canonique, Open Graph,
@@ -230,7 +231,9 @@ export function breadcrumbJsonLd(items = []) {
 export function productJsonLd(product, { reviews = [], rating = null } = {}) {
   if (!product) return null
 
-  const prix = Number(product.flash_price || product.sale_price || product.price) || 0
+  // Le prix annoncé à Google doit être celui de la page, promotions comprises :
+  // un écart entre les deux fait retirer la fiche des résultats enrichis.
+  const prix = sellingPrice(product)
   const image = product.images?.length
     ? product.images.map(i => absoluteUrl(i.url)).slice(0, 5)
     : [absoluteUrl('/logos/rosa-logo-600.png')]

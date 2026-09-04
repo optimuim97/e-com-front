@@ -3,7 +3,7 @@
     <div class="container promo-banner__inner">
       <!-- Colonne message : tout ce que la cliente doit savoir de l'opération -->
       <div class="promo-banner__content">
-        <span class="promo-banner__badge">{{ campaign.badge }}</span>
+        <span class="promo-banner__badge">{{ badge }}</span>
 
         <h2 class="promo-banner__title">{{ campaign.name }}</h2>
 
@@ -33,37 +33,43 @@
           </div>
         </div>
 
-        <RouterLink :to="shopLink" class="btn btn-primary btn-lg promo-banner__cta">
+        <RouterLink :to="shopLink" class="btn btn-primary promo-banner__cta">
           {{ $t('promoBanner.cta') }}
         </RouterLink>
+      </div>
 
-        <!-- Aperçu : trois articles concernés, pour prouver l'offre avant le clic -->
-        <ul v-if="campaign.products?.length" class="promo-banner__preview">
-          <li v-for="product in campaign.products" :key="product.id">
-            <RouterLink :to="`/products/${product.slug}`" class="promo-preview">
+      <!-- Colonne visuelle. Quand l'opération vise des articles précis, ce sont
+           eux qui l'illustrent : la cliente voit ce qu'elle achète et le prix
+           remisé, plutôt qu'une photo de marque déjà présente ailleurs sur la
+           page. Notre image ne revient que sur une opération catalogue, où
+           aucun article ne peut la représenter — et elle reste en dernier. -->
+      <ul v-if="showcase.length" class="promo-banner__showcase" :data-count="showcase.length">
+        <li v-for="product in showcase" :key="product.id">
+          <RouterLink :to="`/products/${product.slug}`" class="promo-item">
+            <span class="promo-item__media">
               <img
                 v-if="product.images?.[0]?.url"
                 :src="product.images[0].url"
                 :alt="product.name"
-                class="promo-preview__img"
+                class="promo-item__img"
                 loading="lazy"
               />
-              <div v-else class="promo-preview__img promo-preview__img--empty"></div>
-              <span class="promo-preview__name">{{ product.name }}</span>
-              <span class="promo-preview__prices">
-                <span class="promo-preview__price">{{ formatPrice(sellingPrice(product)) }}</span>
-                <span v-if="referencePrice(product)" class="promo-preview__price-old">
-                  {{ formatPrice(referencePrice(product)) }}
-                </span>
+              <span v-if="discountBadge(product)" class="promo-item__badge">
+                {{ discountBadge(product) }}
               </span>
-            </RouterLink>
-          </li>
-        </ul>
-      </div>
+            </span>
+            <span class="promo-item__name">{{ product.name }}</span>
+            <span class="promo-item__prices">
+              <span class="promo-item__price">{{ formatPrice(sellingPrice(product)) }}</span>
+              <span v-if="referencePrice(product)" class="promo-item__price-old">
+                {{ formatPrice(referencePrice(product)) }}
+              </span>
+            </span>
+          </RouterLink>
+        </li>
+      </ul>
 
-      <!-- Notre image, en dernière position : à droite sur grand écran, sous le
-           message sur mobile — le texte reste ce que la cliente lit d'abord. -->
-      <figure class="promo-banner__visual">
+      <figure v-else class="promo-banner__visual">
         <img
           src="/rosa-beauty-facial-care.jpg"
           :alt="$t('promoBanner.imageAlt')"
@@ -81,7 +87,7 @@ import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useSettingsStore } from '@/stores/settings'
-import { sellingPrice, referencePrice } from '@/utils/pricing'
+import { sellingPrice, referencePrice, discountPercent } from '@/utils/pricing'
 
 const props = defineProps({
   /** Charge utile `promo_campaign` de GET /home/stats. */
@@ -91,6 +97,13 @@ const props = defineProps({
 const { t } = useI18n()
 const settings = useSettingsStore()
 const formatPrice = (value) => settings.formatPrice(value)
+
+/* Le libellé saisi en administration prime ; sinon la nature de l'opération,
+   traduite. Jamais un pourcentage : celui de la bannière est calculé sur les
+   prix réels et contredirait le taux nominal de l'opération. */
+const badge = computed(() =>
+  props.campaign.banner_label || t(`promoBanner.type.${props.campaign.type || 'standard'}`)
+)
 
 /**
  * Remise mise en avant.
@@ -108,16 +121,29 @@ const headline = computed(() => {
 })
 
 /* « Jusqu'à » n'a de sens que si les remises diffèrent d'un article à l'autre.
-   Sur une opération globale, le taux annoncé est celui que tout le monde aura. */
+   Sur une opération globale, ou sur un article unique, le taux annoncé est
+   exactement celui que la cliente aura. */
 const headlineLabel = computed(() =>
-  props.campaign.scope === 'product' ? t('promoBanner.upTo') : t('promoBanner.discountOf')
+  props.campaign.scope === 'product' && props.campaign.products_count > 1
+    ? t('promoBanner.upTo')
+    : t('promoBanner.discountOf')
 )
 
 const scopeLabel = computed(() =>
   props.campaign.scope === 'product'
-    ? t('promoBanner.selection', { count: props.campaign.products_count })
+    ? t('promoBanner.selection', { count: props.campaign.products_count }, props.campaign.products_count)
     : t('promoBanner.wholeCatalogue')
 )
+
+/* Articles illustrant l'opération : uniquement sur une opération ciblée. */
+const showcase = computed(() =>
+  props.campaign.scope === 'product' ? (props.campaign.products ?? []) : []
+)
+
+const discountBadge = (product) => {
+  const percent = discountPercent(product)
+  return percent ? `−${percent} %` : null
+}
 
 /* Une opération globale ne rattache aucun article : le filtre du catalogue ne
    remonterait rien, on renvoie donc vers la boutique entière. */
@@ -169,36 +195,36 @@ onBeforeUnmount(() => clearInterval(timer))
 
 <style scoped>
 .promo-banner {
-  padding: var(--space-12) 0;
+  padding: var(--space-10) 0;
   position: relative;
   overflow: hidden;
   /* Rose poudré vers crème : la palette de la marque, pas le bleu criard des
      bannières promotionnelles génériques. */
-  background: linear-gradient(135deg, var(--rose-50) 0%, var(--cream-50) 55%, var(--rose-100) 100%);
+  background: linear-gradient(135deg, var(--rose-50) 0%, var(--cream-50) 60%, var(--rose-100) 100%);
 }
 
 /* Confettis : quelques points rose et doré, dessinés en CSS pour ne pas
-   ajouter une image de fond à charger. */
+   ajouter une image de fond à charger. Discrets — le fond ne doit pas
+   concurrencer le prix. */
 .promo-banner::before {
   content: '';
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.35;
   background-image:
-    radial-gradient(circle, var(--rose-300) 2px, transparent 2px),
-    radial-gradient(circle, var(--gold-400) 2px, transparent 2px),
-    radial-gradient(circle, var(--rose-200) 3px, transparent 3px);
-  background-size: 120px 120px, 170px 170px, 210px 210px;
-  background-position: 0 0, 60px 40px, 25px 95px;
+    radial-gradient(circle, var(--rose-300) 1.5px, transparent 1.5px),
+    radial-gradient(circle, var(--gold-400) 1.5px, transparent 1.5px);
+  background-size: 130px 130px, 190px 190px;
+  background-position: 0 0, 65px 45px;
 }
 
 .promo-banner__inner {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
   align-items: center;
-  gap: var(--space-10);
+  gap: var(--space-8);
 }
 
 .promo-banner__content {
@@ -211,24 +237,25 @@ onBeforeUnmount(() => clearInterval(timer))
 .promo-banner__badge {
   background: var(--rose-500);
   color: white;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: var(--radius-full);
-  box-shadow: 0 4px 12px rgba(232, 51, 109, 0.25);
 }
 
 .promo-banner__title {
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 4vw, 2.75rem);
+  font-size: clamp(1.5rem, 3vw, 2.125rem);
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.15;
   color: var(--gray-800);
   margin: 0;
 }
 
+/* Le taux et son intitulé sur une même ligne de base, l'intitulé aligné en
+   haut du chiffre : côte à côte au milieu, ils flottaient. */
 .promo-banner__headline {
   display: flex;
   align-items: baseline;
@@ -237,7 +264,7 @@ onBeforeUnmount(() => clearInterval(timer))
   margin: 0;
 }
 .promo-banner__headline-label {
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -246,7 +273,7 @@ onBeforeUnmount(() => clearInterval(timer))
 .promo-banner__headline-value {
   /* Police sans fantaisie pour les chiffres : ils doivent se lire, pas se
      déchiffrer. */
-  font-size: clamp(2.5rem, 7vw, 4.5rem);
+  font-size: clamp(2rem, 4.5vw, 3rem);
   font-weight: 800;
   line-height: 1;
   color: var(--rose-600);
@@ -254,17 +281,17 @@ onBeforeUnmount(() => clearInterval(timer))
 }
 
 .promo-banner__scope {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--rose-600);
   margin: 0;
 }
 
 .promo-banner__desc {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   line-height: 1.6;
   color: var(--gray-600);
-  max-width: 46ch;
+  max-width: 44ch;
   margin: 0;
 }
 
@@ -273,18 +300,18 @@ onBeforeUnmount(() => clearInterval(timer))
   background: white;
   border: 1px solid var(--rose-200);
   border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-5);
-  box-shadow: 0 6px 20px rgba(232, 51, 109, 0.08);
+  padding: var(--space-2) var(--space-4);
+  box-shadow: 0 4px 14px rgba(232, 51, 109, 0.08);
   text-align: center;
 }
 .promo-banner__countdown-label {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--gray-500);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .promo-banner__countdown-time {
   display: flex;
@@ -297,16 +324,16 @@ onBeforeUnmount(() => clearInterval(timer))
   display: inline-flex;
   flex-direction: column;
   align-items: center;
-  min-width: 32px;
+  min-width: 28px;
 }
 .promo-cell strong {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 .promo-cell small {
-  font-size: 0.625rem;
+  font-size: 0.5625rem;
   color: var(--gray-400);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -314,96 +341,117 @@ onBeforeUnmount(() => clearInterval(timer))
 }
 
 .promo-banner__cta {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
   text-decoration: none;
 }
 
-/* Aperçu des articles */
-.promo-banner__preview {
-  display: flex;
-  gap: var(--space-3);
+/* ── Articles de l'opération ───────────────────────────────────────────── */
+.promo-banner__showcase {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: var(--space-4);
   list-style: none;
   padding: 0;
-  margin: var(--space-4) 0 0;
+  margin: 0 0 0 auto;
   width: 100%;
 }
-.promo-banner__preview > li { flex: 1 1 0; min-width: 0; }
+/* Un article seul n'a pas à s'étaler sur toute la colonne. */
+.promo-banner__showcase[data-count='1'] { max-width: 260px; }
+.promo-banner__showcase[data-count='2'] { max-width: 380px; }
 
-.promo-preview {
+.promo-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-decoration: none;
   transition: transform var(--transition-normal);
 }
-.promo-preview:hover { transform: translateY(-3px); }
+.promo-item:hover { transform: translateY(-3px); }
 
-.promo-preview__img {
-  width: 100%;
+.promo-item__media {
+  position: relative;
+  display: block;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
   border-radius: var(--radius-lg);
+  overflow: hidden;
   background: white;
   border: 1px solid var(--cream-200);
+  box-shadow: 0 10px 26px rgba(232, 51, 109, 0.12);
 }
-.promo-preview__img--empty {
-  background: linear-gradient(135deg, var(--rose-100), var(--cream-100));
+.promo-item__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.promo-item__badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--rose-500);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
 }
 
-.promo-preview__name {
-  font-size: 0.75rem;
-  color: var(--gray-600);
+.promo-item__name {
+  font-size: 0.8125rem;
+  color: var(--gray-700);
   line-height: 1.3;
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.promo-preview__prices {
+.promo-item__prices {
   display: flex;
   align-items: baseline;
   gap: 6px;
   flex-wrap: wrap;
 }
-.promo-preview__price {
-  font-size: 0.8125rem;
+.promo-item__price {
+  font-size: 0.9375rem;
   font-weight: 700;
   color: var(--rose-600);
 }
-.promo-preview__price-old {
-  font-size: 0.6875rem;
+.promo-item__price-old {
+  font-size: 0.75rem;
   color: var(--gray-400);
   text-decoration: line-through;
 }
 
-/* Notre image */
+/* ── Notre image (opération catalogue) ─────────────────────────────────── */
 .promo-banner__visual {
-  margin: 0;
-  border-radius: var(--radius-2xl, 24px);
+  margin: 0 0 0 auto;
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(232, 51, 109, 0.18);
+  box-shadow: 0 14px 36px rgba(232, 51, 109, 0.15);
 }
 .promo-banner__image {
   display: block;
   width: 100%;
-  height: 100%;
-  max-height: 520px;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
 }
 
 @media (max-width: 900px) {
   .promo-banner__inner {
     grid-template-columns: 1fr;
-    gap: var(--space-8);
+    gap: var(--space-6);
   }
-  .promo-banner__image { max-height: 340px; }
+  .promo-banner__showcase,
+  .promo-banner__visual { margin: 0; }
+  .promo-banner__showcase[data-count='1'] { max-width: 220px; }
 }
 
 @media (max-width: 540px) {
-  .promo-banner { padding: var(--space-10) 0; }
+  .promo-banner { padding: var(--space-8) 0; }
   .promo-banner__cta { width: 100%; text-align: center; }
+  .promo-banner__showcase { gap: var(--space-3); }
   .promo-cell strong { font-size: 1.125rem; }
-  .promo-preview__name { display: none; }
 }
 </style>

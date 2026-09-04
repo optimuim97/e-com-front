@@ -182,10 +182,17 @@
     "upTo": "Up to",
     "discountOf": "Save",
     "wholeCatalogue": "On the whole catalogue",
-    "selection": "On a selection of {count} products",
+    "selection": "On {count} selected product | On {count} selected products",
     "endsIn": "Ends in",
     "cta": "Shop the sale",
-    "imageAlt": "Rosa Beauty Facial Care — facial care"
+    "imageAlt": "Rosa Beauty Facial Care — facial care",
+    "type": {
+      "standard": "Live offer",
+      "clearance": "Clearance",
+      "seasonal": "Seasonal offer",
+      "launch": "New launch",
+      "loyalty": "Loyalty offer"
+    }
   },
   "testimonials": {
     "eyebrow": "Testimonials",

@@ -4,6 +4,7 @@ import { cartApi } from './cart.api'
 import api from '@/api'
 import { useToast } from 'vue-toastification'
 import i18n from '@/i18n'
+import { sellingPrice } from '@/utils/pricing'
 
 // ── Clé localStorage pour le panier invité ──────────────────────────────────
 const GUEST_KEY = 'rosa_guest_cart'
@@ -37,8 +38,15 @@ export const useCartStore = defineStore('cart', () => {
 
   // ── Panier local (invité) ─────────────────────────────────────────────────
   function buildFromLocal() {
-    const localItems = getLocalItems()
-    const subtotal = localItems.reduce((s, i) => s + (Number(i.unit_price) || 0) * i.quantity, 0)
+    // Le prix vient du produit mémorisé, qui porte `effective_price` ; le
+    // montant figé dans localStorage ne sert que de repli. Un panier ouvert
+    // avant le début d'une opération affichait sinon l'ancien tarif jusqu'au
+    // paiement — le serveur, lui, retarife toujours à la commande.
+    const localItems = getLocalItems().map(item => ({
+      ...item,
+      unit_price: sellingPrice(item.product) || Number(item.unit_price) || 0,
+    }))
+    const subtotal = localItems.reduce((s, i) => s + i.unit_price * i.quantity, 0)
     cart.value = {
       items: localItems,
       subtotal,
@@ -82,14 +90,18 @@ export const useCartStore = defineStore('cart', () => {
             product = data
           } catch {}
         }
+        // Prix promotionnel, comme partout ailleurs dans la boutique : le
+        // panier invité retenait `price` et affichait donc le tarif plein
+        // d'un article en promotion.
+        const unitPrice = sellingPrice(product)
         localItems.push({
           id:         `local-${productId}-${variantId ?? 0}-${Date.now()}`,
           product_id: productId,
           variant_id: variantId ?? null,
           quantity,
           product:    product ?? null,
-          unit_price: product?.price ?? product?.regular_price ?? 0,
-          price:      product?.price ?? product?.regular_price ?? 0,
+          unit_price: unitPrice,
+          price:      unitPrice,
         })
       }
       saveLocalItems(localItems)

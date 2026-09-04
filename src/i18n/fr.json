@@ -182,10 +182,17 @@
     "upTo": "Jusqu'à",
     "discountOf": "Remise de",
     "wholeCatalogue": "Sur tout le catalogue",
-    "selection": "Sur une sélection de {count} articles",
+    "selection": "Sur {count} article sélectionné | Sur {count} articles sélectionnés",
     "endsIn": "Se termine dans",
     "cta": "J'en profite",
-    "imageAlt": "Rosa Beauty Facial Care — soins du visage"
+    "imageAlt": "Rosa Beauty Facial Care — soins du visage",
+    "type": {
+      "standard": "Offre en cours",
+      "clearance": "Déstockage",
+      "seasonal": "Offre de saison",
+      "launch": "Nouveauté",
+      "loyalty": "Offre fidélité"
+    }
   },
   "testimonials": {
     "eyebrow": "Témoignages",
