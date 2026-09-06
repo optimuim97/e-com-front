@@ -448,10 +448,66 @@ onBeforeUnmount(() => clearInterval(timer))
   .promo-banner__showcase[data-count='1'] { max-width: 220px; }
 }
 
-@media (max-width: 540px) {
+/* ── Mobile ────────────────────────────────────────────────────────────────
+   Le bandeau tombe juste sous l'accroche : chaque pixel qu'il prend repousse
+   le catalogue. On resserre la colonne, on donne au taux la place qu'il
+   mérite, et les articles défilent au doigt plutôt que de se serrer à trois
+   sur 340 px. */
+@media (max-width: 640px) {
   .promo-banner { padding: var(--space-8) 0; }
-  .promo-banner__cta { width: 100%; text-align: center; }
-  .promo-banner__showcase { gap: var(--space-3); }
+
+  .promo-banner__inner { gap: var(--space-5); }
+  .promo-banner__content { gap: var(--space-2); }
+
+  /* Le chiffre est l'information : il gagne ce que les marges perdent. */
+  .promo-banner__headline-value { font-size: 2.5rem; }
+  .promo-banner__desc { font-size: 0.875rem; }
+
+  /* Décompte sur une seule ligne, bord à bord : deux lignes centrées
+     coûtaient une hauteur d'écran pour quatre nombres. */
+  .promo-banner__countdown {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    text-align: left;
+    padding: var(--space-2) var(--space-4);
+  }
+  .promo-banner__countdown-label { margin-bottom: 0; }
+  .promo-banner__countdown-time { justify-content: flex-end; }
+  .promo-cell { min-width: 26px; }
   .promo-cell strong { font-size: 1.125rem; }
+
+  .promo-banner__cta { width: 100%; text-align: center; }
+
+  /* Défilement horizontal aimanté, débordant jusqu'aux bords de l'écran :
+     l'article amorcé à droite dit qu'il y en a d'autres, ce qu'une grille
+     tronquée ne dit pas. La gouttière rendue ici est celle de `.container`
+     en dessous de 768 px. */
+  .promo-banner__showcase {
+    display: flex;
+    gap: var(--space-3);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    margin-inline: calc(var(--space-4) * -1);
+    padding-inline: var(--space-4);
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .promo-banner__showcase::-webkit-scrollbar { display: none; }
+  .promo-banner__showcase > li {
+    flex: 0 0 44%;
+    scroll-snap-align: start;
+  }
+  .promo-banner__showcase[data-count='2'] { max-width: none; }
+  /* Un article seul n'a rien à amorcer : il s'affiche en grand. */
+  .promo-banner__showcase[data-count='1'] {
+    max-width: none;
+    overflow-x: visible;
+  }
+  .promo-banner__showcase[data-count='1'] > li { flex: 0 0 60%; }
+
+  .promo-item__name { font-size: 0.75rem; }
 }
 </style>

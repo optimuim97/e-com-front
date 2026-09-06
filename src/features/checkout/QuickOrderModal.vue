@@ -85,7 +85,7 @@
 
               <!-- Cas : compte rapide → ajouter email + mot de passe -->
               <form v-if="profileNudge.type === 'setup'" @submit.prevent="doSetup" class="qo-nudge__form">
-                <input v-model="nudgeForm.email" type="email" class="input input--sm" :placeholder="$t('contact.emailPlaceholder')" required />
+                <input v-model="nudgeForm.email" type="email" class="input input--sm" :placeholder="$t('auth.emailPlaceholder')" required />
                 <input v-model="nudgeForm.password" type="password" class="input input--sm" :placeholder="$t('quickOrder.pwPlaceholder')" required minlength="8" />
                 <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
                 <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">

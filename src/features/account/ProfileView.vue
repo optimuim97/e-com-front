@@ -134,7 +134,7 @@
                 v-model="setupForm.email"
                 type="email"
                 class="input"
-                :placeholder="$t('contact.emailPlaceholder')"
+                :placeholder="$t('auth.emailPlaceholder')"
                 autocomplete="email"
                 required
               />
