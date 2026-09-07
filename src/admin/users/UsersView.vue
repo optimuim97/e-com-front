@@ -230,6 +230,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
+import { readPagination } from '@/admin/utils/pagination'
 import { useAuthStore } from '@/features/auth/auth.store'
 
 const auth = useAuthStore()
@@ -282,11 +283,7 @@ async function fetchUsers() {
     if (roleFilter.value) params.role   = roleFilter.value
     const { data } = await api.get('/admin/users', { params })
     users.value = data.data
-    pagination.value = {
-      current_page: data.current_page,
-      last_page:    data.last_page,
-      total:        data.total,
-    }
+    pagination.value = readPagination(data)
   } finally {
     loading.value = false
   }

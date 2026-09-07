@@ -89,6 +89,18 @@
             Total du nombre d'articles
           </label>
         </div>
+
+        <!--
+          Décoché par défaut, à dessein : on ouvre souvent cet écran juste pour
+          vérifier une sélection, et un aperçu ne doit rien engager.
+        -->
+        <div class="zep__toggles">
+          <label class="zep__check">
+            <input type="checkbox" v-model="marquerApresExport" />
+            Marquer les commandes comme extraites après le téléchargement
+          </label>
+          <span v-if="marquage" class="zep__marked">{{ marquage }}</span>
+        </div>
       </div>
 
       <!-- Tableau de prévisualisation -->
@@ -126,6 +138,9 @@
               <td class="zep__addr">
                 {{ o.shipping_address?.address_line1 || '—' }}
                 <span v-if="o.shipping_unknown" class="zep__tag zep__tag--warn">hors zone</span>
+                <!-- Déjà sortie sur une feuille précédente : de quoi la retirer
+                     de la sélection plutôt que de l'imprimer deux fois. -->
+                <span v-if="o.exported_at" class="zep__tag zep__tag--warn">déjà extraite</span>
               </td>
               <td class="zep__total">{{ formatPrice(o.total) }}</td>
               <td>
@@ -234,7 +249,7 @@ const props = defineProps({
   // Formats proposés : 'xlsx' (Excel, backend) · 'pdf' (feuille de livraison) · 'csv' (client)
   formats: { type: Array, default: () => ['pdf', 'csv'] },
 })
-const emit = defineEmits(['close', 'created'])
+const emit = defineEmits(['close', 'created', 'refresh'])
 
 const has = (f) => props.formats.includes(f)
 
@@ -270,6 +285,38 @@ onMounted(async () => {
 // Blocs récapitulatifs du document — cochés par défaut (même défaut côté backend)
 const showProductTotals = ref(true)
 const showItemCounts    = ref(true)
+
+/* ── Marquage « extraite » ──────────────────────────────────────────────────
+ *
+ * Décoché par défaut : cet écran sert autant à vérifier une sélection qu'à
+ * sortir une feuille, et un aperçu ne doit rien écrire.
+ *
+ * Le marquage suit le téléchargement au lieu de voyager dans son URL : les
+ * exports sont des GET, qu'un navigateur peut rejouer, et le CSV est fabriqué
+ * ici même — il n'atteint jamais le serveur. Un appel distinct couvre les cinq
+ * formats de la même manière.
+ */
+const marquerApresExport = ref(false)
+const marquage           = ref('')
+
+async function marquerExtraites() {
+  if (!marquerApresExport.value || !selectedOrders.value.length) return
+
+  try {
+    const { data } = await api.post('/admin/orders/bulk-mark-exported', {
+      order_ids: selectedOrders.value.map(o => o.id),
+    })
+    marquage.value = data.message
+    // La liste derrière le modal affiche le repère « extraite » : elle date
+    // d'avant l'appel.
+    emit('refresh')
+  } catch (e) {
+    // Le fichier est déjà chez l'agent : le marquage qui échoue ne doit pas
+    // ressembler à un export raté.
+    marquage.value = "Export téléchargé, mais le marquage a échoué."
+    console.error('Marquage « extraite » échoué', e)
+  }
+}
 
 // Toutes les commandes sont cochées par défaut
 const selected = ref(new Set(props.orders.map(o => o.id)))
@@ -353,6 +400,8 @@ async function downloadBlob({ kind, url, mime, ext, prefix = 'commandes' }) {
     a.download = `${prefix}_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.${ext}`
     document.body.appendChild(a); a.click(); a.remove()
     URL.revokeObjectURL(href)
+
+    await marquerExtraites()
   } catch (e) {
     console.error(`Export ${kind} échoué`, e)
   } finally {
@@ -401,6 +450,10 @@ async function copierPourWhatsapp() {
 
     copie.value = true
     setTimeout(() => { copie.value = false }, 2500)
+
+    // La feuille collée dans WhatsApp est une sortie comme une autre : c'est
+    // même celle qui part le plus souvent chez le livreur.
+    await marquerExtraites()
   } catch (e) {
     console.error('Copie WhatsApp échouée', e)
   } finally {
@@ -516,7 +569,7 @@ async function downloadRoundSheet() {
 }
 
 // ── Export CSV (client-side) ────────────────────────────────────────────────
-function downloadCSV() {
+async function downloadCSV() {
   const esc = (v) => {
     const s = String(v ?? '').replace(/"/g, '""')
     return /[",;\n]/.test(s) ? `"${s}"` : s
@@ -543,6 +596,8 @@ function downloadCSV() {
   a.download = `tournee_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.csv`
   document.body.appendChild(a); a.click(); a.remove()
   URL.revokeObjectURL(url)
+
+  await marquerExtraites()
 }
 </script>
 
@@ -611,6 +666,7 @@ function downloadCSV() {
   font-size: 0.75rem; color: var(--gray-700); cursor: pointer;
 }
 .zep__check input { cursor: pointer; accent-color: var(--rose-500); }
+.zep__marked { font-size: 0.75rem; font-weight: 600; color: var(--rose-600); }
 
 /* Tableau */
 .zep__body { flex: 1; overflow-y: auto; padding: 0 var(--space-5); }

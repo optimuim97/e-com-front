@@ -102,6 +102,7 @@
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
+import { readPagination } from '@/admin/utils/pagination'
 import api from '@/api'
 
 const lines      = ref([])
@@ -116,7 +117,7 @@ async function fetchLines() {
   try {
     const { data } = await api.get('/admin/product-lines', { params: { page: page.value } })
     lines.value = data.data
-    pagination.value = { current_page: data.current_page, last_page: data.last_page, total: data.total }
+    pagination.value = readPagination(data)
   } finally {
     loading.value = false
   }

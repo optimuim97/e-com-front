@@ -212,6 +212,7 @@
       :orders="exportPreview.orders"
       :formats="exportPreview.formats"
       @created="apresTournee"
+      @refresh="apresTournee"
       @close="exportPreview = null"
     />
 
@@ -334,27 +335,38 @@
           <span class="orders__bulk-spacer"></span>
           <button
             type="button"
+            class="btn btn-sm btn-outline"
+            :disabled="!!enCours"
+            title="Passe les commandes cochées en préparation — le geste du matin sur ce qui est arrivé la veille"
+            @click="traiterSelection"
+          >
+            {{ enCours === 'process' ? 'Traitement…' : 'Marquer comme traitée' }}
+          </button>
+          <button
+            type="button"
             class="btn btn-sm btn-primary"
-            :disabled="expedition"
+            :disabled="!!enCours"
             title="Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité"
             @click="expedierSelection(false)"
           >
-            {{ expedition ? 'Envoi…' : 'Marquer comme expédiée' }}
+            {{ enCours === 'ship' ? 'Envoi…' : 'Marquer comme expédiée' }}
           </button>
         </div>
 
-        <!-- Compte rendu de l'expédition en masse -->
-        <div v-if="bilanExpedition" class="orders__bulk-result">
-          <p class="orders__bulk-msg">{{ bilanExpedition.message }}</p>
-          <div v-if="bilanExpedition.rejected.length" class="orders__bulk-rejected">
-            <p><strong>{{ bilanExpedition.rejected.length }}</strong> commande(s) non expédiée(s) :</p>
+        <!-- Compte rendu de l'action de masse -->
+        <div v-if="bilanLot" class="orders__bulk-result">
+          <p class="orders__bulk-msg">{{ bilanLot.message }}</p>
+          <div v-if="bilanLot.rejected.length" class="orders__bulk-rejected">
+            <p><strong>{{ bilanLot.rejected.length }}</strong> commande(s) écartée(s) :</p>
             <ul>
-              <li v-for="r in bilanExpedition.rejected" :key="r.id">
+              <li v-for="r in bilanLot.rejected" :key="r.id">
                 <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
               </li>
             </ul>
+            <!-- Le passage en force ne vaut que pour l'expédition : rien ne
+                 bloque une mise en préparation. -->
             <button
-              v-if="bilanExpedition.forceable"
+              v-if="bilanLot.action === 'ship' && bilanLot.forceable"
               type="button"
               class="orders__bulk-link"
               @click="expedierSelection(true)"
@@ -362,7 +374,7 @@
               Expédier quand même
             </button>
           </div>
-          <button type="button" class="orders__bulk-close" @click="bilanExpedition = null">✕</button>
+          <button type="button" class="orders__bulk-close" @click="bilanLot = null">✕</button>
         </div>
 
         <div v-if="ordersVisibles.length === 0" class="empty-state">
@@ -408,6 +420,13 @@
                   <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
                     {{ order.tracking_number }}
                   </div>
+                  <!-- Déjà sortie sur une feuille : évite de la réimprimer, ou
+                       de croire qu'elle a été oubliée. -->
+                  <span
+                    v-if="order.exported_at"
+                    class="orders__exported"
+                    :title="`Extraite le ${formatDateTime(order.exported_at)}`"
+                  >extraite</span>
                 </td>
                 <td>
                   <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
@@ -486,6 +505,7 @@ import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import ZoneExportPreviewModal from './ZoneExportPreviewModal.vue'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
+import { readPagination } from '@/admin/utils/pagination'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 import { useSettingsStore } from '@/stores/settings'
 import { useAuthStore } from '@/features/auth/auth.store'
@@ -546,9 +566,9 @@ const ordersVisibles = computed(() => orders.value.filter(o => !decote.value.has
 // Le pendant de la tournée pour les envois qui n'en forment pas une : un dépôt
 // chez un transporteur, une série de colis pour l'intérieur. Le backend
 // applique exactement les garde-fous de l'expédition à l'unité.
-const cochees          = ref(new Set())
-const expedition       = ref(false)
-const bilanExpedition  = ref(null)
+const cochees  = ref(new Set())
+const enCours  = ref(null)   // null | 'ship' | 'process'
+const bilanLot = ref(null)   // { action, message, rejected, forceable }
 
 const toutesCochees = computed(() =>
   ordersVisibles.value.length > 0 && ordersVisibles.value.every(o => cochees.value.has(o.id))
@@ -571,18 +591,23 @@ function viderSelection() {
   cochees.value = new Set()
 }
 
-async function expedierSelection(force = false) {
-  if (expedition.value || !cochees.value.size) return
-  expedition.value = true
+/**
+ * Applique une action de masse et rend compte commande par commande.
+ *
+ * Le compte rendu importe autant que l'action : sur trente commandes, un
+ * « 27 traitées » sans dire lesquelles des trois autres ont résisté, ni
+ * pourquoi, oblige à tout reprendre à la main.
+ */
+async function lancerLot(action, url, payload = {}, echec) {
+  if (enCours.value || !cochees.value.size) return
+  enCours.value = action
 
   try {
-    const { data } = await api.post('/admin/orders/bulk-ship', {
-      order_ids: [...cochees.value],
-      force,
-    })
+    const { data } = await api.post(url, { order_ids: [...cochees.value], ...payload })
 
     const refuses = data.rejected ?? []
-    bilanExpedition.value = {
+    bilanLot.value = {
+      action,
       message:   data.message,
       rejected:  refuses,
       // « Expédier quand même » n'a de sens que sur les refus qui se lèvent :
@@ -595,16 +620,26 @@ async function expedierSelection(force = false) {
     cochees.value = new Set(refuses.map(r => r.id))
 
     await fetchOrders()
+    orderStats.refresh()   // les compteurs de l'écran et du menu ont bougé
   } catch (e) {
-    bilanExpedition.value = {
-      message:   e.response?.data?.message ?? "L'expédition en masse a échoué.",
+    bilanLot.value = {
+      action,
+      message:   e.response?.data?.message ?? echec,
       rejected:  [],
       forceable: false,
     }
   } finally {
-    expedition.value = false
+    enCours.value = null
   }
 }
+
+const expedierSelection = (force = false) => lancerLot(
+  'ship', '/admin/orders/bulk-ship', { force }, "L'expédition en masse a échoué.",
+)
+
+const traiterSelection = () => lancerLot(
+  'process', '/admin/orders/bulk-process', {}, 'La mise en préparation a échoué.',
+)
 
 function persisterDecote() {
   sessionStorage.setItem(CLE_DECOTE, JSON.stringify([...decote.value]))
@@ -1007,11 +1042,7 @@ async function fetchOrders() {
     if (filters.du_jour) params.du_jour = 1
     const { data } = await api.get('/admin/orders', { params })
     orders.value = data.data
-    pagination.value = {
-      current_page: data.current_page,
-      last_page: data.last_page,
-      total: data.total,
-    }
+    pagination.value = readPagination(data)
   } finally {
     loading.value = false
   }
@@ -1020,6 +1051,13 @@ async function fetchOrders() {
 function formatDate(val) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function formatDateTime(val) {
+  if (!val) return '—'
+  return new Date(val).toLocaleString('fr-FR', {
+    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
 }
 
 function formatPrice(val) {
@@ -1509,6 +1547,18 @@ onMounted(async () => {
 .admin-table__total {
   font-weight: 600;
   color: var(--rose-600) !important;
+}
+.orders__exported {
+  display: inline-block;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--cream-200);
+  font-family: var(--font-sans, inherit);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--gray-600);
 }
 .admin-table__action a {
   color: var(--rose-500);
