@@ -91,49 +91,14 @@
       />
     </div>
 
-    <!-- Modal -->
-    <div v-if="modal" class="modal-overlay" @click.self="modal = null">
-      <div class="modal">
-        <h3>{{ form.id ? 'Modifier la zone' : 'Nouvelle zone' }}</h3>
-        <div class="form-grid">
-          <label>Groupe
-            <input v-model="form.group" type="text" placeholder="Ex. Grand Abidjan" />
-          </label>
-          <label>Nom de la zone
-            <input v-model="form.name" type="text" placeholder="Ex. Cocody Centre" />
-          </label>
-          <label>Pays (ISO-2)
-            <input v-model="form.country" type="text" maxlength="2" />
-          </label>
-          <label>Tarif (FCFA)
-            <input v-model.number="form.price" type="number" min="0" />
-          </label>
-          <label>Unité
-            <select v-model="form.price_unit">
-              <option value="flat">Forfait</option>
-              <option value="per_kg">Par kg</option>
-            </select>
-          </label>
-          <label>Seuil franco (optionnel)
-            <input v-model.number="form.free_threshold" type="number" min="0" />
-          </label>
-          <label class="span-2">Alias / synonymes (séparés par virgule)
-            <input v-model="aliasesText" type="text" placeholder="cocody, cocody centre, cocody 2 plateaux" />
-          </label>
-          <label class="span-2 checkbox">
-            <input v-model="form.active" type="checkbox" />
-            <span>Zone active</span>
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button class="btn btn-outline" @click="modal = null">Annuler</button>
-          <button class="btn btn-primary" :disabled="saving" @click="save">
-            {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
-          </button>
-        </div>
-        <p v-if="error" class="form-error">{{ error }}</p>
-      </div>
-    </div>
+    <!-- Modal partagée avec l'écran des expéditions -->
+    <DeliveryZoneFormModal
+      v-if="modal"
+      :zone="modalZone"
+      @saved="apresEnregistrement"
+      @close="modal = null"
+    />
+
   </div>
 </template>
 
@@ -141,28 +106,19 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/api';
 import AdminPagination from '@/admin/components/AdminPagination.vue';
+import DeliveryZoneFormModal from './DeliveryZoneFormModal.vue';
 
 const zones      = ref([]);
 const loading    = ref(true);
 const modal      = ref(null);
-const saving     = ref(false);
-const error      = ref('');
-const form       = ref(emptyForm());
-const aliasesText= ref('');
+/* Zone confiée à la modale : null pour une création vierge. */
+const modalZone  = ref(null);
 
 const activeTab  = ref('all');
 const search     = ref('');
 const sort       = ref({ key: 'name', dir: 'asc' });
 const page       = ref(1);
 const perPage    = ref(10);
-
-function emptyForm() {
-  return {
-    id: null, group: '', name: '', country: 'CI',
-    price: 0, price_unit: 'flat', free_threshold: null,
-    sort_order: 0, active: true, cities: [],
-  };
-}
 
 const tabs = computed(() => {
   const groups = {};
@@ -231,39 +187,18 @@ async function load() {
 }
 
 function openCreate() {
-  form.value = emptyForm();
-  aliasesText.value = '';
-  error.value = '';
+  modalZone.value = null;
   modal.value = 'create';
 }
 
 function openEdit(z) {
-  form.value = { ...z };
-  aliasesText.value = (z.cities || []).join(', ');
-  error.value = '';
+  modalZone.value = { ...z };
   modal.value = 'edit';
 }
 
-async function save() {
-  saving.value = true;
-  error.value = '';
-  try {
-    const payload = {
-      ...form.value,
-      cities: aliasesText.value.split(',').map(s => s.trim()).filter(Boolean),
-    };
-    if (form.value.id) {
-      await api.patch(`/admin/delivery-zones/${form.value.id}`, payload);
-    } else {
-      await api.post('/admin/delivery-zones', payload);
-    }
-    modal.value = null;
-    await load();
-  } catch (e) {
-    error.value = e.response?.data?.message ?? 'Erreur lors de l\'enregistrement.';
-  } finally {
-    saving.value = false;
-  }
+async function apresEnregistrement() {
+  modal.value = null;
+  await load();
 }
 
 async function destroy(z) {

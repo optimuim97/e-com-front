@@ -357,16 +357,75 @@
                   manuel. À l'international, aucune liste ne tiendrait — et les
                   frais s'y négocient de toute façon au cas par cas.
                 -->
-                <select
+                <!--
+                  Cherchable, et sur les communes autant que sur les villes : une
+                  liste déroulante de cinquante-sept villes se parcourt mal au
+                  pouce, et personne ne devine sous quelle ville se range son
+                  quartier. Chaque ligne annonce son tarif quand la destination
+                  tombe dans une de nos zones.
+                -->
+                <div
                   v-if="!estInternational"
-                  v-model="form.city"
-                  class="input"
-                  :class="{ 'input--error': fieldErrors.city }"
-                  :aria-invalid="!!fieldErrors.city"
+                  class="qo-combobox"
+                  v-click-outside="closeCity"
                 >
-                  <option value="" disabled>{{ $t('quickOrder.chooseCity') }}</option>
-                  <option v-for="name in citySuggestions" :key="name" :value="name">{{ name }}</option>
-                </select>
+                  <div
+                    class="qo-combobox__trigger"
+                    :class="{ 'qo-combobox__trigger--error': fieldErrors.city }"
+                    tabindex="0"
+                    role="combobox"
+                    :aria-expanded="cityOpen"
+                    :aria-invalid="!!fieldErrors.city"
+                    @click="openCity"
+                    @keydown.enter.prevent="openCity"
+                    @keydown.space.prevent="openCity"
+                  >
+                    <span v-if="form.city" class="qo-combobox__value">
+                      {{ form.city }}
+                      <span v-if="form.cityCommune" class="qo-combobox__sub">· {{ form.cityCommune }}</span>
+                    </span>
+                    <span v-else class="qo-combobox__placeholder">{{ $t('quickOrder.chooseCity') }}</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="qo-combobox__arrow" :class="{ 'qo-combobox__arrow--open': cityOpen }">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+
+                  <div v-if="cityOpen" class="qo-combobox__dropdown">
+                    <input
+                      ref="citySearchInput"
+                      v-model="citySearch"
+                      type="text"
+                      class="qo-combobox__search"
+                      :placeholder="$t('quickOrder.searchCityPlaceholder')"
+                      @click.stop
+                      @keydown.enter.prevent="onCityEnter"
+                      @keydown.esc.prevent="closeCity"
+                    />
+                    <ul class="qo-combobox__list">
+                      <li
+                        v-for="d in filteredCities"
+                        :key="d.city"
+                        class="qo-combobox__option qo-combobox__option--dest"
+                        :class="{ 'qo-combobox__option--active': form.city === d.city }"
+                        @click="selectCity(d)"
+                      >
+                        <span class="qo-dest-opt">
+                          <span class="qo-dest-opt__name">{{ d.city }}</span>
+                          <span v-if="d.matchedCommune" class="qo-dest-opt__sub">{{ d.matchedCommune.name }}</span>
+                          <span v-else-if="d.communes.length > 1" class="qo-dest-opt__sub">
+                            {{ d.communes.length }} {{ $t('quickOrder.communesCount') }}
+                          </span>
+                        </span>
+                        <span class="qo-dest-opt__price" :class="{ 'qo-dest-opt__price--unknown': destPrice(d) === null }">
+                          {{ destPrice(d) === null ? $t('quickOrder.priceOnRequest') : fmtPrice(destPrice(d)) }}
+                        </span>
+                      </li>
+                      <li v-if="!filteredCities.length && citySearch" class="qo-combobox__empty">
+                        {{ $t('common.noResults') }}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
                 <input
                   v-else
                   v-model="form.city"
@@ -515,7 +574,8 @@ import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import { useCartStore } from '@/features/cart/cart.store'
-import { isAbidjan, citiesCI } from '@/data/cities-ci'
+import { isAbidjan } from '@/data/cities-ci'
+import { filtrerDestinations } from '@/data/destinations-ci'
 import { communesAbidjan, chargerCommunesAbidjan } from '@/data/abidjan-communes.js'
 import { useAgentRedirect } from '@/composables/useAgentRedirect'
 import { useAuthStore } from '@/features/auth/auth.store'
@@ -544,6 +604,9 @@ const form = ref({
   commune: '',
   communeManuel: '',
   city: '',
+  // Commune retenue à l'intérieur du pays : c'est elle qui fait tomber le
+  // devis sur la bonne zone quand la ville seule ne suffit pas.
+  cityCommune: '',
   country: 'CI',
   indication: '',
   payment: 'wave',
@@ -645,11 +708,46 @@ const isAbidjanQuick = computed(() => {
 const showCityField = computed(() => !!form.value.commune && !isAbidjanQuick.value)
 
 
-// Villes hors Abidjan proposées dans la liste, triées alphabétiquement
-const citySuggestions = citiesCI
-  .filter(c => c.name !== 'Abidjan')
-  .map(c => c.name)
-  .sort((a, b) => a.localeCompare(b, 'fr'))
+/* ── Destination hors Abidjan ─────────────────────────────────────────────────
+ *
+ * La liste fusionne le découpage administratif et nos zones tarifées : voir
+ * destinations-ci.js. La commune retenue compte autant que la ville — c'est
+ * elle qui porte souvent le tarif, et jusqu'ici la commande partait avec un
+ * « Hors Abidjan » qui ne pouvait correspondre à aucune zone.
+ */
+const cityOpen        = ref(false)
+const citySearch      = ref('')
+const citySearchInput = ref(null)
+
+const filteredCities = computed(() => filtrerDestinations(citySearch.value))
+
+/** Tarif à afficher pour une ligne : celui de la commune trouvée s'il existe. */
+function destPrice(d) {
+  return d.matchedCommune?.price ?? d.price
+}
+
+async function openCity() {
+  cityOpen.value   = true
+  citySearch.value = ''
+  await nextTick()
+  citySearchInput.value?.focus()
+}
+function closeCity() { cityOpen.value = false }
+
+function selectCity(d) {
+  form.value.city = d.city
+  // « Sikensi » cherché dans le champ ville vaut Dabou + Sikensi : la cliente a
+  // déjà donné l'information, on ne la lui redemande pas — et c'est cette
+  // commune qui permet au devis de tomber sur la bonne zone.
+  form.value.cityCommune = d.matchedCommune?.name
+    ?? (d.communes.length === 1 ? d.communes[0].name : '')
+  cityOpen.value = false
+}
+
+// Entrée : sélectionne le premier résultat, comme pour les communes d'Abidjan.
+function onCityEnter() {
+  if (filteredCities.value.length) selectCity(filteredCities.value[0])
+}
 
 
 async function openCommune() {
@@ -760,7 +858,10 @@ async function refreshShippingQuote() {
     const { data } = await api.get('/shipping/quote', {
       params: {
         city:     showCityField.value ? form.value.city : 'Abidjan',
-        commune,
+        // Hors Abidjan, `commune` vaut « Hors Abidjan » : une étiquette, pas un
+        // lieu, qui ne pouvait correspondre à aucune zone. La commune choisie
+        // dans la liste la remplace dès qu'elle existe.
+        commune:  showCityField.value ? (form.value.cityCommune || commune) : commune,
         country:  'CI',
         subtotal: cartStore.subtotal,
       },
@@ -772,7 +873,7 @@ async function refreshShippingQuote() {
 }
 
 watch(
-  () => [effectiveCommune.value, form.value.city, destination.value, cartStore.subtotal],
+  () => [effectiveCommune.value, form.value.city, form.value.cityCommune, destination.value, cartStore.subtotal],
   () => {
     clearTimeout(quoteTimer)
     quoteTimer = setTimeout(refreshShippingQuote, 250)
@@ -791,6 +892,7 @@ watch(destination, (d) => {
     form.value.commune = 'International'
     form.value.communeManuel = ''
     form.value.city = ''
+    form.value.cityCommune = ''
     form.value.country = ''
     return
   }
@@ -798,6 +900,7 @@ watch(destination, (d) => {
   if (['Hors Abidjan', 'International'].includes(form.value.commune)) {
     form.value.commune = ''
     form.value.city = ''
+    form.value.cityCommune = ''
   }
   form.value.country = 'CI'
 })
@@ -1066,7 +1169,9 @@ async function submit() {
       name:           form.value.name,
       phone:          form.value.phone,
       email:          form.value.email?.trim() || null,
-      commune:        effectiveCommune.value,
+      commune:        showCityField.value
+        ? (form.value.cityCommune || effectiveCommune.value)
+        : effectiveCommune.value,
       country:        estInternational.value ? form.value.country : 'CI',
       city:           isAbidjanQuick.value ? 'Abidjan' : (form.value.city.trim() || null),
       landmark:       form.value.indication?.trim() || null,
@@ -1558,6 +1663,30 @@ function fmtPrice(val) {
   font-style: italic;
 }
 .qo-combobox__option--other:hover { background: var(--cream-100); color: var(--gray-700); }
+
+/* Destination hors Abidjan : nom à gauche, tarif à droite. Le prix figure dans
+   la liste elle-même — le découvrir après avoir choisi sa ville, c'est devoir
+   revenir en arrière pour comparer. */
+.qo-combobox__option--dest { justify-content: space-between; }
+.qo-dest-opt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.qo-dest-opt__name { font-weight: 500; }
+.qo-dest-opt__sub {
+  font-size: 0.6875rem;
+  color: var(--gray-400);
+}
+.qo-dest-opt__price {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--rose-600);
+  white-space: nowrap;
+}
+.qo-dest-opt__price--unknown {
+  font-weight: 500;
+  font-style: italic;
+  color: var(--gray-400);
+}
+.qo-combobox__sub { font-size: 0.75rem; color: var(--gray-400); }
 
 .qo-combobox__empty {
   padding: 10px 14px;

@@ -74,6 +74,22 @@
                   <button type="button" class="btn btn-xs btn-primary" @click="basculer(o)">
                     {{ ouverte === o.id ? 'Fermer' : 'Traiter' }}
                   </button>
+                  <!--
+                    Le geste qui manquait : la commande vient d'être tarifée à la
+                    main, et la suivante vers la même commune le sera aussi tant
+                    que la zone n'existe pas. Le bouton ouvre la zone
+                    pré-remplie avec la destination et le montant qu'on vient de
+                    saisir — plus rien à ressaisir, donc plus rien à se tromper.
+                  -->
+                  <button
+                    v-if="zoneCreable(o)"
+                    type="button"
+                    class="ship__zone"
+                    title="Créer la zone de livraison avec ces frais, pour tarifer automatiquement les prochaines commandes"
+                    @click="ouvrirZone(o)"
+                  >
+                    Créer la zone
+                  </button>
                   <RouterLink
                     class="ship__detail"
                     :to="{ name: 'admin.order', params: { id: o.id }, query: { retour: 'expeditions', onglet } }"
@@ -102,6 +118,14 @@
       </p>
       <p v-if="loading" class="ship__empty">Chargement…</p>
     </div>
+
+    <DeliveryZoneFormModal
+      v-if="zonePrefill"
+      :zone="zonePrefill.zone"
+      :origin="zonePrefill.origin"
+      @saved="apresCreationZone"
+      @close="zonePrefill = null"
+    />
   </div>
 </template>
 
@@ -110,6 +134,9 @@ import { ref, reactive, onMounted, nextTick } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
+import DeliveryZoneFormModal from '@/admin/delivery-zones/DeliveryZoneFormModal.vue'
+import { readPagination } from '@/admin/utils/pagination'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 /*
  * Trois onglets, dans l'ordre où ils coûtent de l'argent : une commande à
@@ -131,6 +158,7 @@ const STATUTS = {
 }
 
 const route = useRoute()
+const auth  = useAuthStore()
 
 const onglet = ref('a_tarifer')
 const commandes = ref([])
@@ -162,7 +190,9 @@ async function charger() {
       params: { ...parametres(onglet.value), per_page: 100 },
     })
     commandes.value = data.data
-    compteurs[onglet.value] = data.total
+    // Les compteurs vivent sous `meta` : lus à la racine, ils restaient
+    // indéfinis et aucun onglet n'affichait son nombre.
+    compteurs[onglet.value] = readPagination(data).total
   } finally {
     loading.value = false
   }
@@ -182,7 +212,7 @@ async function chargerCompteurs() {
       const { data } = await api.get('/admin/orders', {
         params: { ...parametres(t.cle), per_page: 5 },
       })
-      compteurs[t.cle] = data.total
+      compteurs[t.cle] = readPagination(data).total
     } catch {
       compteurs[t.cle] = null
     }
@@ -217,6 +247,60 @@ function apresTraitement(majOrder, options = {}) {
   if (options.partial) return
 
   traitees.value = new Set(traitees.value).add(majOrder.id)
+}
+
+/* ── Création de zone depuis une commande tarifée à la main ──────────────────
+ *
+ * Une commande « à tarifer » signale une destination que nos zones ne couvrent
+ * pas. L'agent saisit les frais, la commande part — et la suivante vers la même
+ * commune revient au même point. Créer la zone dans la foulée est le seul geste
+ * qui arrête la répétition, encore fallait-il qu'il tienne en un clic.
+ */
+const zonePrefill = ref(null)
+
+/**
+ * Proposable dès que les frais sont connus : c'est eux qui font le tarif.
+ *
+ * Le montant est masqué aux agents sans `finance.view`, et la création de zone
+ * relève d'une autre habilitation : proposer le bouton sans l'une ou l'autre
+ * mènerait à un refus du serveur, une fois la saisie faite.
+ */
+function zoneCreable(o) {
+  if (!auth.can('delivery_zones.create')) return false
+  return Number(o.shipping_cost) > 0 && !!(o.shipping_address?.commune || o.shipping_address?.city)
+}
+
+function ouvrirZone(o) {
+  const adresse = o.shipping_address ?? {}
+  const pays    = (adresse.country || 'CI').toUpperCase()
+
+  // La commune nomme la zone quand elle existe : c'est le niveau auquel le
+  // tarif se décide. La ville ne sert que de repli, et d'alias dans tous les cas.
+  const nom = (adresse.commune || adresse.city || '').trim()
+
+  const alias = [...new Set(
+    [adresse.commune, adresse.city].map(v => (v || '').trim()).filter(Boolean),
+  )]
+
+  zonePrefill.value = {
+    zone: {
+      group:      pays === 'CI' ? 'Intérieur CI' : 'International',
+      name:       nom,
+      country:    pays,
+      price:      Number(o.shipping_cost) || 0,
+      price_unit: 'flat',
+      cities:     alias,
+      active:     true,
+    },
+    origin: `Pré-rempli depuis la commande ${o.number} — ${alias.join(', ') || 'destination inconnue'}.`,
+  }
+}
+
+async function apresCreationZone() {
+  zonePrefill.value = null
+  // La commande cesse d'être « à tarifer » : elle sort de l'onglet au prochain
+  // chargement, et les compteurs bougent.
+  await rafraichir()
 }
 
 async function rafraichir() {
@@ -347,6 +431,19 @@ function formatPrice(val) {
   white-space: nowrap;
 }
 .ship__detail { font-size: 0.8125rem; color: var(--gray-500); }
+
+.ship__zone {
+  padding: 3px 10px;
+  border: 1px solid var(--rose-200);
+  border-radius: var(--radius-full);
+  background: var(--rose-50);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--rose-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.ship__zone:hover { background: var(--rose-500); border-color: var(--rose-500); color: #fff; }
 .ship__detail:hover { color: var(--rose-600); }
 
 /* Ligne dépliée : rattachée visuellement à sa fiche, sinon les deux flottent. */

@@ -28,6 +28,15 @@ export const COMMUNES_OFFICIELLES = [
 /** Communes proposées à la cliente, ordre alphabétique. */
 export const communesAbidjan = ref([...COMMUNES_OFFICIELLES])
 
+/**
+ * Toutes les zones actives, telles que l'administration les tarife.
+ *
+ * Abidjan n'en est qu'une partie : l'intérieur du pays a besoin des mêmes
+ * données pour annoncer un prix au lieu d'un « frais à confirmer ».
+ * Voir destinations-ci.js, qui les fusionne avec le découpage administratif.
+ */
+export const zonesLivraison = ref([])
+
 /** Normalisation partagée : minuscules, sans accents, espaces resserrés. */
 export function normalizeLoc(v) {
   return String(v || '')
@@ -49,7 +58,9 @@ export function chargerCommunesAbidjan() {
 
   chargement = api.get('/shipping/destinations')
     .then(({ data }) => {
-      const noms = (data?.data ?? [])
+      zonesLivraison.value = data?.data ?? []
+
+      const noms = zonesLivraison.value
         .filter(z => z.is_abidjan)
         .map(z => z.name)
         .filter(Boolean)
