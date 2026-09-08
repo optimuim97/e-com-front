@@ -8,10 +8,68 @@
           tant que leurs frais ne sont pas saisis, elles ne peuvent pas être expédiées.
         </p>
       </div>
-      <button class="btn btn-outline btn-sm" :disabled="loading" @click="rafraichir">
-        Actualiser
-      </button>
+      <div class="ship__head-actions">
+        <button class="btn btn-outline btn-sm" :disabled="loading" @click="rafraichir">
+          Actualiser
+        </button>
+        <button
+          class="btn btn-primary btn-sm"
+          :disabled="loading || !commandes.length || !!extraction"
+          title="Extraire les commandes de cet onglet"
+          @click="panneauExport = !panneauExport"
+        >
+          Exporter
+        </button>
+      </div>
     </header>
+
+    <!--
+      Extraction de l'onglet courant. Elle est propre aux expéditions : l'export
+      général écarte les commandes non payées hors Abidjan, c'est-à-dire à peu
+      près tout ce qui s'affiche ici.
+    -->
+    <div v-if="panneauExport" class="card ship__export">
+      <p class="ship__export-title">
+        Extraire « {{ ONGLETS.find(t => t.cle === onglet).label }} »
+        <span class="ship__export-count">{{ commandes.length }} commande(s)</span>
+      </p>
+
+      <div class="ship__export-opts">
+        <label class="ship__check">
+          <input type="radio" value="full" v-model="exportColonnes" />
+          Fiche complète
+        </label>
+        <label class="ship__check">
+          <input type="radio" value="minimal" v-model="exportColonnes" />
+          Nom du client et numéro de commande
+        </label>
+        <span class="ship__export-sep"></span>
+        <label class="ship__check">
+          <input type="radio" value="xlsx" v-model="exportFormat" />
+          Excel
+        </label>
+        <label class="ship__check">
+          <input type="radio" value="csv" v-model="exportFormat" />
+          CSV
+        </label>
+      </div>
+
+      <div class="ship__export-opts">
+        <!-- Même repère que sur l'écran des commandes, et décoché par défaut
+             pour la même raison : une extraction de vérification n'engage rien. -->
+        <label class="ship__check">
+          <input type="checkbox" v-model="marquerApresExport" />
+          Marquer les commandes comme extraites après le téléchargement
+        </label>
+        <span class="ship__export-sep"></span>
+        <button class="btn btn-primary btn-sm" :disabled="!!extraction" @click="exporter">
+          {{ extraction ? 'Extraction…' : 'Télécharger' }}
+        </button>
+        <button class="btn btn-outline btn-sm" @click="panneauExport = false">Fermer</button>
+      </div>
+
+      <p v-if="messageExport" class="ship__export-msg">{{ messageExport }}</p>
+    </div>
 
     <!-- Onglets : l'ordre suit l'urgence, pas la géographie. -->
     <nav class="ship__tabs" role="tablist">
@@ -249,6 +307,73 @@ function apresTraitement(majOrder, options = {}) {
   traitees.value = new Set(traitees.value).add(majOrder.id)
 }
 
+/* ── Extraction de l'onglet courant ──────────────────────────────────────────
+ *
+ * Endpoint distinct de l'export général : celui-ci écarte les commandes non
+ * payées hors Abidjan — la règle qui décide de ce qui peut partir, pas de ce
+ * que l'agent a besoin de voir. Appliquée ici, elle vide les trois onglets.
+ */
+const panneauExport      = ref(false)
+const exportColonnes     = ref('full')     // 'full' | 'minimal'
+const exportFormat       = ref('xlsx')     // 'xlsx' | 'csv'
+const marquerApresExport = ref(false)
+const extraction         = ref(false)
+const messageExport      = ref('')
+
+async function exporter() {
+  if (extraction.value || !commandes.value.length) return
+  extraction.value  = true
+  messageExport.value = ''
+
+  const label = ONGLETS.find(t => t.cle === onglet.value).label
+
+  try {
+    const params = new URLSearchParams({
+      tab:     onglet.value,
+      columns: exportColonnes.value,
+      format:  exportFormat.value,
+      label,
+    })
+
+    const res  = await api.get(`/admin/orders/export-shipments?${params}`, { responseType: 'blob' })
+    const href = URL.createObjectURL(new Blob([res.data]))
+    const a    = document.createElement('a')
+    a.href     = href
+    a.download = `expeditions_${label.replace(/[^a-zA-Z0-9]+/g, '_')}_${new Date().toISOString().slice(0, 10)}.${exportFormat.value}`
+    document.body.appendChild(a); a.click(); a.remove()
+    URL.revokeObjectURL(href)
+
+    await marquerExtraites()
+  } catch (e) {
+    messageExport.value = e.response?.data?.message ?? "L'extraction a échoué."
+    console.error('Extraction des expéditions échouée', e)
+  } finally {
+    extraction.value = false
+  }
+}
+
+/*
+ * Le marquage suit le téléchargement plutôt que de voyager dans son URL :
+ * l'export est un GET, qu'un navigateur peut rejouer, et une écriture ne doit
+ * pas dépendre d'un téléchargement.
+ */
+async function marquerExtraites() {
+  if (!marquerApresExport.value) return
+
+  try {
+    const { data } = await api.post('/admin/orders/bulk-mark-exported', {
+      order_ids: commandes.value.map(o => o.id),
+    })
+    messageExport.value = data.message
+    await charger()
+  } catch (e) {
+    // Le fichier est déjà chez l'agent : un marquage raté ne doit pas
+    // ressembler à une extraction ratée.
+    messageExport.value = 'Extraction téléchargée, mais le marquage a échoué.'
+    console.error('Marquage « extraite » échoué', e)
+  }
+}
+
 /* ── Création de zone depuis une commande tarifée à la main ──────────────────
  *
  * Une commande « à tarifer » signale une destination que nos zones ne couvrent
@@ -349,6 +474,54 @@ function formatPrice(val) {
   flex-wrap: wrap;
 }
 .ship__title { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.ship__head-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+
+/* Panneau d'extraction */
+.ship__export {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1.5px solid var(--rose-100);
+  background: var(--rose-50);
+}
+.ship__export-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.ship__export-count {
+  font-weight: 500;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+.ship__export-opts {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.ship__export-sep { flex: 1; min-width: var(--space-2); }
+.ship__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+.ship__check input { cursor: pointer; accent-color: var(--rose-500); }
+.ship__export-msg {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--rose-600);
+}
 .ship__sub {
   margin: var(--space-1) 0 0;
   font-size: 0.875rem;
