@@ -382,18 +382,25 @@ async function downloadBlob({ kind, url, mime, ext, prefix = 'commandes' }) {
   if (busy.value || !selectedOrders.value.length) return
   busy.value = kind
   try {
-    const params = new URLSearchParams()
-    selectedOrders.value.forEach(o => params.append('order_ids[]', o.id))
-    if (kind === 'xlsx') params.append('format', 'xlsx')
+    /*
+     * La sélection part dans le corps, jamais dans l'URL.
+     *
+     * Répétés en `order_ids[]=…`, sept cents identifiants font une ligne de
+     * requête de 14 Ko — nginx en accepte 8 et renvoyait un 414 : la feuille
+     * de livraison devenait impossible à sortir précisément sur les gros lots,
+     * ceux qui en ont le plus besoin.
+     */
+    const payload = { order_ids: selectedOrders.value.map(o => o.id) }
+    if (kind === 'xlsx') payload.format = 'xlsx'
 
     // Feuilles de livraison (PDF et TXT) : titre + blocs récapitulatifs choisis
     if (kind === 'pdf' || kind === 'txt') {
-      params.append('label', titleEdit.value || props.label)
-      params.append('show_product_totals', showProductTotals.value ? '1' : '0')
-      params.append('show_item_counts',    showItemCounts.value    ? '1' : '0')
+      payload.label               = titleEdit.value || props.label
+      payload.show_product_totals = showProductTotals.value ? 1 : 0
+      payload.show_item_counts    = showItemCounts.value    ? 1 : 0
     }
 
-    const res  = await api.get(`${url}?${params.toString()}`, { responseType: 'blob' })
+    const res  = await api.post(url, payload, { responseType: 'blob' })
     const href = URL.createObjectURL(new Blob([res.data], { type: mime }))
     const a    = document.createElement('a')
     a.href     = href
@@ -435,15 +442,12 @@ async function copierPourWhatsapp() {
   if (busy.value || !selectedOrders.value.length) return
   busy.value = 'copie'
   try {
-    const params = new URLSearchParams()
-    selectedOrders.value.forEach(o => params.append('order_ids[]', o.id))
-    params.append('label', titleEdit.value || props.label)
-    params.append('show_product_totals', showProductTotals.value ? '1' : '0')
-    params.append('show_item_counts',    showItemCounts.value    ? '1' : '0')
-
-    const res = await api.get(`/admin/orders/export-by-zone-txt?${params.toString()}`, {
-      responseType: 'text',
-    })
+    const res = await api.post('/admin/orders/export-by-zone-txt', {
+      order_ids:           selectedOrders.value.map(o => o.id),
+      label:               titleEdit.value || props.label,
+      show_product_totals: showProductTotals.value ? 1 : 0,
+      show_item_counts:    showItemCounts.value    ? 1 : 0,
+    }, { responseType: 'text' })
 
     const feuille = String(res.data).replace(/^\uFEFF/, '').trimEnd()
     await ecrireDansPressePapiers('```\n' + feuille + '\n```')

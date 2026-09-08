@@ -52,7 +52,16 @@
           <input type="radio" value="csv" v-model="exportFormat" />
           CSV
         </label>
+        <label class="ship__check">
+          <input type="radio" value="txt" v-model="exportFormat" />
+          Texte (impression / WhatsApp)
+        </label>
       </div>
+
+      <p v-if="exportFormat === 'txt'" class="ship__export-note">
+        Feuille de livraison sur 48 colonnes : nom, numéro de commande, adresse,
+        téléphone et montant. Les colonnes ci-dessus ne s'y appliquent pas.
+      </p>
 
       <div class="ship__export-opts">
         <!-- Même repère que sur l'écran des commandes, et décoché par défaut
@@ -63,7 +72,19 @@
         </label>
         <span class="ship__export-sep"></span>
         <button class="btn btn-primary btn-sm" :disabled="!!extraction" @click="exporter">
-          {{ extraction ? 'Extraction…' : 'Télécharger' }}
+          {{ extraction === 'fichier' ? 'Extraction…' : 'Télécharger' }}
+        </button>
+        <!--
+          La copie sert le cas réel : la feuille part au livreur par WhatsApp,
+          pas par pièce jointe. Elle n'a de sens que sur le format texte.
+        -->
+        <button
+          class="btn btn-outline btn-sm"
+          :disabled="!!extraction"
+          title="Copie la feuille dans le presse-papiers, prête à coller dans WhatsApp"
+          @click="copierPourWhatsapp"
+        >
+          {{ copie ? 'Copié !' : (extraction === 'copie' ? '…' : 'Copier pour WhatsApp') }}
         </button>
         <button class="btn btn-outline btn-sm" @click="panneauExport = false">Fermer</button>
       </div>
@@ -317,25 +338,36 @@ const panneauExport      = ref(false)
 const exportColonnes     = ref('full')     // 'full' | 'minimal'
 const exportFormat       = ref('xlsx')     // 'xlsx' | 'csv'
 const marquerApresExport = ref(false)
-const extraction         = ref(false)
+const extraction         = ref(null)   // null | 'fichier' | 'copie'
 const messageExport      = ref('')
+const copie              = ref(false)
+
+const libelleOnglet = () => ONGLETS.find(t => t.cle === onglet.value).label
+
+/** Charge utile commune au téléchargement et à la copie. */
+function chargeExport(format) {
+  return {
+    tab:     onglet.value,
+    columns: exportColonnes.value,
+    format,
+    label:   libelleOnglet(),
+  }
+}
 
 async function exporter() {
   if (extraction.value || !commandes.value.length) return
-  extraction.value  = true
+  extraction.value    = 'fichier'
   messageExport.value = ''
 
-  const label = ONGLETS.find(t => t.cle === onglet.value).label
+  const label = libelleOnglet()
 
   try {
-    const params = new URLSearchParams({
-      tab:     onglet.value,
-      columns: exportColonnes.value,
-      format:  exportFormat.value,
-      label,
+    // POST comme les autres extractions : l'endpoint accepte aussi une
+    // sélection d'identifiants, qui ne tiendrait pas dans une URL.
+    const res = await api.post('/admin/orders/export-shipments', chargeExport(exportFormat.value), {
+      responseType: 'blob',
     })
 
-    const res  = await api.get(`/admin/orders/export-shipments?${params}`, { responseType: 'blob' })
     const href = URL.createObjectURL(new Blob([res.data]))
     const a    = document.createElement('a')
     a.href     = href
@@ -348,8 +380,64 @@ async function exporter() {
     messageExport.value = e.response?.data?.message ?? "L'extraction a échoué."
     console.error('Extraction des expéditions échouée', e)
   } finally {
-    extraction.value = false
+    extraction.value = null
   }
+}
+
+/**
+ * Copie la feuille dans le presse-papiers, prête à coller dans WhatsApp.
+ *
+ * Encadrée de trois accents graves : c'est ce qui fait passer WhatsApp en
+ * police à chasse fixe. Sans eux, les colonnes de montants — calées au
+ * caractère près sur 48 colonnes — se décalent toutes et la feuille devient
+ * illisible à l'arrivée. Le BOM est retiré : invisible dans un fichier, il
+ * apparaît comme un caractère parasite en tête de message.
+ */
+async function copierPourWhatsapp() {
+  if (extraction.value || !commandes.value.length) return
+  extraction.value    = 'copie'
+  messageExport.value = ''
+
+  try {
+    const res = await api.post('/admin/orders/export-shipments', chargeExport('txt'), {
+      responseType: 'text',
+    })
+
+    const feuille = String(res.data).replace(/^\uFEFF/, '').trimEnd()
+    await ecrireDansPressePapiers('```\n' + feuille + '\n```')
+
+    copie.value = true
+    setTimeout(() => { copie.value = false }, 2500)
+
+    await marquerExtraites()
+  } catch (e) {
+    messageExport.value = 'La copie a échoué.'
+    console.error('Copie WhatsApp échouée', e)
+  } finally {
+    extraction.value = null
+  }
+}
+
+/**
+ * `navigator.clipboard` exige un contexte sécurisé : sur une recette servie en
+ * HTTP, ou sur d'anciens navigateurs, il faut ce repli.
+ */
+async function ecrireDansPressePapiers(texte) {
+  try {
+    await navigator.clipboard.writeText(texte)
+    return
+  } catch {
+    // On tente la méthode historique.
+  }
+
+  const zone = document.createElement('textarea')
+  zone.value = texte
+  zone.style.position = 'fixed'
+  zone.style.opacity  = '0'
+  document.body.appendChild(zone)
+  zone.select()
+  try { document.execCommand('copy') } catch { /* rien de plus à tenter */ }
+  document.body.removeChild(zone)
 }
 
 /*
@@ -516,6 +604,12 @@ function formatPrice(val) {
   cursor: pointer;
 }
 .ship__check input { cursor: pointer; accent-color: var(--rose-500); }
+.ship__export-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  line-height: 1.5;
+}
 .ship__export-msg {
   margin: 0;
   font-size: 0.8125rem;
