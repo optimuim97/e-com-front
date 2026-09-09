@@ -211,6 +211,7 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { exportStamp } from '@/admin/utils/exportStamp'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryZoneFormModal from '@/admin/delivery-zones/DeliveryZoneFormModal.vue'
@@ -371,7 +372,7 @@ async function exporter() {
     const href = URL.createObjectURL(new Blob([res.data]))
     const a    = document.createElement('a')
     a.href     = href
-    a.download = `expeditions_${label.replace(/[^a-zA-Z0-9]+/g, '_')}_${new Date().toISOString().slice(0, 10)}.${exportFormat.value}`
+    a.download = `expeditions_${label.replace(/[^a-zA-Z0-9]+/g, '_')}_${exportStamp()}.${exportFormat.value}`
     document.body.appendChild(a); a.click(); a.remove()
     URL.revokeObjectURL(href)
 

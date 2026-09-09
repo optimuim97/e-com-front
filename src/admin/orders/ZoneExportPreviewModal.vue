@@ -241,6 +241,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { exportStamp } from '@/admin/utils/exportStamp'
 import api from '@/api'
 
 const props = defineProps({
@@ -404,7 +405,7 @@ async function downloadBlob({ kind, url, mime, ext, prefix = 'commandes' }) {
     const href = URL.createObjectURL(new Blob([res.data], { type: mime }))
     const a    = document.createElement('a')
     a.href     = href
-    a.download = `${prefix}_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.${ext}`
+    a.download = `${prefix}_${safeName(titleEdit.value)}_${exportStamp()}.${ext}`
     document.body.appendChild(a); a.click(); a.remove()
     URL.revokeObjectURL(href)
 
@@ -597,7 +598,7 @@ async function downloadCSV() {
   const url  = URL.createObjectURL(blob)
   const a    = document.createElement('a')
   a.href     = url
-  a.download = `tournee_${safeName(titleEdit.value)}_${new Date().toISOString().slice(0, 10)}.csv`
+  a.download = `tournee_${safeName(titleEdit.value)}_${exportStamp()}.csv`
   document.body.appendChild(a); a.click(); a.remove()
   URL.revokeObjectURL(url)
 

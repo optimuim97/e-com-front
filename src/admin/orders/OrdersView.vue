@@ -154,20 +154,20 @@
       </h3>
 
       <div class="export-filters">
-        <!-- Date range -->
+        <!-- Plage : heure comprise, pour sortir une matinée ou une tournée -->
         <div class="export-field">
           <label class="export-label">Du</label>
-          <input v-model="exportFilters.date_from" type="date" class="input export-input" />
+          <input v-model="exportFilters.date_from" type="datetime-local" class="input export-input" />
         </div>
         <div class="export-field">
           <label class="export-label">Au</label>
-          <input v-model="exportFilters.date_to" type="date" class="input export-input" />
+          <input v-model="exportFilters.date_to" type="datetime-local" class="input export-input" />
         </div>
 
         <!-- Status -->
         <div class="export-field">
           <label class="export-label">Statut</label>
-          <AppSelect v-model="exportFilters.status" :options="orderStatusOptions" placeholder="Tous" />
+          <AppSelect v-model="exportFilters.status" :options="orderStatusOptions" placeholder="Ventes (hors annulées)" />
         </div>
 
         <!-- Country -->
@@ -176,6 +176,16 @@
           <AppSelect v-model="exportFilters.country" :options="exportCountryOptions" placeholder="Tous" />
         </div>
       </div>
+
+      <!--
+        Sans statut choisi, l'extraction porte sur les ventes : une commande
+        annulée ou remboursée n'en est pas une et fausse les totaux. Choisir
+        « Annulées » dans le statut reste possible et l'emporte.
+      -->
+      <label v-if="!exportFilters.status" class="export-toggle">
+        <input v-model="exportFilters.include_cancelled" type="checkbox" />
+        <span>Inclure les commandes annulées et remboursées</span>
+      </label>
 
       <!-- Format + Download buttons -->
       <div class="export-actions">
@@ -934,6 +944,9 @@ const exportFilters = reactive({
   date_to:   '',
   status:    '',
   country:   '',
+  // Les annulées et remboursées sortent de l'extraction par défaut : ce ne
+  // sont pas des ventes. Décision réversible, d'où la case.
+  include_cancelled: false,
 })
 
 /**
@@ -950,6 +963,7 @@ async function openGlobalExportPreview() {
     if (exportFilters.date_to)   params.date_to   = exportFilters.date_to
     if (exportFilters.status)    params.status    = exportFilters.status
     if (exportFilters.country)   params.country   = exportFilters.country
+    if (exportFilters.include_cancelled) params.include_cancelled = 1
 
     const { data } = await api.get('/admin/orders/export-preview', { params })
     const orders = data.data ?? []
@@ -960,7 +974,12 @@ async function openGlobalExportPreview() {
     }
 
     exportPreview.value = {
-      label:   `Commandes ${new Date().toLocaleDateString('fr-FR')}`,
+      // Heure comprise : deux extractions du même jour doivent se distinguer,
+      // dans le titre de la feuille comme dans le nom du fichier.
+      label:   `Commandes ${new Date().toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })}`,
       orders,
       formats: ['xlsx', 'pdf', 'csv'],
     }
@@ -1481,6 +1500,21 @@ onMounted(async () => {
   font-size: 0.8125rem;
   background: #fff;
 }
+/* Le champ datetime-local est plus large que le champ date : sans ce minimum,
+   l'heure était rognée sur les écrans étroits. */
+.export-input[type='datetime-local'] { min-width: 205px; }
+
+.export-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: 0.8125rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  user-select: none;
+}
+.export-toggle input { cursor: pointer; }
 .export-actions {
   display: flex;
   align-items: center;
