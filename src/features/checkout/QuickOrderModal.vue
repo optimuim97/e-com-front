@@ -85,8 +85,8 @@
 
               <!-- Cas : compte rapide → ajouter email + mot de passe -->
               <form v-if="profileNudge.type === 'setup'" @submit.prevent="doSetup" class="qo-nudge__form">
-                <input v-model="nudgeForm.email" type="email" class="input input--sm" :placeholder="$t('auth.emailPlaceholder')" required />
-                <input v-model="nudgeForm.password" type="password" class="input input--sm" :placeholder="$t('quickOrder.pwPlaceholder')" required minlength="8" />
+                <input v-model="nudgeForm.email" type="email" class="input input--sm w-100" :placeholder="$t('auth.emailPlaceholder')" required />
+                <input v-model="nudgeForm.password" type="password" class="input input--sm w-100" :placeholder="$t('quickOrder.pwPlaceholder')" required minlength="8" />
                 <p v-if="nudgeError" class="qo-nudge__err">{{ nudgeError }}</p>
                 <button type="submit" class="btn btn-primary btn-sm" :disabled="nudgeSaving">
                   <span v-if="nudgeSaving" class="qo-geo-spin"></span>
@@ -2065,6 +2065,7 @@ function fmtPrice(val) {
 .input--sm {
   padding: 8px 12px;
   font-size: 0.875rem;
+  width: 100% !important;
 }
 .qo-nudge__err {
   font-size: 0.8125rem;
