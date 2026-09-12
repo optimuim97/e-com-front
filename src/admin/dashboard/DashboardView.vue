@@ -46,15 +46,32 @@
     <!-- ── Ligne milieu : graphique + statuts ── -->
     <div class="mid-grid">
 
-      <!-- Graphique CA 30 jours — finance uniquement -->
+      <!-- Courbe du CA — finance uniquement -->
       <section class="card chart-card" v-if="canFinance">
         <div class="chart-card__head">
           <div>
             <span class="eyebrow">Tendance</span>
-            <h2 class="section-title">Chiffre d'affaires – 30 jours</h2>
+            <h2 class="section-title">Chiffre d'affaires – {{ PERIODES[periode].titre }}</h2>
           </div>
-          <div class="chart-legend">
-            <span class="chart-legend__dot chart-legend__dot--rose"></span> CA journalier
+          <div class="chart-head__right">
+            <!--
+              La semaine est le defaut : une boutique qui livre par tournees a
+              des journees en dents de scie, illisibles au jour le jour.
+            -->
+            <div class="chart-periodes" role="group" aria-label="Granularite">
+              <button
+                v-for="(def, cle) in PERIODES"
+                :key="cle"
+                type="button"
+                class="chart-periode"
+                :class="{ 'chart-periode--active': periode === cle }"
+                :disabled="loading"
+                @click="changerPeriode(cle)"
+              >{{ def.label }}</button>
+            </div>
+            <div class="chart-legend">
+              <span class="chart-legend__dot chart-legend__dot--rose"></span> CA livre
+            </div>
           </div>
         </div>
         <div class="chart-wrap" v-if="!loading && salesChart.length">
@@ -95,7 +112,7 @@
           </div>
         </div>
         <div v-else-if="loading" class="skel skel--chart"></div>
-        <div v-else class="chart-empty">Aucune donnée sur les 30 derniers jours</div>
+        <div v-else class="chart-empty">Aucune livraison sur {{ PERIODES[periode].titre }}</div>
 
         <!-- Mini stats sous le graphique -->
         <div v-if="!loading && salesChart.length" class="chart-footer">
@@ -104,11 +121,11 @@
             <strong class="chart-footer__val">{{ fmt(chartTotal) }}</strong>
           </div>
           <div class="chart-footer__stat">
-            <span class="chart-footer__label">Meilleur jour</span>
+            <span class="chart-footer__label">Meilleur {{ PERIODES[periode].unite }}</span>
             <strong class="chart-footer__val">{{ fmt(chartMax) }}</strong>
           </div>
           <div class="chart-footer__stat">
-            <span class="chart-footer__label">Moyenne/jour</span>
+            <span class="chart-footer__label">Moyenne/{{ PERIODES[periode].unite }}</span>
             <strong class="chart-footer__val">{{ fmt(chartAvg) }}</strong>
           </div>
           <div class="chart-footer__stat">
@@ -343,7 +360,9 @@ const chartPeaks = computed(() => {
 const chartXLabels = computed(() => {
   const data = salesChart.value
   if (!data.length) return ['', '', '']
-  const fmt = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+  // Au mois, « 1 sept. » n'apprend rien : on n'affiche alors que le mois.
+  const fmt = (d) => new Date(d).toLocaleDateString('fr-FR',
+    periode.value === 'month' ? { month: 'short', year: '2-digit' } : { day: 'numeric', month: 'short' })
   return [
     fmt(data[0].date),
     fmt(data[Math.floor(data.length / 2)].date),
@@ -383,14 +402,42 @@ function statusBadge(s) {
            refunded: 'badge badge-gray' }[s] ?? 'badge badge-gray'
 }
 
-onMounted(async () => {
-  const { data } = await api.get('/admin/dashboard')
-  stats.value        = data.stats
-  recentOrders.value = data.recent_orders
-  lowStock.value     = data.low_stock
-  salesChart.value   = data.sales_chart ?? []
-  loading.value      = false
-})
+/*
+ * Granularite de la courbe. La semaine est le defaut, cote serveur comme ici :
+ * une boutique qui livre par tournees a des journees en dents de scie, et la
+ * lecture au jour le jour ne dit rien de la tendance.
+ */
+const PERIODES = {
+  week:  { label: 'Semaine', titre: '12 dernieres semaines', unite: 'semaine' },
+  day:   { label: 'Jour',    titre: '30 derniers jours',     unite: 'jour' },
+  month: { label: 'Mois',    titre: '12 derniers mois',      unite: 'mois' },
+}
+
+const periode = ref('week')
+
+async function charger() {
+  loading.value = true
+  try {
+    const { data } = await api.get('/admin/dashboard', { params: { period: periode.value } })
+    stats.value        = data.stats
+    recentOrders.value = data.recent_orders
+    lowStock.value     = data.low_stock
+    salesChart.value   = data.sales_chart ?? []
+    // Le serveur tranche la granularite : une valeur inconnue retombe sur la
+    // semaine, et l'ecran doit afficher ce qui a reellement ete rendu.
+    if (data.period) periode.value = data.period
+  } finally {
+    loading.value = false
+  }
+}
+
+function changerPeriode(cle) {
+  if (periode.value === cle || loading.value) return
+  periode.value = cle
+  charger()
+}
+
+onMounted(charger)
 </script>
 
 <style scoped>
@@ -525,6 +572,38 @@ onMounted(async () => {
   justify-content: space-between;
   margin-bottom: var(--space-4);
 }
+.chart-head__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.chart-periodes {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-full);
+  background: var(--cream-100);
+}
+.chart-periode {
+  padding: 4px 12px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.chart-periode:hover:not(:disabled) { color: var(--rose-600); }
+.chart-periode:disabled { cursor: default; opacity: 0.6; }
+.chart-periode--active {
+  background: #fff;
+  color: var(--rose-600);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
 .chart-legend {
   display: flex;
   align-items: center;
