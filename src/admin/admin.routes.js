@@ -22,6 +22,7 @@ export default {
     { path: 'users',                        name: 'admin.users',                  meta: { permission: 'customers.view' },       component: () => import('./users/UsersView.vue') },
     { path: 'roles',                        name: 'admin.roles',                  meta: { permission: 'roles.view' },           component: () => import('./roles/RolesView.vue') },
     { path: 'permissions',                  name: 'admin.permissions',            meta: { permission: 'permissions.view' },     component: () => import('./permissions/PermissionsView.vue') },
+    { path: 'journal',                      name: 'admin.activity',               meta: { permission: 'activity.view' },        component: () => import('./activity/ActivityView.vue') },
     { path: 'settings',                     name: 'admin.settings',               meta: { permission: 'settings.view' },        component: () => import('./settings/SettingsView.vue') },
     { path: 'galerie',                      name: 'admin.gallery',                meta: { permission: 'gallery.view' },         component: () => import('./gallery/GalleryView.vue') },
     { path: 'blog',                         name: 'admin.blog',                   meta: { permission: 'blog.view' },            component: () => import('./blog/BlogView.vue') },

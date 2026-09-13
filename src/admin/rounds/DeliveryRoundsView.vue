@@ -5,8 +5,9 @@
         <span class="eyebrow">Livraison</span>
         <h1 class="page-header__title">Tournées</h1>
         <p class="page-header__sub">
-          Une tournée se prépare depuis les commandes : groupez par zone,
-          cochez, puis « Créer la tournée ». Au retour du livreur, dépliez-la
+          L'extraction de 21 h prépare la tournée du lendemain : au matin,
+          désignez le livreur et confirmez le départ. Une tournée se compose
+          aussi à la main depuis les commandes. Au retour du livreur, dépliez-la
           ici et pointez chaque livraison.
         </p>
       </div>
@@ -64,7 +65,8 @@
               <tr :class="{ 'tr--open': ouverte === r.code }">
                 <td class="admin-table__mono tr__code">
                   {{ r.code }}
-                  <span v-if="r.status === 'closed'" class="badge badge-gray">clôturée</span>
+                  <span v-if="r.status === 'draft'" class="badge badge-warning">à faire partir</span>
+                  <span v-else-if="r.status === 'closed'" class="badge badge-gray">clôturée</span>
                 </td>
                 <td>{{ r.label || '—' }}</td>
                 <td>
@@ -72,16 +74,33 @@
                   <span v-if="r.zone_group" class="tr__group">{{ r.zone_group }}</span>
                 </td>
                 <td>{{ r.courier?.name || 'Non affecté' }}</td>
-                <td>{{ formatDate(r.dispatched_at) }}</td>
+                <td>{{ r.status === 'draft' ? 'pas encore partie' : formatDate(r.dispatched_at) }}</td>
                 <td>{{ r.orders_count }}</td>
                 <td class="admin-table__total">{{ formatPrice(r.expected_total) }}</td>
                 <td>
                   <div class="tr__actions">
-                    <button type="button" class="btn btn-xs btn-primary" @click="basculer(r)">
-                      {{ ouverte === r.code ? 'Fermer' : 'Pointer' }}
+                    <button
+                      v-if="r.status === 'draft'"
+                      type="button"
+                      class="btn btn-xs btn-primary"
+                      @click="aConfirmer = r"
+                    >
+                      Faire partir
+                    </button>
+                    <button type="button" class="btn btn-xs" :class="r.status === 'draft' ? 'btn-outline' : 'btn-primary'" @click="basculer(r)">
+                      {{ ouverte === r.code ? 'Fermer' : (r.status === 'draft' ? 'Voir' : 'Pointer') }}
                     </button>
                     <button type="button" class="btn btn-xs btn-outline" @click="telechargerFeuille(r)">
                       Feuille
+                    </button>
+                    <button
+                      v-if="r.status === 'draft'"
+                      type="button"
+                      class="btn btn-xs btn-outline tr__abandon"
+                      title="Rend leur liberté aux commandes retenues"
+                      @click="abandonner(r)"
+                    >
+                      Abandonner
                     </button>
                   </div>
                 </td>
@@ -129,7 +148,7 @@
                                 </span>
                                 <span v-if="l.failure_reason" class="pointage__reason">{{ l.failure_reason }}</span>
                                 <button
-                                  v-if="detail.status !== 'closed'"
+                                  v-if="pointable"
                                   type="button"
                                   class="pointage__link"
                                   @click="rouvrir(l)"
@@ -139,7 +158,7 @@
                               </div>
 
                               <!-- À pointer -->
-                              <div v-else-if="detail.status !== 'closed'" class="pointage__todo">
+                              <div v-else-if="pointable" class="pointage__todo">
                                 <!--
                                   Le montant est pré-rempli au montant attendu.
                                   À vingt lignes, exiger une saisie par livraison
@@ -171,7 +190,13 @@
                                 </button>
                               </div>
 
-                              <span v-else class="pointage__reason">non pointée</span>
+                              <!--
+                                Un brouillon n'a rien à pointer : les colis
+                                sont encore en boutique.
+                              -->
+                              <span v-else class="pointage__reason">
+                                {{ detail.status === 'draft' ? 'en attente du départ' : 'non pointée' }}
+                              </span>
                             </td>
                           </tr>
 
@@ -214,7 +239,11 @@
 
                     <!-- Le compte de la tournée -->
                     <div class="pointage__foot">
-                      <div class="pointage__stats">
+                      <div v-if="detail.status === 'draft'" class="pointage__stats">
+                        <span><strong>{{ detail.summary.pending }}</strong> commande(s) prêtes à partir</span>
+                      </div>
+
+                      <div v-else class="pointage__stats">
                         <span><strong>{{ detail.summary.delivered }}</strong> livrée(s)</span>
                         <span v-if="detail.summary.failed"><strong>{{ detail.summary.failed }}</strong> échec(s)</span>
                         <span v-if="detail.summary.postponed"><strong>{{ detail.summary.postponed }}</strong> reportée(s)</span>
@@ -223,7 +252,16 @@
                         </span>
                       </div>
 
-                      <div class="pointage__caisse">
+                      <!--
+                        Rien n'est encaissé avant le départ : afficher « 0 sur
+                        0 » sur un brouillon ferait lire un écart de caisse là
+                        où il n'y a pas encore de caisse.
+                      -->
+                      <div v-if="detail.status === 'draft'" class="pointage__caisse">
+                        <span>À encaisser <strong>{{ formatPrice(detail.expected_total) }}</strong></span>
+                      </div>
+
+                      <div v-else class="pointage__caisse">
                         <span>Encaissé <strong>{{ formatPrice(detail.summary.collected) }}</strong></span>
                         <span class="pointage__sur">sur {{ formatPrice(detail.summary.expected_on_pointed) }}</span>
                         <span
@@ -239,6 +277,14 @@
                         <span v-if="detail.status === 'closed'" class="badge badge-gray">
                           Clôturée le {{ formatDate(detail.closed_at) }}
                         </span>
+                        <button
+                          v-else-if="detail.status === 'draft'"
+                          type="button"
+                          class="btn btn-sm btn-primary"
+                          @click="aConfirmer = rounds.find(r => r.code === detail.code) ?? detail"
+                        >
+                          Faire partir
+                        </button>
                         <button
                           v-else
                           type="button"
@@ -263,16 +309,25 @@
         </table>
       </div>
     </div>
+
+    <DispatchRoundModal
+      v-if="aConfirmer"
+      :round="aConfirmer"
+      @close="aConfirmer = null"
+      @dispatched="apresDepart"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
+import DispatchRoundModal from './DispatchRoundModal.vue'
 
 const ONGLETS = [
   { value: '',           label: 'Toutes' },
+  { value: 'draft',      label: 'À faire partir' },
   { value: 'dispatched', label: 'En cours' },
   { value: 'closed',     label: 'Clôturées' },
 ]
@@ -295,6 +350,17 @@ const chargementDetail = ref(false)
 const enCours          = ref(null)   // id de la ligne en cours d'envoi
 const cloture          = ref(false)
 const erreur           = ref('')
+
+/** Tournée dont on confirme le départ. Non nulle = modale ouverte. */
+const aConfirmer = ref(null)
+
+/**
+ * Une tournée ne se pointe qu'entre le départ et la clôture : avant, les colis
+ * sont en boutique ; après, les comptes sont arrêtés.
+ */
+const pointable = computed(() =>
+  detail.value !== null && detail.value.status !== 'closed' && detail.value.status !== 'draft',
+)
 
 /** Montants corrigés, par id de ligne. Vide = le montant attendu s'applique. */
 const montants = reactive({})
@@ -355,6 +421,38 @@ async function basculer(round) {
 async function recharger(code) {
   const { data } = await api.get(`/admin/delivery-rounds/${encodeURIComponent(code)}`)
   return data.data
+}
+
+// ── Départ d'une tournée préparée ───────────────────────────────────────────
+
+/**
+ * La tournée est partie : le serveur renvoie son état complet, y compris les
+ * commandes écartées au dernier moment. On recharge la liste pour que la ligne
+ * change de camp.
+ */
+async function apresDepart(reponse) {
+  aConfirmer.value = null
+  if (ouverte.value === reponse.data.code) detail.value = reponse.data
+  await charger()
+}
+
+async function abandonner(round) {
+  const ok = window.confirm(
+    `Abandonner la tournée ${round.code} ? Ses ${round.orders_count} commande(s) `
+    + 'redeviennent disponibles pour une autre tournée.',
+  )
+  if (!ok) return
+
+  try {
+    await api.delete(`/admin/delivery-rounds/${encodeURIComponent(round.code)}`)
+    if (ouverte.value === round.code) {
+      ouverte.value = null
+      detail.value  = null
+    }
+    await charger()
+  } catch (e) {
+    erreur.value = e.response?.data?.message ?? "La tournée n'a pas pu être abandonnée."
+  }
 }
 
 // ── Pointage ────────────────────────────────────────────────────────────────
@@ -514,7 +612,8 @@ onMounted(charger)
   font-weight: 700; letter-spacing: 0.05em; color: var(--rose-600);
 }
 .tr__group { display: block; font-size: 0.6875rem; color: var(--gray-400); }
-.tr__actions { display: flex; gap: 6px; }
+.tr__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.tr__abandon { color: var(--gray-500); }
 .tr--open { background: var(--rose-50); }
 .tr__loading { padding: var(--space-4); color: var(--gray-500); }
 

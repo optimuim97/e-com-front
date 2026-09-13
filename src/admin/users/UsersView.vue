@@ -77,6 +77,20 @@
               <td class="admin-table__total">{{ formatPrice(user.orders_sum_total ?? 0) }}</td>
               <td class="user-cell__date">{{ formatDate(user.created_at) }}</td>
               <td class="admin-table__action-cell">
+                <!--
+                  Ses actions dans le journal. Réservé à qui a l'habilitation :
+                  le journal est un outil d'encadrement, pas une consultation
+                  entre collègues.
+                -->
+                <RouterLink
+                  v-if="auth.can('activity.view')"
+                  :to="{ name: 'admin.activity', query: { operator_id: user.id } }"
+                  class="icon-btn"
+                  aria-label="Ses actions"
+                  title="Ses actions dans le journal"
+                >
+                  <ClockIcon class="w-4 h-4" />
+                </RouterLink>
                 <button @click="openEdit(user)" class="icon-btn icon-btn--edit" aria-label="Modifier">
                   <PencilIcon class="w-4 h-4" />
                 </button>
@@ -227,7 +241,8 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
+import { RouterLink } from 'vue-router'
+import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { readPagination } from '@/admin/utils/pagination'

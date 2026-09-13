@@ -106,6 +106,7 @@ import {
   CalendarDaysIcon,
   BuildingStorefrontIcon,
   ReceiptPercentIcon,
+  ClockIcon,
 } from '@heroicons/vue/24/outline';
 import { useAuthStore } from '@/features/auth/auth.store';
 import { useSettingsStore } from '@/stores/settings';
@@ -202,6 +203,9 @@ const NAV_GROUPS = [
       { to: '/admin/users',       label: 'Clients',      icon: UsersIcon,       permission: 'customers.view'   },
       { to: '/admin/roles',       label: 'Rôles',        icon: ShieldCheckIcon, permission: 'roles.view'       },
       { to: '/admin/permissions', label: 'Permissions',  icon: KeyIcon,         permission: 'permissions.view' },
+      // Le journal dit qui a fait quoi : outil d'encadrement, d'où sa place
+      // sous « Équipe » et non sous « Système ».
+      { to: '/admin/journal',     label: 'Journal des actions', icon: ClockIcon, permission: 'activity.view'   },
     ],
   },
   {
@@ -243,6 +247,7 @@ const TITLES = {
   'admin.users':               'Utilisateurs',
   'admin.roles':               'Rôles',
   'admin.permissions':         'Permissions',
+  'admin.activity':            'Journal des actions',
   'admin.settings':            'Paramètres boutique',
   'admin.product-lines':       'Gammes de produits',
   'admin.product-lines.create':'Nouvelle gamme',
