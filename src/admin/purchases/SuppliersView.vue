@@ -83,52 +83,64 @@
       @update:page="charger"
     />
 
-    <!-- Formulaire -->
-    <div v-if="formulaireOuvert" class="modal" @click.self="fermerFormulaire">
-      <div class="modal__panel">
-        <h2 class="modal__title">{{ form.id ? 'Modifier le fournisseur' : 'Nouveau fournisseur' }}</h2>
+    <!--
+      Formulaire. Téléporté vers `body` et bâti sur les classes globales
+      d'app.css : `.modal-overlay` pour le fond, `.modal` pour le panneau.
+      L'inverse était écrit ici, et le fond héritait donc du `max-width`
+      du panneau — il ne couvrait plus l'écran.
+    -->
+    <Teleport to="body">
+      <div v-if="formulaireOuvert" class="modal-overlay" @click.self="fermerFormulaire">
+        <div class="modal">
+          <header class="modal__header">
+            <h2>{{ form.id ? 'Modifier le fournisseur' : 'Nouveau fournisseur' }}</h2>
+            <button class="modal__close" type="button" aria-label="Fermer" @click="fermerFormulaire">✕</button>
+          </header>
 
-        <div class="field">
-          <label class="label">Nom *</label>
-          <input v-model="form.name" type="text" class="input" maxlength="160" />
-        </div>
-        <div class="field">
-          <label class="label">Personne de contact</label>
-          <input v-model="form.contact_name" type="text" class="input" maxlength="160" />
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label class="label">Téléphone</label>
-            <input v-model="form.phone" type="text" class="input" maxlength="40" />
+          <div class="modal__body">
+            <div class="field">
+              <label class="label">Nom *</label>
+              <input v-model="form.name" type="text" class="input" maxlength="160" />
+            </div>
+            <div class="field">
+              <label class="label">Personne de contact</label>
+              <input v-model="form.contact_name" type="text" class="input" maxlength="160" />
+            </div>
+            <div class="modal__grid">
+              <div class="field">
+                <label class="label">Téléphone</label>
+                <input v-model="form.phone" type="text" class="input" maxlength="40" />
+              </div>
+              <div class="field">
+                <label class="label">E-mail</label>
+                <input v-model="form.email" type="email" class="input" maxlength="160" />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Adresse</label>
+              <input v-model="form.address" type="text" class="input" maxlength="255" />
+            </div>
+            <div class="field">
+              <label class="label">Notes</label>
+              <textarea v-model="form.notes" class="input" rows="3" maxlength="2000"></textarea>
+            </div>
+            <label class="case">
+              <input v-model="form.is_active" type="checkbox" />
+              Fournisseur actif
+            </label>
+
+            <p v-if="erreur" class="erreur">{{ erreur }}</p>
           </div>
-          <div class="field">
-            <label class="label">E-mail</label>
-            <input v-model="form.email" type="email" class="input" maxlength="160" />
-          </div>
-        </div>
-        <div class="field">
-          <label class="label">Adresse</label>
-          <input v-model="form.address" type="text" class="input" maxlength="255" />
-        </div>
-        <div class="field">
-          <label class="label">Notes</label>
-          <textarea v-model="form.notes" class="input" rows="3" maxlength="2000"></textarea>
-        </div>
-        <label class="case">
-          <input v-model="form.is_active" type="checkbox" />
-          Fournisseur actif
-        </label>
 
-        <p v-if="erreur" class="erreur">{{ erreur }}</p>
-
-        <div class="modal__actions">
-          <button class="btn btn-ghost" @click="fermerFormulaire">Annuler</button>
-          <button class="btn btn-primary" :disabled="!form.name.trim() || envoi" @click="enregistrer">
-            {{ envoi ? 'Enregistrement…' : 'Enregistrer' }}
-          </button>
+          <footer class="modal__footer">
+            <button class="btn btn-ghost" @click="fermerFormulaire">Annuler</button>
+            <button class="btn btn-primary" :disabled="!form.name.trim() || envoi" @click="enregistrer">
+              {{ envoi ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </footer>
         </div>
       </div>
-    </div>
+    </Teleport>
 
   </div>
 </template>
@@ -264,12 +276,6 @@ onMounted(() => charger(1))
 
 .text-right { text-align: right; }
 
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 .case {
   display: inline-flex;
   align-items: center;
@@ -278,40 +284,7 @@ onMounted(() => charger(1))
   margin-top: 4px;
 }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(30, 20, 16, .45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 60;
-}
-
-.modal__panel {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
-}
-
-.modal__title {
-  font-size: 19px;
-  font-weight: 700;
-  margin-bottom: 18px;
-}
-
-.modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 24px;
-}
+/* Les styles de modale viennent d'app.css — voir le commentaire du gabarit. */
 
 .erreur {
   margin-top: 14px;

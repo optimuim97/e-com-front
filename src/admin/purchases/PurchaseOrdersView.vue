@@ -80,12 +80,22 @@
       @update:page="charger"
     />
 
-    <!-- ── Saisie / modification ─────────────────────────────────────────── -->
-    <div v-if="formulaireOuvert" class="modal" @click.self="fermerFormulaire">
-      <div class="modal__panel modal__panel--large">
-        <h2 class="modal__title">{{ form.id ? `Modifier ${form.number}` : "Nouveau bon d'achat" }}</h2>
+    <!-- ── Saisie / modification ───────────────────────────────────────────
+      Classes globales d'app.css : `.modal-overlay` porte le fond plein écran,
+      `.modal` le panneau. L'inverse était écrit ici, si bien que le fond
+      héritait du `max-width: 540px` du panneau et ne couvrait plus l'écran.
+    -->
+    <Teleport to="body">
+      <div v-if="formulaireOuvert" class="modal-overlay" @click.self="fermerFormulaire">
+        <div class="modal modal--lg">
+          <header class="modal__header">
+            <h2>{{ form.id ? `Modifier ${form.number}` : "Nouveau bon d'achat" }}</h2>
+            <button class="modal__close" type="button" aria-label="Fermer" @click="fermerFormulaire">✕</button>
+          </header>
 
-        <div class="grid-2">
+          <div class="modal__body">
+
+        <div class="modal__grid">
           <div class="field">
             <label class="label">Fournisseur</label>
             <select v-model.number="form.supplier_id" class="input">
@@ -151,7 +161,7 @@
           Transport, douane, manutention. Ils sont répartis sur les lignes au
           prorata de leur valeur, et entrent dans le prix de revient.
         </p>
-        <div class="grid-2">
+        <div class="modal__grid">
           <div class="field">
             <label class="label">Transport</label>
             <input v-model.number="form.shipping_cost" type="number" min="0" class="input" />
@@ -175,19 +185,28 @@
 
         <p v-if="erreur" class="erreur">{{ erreur }}</p>
 
-        <div class="modal__actions">
-          <button class="btn btn-ghost" @click="fermerFormulaire">Annuler</button>
-          <button class="btn btn-primary" :disabled="!form.items.length || envoi" @click="enregistrer">
-            {{ envoi ? 'Enregistrement…' : 'Enregistrer' }}
-          </button>
+          </div>
+
+          <footer class="modal__footer">
+            <button class="btn btn-ghost" @click="fermerFormulaire">Annuler</button>
+            <button class="btn btn-primary" :disabled="!form.items.length || envoi" @click="enregistrer">
+              {{ envoi ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </footer>
         </div>
       </div>
-    </div>
+    </Teleport>
 
     <!-- ── Détail ────────────────────────────────────────────────────────── -->
-    <div v-if="detail" class="modal" @click.self="detail = null">
-      <div class="modal__panel modal__panel--large">
-        <h2 class="modal__title">{{ detail.number }}</h2>
+    <Teleport to="body">
+      <div v-if="detail" class="modal-overlay" @click.self="detail = null">
+        <div class="modal modal--lg">
+          <header class="modal__header">
+            <h2>{{ detail.number }}</h2>
+            <button class="modal__close" type="button" aria-label="Fermer" @click="detail = null">✕</button>
+          </header>
+
+          <div class="modal__body">
         <p class="detail-meta">
           {{ detail.supplier?.name ?? 'Sans fournisseur' }} ·
           <span class="badge" :class="badgeEtat(detail.status)">{{ detail.status_label }}</span>
@@ -231,12 +250,15 @@
 
         <p v-if="detail.notes" class="detail-notes">{{ detail.notes }}</p>
 
-        <div class="modal__actions">
-          <button class="btn btn-ghost" @click="detail = null">Fermer</button>
-          <button v-if="detail.editable" class="btn btn-primary" @click="receptionner(detail)">Réceptionner</button>
+          </div>
+
+          <footer class="modal__footer">
+            <button class="btn btn-ghost" @click="detail = null">Fermer</button>
+            <button v-if="detail.editable" class="btn btn-primary" @click="receptionner(detail)">Réceptionner</button>
+          </footer>
         </div>
       </div>
-    </div>
+    </Teleport>
 
   </div>
 </template>
@@ -480,12 +502,6 @@ onMounted(() => {
 
 .text-right { text-align: right; }
 
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
 .section-title {
   font-size: 14px;
   font-weight: 700;
@@ -600,42 +616,7 @@ onMounted(() => {
   font-style: italic;
 }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(30, 20, 16, .45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 60;
-}
-
-.modal__panel {
-  background: #fff;
-  border-radius: 16px;
-  padding: 28px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, .2);
-}
-
-.modal__panel--large { max-width: 760px; }
-
-.modal__title {
-  font-size: 19px;
-  font-weight: 700;
-  margin-bottom: 18px;
-}
-
-.modal__actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 24px;
-}
+/* Les styles de modale viennent d'app.css — voir le commentaire du gabarit. */
 
 .erreur {
   margin-top: 14px;

@@ -103,6 +103,7 @@ import {
   SwatchIcon,
   PhotoIcon,
   ArrowsRightLeftIcon,
+  CalendarDaysIcon,
   BuildingStorefrontIcon,
   ReceiptPercentIcon,
 } from '@heroicons/vue/24/outline';
@@ -165,6 +166,7 @@ const NAV_GROUPS = [
       { to: '/admin/products',      label: 'Produits',    icon: ShoppingBagIcon, permission: 'products.view'      },
       { to: '/admin/categories',    label: 'Catégories',  icon: FolderIcon,      permission: 'categories.view'    },
       { to: '/admin/product-lines', label: 'Gammes',      icon: SwatchIcon,      permission: 'product_lines.view' },
+      { to: '/admin/stock-semaine',    label: 'Stock de la semaine', icon: CalendarDaysIcon,    permission: 'stock.view' },
       { to: '/admin/mouvements-stock', label: 'Mouvements de stock', icon: ArrowsRightLeftIcon, permission: 'stock.view' },
     ],
   },
@@ -225,6 +227,7 @@ const TITLES = {
   'admin.rounds':              'Tournées',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
+  'admin.weekly-stock':        'Stock de la semaine',
   'admin.stock-movements':     'Mouvements de stock',
   'admin.purchase-orders':     "Bons d'achat",
   'admin.suppliers':           'Fournisseurs',
