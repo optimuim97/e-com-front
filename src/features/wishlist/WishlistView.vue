@@ -51,7 +51,7 @@
               <div v-else class="wishlist-card__fallback"><FlowerMark /></div>
 
               <!-- Badge rupture -->
-              <span v-if="item.product_stock === 0" class="wishlist-card__badge">{{ $t('common.soldOut') }}</span>
+              <span v-if="unavailableLabelKey(item, 'common')" class="wishlist-card__badge">{{ $t(unavailableLabelKey(item, 'common')) }}</span>
               <!-- Badge promo -->
               <span v-else-if="item.discount_percent" class="wishlist-card__badge wishlist-card__badge--promo">
                 -{{ item.discount_percent }}%
@@ -77,7 +77,7 @@
             <!-- Actions -->
             <div class="wishlist-card__actions">
               <button
-                v-if="item.product_stock > 0"
+                v-if="isOrderable(item)"
                 class="btn btn-primary btn-sm"
                 @click="addToCart(item)"
                 :disabled="addingId === item.product_id"
@@ -89,7 +89,11 @@
                 </svg>
                 {{ addingId === item.product_id ? '…' : $t('common.addToCart') }}
               </button>
-              <span v-else class="wishlist-card__stock-badge">{{ $t('common.outOfStock') }}</span>
+              <!--
+                Quota atteint : « de retour lundi ». C'est sur la liste d'envies
+                que la cliente revient voir, elle doit savoir quand repasser.
+              -->
+              <span v-else class="wishlist-card__stock-badge">{{ $t(unavailableLabelKey(item, 'common') ?? 'common.outOfStock') }}</span>
 
               <button
                 class="wishlist-card__remove"
@@ -117,6 +121,7 @@ import { useCurrencyStore } from '@/stores/currency'
 import { RouterLink } from 'vue-router'
 import { useWishlistStore } from '@/features/wishlist/wishlist.store'
 import { useCartStore } from '@/features/cart/cart.store'
+import { isOrderable, unavailableLabelKey } from '@/utils/availability'
 
 const wishlist  = useWishlistStore()
 const cart      = useCartStore()

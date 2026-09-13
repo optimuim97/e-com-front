@@ -41,6 +41,8 @@
     "addToCart": "Add to cart",
     "outOfStock": "Out of stock",
     "soldOut": "Sold out",
+    "backMonday": "Back on Monday",
+    "backNextMonday": "Back next Monday",
     "new": "New",
     "bestseller": "Bestseller",
     "flashSale": "Flash sale",
@@ -301,7 +303,9 @@
     "increase": "Increase",
     "removeCoupon": "Remove code",
     "addedToast": "✓ Added to cart",
-    "addError": "Could not add to cart"
+    "addError": "Could not add to cart",
+    "onlineLimit": "Only {count} left for online sale this week.",
+    "unavailable": "This item is not available online at the moment."
   },
   "checkout": {
     "eyebrow": "Complete my order",
@@ -565,7 +569,12 @@
     "decrease": "Decrease",
     "increase": "Increase",
     "inStock": "{count} in stock",
+    "inStockNoCount": "In stock",
     "outOfStock": "Out of stock",
+    "backMonday": "Back on Monday",
+    "backNextMonday": "Back next Monday",
+    "quotaReachedHint": "This week's online stock has sold out.",
+    "onlyLeft": "Only {count} left",
     "addToCart": "Add to cart",
     "addToCartWithPrice": "Add to cart · {price}",
     "youSave": "You save {amount}",

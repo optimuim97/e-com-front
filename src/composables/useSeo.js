@@ -1,6 +1,7 @@
 import { watchEffect, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { sellingPrice } from '@/utils/pricing'
+import { isOrderable } from '@/utils/availability'
 
 /**
  * Gestion des balises SEO par page (titre, description, canonique, Open Graph,
@@ -251,7 +252,11 @@ export function productJsonLd(product, { reviews = [], rating = null } = {}) {
       url: absoluteUrl(`/products/${product.slug}`),
       priceCurrency: 'XOF',
       price: prix,
-      availability: (product.stock ?? 1) > 0
+      // Quota de la semaine atteint : `OutOfStock`, et non `BackOrder` —
+      // celui-ci annonce un article qu'on commande pour une livraison
+      // ultérieure, ce que la boutique ne fait pas. L'état est temporaire, et
+      // schema.org n'en demande pas davantage.
+      availability: isOrderable(product)
         ? 'https://schema.org/InStock'
         : 'https://schema.org/OutOfStock',
       itemCondition: 'https://schema.org/NewCondition',

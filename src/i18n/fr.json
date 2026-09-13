@@ -41,6 +41,8 @@
     "addToCart": "Ajouter au panier",
     "outOfStock": "Rupture de stock",
     "soldOut": "Épuisé",
+    "backMonday": "De retour lundi",
+    "backNextMonday": "De retour lundi prochain",
     "new": "Nouveau",
     "bestseller": "Bestseller",
     "flashSale": "Vente flash",
@@ -301,7 +303,9 @@
     "increase": "Augmenter",
     "removeCoupon": "Retirer le code",
     "addedToast": "✓ Ajouté au panier",
-    "addError": "Impossible d'ajouter au panier"
+    "addError": "Impossible d'ajouter au panier",
+    "onlineLimit": "Il n'en reste que {count} à la vente en ligne cette semaine.",
+    "unavailable": "Cet article n'est plus disponible en ligne pour le moment."
   },
   "checkout": {
     "eyebrow": "Finaliser ma commande",
@@ -565,7 +569,12 @@
     "decrease": "Diminuer",
     "increase": "Augmenter",
     "inStock": "{count} en stock",
+    "inStockNoCount": "En stock",
     "outOfStock": "Rupture de stock",
+    "backMonday": "De retour lundi",
+    "backNextMonday": "De retour lundi prochain",
+    "quotaReachedHint": "Tout est parti pour cette semaine en ligne.",
+    "onlyLeft": "Plus que {count}",
     "addToCart": "Ajouter au panier",
     "addToCartWithPrice": "Ajouter au panier · {price}",
     "youSave": "Vous économisez {amount}",

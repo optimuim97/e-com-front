@@ -5,6 +5,7 @@ import api from '@/api'
 import { useToast } from 'vue-toastification'
 import i18n from '@/i18n'
 import { sellingPrice } from '@/utils/pricing'
+import { isOrderable, maxQuantity } from '@/utils/availability'
 
 // ── Clé localStorage pour le panier invité ──────────────────────────────────
 const GUEST_KEY = 'rosa_guest_cart'
@@ -79,6 +80,27 @@ export const useCartStore = defineStore('cart', () => {
       const existing = localItems.find(
         i => i.product_id === productId && (i.variant_id ?? null) === (variantId ?? null)
       )
+
+      // Même borne que le serveur applique au panier connecté : le panier
+      // invité ne passe pas par l'API, et sans ce contrôle la cliente
+      // découvrirait la limite au paiement. Toutes les lignes de l'article
+      // comptent, déclinaisons comprises — l'allocation porte sur l'article.
+      const reference = snapshot ?? existing?.product
+      if (reference) {
+        if (!isOrderable(reference)) {
+          toast.error(i18n.global.t('cart.unavailable'))
+          return
+        }
+        const max = maxQuantity(reference)
+        const dejaAuPanier = localItems
+          .filter(i => i.product_id === productId)
+          .reduce((total, i) => total + i.quantity, 0)
+        if (max !== null && dejaAuPanier + quantity > max) {
+          toast.error(i18n.global.t('cart.onlineLimit', { count: max }))
+          return
+        }
+      }
+
       if (existing) {
         existing.quantity += quantity
       } else {

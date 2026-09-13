@@ -98,6 +98,7 @@ import { useHomeStore } from '@/features/home/home.store'
 import ProductCard from '@/components/ui/ProductCard.vue'
 import AppSelect   from '@/components/ui/AppSelect.vue'
 import { useSeo, itemListJsonLd } from '@/composables/useSeo'
+import { isOrderable } from '@/utils/availability'
 
 const { t }     = useI18n()
 const route     = useRoute()
@@ -173,7 +174,7 @@ function debouncedSearch() {
 }
 
 function addToCart(product) {
-  if (product.stock === 0) return
+  if (!isOrderable(product)) return
   cartStore.add(product.id ?? product, 1, null, { snapshot: product })
 }
 

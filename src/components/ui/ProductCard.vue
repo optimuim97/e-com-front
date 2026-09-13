@@ -11,9 +11,7 @@
     >
       <!-- Badges top-left -->
       <div class="product-card__badges">
-        <span v-if="product.stock === 0" class="badge badge-dark">{{
-          $t("product.soldOut")
-        }}</span>
+        <span v-if="unavailableKey" class="badge badge-dark">{{ $t(unavailableKey) }}</span>
         <span v-if="product.is_featured" class="badge badge-rose">{{
           $t("product.featured")
         }}</span>
@@ -36,7 +34,7 @@
           class="product-card__img"
           :class="{
             'product-card__img--zoom': hovered && coverAlt,
-            'product-card__img--grayscale': product.stock === 0,
+            'product-card__img--grayscale': !orderable,
           }"
           loading="lazy"
         />
@@ -55,7 +53,7 @@
 
       <!-- Ajout rapide au survol -->
       <div
-        v-if="product.stock > 0"
+        v-if="orderable"
         class="product-card__quick-add"
         :class="{ 'product-card__quick-add--visible': hovered }"
       >
@@ -116,9 +114,9 @@
           class="product-card__cart-btn"
           :class="{
             'product-card__cart-btn--added': added,
-            'product-card__cart-btn--out': product.stock === 0,
+            'product-card__cart-btn--out': !orderable,
           }"
-          :disabled="product.stock === 0"
+          :disabled="!orderable"
           @click.prevent="addToCart"
           :aria-label="$t('product.addToCart') + ' ' + product.name"
         >
@@ -165,6 +163,7 @@ import { useI18n } from "vue-i18n";
 import WishlistButton from "@/features/wishlist/WishlistButton.vue";
 import { useCurrencyStore } from "@/stores/currency";
 import * as pricing from "@/utils/pricing";
+import { isOrderable, unavailableLabelKey } from "@/utils/availability";
 
 const props = defineProps({
   product: { type: Object, required: true },
@@ -191,8 +190,12 @@ function formatPrice(val) {
   return currency.format(val);
 }
 
+/* Disponibilité : décidée par le serveur, voir utils/availability. */
+const orderable = computed(() => isOrderable(props.product));
+const unavailableKey = computed(() => unavailableLabelKey(props.product));
+
 function addToCart() {
-  if (props.product.stock === 0) return;
+  if (!orderable.value) return;
   emit("add-to-cart", props.product);
   added.value = true;
   setTimeout(() => {

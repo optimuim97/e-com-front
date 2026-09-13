@@ -107,22 +107,43 @@
                 <MinusIcon class="w-4 h-4" />
               </button>
               <span class="product-info__qty-value">{{ qty }}</span>
-              <button @click="qty++" class="product-info__qty-btn" :aria-label="$t('product.increase')">
+              <!--
+                Borné au vendable : laisser choisir 10 quand 3 restent en ligne,
+                c'est reporter le refus au paiement.
+              -->
+              <button
+                @click="(maxQty === null || qty < maxQty) && qty++"
+                :disabled="maxQty !== null && qty >= maxQty"
+                class="product-info__qty-btn"
+                :aria-label="$t('product.increase')"
+              >
                 <PlusIcon class="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <!-- Stock -->
-          <p v-if="product.stock !== undefined" class="product-info__stock"
-            :class="product.stock > 0 ? 'product-info__stock--ok' : 'product-info__stock--ko'">
+          <!--
+            Disponibilité en ligne, décidée par le serveur. Trois cas : se vend
+            (avec le nombre quand il est limité), quota de la semaine atteint
+            (« de retour lundi » — la marchandise existe), réserve vide.
+          -->
+          <p class="product-info__stock"
+            :class="orderable ? 'product-info__stock--ok' : 'product-info__stock--ko'">
             <span class="product-info__stock-dot"></span>
-            {{ product.stock > 0 ? $t('product.inStock', { count: product.stock }) : $t('product.outOfStock') }}
+            <template v-if="orderable">
+              {{ maxQty !== null ? $t('product.inStock', { count: maxQty }) : $t('product.inStockNoCount') }}
+            </template>
+            <template v-else-if="unavailableKey === 'product.soldOut'">
+              {{ $t('product.outOfStock') }}
+            </template>
+            <template v-else>
+              {{ $t(unavailableKey) }} · {{ $t('product.quotaReachedHint') }}
+            </template>
           </p>
 
           <!-- Actions -->
           <div class="product-info__actions">
-            <button @click="addToCart" :disabled="product.stock === 0 || cartLoading"
+            <button @click="addToCart" :disabled="!orderable || cartLoading"
               class="btn btn-primary btn-lg product-info__cta">
               <span v-if="cartLoading" class="product-info__spinner"></span>
               <span v-else>{{ $t('product.addToCartWithPrice', { price: formatPrice(sellingPrice * qty) }) }}</span>
@@ -298,6 +319,7 @@ import { reviewApi } from '@/features/reviews/review.api'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 import ProductCard from '@/components/shop/ProductCard.vue'
 import { useSeo, productJsonLd, breadcrumbJsonLd } from '@/composables/useSeo'
+import { isOrderable, unavailableLabelKey, maxQuantity } from '@/utils/availability'
 
 const { t, locale } = useI18n()
 const route = useRoute()
@@ -343,6 +365,17 @@ const reviewAlreadyExists = ref(false)
 const sellingPrice   = computed(() => pricing.sellingPrice(product.value))
 const referencePrice = computed(() => pricing.referencePrice(product.value))
 const discountBadge  = computed(() => pricing.discountBadge(product.value))
+
+/* Disponibilité en ligne : voir utils/availability. */
+const orderable      = computed(() => isOrderable(product.value))
+const unavailableKey = computed(() => unavailableLabelKey(product.value))
+const maxQty         = computed(() => maxQuantity(product.value))
+
+// Une fiche rechargée avec moins de vendable qu'avant ne doit pas garder une
+// quantité devenue impossible.
+watch(maxQty, (max) => {
+  if (max !== null && max > 0 && qty.value > max) qty.value = max
+})
 
 const savedAmount = computed(() => {
   const reference = referencePrice.value

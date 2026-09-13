@@ -4,9 +4,9 @@
     <RouterLink :to="`/products/${product.slug}`" class="product-card__img-wrap block relative">
       <!-- Badges left -->
       <div class="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
-        <span v-if="product.stock === 0"
+        <span v-if="unavailableKey"
           class="badge badge-gray">
-          Épuisé
+          {{ $t(unavailableKey) }}
         </span>
         <span v-else-if="product.is_featured"
           class="badge badge-primary">
@@ -15,7 +15,7 @@
       </div>
 
       <!-- Discount badge -->
-      <div v-if="discountBadge" class="absolute top-3 left-3 z-10 mt-0" :class="{'mt-7': product.stock === 0 || product.is_featured}">
+      <div v-if="discountBadge" class="absolute top-3 left-3 z-10 mt-0" :class="{'mt-7': unavailableKey || product.is_featured}">
         <span class="badge badge-warning font-bold">{{ discountBadge }}</span>
       </div>
 
@@ -31,7 +31,7 @@
           :src="cover"
           :alt="product.name"
           class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          :class="{ 'opacity-50 grayscale': product.stock === 0 }"
+          :class="{ 'opacity-50 grayscale': unavailableKey }"
           @error="imgError = true"
         />
         <div v-else class="w-full h-full flex items-center justify-center text-5xl select-none"><FlowerMark /></div>
@@ -54,9 +54,13 @@
             {{ formatPrice(referencePrice) }}
           </span>
         </div>
-        <div v-if="product.stock > 0 && product.stock <= 5"
+        <!--
+          Le nombre est celui du vendable en ligne : « plus que 3 » est vrai,
+          et c'est le seul cas où cette mention ne ment pas.
+        -->
+        <div v-if="scarcity"
           class="product-card__stock-hint shrink-0">
-          Plus que {{ product.stock }}
+          {{ $t('product.onlyLeft', { count: scarcity }) }}
         </div>
       </div>
     </div>
@@ -69,6 +73,7 @@ import { RouterLink } from 'vue-router'
 import WishlistButton from '@/features/wishlist/WishlistButton.vue'
 import { useCurrencyStore } from '@/stores/currency'
 import * as pricing from '@/utils/pricing'
+import { unavailableLabelKey, scarcityCount } from '@/utils/availability'
 
 const props = defineProps({ product: { type: Object, required: true } })
 
@@ -80,6 +85,10 @@ const currency = useCurrencyStore()
 const sellingPrice   = computed(() => pricing.sellingPrice(props.product))
 const referencePrice = computed(() => pricing.referencePrice(props.product))
 const discountBadge  = computed(() => pricing.discountBadge(props.product))
+
+/* Disponibilité : décidée par le serveur, voir utils/availability. */
+const unavailableKey = computed(() => unavailableLabelKey(props.product))
+const scarcity       = computed(() => scarcityCount(props.product))
 
 function formatPrice(price) {
   return currency.format(price)
