@@ -13,7 +13,7 @@
     <div class="orders-stats">
       <button
         class="stat-card stat-card--all"
-        :class="{ 'stat-card--active': filters.status === '' }"
+        :class="{ 'stat-card--active': !filters.status.length }"
         @click="setStatusFilter('')"
       >
         <span class="stat-card__label">Total</span>
@@ -23,7 +23,7 @@
 
       <button
         class="stat-card stat-card--pending"
-        :class="{ 'stat-card--active': filters.status === 'pending' }"
+        :class="{ 'stat-card--active': estSeulStatut('pending') }"
         @click="setStatusFilter('pending')"
         :title="canFinance ? `${fmt(orderStats.pendingRevenue)} en attente de validation` : ''"
       >
@@ -35,7 +35,7 @@
 
       <button
         class="stat-card stat-card--processing"
-        :class="{ 'stat-card--active': filters.status === 'processing' }"
+        :class="{ 'stat-card--active': estSeulStatut('processing') }"
         @click="setStatusFilter('processing')"
       >
         <span class="stat-card__label">En traitement</span>
@@ -45,7 +45,7 @@
 
       <button
         class="stat-card stat-card--shipped"
-        :class="{ 'stat-card--active': filters.status === 'shipped' }"
+        :class="{ 'stat-card--active': estSeulStatut('shipped') }"
         @click="setStatusFilter('shipped')"
       >
         <span class="stat-card__label">Expédiées</span>
@@ -55,7 +55,7 @@
 
       <button
         class="stat-card stat-card--delivered"
-        :class="{ 'stat-card--active': filters.status === 'delivered' }"
+        :class="{ 'stat-card--active': estSeulStatut('delivered') }"
         @click="setStatusFilter('delivered')"
       >
         <span class="stat-card__label">Livrées</span>
@@ -72,39 +72,39 @@
 
     <!-- Filters -->
     <div class="card filters-bar">
-      <div class="status-tabs">
-        <button
-          v-for="tab in statusTabs"
-          :key="tab.value"
-          @click="setStatus(tab.value)"
-          class="status-tab"
-          :class="{ 'status-tab--active': filters.status === tab.value }"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
       <input
+        v-if="!groupBy"
         v-model="filters.search"
-        @input="debouncedFetch"
         type="text"
         class="input filters-bar__search"
-        placeholder="Rechercher par numéro, client…"
+        placeholder="N° de commande, nom, téléphone, e-mail…"
       />
+
       <!--
-        Axe distinct des statuts : « aujourd'hui » se combine avec eux plutôt
-        que de les remplacer. En faire un onglet de plus aurait obligé à choisir
-        entre « en attente » et « du jour », alors que la question du matin est
-        justement « qu'est-ce qui est arrivé aujourd'hui et attend encore ».
+        Raccourcis de période. Ils posent le filtre de la colonne Date du
+        tableau plutôt qu'un filtre à part : la période choisie reste visible
+        sous l'en-tête, et se précise là (« du 3 au 12 ») sans qu'un second
+        filtre invisible vienne s'y ajouter.
+
+        Axe distinct des statuts : « aujourd'hui » se combine avec « en
+        attente », parce que la question du matin est justement « qu'est-ce
+        qui est arrivé aujourd'hui et attend encore ».
       -->
-      <button
-        type="button"
-        class="orders__today"
-        :class="{ 'orders__today--on': filters.du_jour }"
-        @click="basculerDuJour"
-      >
-        Aujourd'hui
-        <span v-if="filters.du_jour" class="orders__today-count">{{ pagination.total ?? 0 }}</span>
-      </button>
+      <div v-if="!groupBy" class="orders__presets" role="group" aria-label="Période">
+        <button
+          v-for="p in RACCOURCIS_DATE"
+          :key="p.key"
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': raccourciActif === p.key }"
+          @click="appliquerRaccourci(p.key)"
+        >
+          {{ p.label }}
+        </button>
+        <span v-if="raccourciActif === 'custom'" class="orders__chip orders__chip--on orders__chip--static">
+          Période choisie dans la colonne
+        </span>
+      </div>
 
       <!-- Group-by selector -->
       <label class="group-by">
@@ -141,6 +141,89 @@
           <path stroke-linecap="round" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/>
         </svg>
         Exporter
+      </button>
+    </div>
+
+    <!--
+      Filtres rapides : les valeurs d'une liste fermée (statut, paiement,
+      destination) se cochent d'un geste ici plutôt que dans un menu de
+      colonne. Plusieurs valeurs d'un même groupe se cumulent : « en attente
+      ou en cours ».
+    -->
+    <div v-if="!groupBy" class="card orders__quick">
+      <div class="orders__quick-group">
+        <span class="orders__quick-label">Statut</span>
+        <button
+          v-for="s in STATUTS_RAPIDES"
+          :key="s.value"
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.status.includes(s.value) }"
+          @click="basculerDans('status', s.value)"
+        >
+          {{ s.label }}
+        </button>
+      </div>
+
+      <div class="orders__quick-group">
+        <span class="orders__quick-label">Paiement</span>
+        <button
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.paid === '1' }"
+          @click="basculerValeur('paid', '1')"
+        >Payées</button>
+        <button
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.paid === '0' }"
+          @click="basculerValeur('paid', '0')"
+        >Non payées</button>
+        <span class="orders__quick-sep"></span>
+        <button
+          v-for="m in MOYENS_RAPIDES"
+          :key="m.key"
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': m.values.every(v => filters.payment_method.includes(v)) }"
+          @click="basculerMoyen(m)"
+        >
+          {{ m.label }}
+        </button>
+      </div>
+
+      <div class="orders__quick-group">
+        <span class="orders__quick-label">Destination</span>
+        <button
+          v-for="d in DESTINATIONS_RAPIDES"
+          :key="d.value"
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.destination.includes(d.value) }"
+          @click="basculerDans('destination', d.value)"
+        >
+          {{ d.label }}
+        </button>
+      </div>
+
+      <div class="orders__quick-group">
+        <span class="orders__quick-label">Extraction</span>
+        <button
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.exported === '0' }"
+          @click="basculerValeur('exported', '0')"
+        >Pas encore extraites</button>
+        <button
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.exported === '1' }"
+          @click="basculerValeur('exported', '1')"
+        >Déjà extraites</button>
+      </div>
+
+      <button v-if="filtresRapidesActifs" type="button" class="orders__quick-reset" @click="effacerFiltresRapides">
+        Effacer les filtres
       </button>
     </div>
 
@@ -308,223 +391,123 @@
     </div>
 
     <!-- ── Vue Liste ── -->
-    <div v-else class="card">
-      <div v-if="loading" class="loader-wrap">
-        <div class="loader"></div>
+    <div v-else class="card orders__list">
+      <!--
+        Bandeau permanent tant qu'une commande est masquée : sans lui, une
+        mise de côté oubliée deviendrait une commande jamais traitée.
+      -->
+      <div v-if="decote.size" class="orders__aside-bar">
+        <span>
+          {{ decote.size }} commande{{ decote.size > 1 ? 's' : '' }} mise{{ decote.size > 1 ? 's' : '' }} de côté,
+          visible{{ decote.size > 1 ? 's' : '' }} de vous seul.
+        </span>
+        <button type="button" class="btn btn-xs btn-outline" @click="toutReafficher">
+          Tout réafficher
+        </button>
       </div>
 
-      <div v-else-if="orders.length === 0" class="empty-state">
-        Aucune commande trouvée.
+      <!--
+        Barre d'action de la sélection. Elle n'apparaît qu'une fois une case
+        cochée : hors de ce moment-là, elle ne ferait qu'occuper la place
+        au-dessus de la liste.
+      -->
+      <div v-if="cochees.size" class="orders__bulk">
+        <span class="orders__bulk-count">
+          <strong>{{ cochees.size }}</strong> commande(s) sélectionnée(s)
+        </span>
+        <button type="button" class="orders__bulk-link" @click="viderSelection">Tout décocher</button>
+        <span class="orders__bulk-spacer"></span>
+        <button
+          type="button"
+          class="btn btn-sm btn-outline"
+          :disabled="!!enCours"
+          title="Passe les commandes cochées en préparation — le geste du matin sur ce qui est arrivé la veille"
+          @click="traiterSelection"
+        >
+          {{ enCours === 'process' ? 'Traitement…' : 'Marquer comme traitée' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary"
+          :disabled="!!enCours"
+          title="Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité"
+          @click="expedierSelection(false)"
+        >
+          {{ enCours === 'ship' ? 'Envoi…' : 'Marquer comme expédiée' }}
+        </button>
       </div>
 
-      <template v-else>
-        <!--
-          Bandeau permanent tant qu'une commande est masquée : sans lui, une
-          mise de côté oubliée deviendrait une commande jamais traitée.
-        -->
-        <div v-if="decote.size" class="orders__aside-bar">
-          <span>
-            {{ decote.size }} commande{{ decote.size > 1 ? 's' : '' }} mise{{ decote.size > 1 ? 's' : '' }} de côté,
-            visible{{ decote.size > 1 ? 's' : '' }} de vous seul.
-          </span>
-          <button type="button" class="btn btn-xs btn-outline" @click="toutReafficher">
-            Tout réafficher
-          </button>
-        </div>
-
-        <!--
-          Barre d'action de la sélection. Elle n'apparaît qu'une fois une case
-          cochée : hors de ce moment-là, elle ne ferait qu'occuper la place
-          au-dessus de la liste.
-        -->
-        <div v-if="cochees.size" class="orders__bulk">
-          <span class="orders__bulk-count">
-            <strong>{{ cochees.size }}</strong> commande(s) sélectionnée(s)
-          </span>
-          <button type="button" class="orders__bulk-link" @click="viderSelection">Tout décocher</button>
-          <span class="orders__bulk-spacer"></span>
+      <!-- Compte rendu de l'action de masse -->
+      <div v-if="bilanLot" class="orders__bulk-result">
+        <p class="orders__bulk-msg">{{ bilanLot.message }}</p>
+        <div v-if="bilanLot.rejected.length" class="orders__bulk-rejected">
+          <p><strong>{{ bilanLot.rejected.length }}</strong> commande(s) écartée(s) :</p>
+          <ul>
+            <li v-for="r in bilanLot.rejected" :key="r.id">
+              <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
+            </li>
+          </ul>
+          <!-- Le passage en force ne vaut que pour l'expédition : rien ne
+               bloque une mise en préparation. -->
           <button
+            v-if="bilanLot.action === 'ship' && bilanLot.forceable"
             type="button"
-            class="btn btn-sm btn-outline"
-            :disabled="!!enCours"
-            title="Passe les commandes cochées en préparation — le geste du matin sur ce qui est arrivé la veille"
-            @click="traiterSelection"
+            class="orders__bulk-link"
+            @click="expedierSelection(true)"
           >
-            {{ enCours === 'process' ? 'Traitement…' : 'Marquer comme traitée' }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm btn-primary"
-            :disabled="!!enCours"
-            title="Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité"
-            @click="expedierSelection(false)"
-          >
-            {{ enCours === 'ship' ? 'Envoi…' : 'Marquer comme expédiée' }}
+            Expédier quand même
           </button>
         </div>
+        <button type="button" class="orders__bulk-close" @click="bilanLot = null">✕</button>
+      </div>
 
-        <!-- Compte rendu de l'action de masse -->
-        <div v-if="bilanLot" class="orders__bulk-result">
-          <p class="orders__bulk-msg">{{ bilanLot.message }}</p>
-          <div v-if="bilanLot.rejected.length" class="orders__bulk-rejected">
-            <p><strong>{{ bilanLot.rejected.length }}</strong> commande(s) écartée(s) :</p>
-            <ul>
-              <li v-for="r in bilanLot.rejected" :key="r.id">
-                <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
-              </li>
-            </ul>
-            <!-- Le passage en force ne vaut que pour l'expédition : rien ne
-                 bloque une mise en préparation. -->
-            <button
-              v-if="bilanLot.action === 'ship' && bilanLot.forceable"
-              type="button"
-              class="orders__bulk-link"
-              @click="expedierSelection(true)"
-            >
-              Expédier quand même
-            </button>
-          </div>
-          <button type="button" class="orders__bulk-close" @click="bilanLot = null">✕</button>
-        </div>
-
-        <div v-if="ordersVisibles.length === 0" class="empty-state">
-          Toutes les commandes de cette page sont mises de côté.
-        </div>
-
-        <div v-else class="table-scroll">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th class="orders__th-check">
-                <input
-                  type="checkbox"
-                  :checked="toutesCochees"
-                  title="Tout cocher / tout décocher"
-                  @change="basculerToutes"
-                />
-              </th>
-              <th>N° commande</th>
-              <th>Client</th>
-              <th>Date</th>
-              <th>Total</th>
-              <th>Statut</th>
-              <th>Paiement</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-for="order in ordersVisibles" :key="order.id">
-              <tr :class="{
-                'admin-table__row--expanded': expandedId === order.id,
-                'orders__row--revue': revue === order.id,
-              }">
-                <td class="orders__th-check">
-                  <input
-                    type="checkbox"
-                    :checked="cochees.has(order.id)"
-                    @click.stop="basculerUne(order.id)"
-                  />
-                </td>
-                <td class="admin-table__mono">
-                  {{ order.number }}
-                  <div v-if="order.tracking_number" class="admin-table__tracking" :title="`Suivi : ${order.tracking_number}`">
-                    {{ order.tracking_number }}
-                  </div>
-                  <!-- Déjà sortie sur une feuille : évite de la réimprimer, ou
-                       de croire qu'elle a été oubliée. -->
-                  <span
-                    v-if="order.exported_at"
-                    class="orders__exported"
-                    :title="`Extraite le ${formatDateTime(order.exported_at)}`"
-                  >extraite</span>
-                </td>
-                <td>
-                  <div class="admin-table__client">{{ order.user?.name ?? `${order.shipping_first_name} ${order.shipping_last_name}` }}</div>
-                  <div class="admin-table__sub">{{ order.user?.email ?? '' }}</div>
-                </td>
-                <td>{{ formatDate(order.created_at) }}</td>
-                <td class="admin-table__total">{{ formatPrice(order.total) }}</td>
-                <td><span :class="statusBadge(order.status)">{{ statusLabel(order.status) }}</span></td>
-                <td>{{ paymentLabel(order.payment_method) }}</td>
-                <td class="admin-table__action">
-                  <div class="admin-table__action-row">
-                    <button
-                      class="btn btn-xs btn-primary"
-                      @click="toggleQuickAction(order)"
-                      :title="expandedId === order.id ? 'Replier' : 'Traitement rapide'"
-                    >
-                      {{ expandedId === order.id ? 'Fermer' : 'Traiter' }}
-                    </button>
-                    <RouterLink :to="{ name: 'admin.order', params: { id: order.id }, query: { retour: 'commandes' } }">
-                      Détail →
-                    </RouterLink>
-                    <!--
-                      Mise de côté : préférence de travail personnelle, jamais
-                      un état de la commande. Elle n'est ni enregistrée en base
-                      ni visible des collègues — masquer une commande pour toute
-                      l'équipe reviendrait à cacher du travail à faire.
-                    -->
-                    <button
-                      class="orders__aside"
-                      type="button"
-                      :title="'Retirer ' + order.number + ' de ma liste de travail'"
-                      @click="mettreDeCote(order.id)"
-                    >
-                      Mettre de côté
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              <tr v-if="expandedId === order.id" class="admin-table__detail-row">
-                <td :colspan="8">
-                  <OrderQuickActionModal
-                    :order="order"
-                    inline
-                    @close="expandedId = null"
-                    @updated="onOrderUpdated"
-                  />
-                </td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
-        </div>
-      </template>
-
-      <!-- Pagination unifiée (mode liste uniquement) -->
-      <AdminPagination
-        v-if="!groupBy"
-        :current-page="pagination.current_page"
-        :last-page="pagination.last_page"
-        :total="pagination.total"
-        :per-page="filters.per_page"
-        item-singular="commande"
-        item-plural="commandes"
-        @update:page="changePage"
-        @update:per-page="onPerPageUpdate"
+      <OrdersGrid
+        ref="grille"
+        :external-filters="filtresGrille"
+        :can-finance="canFinance"
+        :highlight-id="revue"
+        @selection-changed="(ids) => (cochees = new Set(ids))"
+        @date-filter-changed="(model) => (filtreDate = model)"
+        @process="(order) => (aTraiter = order)"
+        @aside="mettreDeCote"
       />
     </div>
+
+    <!--
+      Traitement rapide dans une fenêtre : le tableau ne sait pas déplier une
+      ligne sous une autre. Téléporté pour échapper au contexte d'empilement
+      du tableau, qui la ferait passer sous les colonnes épinglées.
+    -->
+    <Teleport to="body">
+      <OrderQuickActionModal
+        v-if="aTraiter"
+        :order="aTraiter"
+        @close="aTraiter = null"
+        @updated="onOrderUpdated"
+      />
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import ZoneExportPreviewModal from './ZoneExportPreviewModal.vue'
-import AdminPagination from '@/admin/components/AdminPagination.vue'
-import { readPagination } from '@/admin/utils/pagination'
+import OrdersGrid from './OrdersGrid.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 import { useSettingsStore } from '@/stores/settings'
 import { useAuthStore } from '@/features/auth/auth.store'
+import { usePersistedFilters } from '@/admin/utils/persistedFilters'
 
 const auth = useAuthStore()
 // Finance privée : masque les montants agrégés pour les agents sans finance.view
 const canFinance = computed(() => auth.can('finance.view'))
 const orderStats = useOrderStatsStore()
 const settings   = useSettingsStore()
+const route      = useRoute()
 
 // Adresse de départ par défaut pour l'itinéraire (adresse boutique)
 const pickupAddress = computed(() => {
@@ -540,17 +523,153 @@ const fuzzyThresholdLabel = computed(() => {
   if (fuzzyThreshold.value <= 0.8) return 'Équilibrée'
   return 'Stricte'
 })
-const expandedId = ref(null)
 
-function toggleQuickAction(order) {
-  expandedId.value = expandedId.value === order.id ? null : order.id
+/** Le tableau : rechargé, re-sélectionné et filtré par date depuis cet écran. */
+const grille = ref(null)
+
+// ── Filtres rapides ─────────────────────────────────────────────────────────
+//
+// Conservés d'une visite à l'autre : la gérante revient dix fois par jour sur
+// cet écran avec les mêmes critères.
+
+const filters = usePersistedFilters('orders', {
+  search:         '',
+  status:         [],
+  payment_method: [],
+  destination:    [],
+  paid:           '',
+  exported:       '',
+})
+
+const STATUTS_RAPIDES = [
+  { value: 'pending',    label: 'En attente' },
+  { value: 'processing', label: 'En cours' },
+  { value: 'shipped',    label: 'Expédiées' },
+  { value: 'delivered',  label: 'Livrées' },
+  { value: 'cancelled',  label: 'Annulées' },
+]
+
+/** Un moyen affiché peut couvrir plusieurs codes : « à la livraison » en a deux. */
+const MOYENS_RAPIDES = [
+  { key: 'wave',     label: 'Wave',           values: ['wave'] },
+  { key: 'om',       label: 'Orange Money',   values: ['orange_money'] },
+  { key: 'livraison', label: 'À la livraison', values: ['cod', 'delivery'] },
+  { key: 'cash',     label: 'Espèces',        values: ['cash'] },
+  { key: 'carte',    label: 'Carte',          values: ['card', 'stripe', 'cinetpay'] },
+]
+
+const DESTINATIONS_RAPIDES = [
+  { value: 'abidjan',       label: 'Abidjan' },
+  { value: 'interior',      label: 'Hors Abidjan' },
+  { value: 'international', label: 'International' },
+]
+
+function basculerDans(cle, valeur) {
+  const liste = filters[cle]
+  filters[cle] = liste.includes(valeur) ? liste.filter(v => v !== valeur) : [...liste, valeur]
 }
 
+/** Deux choix exclusifs (payées / non payées) : un second clic retire le filtre. */
+function basculerValeur(cle, valeur) {
+  filters[cle] = filters[cle] === valeur ? '' : valeur
+}
+
+function basculerMoyen(moyen) {
+  const actif = moyen.values.every(v => filters.payment_method.includes(v))
+  filters.payment_method = actif
+    ? filters.payment_method.filter(v => !moyen.values.includes(v))
+    : [...new Set([...filters.payment_method, ...moyen.values])]
+}
+
+const filtresRapidesActifs = computed(() =>
+  filters.status.length || filters.payment_method.length || filters.destination.length
+  || filters.paid !== '' || filters.exported !== '' || filters.search !== ''
+)
+
+function effacerFiltresRapides() {
+  filters.$reset()
+}
+
+/** Les cartes de statistiques ne filtrent que sur un statut à la fois. */
+function estSeulStatut(statut) {
+  return filters.status.length === 1 && filters.status[0] === statut
+}
+
+// La recherche part au serveur après une pause de frappe, pas à chaque lettre.
+const rechercheAppliquee = ref(filters.search)
+let minuteurRecherche = null
+watch(() => filters.search, (valeur) => {
+  clearTimeout(minuteurRecherche)
+  minuteurRecherche = setTimeout(() => { rechercheAppliquee.value = valeur }, 400)
+})
+
+// ── Raccourcis de période ───────────────────────────────────────────────────
+
+const RACCOURCIS_DATE = [
+  { key: 'all',       label: 'Toutes les dates' },
+  { key: 'today',     label: "Aujourd'hui" },
+  { key: 'yesterday', label: 'Hier' },
+  { key: 'last7',     label: '7 derniers jours' },
+  { key: 'month',     label: 'Ce mois-ci' },
+]
+
+/** Modèle du filtre de la colonne Date, tel que le tableau le rapporte. */
+const filtreDate = ref(null)
+
+/**
+ * Date locale au format du tableau. La boutique est à Abidjan (GMT+0) : pas
+ * de décalage entre l'heure du navigateur, celle du serveur et celle de la
+ * boutique.
+ */
+function jour(decalage = 0, base = new Date()) {
+  const d = new Date(base)
+  d.setDate(d.getDate() + decalage)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} 00:00:00`
+}
+
+function modeleRaccourci(cle) {
+  const aujourdhui = jour()
+  switch (cle) {
+    case 'today':     return { filterType: 'date', type: 'equals', dateFrom: aujourdhui, dateTo: null }
+    case 'yesterday': return { filterType: 'date', type: 'equals', dateFrom: jour(-1), dateTo: null }
+    case 'last7':     return { filterType: 'date', type: 'inRange', dateFrom: jour(-6), dateTo: aujourdhui }
+    case 'month': {
+      const premier = new Date()
+      premier.setDate(1)
+      return { filterType: 'date', type: 'inRange', dateFrom: jour(0, premier), dateTo: aujourdhui }
+    }
+    default: return null
+  }
+}
+
+/** Raccourci qui correspond au filtre posé, ou « custom » si la date a été saisie dans la colonne. */
+const raccourciActif = computed(() => {
+  const m = filtreDate.value
+  if (!m) return 'all'
+  const cle = RACCOURCIS_DATE.map(r => r.key).find((k) => {
+    const attendu = modeleRaccourci(k)
+    return attendu
+      && attendu.type === m.type
+      && attendu.dateFrom === m.dateFrom
+      && (attendu.dateTo ?? null) === (m.dateTo ?? null)
+  })
+  return cle ?? 'custom'
+})
+
+function appliquerRaccourci(cle) {
+  grille.value?.setDateFilter(modeleRaccourci(cle))
+}
+
+// ── Traitement rapide ───────────────────────────────────────────────────────
+
+const aTraiter = ref(null)
+
 function onOrderUpdated(updated) {
-  // Mettre à jour la ligne dans la liste
-  const idx = orders.value.findIndex(o => o.id === updated.id)
-  if (idx >= 0) orders.value[idx] = { ...orders.value[idx], ...updated }
-  // Rafraîchir le badge sidebar
+  // La fenêtre reste ouverte : elle doit refléter ce qui vient d'être enregistré.
+  if (aTraiter.value?.id === updated.id) aTraiter.value = { ...aTraiter.value, ...updated }
+  // La page courante se recharge sans revenir à la première.
+  grille.value?.reload()
   orderStats.refresh()
 }
 
@@ -568,9 +687,26 @@ function onOrderUpdated(updated) {
 const CLE_DECOTE = 'admin:commandes:de-cote'
 
 const decote = ref(new Set(JSON.parse(sessionStorage.getItem(CLE_DECOTE) ?? '[]')))
-const revue = ref(null)
 
-const ordersVisibles = computed(() => orders.value.filter(o => !decote.value.has(o.id)))
+/**
+ * Commande dont on revient, surlignée : sans ce repère, revenir d'une fiche
+ * renvoyait sur une liste de lignes identiques, et il fallait relire les
+ * numéros pour retrouver où l'on en était.
+ */
+const revue = ref(Number(route.query.commande) || null)
+
+/** Ce que le tableau transmet au serveur, en plus de ses propres filtres de colonne. */
+const filtresGrille = computed(() => ({
+  status:         filters.status,
+  payment_method: filters.payment_method,
+  destination:    filters.destination,
+  paid:           filters.paid,
+  exported:       filters.exported,
+  search:         rechercheAppliquee.value,
+  // Écartées côté serveur, pour que le total et les pages ne comptent pas
+  // des lignes qu'on ne voit pas.
+  exclude:        [...decote.value],
+}))
 
 // ── Sélection multiple & expédition en masse ────────────────────────────────
 // Le pendant de la tournée pour les envois qui n'en forment pas une : un dépôt
@@ -580,25 +716,8 @@ const cochees  = ref(new Set())
 const enCours  = ref(null)   // null | 'ship' | 'process'
 const bilanLot = ref(null)   // { action, message, rejected, forceable }
 
-const toutesCochees = computed(() =>
-  ordersVisibles.value.length > 0 && ordersVisibles.value.every(o => cochees.value.has(o.id))
-)
-
-function basculerUne(id) {
-  const s = new Set(cochees.value)
-  s.has(id) ? s.delete(id) : s.add(id)
-  cochees.value = s
-}
-
-function basculerToutes() {
-  const s = new Set(cochees.value)
-  if (toutesCochees.value) ordersVisibles.value.forEach(o => s.delete(o.id))
-  else                     ordersVisibles.value.forEach(o => s.add(o.id))
-  cochees.value = s
-}
-
 function viderSelection() {
-  cochees.value = new Set()
+  grille.value?.setSelection([])
 }
 
 /**
@@ -627,9 +746,8 @@ async function lancerLot(action, url, payload = {}, echec) {
 
     // Ne restent cochées que les commandes refusées : l'agent voit sa
     // sélection se réduire à ce qui demande encore une décision.
-    cochees.value = new Set(refuses.map(r => r.id))
-
-    await fetchOrders()
+    grille.value?.setSelection(refuses.map(r => r.id))
+    grille.value?.reload()
     orderStats.refresh()   // les compteurs de l'écran et du menu ont bougé
   } catch (e) {
     bilanLot.value = {
@@ -657,7 +775,9 @@ function persisterDecote() {
 
 function mettreDeCote(id) {
   decote.value = new Set(decote.value).add(id)
-  if (expandedId.value === id) expandedId.value = null
+  if (aTraiter.value?.id === id) aTraiter.value = null
+  // Une commande qu'on ne voit plus ne doit pas partir dans une action de masse.
+  if (cochees.value.has(id)) grille.value?.setSelection([...cochees.value].filter(c => c !== id))
   persisterDecote()
 }
 
@@ -666,25 +786,7 @@ function toutReafficher() {
   persisterDecote()
 }
 
-/**
- * Surligne la commande que l'on vient de quitter et la ramène à l'écran.
- *
- * Sans ce repère, revenir d'une fiche renvoyait en haut d'une liste de vingt
- * lignes identiques, et il fallait relire les numéros pour retrouver où l'on
- * en était.
- */
-async function surlignerRetour() {
-  const id = Number(route.query.commande)
-  if (!id) return
-
-  revue.value = id
-  await nextTick()
-  document.querySelector('.orders__row--revue')?.scrollIntoView({ block: 'center', behavior: 'smooth' })
-}
-
-const orders = ref([])
 const loading = ref(true)
-const pagination = ref({})
 
 // ── Mode d'affichage : liste paginée ou groupée selon une dimension ──
 // groupBy: '' = liste paginée | 'zone' | 'commune' | 'address' | 'status'
@@ -844,8 +946,8 @@ function buildFuzzyGroups(orders, threshold) {
 }
 
 function onGroupByChange() {
+  // Retour à la liste : le tableau se charge lui-même en se montant.
   if (groupBy.value) fetchAllForGrouping()
-  else fetchOrders()
 }
 
 function toggleGroup(key) {
@@ -859,7 +961,8 @@ async function fetchAllForGrouping() {
   loading.value = true
   try {
     const params = { limit: 500 }
-    if (filters.status) params.status = filters.status
+    // La vue groupée ne connaît qu'un statut à la fois.
+    if (filters.status.length === 1) params.status = filters.status[0]
     const { data } = await api.get('/admin/orders/by-zone', { params })
     // Aplatir les zones du backend en liste plate de commandes (shipping_zone est dans chaque commande)
     allOrders.value = (data.data ?? []).flatMap(g =>
@@ -891,7 +994,7 @@ function openExportPreview(group) {
  */
 async function apresTournee() {
   if (groupBy.value) await fetchAllForGrouping()
-  else await fetchOrders()
+  else grille.value?.reload()
 }
 
 // ── Modal itinéraire ─────────────────────────────────────────────────────────
@@ -899,20 +1002,6 @@ const routeMap = ref(null) // { title, orders, startAddress } | null
 
 function openRouteMapForGroup(group) {
   routeMap.value = { title: group.label, orders: group.orders, startAddress: pickupAddress.value }
-}
-
-const filters = reactive({
-  status: '',
-  search: '',
-  du_jour: false,
-  page: 1,
-  per_page: 20,
-})
-
-function basculerDuJour() {
-  filters.du_jour = !filters.du_jour
-  filters.page = 1          // le filtre change le jeu de résultats, la page 3 n'a plus de sens
-  fetchOrders()
 }
 
 
@@ -992,53 +1081,13 @@ async function openGlobalExportPreview() {
 
 
 
-const statusTabs = [
-  { value: '', label: 'Toutes' },
-  { value: 'pending', label: 'En attente' },
-  { value: 'processing', label: 'En cours' },
-  { value: 'shipped', label: 'Expédiées' },
-  { value: 'delivered', label: 'Livrées' },
-  { value: 'cancelled', label: 'Annulées' },
-]
-
-let debounceTimer = null
-function debouncedFetch() {
-  clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => { filters.page = 1; fetchOrders() }, 400)
-}
-
-function setStatus(val) {
-  filters.status = val
-  filters.page = 1
-  if (groupBy.value) fetchAllForGrouping()
-  else fetchOrders()
-}
-
-function changePage(page) {
-  if (typeof page !== 'number') return
-  if (page < 1 || page > (pagination.value.last_page ?? 1)) return
-  filters.page = page
-  fetchOrders()
-  // Scroll en haut du tableau pour ne pas perdre l'utilisateur après changement de page
-  document.querySelector('.table-scroll')?.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-function changePerPage() {
-  filters.page = 1
-  fetchOrders()
-}
-
-function onPerPageUpdate(n) {
-  filters.per_page = n
-  filters.page = 1
-  fetchOrders()
-}
-
+/**
+ * Carte de statistique cliquée : filtre sur ce seul statut, ou retire le
+ * filtre si c'était déjà lui. « Total » efface le filtre de statut.
+ */
 function setStatusFilter(status) {
-  filters.status = status
-  filters.page = 1
+  filters.status = !status || estSeulStatut(status) ? [] : [status]
   if (groupBy.value) fetchAllForGrouping()
-  else fetchOrders()
 }
 
 function fmt(v) {
@@ -1052,31 +1101,9 @@ function fmtCompact(v) {
   return n.toLocaleString('fr-FR') + ' FCFA'
 }
 
-async function fetchOrders() {
-  loading.value = true
-  try {
-    const params = { page: filters.page, per_page: filters.per_page }
-    if (filters.status) params.status = filters.status
-    if (filters.search) params.search = filters.search
-    if (filters.du_jour) params.du_jour = 1
-    const { data } = await api.get('/admin/orders', { params })
-    orders.value = data.data
-    pagination.value = readPagination(data)
-  } finally {
-    loading.value = false
-  }
-}
-
 function formatDate(val) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
-}
-
-function formatDateTime(val) {
-  if (!val) return '—'
-  return new Date(val).toLocaleString('fr-FR', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-  })
 }
 
 function formatPrice(val) {
@@ -1102,59 +1129,75 @@ function statusBadge(status) {
   return map[status] ?? 'badge badge-gray'
 }
 
-function paymentLabel(method) {
-  const map = {
-    wave: 'Wave', orange_money: 'Orange Money',
-    card: 'Carte', stripe: 'Carte', cinetpay: 'Carte', cod: 'Livraison', delivery: 'Livraison',
-  }
-  return map[method] ?? method
-}
-
-const route = useRoute()
-
 onMounted(async () => {
   settings.fetch()
-  if (groupBy.value) await fetchAllForGrouping()
-  else await fetchOrders()
 
-  await surlignerRetour()
+  // Lien depuis le tableau de bord (« 12 en attente ») : le statut demandé
+  // prime sur celui conservé de la dernière visite.
+  if (route.query.status) filters.status = [String(route.query.status)]
+
+  if (groupBy.value) await fetchAllForGrouping()
 })
 </script>
 
 <style scoped>
 .admin-page { display: flex; flex-direction: column; gap: var(--space-5); }
 
-.orders__today {
+/* ── Raccourcis de période et filtres rapides ── */
+.orders__presets { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.orders__chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: 8px 14px;
+  padding: 6px 12px;
   border: 1.5px solid var(--cream-300);
   border-radius: var(--radius-full);
   background: #fff;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--gray-600);
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
-.orders__today:hover { border-color: var(--rose-300); color: var(--rose-600); }
-.orders__today--on {
+.orders__chip:hover { border-color: var(--rose-300); color: var(--rose-600); }
+.orders__chip--on {
   border-color: var(--rose-500);
   background: var(--rose-50);
   color: var(--rose-600);
   font-weight: 600;
 }
-.orders__today-count {
-  min-width: 1.4rem;
-  padding: 0 6px;
-  border-radius: var(--radius-full);
-  background: var(--rose-200);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-align: center;
+.orders__chip--static { cursor: default; }
+
+.orders__quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
 }
+.orders__quick-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.orders__quick-label {
+  margin-right: 2px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gray-400);
+}
+.orders__quick-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--cream-300); }
+.orders__quick-reset {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  color: var(--rose-600);
+  cursor: pointer;
+}
+.orders__quick-reset:hover { text-decoration: underline; }
+
+.orders__list { display: flex; flex-direction: column; gap: var(--space-3); padding: var(--space-4); }
 
 /* Commande que l'on vient de quitter : repère éphémère, pas un état. */
 .orders__row--revue > td {

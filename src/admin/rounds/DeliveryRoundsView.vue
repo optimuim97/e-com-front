@@ -56,6 +56,7 @@
               <th>Livreur</th>
               <th>Départ</th>
               <th>Livraisons</th>
+              <th title="Nombre d'articles que le livreur emporte">Articles</th>
               <th>À encaisser</th>
               <th></th>
             </tr>
@@ -76,6 +77,7 @@
                 <td>{{ r.courier?.name || 'Non affecté' }}</td>
                 <td>{{ r.status === 'draft' ? 'pas encore partie' : formatDate(r.dispatched_at) }}</td>
                 <td>{{ r.orders_count }}</td>
+                <td>{{ r.items_count }}</td>
                 <td class="admin-table__total">{{ formatPrice(r.expected_total) }}</td>
                 <td>
                   <div class="tr__actions">
@@ -107,10 +109,25 @@
               </tr>
 
               <tr v-if="ouverte === r.code" class="admin-table__detail-row">
-                <td :colspan="8">
+                <td :colspan="9">
                   <div v-if="chargementDetail" class="tr__loading">Chargement…</div>
 
                   <div v-else-if="detail" class="pointage">
+                    <!--
+                      Le chargement : ce qu'on pose à côté des colis pour
+                      vérifier que rien ne manque avant le départ.
+                    -->
+                    <div v-if="detail.loading_list?.length" class="chargement">
+                      <span class="chargement__titre">
+                        À emporter · {{ detail.items_count }} article{{ detail.items_count > 1 ? 's' : '' }}
+                      </span>
+                      <ul class="chargement__liste">
+                        <li v-for="a in detail.loading_list" :key="a.name">
+                          <strong>{{ a.quantity }}</strong> × {{ a.name }}
+                        </li>
+                      </ul>
+                    </div>
+
                     <table class="admin-table pointage__lines">
                       <thead>
                         <tr>
@@ -126,7 +143,10 @@
                         <template v-for="l in detail.lines" :key="l.id">
                           <tr :class="`pointage__row--${l.status}`">
                             <td>{{ l.position }}</td>
-                            <td class="admin-table__mono">{{ l.order?.number }}</td>
+                            <td class="admin-table__mono">
+                              {{ l.order?.number }}
+                              <span class="pointage__articles">{{ l.items_count }} art.</span>
+                            </td>
                             <td>
                               <div>{{ l.order?.name || '—' }}</div>
                               <a v-if="l.order?.phone" :href="`tel:${l.order.phone}`" class="pointage__phone">
@@ -617,8 +637,22 @@ onMounted(charger)
 .tr--open { background: var(--rose-50); }
 .tr__loading { padding: var(--space-4); color: var(--gray-500); }
 
+/* ── Chargement ── */
+.chargement {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--cream-200);
+  background: var(--cream-50);
+}
+.chargement__titre { display: block; margin-bottom: 6px; font-size: 0.8125rem; font-weight: 600; color: var(--gray-700); }
+.chargement__liste {
+  margin: 0; padding: 0; list-style: none;
+  display: flex; flex-wrap: wrap; gap: 4px 18px;
+  font-size: 0.8125rem; color: var(--gray-600);
+}
+
 /* ── Pointage ── */
 .pointage { background: #fff; border-radius: var(--radius-md); }
+.pointage__articles { display: block; font-size: 0.6875rem; color: var(--gray-400); font-family: var(--font-body); }
 .pointage__lines { margin: 0; }
 .pointage__th-action { width: 260px; }
 .pointage__phone { font-size: 0.75rem; color: var(--rose-600); text-decoration: none; }

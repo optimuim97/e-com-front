@@ -53,7 +53,7 @@
             </div>
             <p class="liv__round-zone">{{ t.label || t.zone_name || 'Sans zone' }}</p>
             <p class="liv__round-meta">
-              {{ t.orders_count }} livraison(s)
+              {{ t.orders_count }} livraison(s) · {{ t.items_count }} article(s)
               <span v-if="t.expected_total > 0">
                 · <strong>{{ prix(t.expected_total) }}</strong> à encaisser
               </span>

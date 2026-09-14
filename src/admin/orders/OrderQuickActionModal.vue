@@ -94,6 +94,34 @@
         </p>
       </div>
 
+      <!--
+        Changement de statut.
+
+        Le serveur garde la main sur ce qui compte : il refuse d'expédier une
+        commande impayée ou aux frais non fixés, et remet le stock en rayon
+        sur une annulation. Ici on ne fait que demander confirmation avant les
+        gestes qui ne se défont pas simplement.
+      -->
+      <div class="modal__section">
+        <h4>Statut de la commande</h4>
+        <div class="action-row">
+          <select v-model="nextStatus" class="input status-select" :disabled="busy === 'status'">
+            <option v-for="s in STATUS_OPTIONS" :key="s.value" :value="s.value">
+              {{ s.label }}{{ s.value === order.status ? ' (actuel)' : '' }}
+            </option>
+          </select>
+          <button
+            class="btn btn-primary"
+            type="button"
+            :disabled="nextStatus === order.status || busy === 'status'"
+            @click="changeStatus()"
+          >
+            {{ busy === 'status' ? 'Enregistrement…' : 'Changer le statut' }}
+          </button>
+        </div>
+        <p v-if="statusHint" class="modal__hint">{{ statusHint }}</p>
+      </div>
+
       <!-- Action paiement -->
       <div class="modal__section" v-if="!order.paid_at">
         <h4>1. Paiement</h4>
@@ -234,6 +262,16 @@
       <div class="modal__section">
         <h4>3. Notifier la cliente</h4>
         <div class="action-row">
+          <!--
+            Envoi automatique par l'API WhatsApp, mis en commentaire.
+
+            L'API Cloud n'autorise l'envoi libre que dans les 24 h suivant un
+            message de la cliente : hors de cette fenêtre l'envoi échoue, et
+            l'agent retombait sur le repli manuel. On ouvre donc directement
+            WhatsApp avec le message rédigé — l'agent l'envoie depuis le
+            téléphone de la boutique, qui ne connaît pas cette limite.
+            Pour réactiver : décommenter ce bouton et le bloc de repli plus bas.
+
           <button
             class="btn btn-primary"
             type="button"
@@ -242,6 +280,27 @@
             title="Envoie le récapitulatif et la facture par WhatsApp"
           >
             {{ busy === 'notify' ? 'Envoi…' : 'Notifier directement' }}
+          </button>
+          -->
+          <a
+            v-if="clientPhone && !feePending"
+            :href="waRecapLink"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-primary"
+            :class="{ 'btn--loading': !waRecapReady }"
+            title="Ouvre WhatsApp avec le récapitulatif de la commande, prêt à envoyer"
+          >
+            {{ waRecapReady ? 'Notifier la cliente sur WhatsApp' : 'Préparation du message…' }}
+          </a>
+          <button
+            v-else
+            class="btn btn-primary"
+            type="button"
+            disabled
+            :title="feePending ? 'Renseignez d\'abord les frais de livraison' : 'Aucun numéro sur cette commande'"
+          >
+            Notifier la cliente sur WhatsApp
           </button>
           <button
             class="btn btn-outline"
@@ -256,8 +315,18 @@
         <p v-if="!clientPhone" class="modal__hint">
           Aucun numéro sur cette commande — seule la facture PDF est disponible.
         </p>
+        <p v-else-if="feePending" class="modal__hint">
+          Renseignez d'abord les frais de livraison : le récapitulatif annoncerait un total faux.
+        </p>
+        <p v-else class="modal__hint">
+          WhatsApp s'ouvre avec le récapitulatif : articles, total et consignes de paiement.
+          Joignez la facture PDF si la cliente la demande.
+        </p>
 
-        <!-- Repli manuel : propose d'envoyer soi-même quand l'API a refusé -->
+        <!--
+          Repli manuel de l'envoi automatique, mis en commentaire avec lui : il
+          n'apparaissait qu'après un refus de l'API.
+
         <div v-if="notifyFallback" class="notify-fallback">
           <p>
             L'envoi automatique n'a pas abouti. Vous pouvez envoyer le message
@@ -275,6 +344,7 @@
             </button>
           </div>
         </div>
+        -->
       </div>
 
       <!-- Lien détails -->
@@ -294,7 +364,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import api from '@/api';
 import { useSettingsStore } from '@/stores/settings';
@@ -388,8 +458,117 @@ function buildWaLink(phoneRaw, message) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
+// ── Changement de statut ─────────────────────────────────────────────────────
+
+const STATUS_OPTIONS = [
+  { value: 'pending',    label: 'En attente' },
+  { value: 'confirmed',  label: 'Confirmée' },
+  { value: 'processing', label: 'En préparation' },
+  { value: 'shipped',    label: 'Expédiée' },
+  { value: 'delivered',  label: 'Livrée' },
+  { value: 'cancelled',  label: 'Annulée' },
+  { value: 'refunded',   label: 'Remboursée' },
+];
+
+const nextStatus = ref(props.order.status);
+
+// La commande a changé ailleurs (suivi, paiement) : le choix repart du statut réel.
+watch(() => props.order.status, (s) => { nextStatus.value = s; });
+
+/** Ce que le changement choisi va entraîner, dit avant de cliquer. */
+const statusHint = computed(() => {
+  if (nextStatus.value === props.order.status) return '';
+  return {
+    shipped:   "La date d'expédition est enregistrée. Une commande impayée ou aux frais non fixés demandera confirmation.",
+    delivered: 'La date de livraison est enregistrée.',
+    cancelled: 'Les articles retournent en stock.',
+    refunded:  "Le remboursement n'est pas effectué ici : seul le statut change.",
+  }[nextStatus.value] ?? '';
+});
+
+async function changeStatus(force = false) {
+  const cible = nextStatus.value;
+  if (cible === props.order.status || busy.value) return;
+
+  // Gestes difficiles à défaire : une annulation remet le stock en rayon.
+  if (!force && ['cancelled', 'refunded'].includes(cible)) {
+    const libelle = statusLabel(cible).toLowerCase();
+    if (!confirm(`Passer la commande ${props.order.number} en « ${libelle} » ?`)) return;
+  }
+
+  busy.value = 'status';
+  error.value = ''; success.value = '';
+  try {
+    const { data } = await api.patch(`/admin/orders/${props.order.id}`, {
+      status: cible,
+      ...(force ? { force: true } : {}),
+    });
+    emit('updated', data.data ?? data);
+    success.value = `Statut changé : ${statusLabel(cible)}.`;
+  } catch (e) {
+    // Même garde-fou que l'expédition avec numéro de suivi : l'agent voit
+    // pourquoi et peut passer outre en connaissance de cause.
+    if (e.response?.status === 422 && e.response?.data?.code === 'shipping_blocked') {
+      const raisons = (e.response.data.blockers ?? []).map(b => `• ${b}`).join('\n');
+      if (confirm(`Expédition risquée :\n\n${raisons}\n\nExpédier quand même ?`)) {
+        busy.value = null;
+        return changeStatus(true);
+      }
+      error.value = e.response.data.message;
+    } else {
+      error.value = e.response?.data?.message ?? "Le statut n'a pas pu être changé.";
+    }
+  } finally {
+    busy.value = null;
+  }
+}
+
+// ── Notification WhatsApp ────────────────────────────────────────────────────
+//
+// Le récapitulatif est rédigé par le serveur — le même texte que l'envoi
+// automatique : articles, total, statut et consignes de paiement. Il est
+// chargé à l'ouverture pour que le bouton soit un vrai lien : ouvrir WhatsApp
+// après une requête ferait bloquer la fenêtre par le navigateur.
+const recapMessage = ref('');
+const waRecapReady = ref(false);
+
+async function loadRecap() {
+  waRecapReady.value = false;
+  try {
+    const { data } = await api.get(`/admin/orders/${props.order.id}/whatsapp-message`);
+    recapMessage.value = data.message ?? '';
+  } catch {
+    recapMessage.value = '';
+  } finally {
+    waRecapReady.value = true;
+  }
+}
+
+/** Message de secours, si le serveur n'a pas pu rédiger le récapitulatif. */
+const recapDeSecours = computed(() => [
+  `Bonjour ${clientName.value.split(' ')[0]} 🌹`,
+  '',
+  `Votre commande ${props.order.number} (${fmt(props.order.total)}) : ${(props.order.status_label ?? statusLabel(props.order.status)).toLowerCase()}.`,
+  '',
+  'Merci de votre confiance.',
+  'Rosabeauty Facial Care',
+].join('\n'));
+
+const waRecapLink = computed(() =>
+  buildWaLink(clientPhone.value, recapMessage.value || recapDeSecours.value));
+
+onMounted(loadRecap);
+
+// Statut, total, paiement ou suivi modifiés depuis la fenêtre : le message
+// doit annoncer l'état à jour, pas celui de l'ouverture.
+watch(
+  () => [props.order.status, props.order.total, props.order.paid_at, props.order.tracking_number, props.order.payment_method],
+  loadRecap,
+);
+
 // Message rédigé par le serveur, conservé quand l'envoi automatique échoue :
 // l'agent peut alors l'envoyer lui-même plutôt que de le retaper.
+// (Envoi automatique mis en commentaire dans le gabarit ; conservé pour le réactiver.)
 const notifyFallback = ref('');
 const waNotifyLink = computed(() => buildWaLink(clientPhone.value, notifyFallback.value));
 
@@ -739,6 +918,12 @@ function paymentLabel(p) { return PAYMENT_LABELS[p] ?? p ?? '—'; }
 }
 
 .fee-input { max-width: 180px; }
+
+.status-select { max-width: 240px; }
+
+/* Lien affiché avant que le message du serveur soit prêt : cliquable (le
+   message de secours s'applique), mais visiblement en cours. */
+.btn--loading { opacity: 0.75; }
 
 .modal-overlay {
   position: fixed; inset: 0; z-index: 200;

@@ -19,7 +19,7 @@
         <span class="eyebrow">Tournée créée</span>
         <p class="zep__done-code">{{ roundResult.code }}</p>
         <p class="zep__done-meta">
-          {{ roundResult.orders_count }} livraison(s)
+          {{ roundResult.orders_count }} livraison(s) · {{ roundResult.items_count }} article(s) à emporter
           <span v-if="roundResult.expected_total > 0">
             · <strong>{{ formatPrice(roundResult.expected_total) }}</strong> à encaisser
           </span>
