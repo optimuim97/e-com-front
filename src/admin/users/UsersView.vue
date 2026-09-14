@@ -241,6 +241,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import api from '@/api'
@@ -252,8 +253,9 @@ const auth = useAuthStore()
 
 const users      = ref([])
 const loading    = ref(true)
-const search     = ref('')
-const roleFilter = ref('')
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const search     = usePersistedRef('users.search', '')
+const roleFilter = usePersistedRef('users.role', '')
 const pagination = ref({})
 const page       = ref(1)
 

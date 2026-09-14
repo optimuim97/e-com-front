@@ -147,6 +147,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
@@ -159,8 +160,9 @@ const loading      = ref(false)
 const chargementErreur = ref('')
 const moduleEteint     = ref(false)
 const page         = ref(1)
-const recherche    = ref('')
-const actifsSeuls  = ref(false)
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const recherche    = usePersistedRef('suppliers.search', '')
+const actifsSeuls  = usePersistedRef('suppliers.active-only', false)
 
 async function charger(p = 1) {
   page.value    = p

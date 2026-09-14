@@ -127,6 +127,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import { PlusIcon, PencilIcon, TrashIcon, PhotoIcon } from '@heroicons/vue/24/outline'
@@ -135,8 +136,9 @@ import api from '@/api'
 const products     = ref([])
 const meta         = ref({})
 const loading      = ref(true)
-const search       = ref('')
-const statusFilter = ref('')
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const search       = usePersistedRef('products.search', '')
+const statusFilter = usePersistedRef('products.status', '')
 
 const statusFilterOptions = [
   { value: '1', label: 'Actifs' },

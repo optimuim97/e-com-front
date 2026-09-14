@@ -91,6 +91,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { usePersistedFilters } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import PromotionFormModal from './PromotionFormModal.vue'
@@ -101,7 +102,8 @@ const loading    = ref(true)
 const modalOpen  = ref(false)
 const editing    = ref(null)
 
-const filters = reactive({ search: '', type: '', activeOnly: false })
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const filters = usePersistedFilters('promotions', { search: '', type: '', activeOnly: false })
 
 async function fetchPromotions() {
   loading.value = true

@@ -113,6 +113,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import api from '@/api'
 
 const tab = ref('campaigns')
@@ -199,7 +200,8 @@ async function sendCampaign(c) {
 // ── Abonnés ──
 const subscribers = ref([])
 const stats = reactive({ subscribed: 0, unsubscribed: 0, total: 0 })
-const search = ref('')
+// Conservée d'une visite à l'autre, comme sur les autres listes.
+const search = usePersistedRef('newsletter.search', '')
 const newSub = reactive({ email: '', name: '' })
 
 async function loadSubscribers() {

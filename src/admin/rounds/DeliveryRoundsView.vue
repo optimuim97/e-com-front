@@ -341,6 +341,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import DispatchRoundModal from './DispatchRoundModal.vue'
@@ -361,8 +362,9 @@ const LIBELLES = {
 
 const rounds  = ref([])
 const loading = ref(false)
-const search  = ref('')
-const statut  = ref('')
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const search  = usePersistedRef('rounds.search', '')
+const statut  = usePersistedRef('rounds.status', '')
 
 const ouverte          = ref(null)   // code de la tournée dépliée
 const detail           = ref(null)

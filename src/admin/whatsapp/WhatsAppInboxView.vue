@@ -207,6 +207,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink, useRouter } from 'vue-router'
 import { adminWhatsAppApi } from './whatsapp.api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
@@ -225,7 +226,8 @@ const page     = ref(1)
 
 // La file s'ouvre sur ce qui reste à faire, pas sur l'historique.
 const filter = ref('pending')
-const search = ref('')
+// Conservée d'une visite à l'autre, comme sur les autres listes.
+const search = usePersistedRef('whatsapp.search', '')
 
 const showReconciliation = ref(false)
 const reconciliation     = ref(null)

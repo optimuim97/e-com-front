@@ -105,6 +105,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import api from '@/api';
+import { usePersistedRef } from '@/admin/utils/persistedFilters';
 import AdminPagination from '@/admin/components/AdminPagination.vue';
 import DeliveryZoneFormModal from './DeliveryZoneFormModal.vue';
 
@@ -115,7 +116,8 @@ const modal      = ref(null);
 const modalZone  = ref(null);
 
 const activeTab  = ref('all');
-const search     = ref('');
+// Conservée d'une visite à l'autre, comme sur les autres listes.
+const search     = usePersistedRef('delivery-zones.search', '');
 const sort       = ref({ key: 'name', dir: 'asc' });
 const page       = ref(1);
 const perPage    = ref(10);

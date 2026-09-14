@@ -1,4 +1,4 @@
-import { reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 
 /**
  * Filtres d'écran conservés d'une visite à l'autre.
@@ -35,6 +35,52 @@ export function usePersistedFilters(cle, defauts) {
   }
 
   return filtres
+}
+
+/**
+ * Même conservation, pour un champ isolé tenu dans une `ref` : la recherche
+ * d'un écran, son filtre de statut, ou un objet de filtres lu via `.value`.
+ *
+ * L'écran garde sa `ref` telle quelle — modèles et fonctions de chargement
+ * n'ont pas à changer.
+ *
+ * @param {string} cle     Identifiant, préfixé à l'enregistrement.
+ * @param {*}      defaut  Valeur de départ. Son type fait foi à la relecture.
+ * @returns {import('vue').Ref}
+ */
+export function usePersistedRef(cle, defaut) {
+  const rangement = `rosa.filters.${cle}`
+  const valeur    = ref(relireValeur(rangement, defaut))
+
+  watch(valeur, (v) => {
+    try {
+      window.localStorage.setItem(rangement, JSON.stringify(v))
+    } catch {
+      // Voir usePersistedFilters : sans gravité.
+    }
+  }, { deep: true })
+
+  return valeur
+}
+
+function estObjet(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v)
+}
+
+/** Une valeur relue d'un autre type que prévu est ignorée plutôt que servie à l'écran. */
+function relireValeur(rangement, defaut) {
+  if (estObjet(defaut)) return { ...defaut, ...relire(rangement, defaut) }
+
+  try {
+    const brut = window.localStorage.getItem(rangement)
+    if (brut === null) return defaut
+
+    const lu = JSON.parse(brut)
+    const memeType = Array.isArray(defaut) ? Array.isArray(lu) : typeof lu === typeof defaut
+    return memeType ? lu : defaut
+  } catch {
+    return defaut
+  }
 }
 
 /**

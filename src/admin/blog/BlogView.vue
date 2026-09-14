@@ -127,14 +127,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 import api from '@/api'
 
 const posts        = ref([])
 const loading      = ref(true)
-const search       = ref('')
-const filterStatus = ref('')
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const search       = usePersistedRef('blog.search', '')
+const filterStatus = usePersistedRef('blog.status', '')
 
 const statusFilterOptions = [
   { value: 'published', label: 'Publiés' },

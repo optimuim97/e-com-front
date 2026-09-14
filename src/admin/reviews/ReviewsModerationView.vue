@@ -151,6 +151,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
+import { usePersistedFilters } from '@/admin/utils/persistedFilters'
 import { reviewApi } from '@/features/reviews/review.api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 
@@ -160,7 +161,8 @@ const loading      = ref(false)
 const page         = ref(1)
 const actionLoading = reactive({})
 
-const filters = reactive({
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const filters = usePersistedFilters('reviews', {
   search: '',
   status: 'pending', // default to pending for moderation workflow
   rating: '',

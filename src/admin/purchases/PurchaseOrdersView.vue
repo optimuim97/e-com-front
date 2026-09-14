@@ -265,6 +265,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
@@ -274,7 +275,8 @@ const bons    = ref([])
 const meta    = ref(null)
 const loading = ref(false)
 const page    = ref(1)
-const filtres = ref({ search: '', status: '' })
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const filtres = usePersistedRef('purchase-orders', { search: '', status: '' })
 
 /** Pourquoi la liste est vide, quand elle l'est pour une mauvaise raison. */
 const chargementErreur = ref('')

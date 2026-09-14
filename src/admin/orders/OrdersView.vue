@@ -77,7 +77,9 @@
         v-model="filters.search"
         type="text"
         class="input filters-bar__search"
-        placeholder="N° de commande, nom, téléphone, e-mail…"
+        placeholder="N° de commande(s), nom, téléphone, e-mail…"
+        title="Plusieurs commandes d'un coup : collez leurs numéros séparés par des virgules (ORD-2026-00042, ORD-2026-00043)"
+        @paste="collerRecherche"
       />
 
       <!--
@@ -406,6 +408,21 @@
         </button>
       </div>
 
+      <!-- Recherche de plusieurs numéros : ce qui manque, et pourquoi. -->
+      <div v-if="bilanRecherche" class="orders__search-report">
+        <span>
+          <strong>{{ bilanRecherche.numbers.length }}</strong> numéros recherchés,
+          <strong>{{ bilanRecherche.numbers.length - bilanRecherche.not_found.length - bilanRecherche.filtered_out.length }}</strong> affichés.
+        </span>
+        <span v-if="bilanRecherche.not_found.length" class="orders__search-missing">
+          Introuvables : {{ bilanRecherche.not_found.join(', ') }}
+        </span>
+        <span v-if="bilanRecherche.filtered_out.length" class="orders__search-missing">
+          Masqués par les filtres : {{ bilanRecherche.filtered_out.join(', ') }}
+          <button type="button" class="orders__bulk-link" @click="afficherMasquees">Retirer les filtres</button>
+        </span>
+      </div>
+
       <!--
         Barre d'action de la sélection. Elle n'apparaît qu'une fois une case
         cochée : hors de ce moment-là, elle ne ferait qu'occuper la place
@@ -417,29 +434,76 @@
         </span>
         <button type="button" class="orders__bulk-link" @click="viderSelection">Tout décocher</button>
         <span class="orders__bulk-spacer"></span>
+
+        <div v-if="canEdit" class="orders__bulk-group">
+          <span class="orders__bulk-label">Marquer comme :</span>
+          <button
+            v-for="a in ACTIONS_VISIBLES"
+            :key="a"
+            type="button"
+            class="btn btn-sm"
+            :class="a === 'ship' ? 'btn-primary' : 'btn-outline'"
+            :disabled="!!enCours"
+            :title="ACTIONS_LOT[a].title"
+            @click="lancerLot(a)"
+          >
+            {{ enCours === a ? ACTIONS_LOT[a].busy : ACTIONS_LOT[a].label }}
+          </button>
+        </div>
+
         <button
           type="button"
           class="btn btn-sm btn-outline"
           :disabled="!!enCours"
-          title="Passe les commandes cochées en préparation — le geste du matin sur ce qui est arrivé la veille"
-          @click="traiterSelection"
+          title="Ouvre l'aperçu d'extraction des commandes cochées : Excel, feuille de livraison, création d'une tournée"
+          @click="extraireSelection"
         >
-          {{ enCours === 'process' ? 'Traitement…' : 'Marquer comme traitée' }}
+          {{ enCours === 'extract' ? 'Chargement…' : 'Extraire / tournée' }}
         </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-primary"
-          :disabled="!!enCours"
-          title="Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité"
-          @click="expedierSelection(false)"
-        >
-          {{ enCours === 'ship' ? 'Envoi…' : 'Marquer comme expédiée' }}
-        </button>
+
+        <div ref="menuLot" class="orders__bulk-more">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline"
+            :disabled="!!enCours"
+            :aria-expanded="menuLotOuvert"
+            @click="menuLotOuvert = !menuLotOuvert"
+          >
+            Plus ▾
+          </button>
+          <div v-if="menuLotOuvert" class="orders__bulk-menu" role="menu">
+            <button type="button" role="menuitem" @click="copierNumeros">
+              Copier les numéros
+            </button>
+            <button type="button" role="menuitem" @click="mettreSelectionDeCote">
+              Mettre de côté
+            </button>
+            <button
+              v-if="canEdit"
+              type="button"
+              role="menuitem"
+              class="orders__bulk-menu--danger"
+              @click="lancerLot('cancel')"
+            >
+              Annuler les commandes…
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Compte rendu de l'action de masse -->
       <div v-if="bilanLot" class="orders__bulk-result">
         <p class="orders__bulk-msg">{{ bilanLot.message }}</p>
+
+        <!-- Livrées mais pas encore réglées : la suite logique est de les
+             passer « payées » une fois l'argent reçu. -->
+        <p v-if="bilanLot.toCollect?.length" class="orders__bulk-collect">
+          Dont <strong>{{ bilanLot.toCollect.length }}</strong> encore à encaisser.
+          <button type="button" class="orders__bulk-link" @click="cocherAEncaisser">
+            Les cocher pour les marquer payées
+          </button>
+        </p>
+
         <div v-if="bilanLot.rejected.length" class="orders__bulk-rejected">
           <p><strong>{{ bilanLot.rejected.length }}</strong> commande(s) écartée(s) :</p>
           <ul>
@@ -447,15 +511,15 @@
               <strong>{{ r.number }}</strong> — {{ r.reasons.join(' ') }}
             </li>
           </ul>
-          <!-- Le passage en force ne vaut que pour l'expédition : rien ne
-               bloque une mise en préparation. -->
+          <!-- Le passage en force n'existe que là où un refus peut se lever :
+               rien ne bloque une mise en préparation. -->
           <button
-            v-if="bilanLot.action === 'ship' && bilanLot.forceable"
+            v-if="bilanLot.forceable && ACTIONS_LOT[bilanLot.action]?.force"
             type="button"
             class="orders__bulk-link"
-            @click="expedierSelection(true)"
+            @click="lancerLot(bilanLot.action, true)"
           >
-            Expédier quand même
+            {{ ACTIONS_LOT[bilanLot.action].force }}
           </button>
         </div>
         <button type="button" class="orders__bulk-close" @click="bilanLot = null">✕</button>
@@ -467,6 +531,7 @@
         :can-finance="canFinance"
         :highlight-id="revue"
         @selection-changed="(ids) => (cochees = new Set(ids))"
+        @search-report="(rapport) => (bilanRecherche = rapport)"
         @date-filter-changed="(model) => (filtreDate = model)"
         @process="(order) => (aTraiter = order)"
         @aside="mettreDeCote"
@@ -490,7 +555,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
@@ -593,6 +658,36 @@ function effacerFiltresRapides() {
 /** Les cartes de statistiques ne filtrent que sur un statut à la fois. */
 function estSeulStatut(statut) {
   return filters.status.length === 1 && filters.status[0] === statut
+}
+
+/**
+ * Plusieurs numéros collés depuis un tableur ou WhatsApp arrivent une ligne
+ * par numéro. Un champ texte supprime les retours à la ligne sans rien mettre
+ * à la place : « ORD-1⏎ORD-2 » devenait « ORD-1ORD-2 », introuvable. On les
+ * remplace donc par des virgules avant de coller.
+ */
+function collerRecherche(e) {
+  const texte = e.clipboardData?.getData('text') ?? ''
+  if (!/[\r\n]/.test(texte.trim())) return
+
+  e.preventDefault()
+  const propre = texte.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean).join(', ')
+  const champ = e.target
+  const debut = champ.selectionStart ?? filters.search.length
+  const fin   = champ.selectionEnd ?? filters.search.length
+  filters.search = filters.search.slice(0, debut) + propre + filters.search.slice(fin)
+}
+
+/** Bilan renvoyé par le serveur quand la recherche porte sur plusieurs numéros. */
+const bilanRecherche = ref(null)
+
+/** Garde la recherche, retire tout ce qui peut cacher une commande cherchée. */
+function afficherMasquees() {
+  const recherche = filters.search
+  filters.$reset()
+  filters.search = recherche
+  grille.value?.clearColumnFilters()
+  toutReafficher()
 }
 
 // La recherche part au serveur après une pause de frappe, pas à chaque lettre.
@@ -713,8 +808,61 @@ const filtresGrille = computed(() => ({
 // chez un transporteur, une série de colis pour l'intérieur. Le backend
 // applique exactement les garde-fous de l'expédition à l'unité.
 const cochees  = ref(new Set())
-const enCours  = ref(null)   // null | 'ship' | 'process'
-const bilanLot = ref(null)   // { action, message, rejected, forceable }
+const enCours  = ref(null)   // null | clé de ACTIONS_LOT | 'extract'
+const bilanLot = ref(null)   // { action, message, rejected, forceable, toCollect }
+
+const canEdit = computed(() => auth.can('orders.edit'))
+
+/**
+ * Actions de masse sur la sélection. Chaque action serveur applique les
+ * garde-fous du geste unitaire et renvoie, commande par commande, ce qu'elle
+ * a écarté et si ce refus peut être levé (`force`).
+ */
+const ACTIONS_LOT = {
+  process: {
+    url:   '/admin/orders/bulk-process',
+    label: 'Traitée',
+    busy:  'Traitement…',
+    title: 'Passe les commandes cochées en préparation — le geste du matin sur ce qui est arrivé la veille',
+    fail:  'La mise en préparation a échoué.',
+  },
+  ship: {
+    url:   '/admin/orders/bulk-ship',
+    label: 'Expédiée',
+    busy:  'Envoi…',
+    title: "Passe les commandes cochées en « expédiée », avec les mêmes garde-fous qu'à l'unité",
+    fail:  "L'expédition en masse a échoué.",
+    force: 'Expédier quand même',
+  },
+  deliver: {
+    url:   '/admin/orders/bulk-deliver',
+    label: 'Livrée',
+    busy:  'Enregistrement…',
+    title: "Pour les colis remis hors tournée (transporteur, retrait en boutique). Les commandes d'une tournée se pointent depuis la tournée.",
+    fail:  'Le marquage « livrée » a échoué.',
+    force: 'Marquer livrées quand même',
+  },
+  paid: {
+    url:   '/admin/orders/bulk-mark-paid',
+    label: 'Payée',
+    busy:  'Enregistrement…',
+    title: "Enregistre le règlement des commandes cochées (relevé Wave, caisse du livreur…). Une expédition en attente passe confirmée, comme à l'unité.",
+    fail:  'Le marquage « payée » a échoué.',
+    force: 'Marquer payées quand même',
+  },
+  cancel: {
+    url:     '/admin/orders/bulk-cancel',
+    label:   'Annuler les commandes',
+    busy:    'Annulation…',
+    fail:    "L'annulation a échoué.",
+    force:   'Annuler quand même',
+    confirm: (n) => `Annuler ${n} commande(s) ? Les articles seront remis en stock.`,
+    confirmForce: (n) => `${n} commande(s) déjà payée(s) : un remboursement sera à faire. Les annuler quand même ?`,
+  },
+}
+
+/** Dans la barre ; l'annulation, rare et lourde, reste dans le menu « Plus ». */
+const ACTIONS_VISIBLES = ['process', 'ship', 'deliver', 'paid']
 
 function viderSelection() {
   grille.value?.setSelection([])
@@ -726,22 +874,37 @@ function viderSelection() {
  * Le compte rendu importe autant que l'action : sur trente commandes, un
  * « 27 traitées » sans dire lesquelles des trois autres ont résisté, ni
  * pourquoi, oblige à tout reprendre à la main.
+ *
+ * En force, seules les commandes dont le refus pouvait être levé repartent :
+ * la sélection a pu changer entre-temps, et l'accord de l'agent ne portait
+ * que sur les commandes listées.
  */
-async function lancerLot(action, url, payload = {}, echec) {
-  if (enCours.value || !cochees.value.size) return
+async function lancerLot(action, force = false) {
+  const def = ACTIONS_LOT[action]
+  menuLotOuvert.value = false
+
+  const ids = force
+    ? (bilanLot.value?.rejected ?? []).filter(r => r.forceable).map(r => r.id)
+    : [...cochees.value]
+  if (enCours.value || !ids.length) return
+
+  const question = force ? def.confirmForce : def.confirm
+  if (question && !window.confirm(question(ids.length))) return
+
   enCours.value = action
 
   try {
-    const { data } = await api.post(url, { order_ids: [...cochees.value], ...payload })
+    const { data } = await api.post(def.url, { order_ids: ids, ...(force ? { force: true } : {}) })
 
     const refuses = data.rejected ?? []
     bilanLot.value = {
       action,
       message:   data.message,
       rejected:  refuses,
-      // « Expédier quand même » n'a de sens que sur les refus qui se lèvent :
-      // une commande annulée le resterait.
+      // « … quand même » n'a de sens que sur les refus qui se lèvent : une
+      // commande annulée le resterait.
       forceable: refuses.some(r => r.forceable),
+      toCollect: data.to_collect ?? [],
     }
 
     // Ne restent cochées que les commandes refusées : l'agent voit sa
@@ -752,22 +915,117 @@ async function lancerLot(action, url, payload = {}, echec) {
   } catch (e) {
     bilanLot.value = {
       action,
-      message:   e.response?.data?.message ?? echec,
+      message:   e.response?.data?.message ?? def.fail,
       rejected:  [],
       forceable: false,
+      toCollect: [],
     }
   } finally {
     enCours.value = null
   }
 }
 
-const expedierSelection = (force = false) => lancerLot(
-  'ship', '/admin/orders/bulk-ship', { force }, "L'expédition en masse a échoué.",
-)
+/** Enchaîne « livrée » puis « payée » sans rechercher les commandes une à une. */
+function cocherAEncaisser() {
+  grille.value?.setSelection(bilanLot.value.toCollect.map(o => o.id))
+  bilanLot.value = null
+}
 
-const traiterSelection = () => lancerLot(
-  'process', '/admin/orders/bulk-process', {}, 'La mise en préparation a échoué.',
-)
+/**
+ * Ouvre l'aperçu d'extraction sur la sélection : Excel, feuille de livraison
+ * et création de tournée, sans repasser par les filtres d'export.
+ *
+ * L'aperçu applique les règles de l'export réel — ni annulées, ni commandes
+ * hors Abidjan impayées —, d'où l'annonce de ce qu'il a laissé de côté.
+ */
+async function extraireSelection() {
+  if (enCours.value || !cochees.value.size) return
+  menuLotOuvert.value = false
+  enCours.value = 'extract'
+
+  try {
+    const { data } = await api.post('/admin/orders/export-preview', { order_ids: [...cochees.value] })
+    const orders = data.data ?? []
+    const ecartees = cochees.value.size - orders.length
+
+    bilanLot.value = ecartees > 0
+      ? {
+          action:    'extract',
+          message:   orders.length
+            ? `${ecartees} commande(s) cochée(s) laissée(s) hors de l'extraction : annulées, ou hors Abidjan et pas encore payées.`
+            : "Aucune commande cochée n'est extractible : annulées, ou hors Abidjan et pas encore payées.",
+          rejected:  [],
+          forceable: false,
+          toCollect: [],
+        }
+      : null
+
+    if (!orders.length) return
+
+    exportPreview.value = {
+      label:   `Sélection du ${new Date().toLocaleString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+      })}`,
+      orders,
+      formats: ['xlsx', 'pdf', 'csv'],
+    }
+  } catch (e) {
+    bilanLot.value = {
+      action:    'extract',
+      message:   e.response?.data?.message ?? "Impossible de charger l'aperçu d'extraction.",
+      rejected:  [],
+      forceable: false,
+      toCollect: [],
+    }
+  } finally {
+    enCours.value = null
+  }
+}
+
+/** Numéros séparés par des retours à la ligne : prêts à coller dans WhatsApp ou un tableur. */
+async function copierNumeros() {
+  menuLotOuvert.value = false
+  const numeros = grille.value?.selectedNumbers?.() ?? []
+  const texte = numeros.join('\n')
+
+  try {
+    await navigator.clipboard.writeText(texte)
+    bilanLot.value = {
+      action: 'copy',
+      message: numeros.length === cochees.value.size
+        ? `${numeros.length} numéro(s) copié(s).`
+        : `${numeros.length} numéro(s) copié(s) sur ${cochees.value.size} : les autres sont sur des pages non chargées.`,
+      rejected: [], forceable: false, toCollect: [],
+    }
+  } catch {
+    bilanLot.value = {
+      action: 'copy', message: `Copie refusée par le navigateur. Numéros : ${numeros.join(', ')}`,
+      rejected: [], forceable: false, toCollect: [],
+    }
+  }
+}
+
+function mettreSelectionDeCote() {
+  menuLotOuvert.value = false
+  const ids = [...cochees.value]
+  decote.value = new Set([...decote.value, ...ids])
+  if (aTraiter.value && ids.includes(aTraiter.value.id)) aTraiter.value = null
+  grille.value?.setSelection([])
+  persisterDecote()
+}
+
+// Menu « Plus » : se referme au clic ailleurs.
+const menuLot = ref(null)
+const menuLotOuvert = ref(false)
+
+function fermerMenuLot(e) {
+  if (menuLotOuvert.value && menuLot.value && !menuLot.value.contains(e.target)) {
+    menuLotOuvert.value = false
+  }
+}
+onMounted(() => document.addEventListener('click', fermerMenuLot))
+onBeforeUnmount(() => document.removeEventListener('click', fermerMenuLot))
 
 function persisterDecote() {
   sessionStorage.setItem(CLE_DECOTE, JSON.stringify([...decote.value]))
@@ -1755,6 +2013,32 @@ onMounted(async () => {
   font-size: 0.75rem; font-weight: 500; color: var(--rose-600);
 }
 .orders__bulk-link:hover { text-decoration: underline; }
+
+.orders__search-report {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--space-4);
+  padding: var(--space-2) var(--space-4); margin-bottom: var(--space-3);
+  background: var(--cream-50); border-radius: var(--radius-md);
+  font-size: 0.8125rem; color: var(--gray-700);
+}
+.orders__search-missing { color: #92400e; }
+.orders__bulk-group { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+.orders__bulk-label { font-size: 0.75rem; color: var(--gray-500); }
+.orders__bulk-more { position: relative; }
+.orders__bulk-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 30;
+  min-width: 210px; padding: 4px;
+  background: #fff; border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(43, 33, 38, 0.12);
+}
+.orders__bulk-menu button {
+  display: block; width: 100%; text-align: left;
+  padding: 8px 10px; border: none; background: none; border-radius: 6px;
+  font-size: 0.8125rem; color: var(--gray-700); cursor: pointer;
+}
+.orders__bulk-menu button:hover { background: var(--rose-50); }
+.orders__bulk-menu .orders__bulk-menu--danger { color: #b91c1c; }
+.orders__bulk-menu .orders__bulk-menu--danger:hover { background: #fef2f2; }
+.orders__bulk-collect { margin: 6px 0 0; color: var(--gray-700); }
 
 .orders__bulk-result {
   position: relative;

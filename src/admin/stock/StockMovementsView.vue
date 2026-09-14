@@ -236,6 +236,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
@@ -264,7 +265,8 @@ const page       = ref(1)
 /** Pourquoi la liste est vide, quand elle l'est pour une mauvaise raison. */
 const chargementErreur = ref('')
 
-const filtres = ref({ search: '', type: '', direction: '', from: '', to: '' })
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const filtres = usePersistedRef('stock-movements', { search: '', type: '', direction: '', from: '', to: '' })
 
 function parametres() {
   const p = {}

@@ -134,7 +134,7 @@ const props = defineProps({
   highlightId:     { type: Number, default: null },
 })
 
-const emit = defineEmits(['selection-changed', 'total-changed', 'date-filter-changed', 'process', 'aside'])
+const emit = defineEmits(['selection-changed', 'total-changed', 'date-filter-changed', 'search-report', 'process', 'aside'])
 
 const CLE_DISPOSITION = 'rosa.grid.orders.v1'
 
@@ -146,6 +146,14 @@ const versionColonnes = ref(0)   // force le recalcul du menu après un changeme
 
 /** Sélection tenue ici : le tableau oublie les lignes des pages qu'il décharge. */
 const selection = new Set()
+
+/** Numéro de chaque commande déjà affichée : la sélection ne garde que des identifiants. */
+const numerosVus = new Map()
+
+/** Numéros des commandes cochées, y compris sur les pages déchargées. */
+function selectedNumbers() {
+  return [...selection].map((id) => numerosVus.get(id)).filter(Boolean)
+}
 
 // ── Apparence ────────────────────────────────────────────────────────────────
 
@@ -433,6 +441,8 @@ const datasource = {
         const n = Number(data.meta?.total ?? data.total ?? 0)
         total.value = n
         emit('total-changed', n)
+        ;(data.data ?? []).forEach((o) => numerosVus.set(o.id, o.number))
+        emit('search-report', data.search ?? null)
         params.successCallback(data.data ?? [], n)
       })
       .catch((e) => {
@@ -512,6 +522,11 @@ async function setDateFilter(model) {
   if (!gridApi) return
   await gridApi.setColumnFilterModel('created_at', model)
   gridApi.onFilterChanged()
+}
+
+/** Retire les filtres de toutes les colonnes, date comprise. */
+function clearColumnFilters() {
+  gridApi?.setFilterModel(null)
 }
 
 function onFilterChanged() {
@@ -619,7 +634,7 @@ onBeforeUnmount(() => {
   clearTimeout(minuteurMemoire)
 })
 
-defineExpose({ refresh: recharger, reload: relirePage, setSelection, setDateFilter })
+defineExpose({ refresh: recharger, reload: relirePage, setSelection, setDateFilter, clearColumnFilters, selectedNumbers })
 </script>
 
 <style scoped>

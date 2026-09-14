@@ -345,6 +345,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import FormField    from '@/shared/components/ui/FormField.vue'
 import AppSelect    from '@/components/ui/AppSelect.vue'
 import { adminProgramApi } from './program.api'
@@ -369,8 +370,9 @@ const stats = ref(null)
 // ── Membres ───────────────────────────────────────────────────────────────
 const members       = ref([])
 const membersLoading= ref(false)
-const memberSearch  = ref('')
-const memberTierFilter = ref('')
+// Conservés d'une visite à l'autre, comme sur les autres listes.
+const memberSearch     = usePersistedRef('program.members.search', '')
+const memberTierFilter = usePersistedRef('program.members.tier', '')
 
 const filteredMembers = computed(() => {
   let list = members.value

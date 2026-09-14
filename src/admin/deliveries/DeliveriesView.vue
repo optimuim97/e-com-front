@@ -235,6 +235,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { usePersistedFilters } from '@/admin/utils/persistedFilters'
 import api from '@/api'
 import AdminPagination from '@/admin/components/AdminPagination.vue'
 
@@ -245,12 +246,15 @@ const stats      = ref({})
 const loading    = ref(true)
 const pagination = ref({ last_page: 1, current_page: 1, total: 0 })
 
-const filters = reactive({
+// Conservés d'une visite à l'autre, comme sur les autres listes — sauf la
+// page : revenir en page 4 d'une liste qui a bougé depuis n'aide personne.
+const filters = usePersistedFilters('deliveries', {
   status:     '',
   courier_id: '',
   search:     '',
   page:       1,
 })
+filters.page = 1
 
 const showCreate  = ref(false)
 const createForm  = ref({ order_number: '', payment_flow: 'COD', product_amount: 0, delivery_fee: 0, courier_id: '', notes: '' })
