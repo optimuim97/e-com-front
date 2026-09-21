@@ -229,6 +229,12 @@
       </button>
     </div>
 
+    <!--
+      Extractions par transporteur, toujours visibles : c'est le geste
+      quotidien de l'agente, il n'a pas à être caché derrière « Exporter ».
+    -->
+    <ExtractionPanel @extracted="fetchOrders" />
+
     <!-- Export panel -->
     <div v-if="showExport" class="card export-panel">
       <h3 class="export-panel__title">
@@ -561,6 +567,7 @@ import api from '@/api'
 import OrderQuickActionModal from './OrderQuickActionModal.vue'
 import DeliveryRouteMap from './DeliveryRouteMap.vue'
 import ZoneExportPreviewModal from './ZoneExportPreviewModal.vue'
+import ExtractionPanel from './ExtractionPanel.vue'
 import OrdersGrid from './OrdersGrid.vue'
 import { useOrderStatsStore } from '@/admin/stores/orderStats.store'
 import { useSettingsStore } from '@/stores/settings'

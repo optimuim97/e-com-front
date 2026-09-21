@@ -5,5 +5,8 @@ export const checkoutApi = {
   placeOrder: (payload) => api.post('/orders', payload),
 
   /** Valide un code promo et retourne { discount, type, value } */
-  validateCoupon: (code) => api.post('/coupons/validate', { code }),
+  // Les lignes accompagnent le code : le serveur chiffre lui-même la remise.
+  // Un coupon ciblé, ou un panier contenant des articles déjà remisés, ne se
+  // calcule pas sans savoir ce qui est acheté.
+  validateCoupon: (code, items = []) => api.post('/coupons/validate', { code, items }),
 }

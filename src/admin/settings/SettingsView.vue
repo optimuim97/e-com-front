@@ -427,6 +427,36 @@
               </div>
             </div>
 
+            <!--
+              Transit times behind the delivery date shown to customers. Abidjan
+              is not listed: it is delivered the day after its extraction.
+            -->
+            <div class="field transit">
+              <label class="label">Durée de transport annoncée aux clientes</label>
+              <p class="hint">
+                En jours, à compter du départ de la boutique (lendemain de l'extraction de 21 h).
+                Abidjan : livraison le lendemain de l'extraction, sans réglage.
+              </p>
+              <div class="transit__grid">
+                <span></span>
+                <span class="transit__head">Minimum</span>
+                <span class="transit__head">Maximum</span>
+                <template v-for="z in transitZones" :key="z.key">
+                  <span class="transit__zone">{{ z.label }}</span>
+                  <input
+                    v-model.number="form[`delivery_transit_${z.key}_min`]"
+                    type="number" min="0" max="60" class="input"
+                    :placeholder="String(z.min)"
+                  />
+                  <input
+                    v-model.number="form[`delivery_transit_${z.key}_max`]"
+                    type="number" min="0" max="60" class="input"
+                    :placeholder="String(z.max)"
+                  />
+                </template>
+              </div>
+            </div>
+
             <label class="settings-toggle">
               <button
                 type="button"
@@ -1272,6 +1302,14 @@ const tabs = [
   },
 ];
 
+// Zones with a configurable transit time; placeholders mirror the server
+// defaults (DeliveryEstimate::TRANSIT_DEFAULTS).
+const transitZones = [
+  { key: "interior", label: "Hors Abidjan", min: 1, max: 2 },
+  { key: "sous_region", label: "Sous-région", min: 3, max: 7 },
+  { key: "international", label: "International (DHL)", min: 3, max: 5 },
+];
+
 const form = ref({
   // Boutique
   shop_name: "",
@@ -1297,6 +1335,14 @@ const form = ref({
   shipping_free_threshold: "",
   shipping_delay: "",
   shipping_delay_en: "",
+  // Transit times (days) behind the customer delivery date. Empty = the
+  // server default shown as placeholder.
+  delivery_transit_interior_min: "",
+  delivery_transit_interior_max: "",
+  delivery_transit_sous_region_min: "",
+  delivery_transit_sous_region_max: "",
+  delivery_transit_international_min: "",
+  delivery_transit_international_max: "",
   shipping_zones: "",
   shipping_pickup_enabled: "false",
   // Paiement
@@ -2099,5 +2145,20 @@ onMounted(async () => {
 }
 .settings-save-btn svg {
   flex-shrink: 0;
+}
+
+/* ── Transit times ── */
+.transit__grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) 110px 110px;
+  gap: 8px 12px;
+  align-items: center;
+  margin-top: 8px;
+  max-width: 480px;
+}
+.transit__head { font-size: 0.75rem; color: var(--gray-500); font-weight: 600; }
+.transit__zone { font-size: 0.875rem; color: var(--gray-700); }
+@media (max-width: 480px) {
+  .transit__grid { grid-template-columns: 1fr 80px 80px; }
 }
 </style>

@@ -33,6 +33,7 @@
               <th>Type</th>
               <th>Valeur</th>
               <th>Min. commande</th>
+              <th>Porte sur</th>
               <th>Utilisations</th>
               <th>Expiration</th>
               <th>Statut</th>
@@ -42,14 +43,24 @@
           <tbody>
             <tr v-for="coupon in coupons" :key="coupon.id">
               <td class="admin-table__mono coupon-code">{{ coupon.code }}</td>
-              <td>{{ coupon.type === 'percent' ? 'Pourcentage' : 'Montant fixe' }}</td>
+              <td>{{ coupon.type === 'percentage' ? 'Pourcentage' : 'Montant fixe' }}</td>
               <td class="admin-table__client">
-                {{ coupon.type === 'percent' ? coupon.value + '%' : formatPrice(coupon.value) }}
+                {{ coupon.type === 'percentage' ? coupon.value + '%' : formatPrice(coupon.value) }}
               </td>
-              <td>{{ coupon.min_order ? formatPrice(coupon.min_order) : '—' }}</td>
+              <td>{{ coupon.minimum_amount ? formatPrice(coupon.minimum_amount) : '—' }}</td>
+              <td>
+                <span v-if="!coupon.products?.length" class="coupon-scope">Tout le panier</span>
+                <span
+                  v-else
+                  class="coupon-scope coupon-scope--targeted"
+                  :title="coupon.products.map(p => p.name).join(', ')"
+                >
+                  {{ coupon.products.length }} article{{ coupon.products.length > 1 ? 's' : '' }}
+                </span>
+              </td>
               <td>
                 {{ coupon.used_count ?? 0 }}
-                <span v-if="coupon.max_uses" class="coupon-max">/ {{ coupon.max_uses }}</span>
+                <span v-if="coupon.usage_limit" class="coupon-max">/ {{ coupon.usage_limit }}</span>
               </td>
               <td>{{ coupon.expires_at ? formatDate(coupon.expires_at) : '—' }}</td>
               <td>
@@ -101,17 +112,62 @@
 
               <div>
                 <label class="label">Min. commande</label>
-                <input v-model.number="form.min_order" type="number" min="0" class="input" placeholder="5000" />
+                <input v-model.number="form.minimum_amount" type="number" min="0" class="input" placeholder="5000" />
               </div>
 
               <div>
                 <label class="label">Utilisations max</label>
-                <input v-model.number="form.max_uses" type="number" min="0" class="input" placeholder="100" />
+                <input v-model.number="form.usage_limit" type="number" min="1" class="input" placeholder="100" />
               </div>
 
               <div class="modal__full">
                 <label class="label">Date d'expiration</label>
                 <input v-model="form.expires_at" type="date" class="input" />
+              </div>
+
+              <!--
+                Ciblage : sans article, le code porte sur toute la commande.
+                Avec, il ne remise que ces articles-là — de quoi écouler une
+                référence sans brader le reste du panier.
+              -->
+              <div class="modal__full">
+                <label class="label">
+                  Articles ciblés
+                  <span class="coupon-hint">— vide = tout le panier</span>
+                </label>
+
+                <input
+                  v-model="productSearch"
+                  type="search"
+                  class="input"
+                  placeholder="Rechercher un article…"
+                />
+
+                <ul v-if="productMatches.length" class="coupon-picker__results">
+                  <li v-for="p in productMatches" :key="p.id">
+                    <button type="button" class="coupon-picker__add" @click="addProduct(p)">
+                      + {{ p.name }}
+                    </button>
+                  </li>
+                </ul>
+                <p v-else-if="productSearch.trim()" class="coupon-picker__empty">
+                  Aucun article ne correspond.
+                </p>
+
+                <ul v-if="form.products.length" class="coupon-chips">
+                  <li v-for="p in form.products" :key="p.id" class="coupon-chip">
+                    {{ p.name }}
+                    <button
+                      type="button"
+                      class="coupon-chip__x"
+                      aria-label="Retirer"
+                      @click="removeProduct(p.id)"
+                    >×</button>
+                  </li>
+                </ul>
+                <p v-else class="coupon-picker__all">
+                  Ce code s'appliquera à l'ensemble du panier.
+                </p>
               </div>
 
               <div class="modal__full modal__toggle-row">
@@ -143,7 +199,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import api from '@/api'
 import { PlusIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 
@@ -154,29 +210,77 @@ const editingId = ref(null)
 const saving = ref(false)
 const formError = ref('')
 
+/* ── Sélecteur d'articles ciblés ──────────────────────────────────────────
+   Le catalogue est chargé une fois à l'ouverture de l'écran : il tient en
+   quelques dizaines de références, une recherche serveur à chaque frappe
+   coûterait plus qu'elle ne rapporte. */
+const catalogue     = ref([])
+const productSearch = ref('')
+
+const productMatches = computed(() => {
+  const q = productSearch.value.trim().toLowerCase()
+  if (!q) return []
+
+  const dejaPris = new Set(form.products.map(p => p.id))
+
+  return catalogue.value
+    .filter(p => !dejaPris.has(p.id) && p.name.toLowerCase().includes(q))
+    .slice(0, 6)
+})
+
+function addProduct(product) {
+  form.products.push({ id: product.id, name: product.name })
+  productSearch.value = ''
+}
+
+function removeProduct(id) {
+  form.products = form.products.filter(p => p.id !== id)
+}
+
+async function fetchCatalogue() {
+  try {
+    const { data } = await api.get('/admin/products', { params: { per_page: 200 } })
+    catalogue.value = (data.data ?? data ?? []).map(p => ({ id: p.id, name: p.name }))
+  } catch {
+    // Le ciblage devient inutilisable, le reste du formulaire reste valable.
+    catalogue.value = []
+  }
+}
+
 const couponTypeOptions = [
   { value: 'percentage', label: 'Pourcentage (%)' },
   { value: 'fixed',      label: 'Montant fixe (FCFA)' },
 ]
 
+/*
+ * Les noms suivent ceux de l'API. Le formulaire envoyait `min_order`,
+ * `max_uses` et un type « percent » : les deux premiers n'existent pas côté
+ * serveur et partaient à la poubelle sans un mot, le troisième était refusé par
+ * la validation. Le minimum d'achat et la limite d'usage saisis ici n'étaient
+ * donc jamais enregistrés.
+ */
 const form = reactive({
   code: '',
-  type: 'percent',
+  type: 'percentage',
   value: '',
-  min_order: '',
-  max_uses: '',
+  minimum_amount: '',
+  usage_limit: '',
   expires_at: '',
   is_active: true,
+  // Articles visés. Vide = le code porte sur tout le panier.
+  products: [],
 })
 
 function resetForm() {
   form.code = ''
-  form.type = 'percent'
+  form.type = 'percentage'
   form.value = ''
-  form.min_order = ''
-  form.max_uses = ''
+  form.minimum_amount = ''
+  form.usage_limit = ''
   form.expires_at = ''
   form.is_active = true
+  form.products = []
+  productSearch.value = ''
   formError.value = ''
 }
 
@@ -191,10 +295,12 @@ function openEdit(coupon) {
   form.code = coupon.code
   form.type = coupon.type
   form.value = coupon.value
-  form.min_order = coupon.min_order ?? ''
-  form.max_uses = coupon.max_uses ?? ''
+  form.minimum_amount = coupon.minimum_amount ?? ''
+  form.usage_limit = coupon.usage_limit ?? ''
   form.expires_at = coupon.expires_at ? coupon.expires_at.substring(0, 10) : ''
   form.is_active = coupon.is_active
+  form.products = (coupon.products ?? []).map(p => ({ id: p.id, name: p.name }))
+  productSearch.value = ''
   formError.value = ''
   showModal.value = true
 }
@@ -222,10 +328,13 @@ async function saveCoupon() {
       code: form.code.toUpperCase(),
       type: form.type,
       value: form.value,
-      min_order: form.min_order || null,
-      max_uses: form.max_uses || null,
+      minimum_amount: form.minimum_amount || null,
+      usage_limit: form.usage_limit || null,
       expires_at: form.expires_at || null,
       is_active: form.is_active,
+      // Toujours envoyé, tableau vide compris : c'est ainsi qu'on retire le
+      // ciblage d'un coupon pour le rendre à nouveau applicable partout.
+      product_ids: form.products.map(p => p.id),
     }
     if (editingId.value) {
       await api.patch(`/admin/coupons/${editingId.value}`, payload)
@@ -260,7 +369,10 @@ function formatPrice(val) {
   return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XOF', maximumFractionDigits: 0 }).format(val ?? 0)
 }
 
-onMounted(fetchCoupons)
+onMounted(() => {
+  fetchCoupons()
+  fetchCatalogue()
+})
 </script>
 
 <style scoped>
@@ -351,4 +463,83 @@ onMounted(fetchCoupons)
   margin-top: var(--space-2);
 }
 .modal__actions .btn { flex: 1; justify-content: center; }
+
+/* ── Ciblage d'articles ── */
+.coupon-hint {
+  font-weight: 400;
+  color: var(--gray-400);
+  font-size: 0.75rem;
+}
+
+.coupon-picker__results {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 4px;
+  border: 1px solid var(--cream-200);
+  border-radius: var(--radius-md, 8px);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.coupon-picker__add {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: var(--gray-700);
+}
+.coupon-picker__add:hover { background: var(--rose-50); color: var(--rose-600); }
+
+.coupon-picker__empty,
+.coupon-picker__all {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.coupon-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+
+.coupon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--rose-50);
+  color: var(--rose-600);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.coupon-chip__x {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+.coupon-chip__x:hover { color: var(--rose-700); }
+
+.coupon-scope { font-size: 0.8125rem; color: var(--gray-500); }
+.coupon-scope--targeted {
+  color: var(--rose-600);
+  font-weight: 600;
+  cursor: help;
+}
 </style>

@@ -543,6 +543,14 @@
             </div>
             <p v-if="couponError" class="co-msg co-msg--error">{{ couponError }}</p>
             <p v-if="couponApplied" class="co-msg co-msg--success">{{ $t('drawer.discountApplied') }}</p>
+            <!--
+              Code ciblé : la cliente doit savoir pourquoi la remise ne porte
+              pas sur tout son panier, sinon l'écart avec le taux annoncé passe
+              pour une erreur.
+            -->
+            <p v-if="couponTargets.length" class="co-msg co-coupon-scope">
+              {{ $t('checkout.couponOnlyOn', { products: couponTargets.join(', ') }) }}
+            </p>
           </div>
 
           <!-- Bouton confirmer — visible uniquement à l'étape 3 -->
@@ -867,11 +875,29 @@ const couponApplied  = ref(false)
 const couponDiscount = ref(0)
 const couponError    = ref('')
 const couponLoading  = ref(false)
+// Montant chiffré par le serveur, et articles visés quand le code est ciblé.
+const couponAmount   = ref(0)
+const couponProducts = ref([])
 
+/**
+ * Montant de la réduction.
+ *
+ * Toujours une valeur venue du serveur : celle du panier quand le code y était
+ * déjà posé, celle de la validation sinon. Le calcul local qui la remplaçait
+ * ignorait aussi bien le ciblage que l'exclusion des articles en promotion, et
+ * annonçait donc une remise que la commande ne tenait pas.
+ */
 const discountAmount = computed(() => {
   if (!couponApplied.value) return 0
   if (couponFromCart.value) return Number(cartStore.cart.discount ?? 0)
-  return Number(cartStore.subtotal) * couponDiscount.value / 100
+  return couponAmount.value
+})
+
+/** Le code ne vaut-il que pour certains articles ? */
+const couponTargets = computed(() => {
+  if (!couponApplied.value) return []
+  if (couponFromCart.value) return cartStore.coupon?.products ?? []
+  return couponProducts.value.map(p => p.name)
 })
 
 const couponLabelSuffix = computed(() => {
@@ -975,14 +1001,32 @@ onMounted(() => {
 })
 
 // ── Actions ────────────────────────────────────────────────────────────────────
+/**
+ * Valide le code et récupère le montant réellement accordé.
+ *
+ * La remise était devinée ici (`sous-total × valeur / 100`), donc fausse dès
+ * qu'un article était déjà en promotion — et impossible à deviner du tout pour
+ * un coupon ciblé, qui ne mord que sur certains articles. C'est le serveur qui
+ * la chiffre maintenant, sur les lignes du panier.
+ */
 async function applyCoupon() {
   if (!couponCode.value.trim()) return
   couponLoading.value = true
   couponError.value   = ''
   try {
-    const { data } = await checkoutApi.validateCoupon(couponCode.value)
+    const { data } = await checkoutApi.validateCoupon(
+      couponCode.value,
+      cartStore.items.map(i => ({
+        product_id: i.product_id,
+        variant_id: i.variant_id ?? null,
+        quantity:   i.quantity,
+      })),
+    )
     couponApplied.value  = true
-    couponDiscount.value = data.discount ?? 10
+    couponFromCart.value = false
+    couponDiscount.value = data.discount ?? 0
+    couponAmount.value   = Number(data.discount_amount ?? 0)
+    couponProducts.value = data.products ?? []
   } catch (e) {
     couponError.value = e.response?.data?.message ?? t('checkout.couponInvalid')
   } finally {
@@ -1506,6 +1550,8 @@ function formatPrice(val) {
 .co-msg { font-size: 0.8125rem; }
 .co-msg--error { color: #b91c1c; }
 .co-msg--success { color: #15803d; }
+/* Portée d'un code ciblé : une précision, pas une alerte. */
+.co-coupon-scope { color: var(--gray-500); margin-top: 2px; }
 
 .co-shipping-note {
   display: flex;

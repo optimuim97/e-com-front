@@ -59,6 +59,25 @@
             </button>
           </div>
 
+          <!--
+            Promised delivery date, computed server-side on the extraction
+            calendar. Rendered here from the structured value so it follows the
+            shop language; conditional while payment (or the fee) is missing.
+          -->
+          <div v-if="deliveryText" class="order-eta">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 7h11v9H3zM14 10h4l3 3v3h-7zM7 19a2 2 0 100-4 2 2 0 000 4zM17 19a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+            <div>
+              <strong>{{ deliveryText }}</strong>
+              <p v-if="order.delivery_estimate.conditional" class="order-eta__note">
+                {{ order.delivery_estimate.zone === 'sous_region' || order.delivery_estimate.zone === 'international'
+                  ? $t('orders.etaConditionalAbroad')
+                  : $t('orders.etaConditional') }}
+              </p>
+            </div>
+          </div>
+
           <!-- Tracking -->
           <div v-if="order.tracking_number" class="order-tracking">
             <strong>{{ $t('orders.trackingNumber') }} :</strong> {{ order.tracking_number }}
@@ -606,6 +625,27 @@ function formatDate(val) {
   if (!val) return '—'
   return new Date(val).toLocaleDateString(locale.value, { day: '2-digit', month: 'long', year: 'numeric' })
 }
+
+/**
+ * A calendar day ("2026-09-23") as a weekday phrase. Built from its parts, not
+ * parsed as an ISO string: `new Date('2026-09-23')` is UTC midnight, which a
+ * customer in the Americas would see as the day before.
+ */
+function formatDay(ymd) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleDateString(locale.value, {
+    weekday: 'long', day: 'numeric', month: 'long',
+  })
+}
+
+const deliveryText = computed(() => {
+  const eta = order.value?.delivery_estimate
+  if (!eta) return ''
+
+  if (eta.firm) return t('orders.etaFirm', { date: formatDay(eta.from) })
+  if (eta.from === eta.to) return t('orders.etaOn', { date: formatDay(eta.from) })
+  return t('orders.etaRange', { from: formatDay(eta.from), to: formatDay(eta.to) })
+})
 
 function formatPrice(val) {
   return useCurrencyStore().format(val ?? 0)
@@ -1164,6 +1204,21 @@ onBeforeUnmount(() => clearInterval(minuteur))
 .order-pdf-btn__spin {
   animation: spin 0.7s linear infinite;
 }
+
+.order-eta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: #f0fdf4;
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: #166534;
+}
+.order-eta svg { flex: 0 0 auto; margin-top: 1px; }
+.order-eta strong { font-weight: 600; }
+.order-eta__note { margin: 2px 0 0; font-size: 0.75rem; color: #3f6212; }
 
 .order-tracking {
   margin-top: var(--space-4);

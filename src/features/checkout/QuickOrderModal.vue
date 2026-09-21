@@ -495,6 +495,47 @@
                 <p v-if="fieldErrors.payment" class="qo-required">{{ $t('quickOrder.required') }}</p>
               </div>
 
+              <!--
+                Code promo. Le tunnel classique en a toujours eu un ; la
+                commande rapide, non — une cliente à qui on venait d'envoyer un
+                code devait repasser par le panier pour s'en servir.
+              -->
+              <div class="qo-field" data-field="coupon">
+                <label class="label">
+                  {{ $t('quickOrder.coupon') }}
+                  <span class="qo-optional">({{ $t('quickOrder.noteOptional') }})</span>
+                </label>
+                <div class="qo-coupon">
+                  <input
+                    v-model="couponCode"
+                    type="text"
+                    class="input qo-coupon__input"
+                    :placeholder="$t('quickOrder.couponPlaceholder')"
+                    :disabled="couponApplied"
+                    @keydown.enter.prevent="applyCoupon"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline btn-sm qo-coupon__btn"
+                    :disabled="couponLoading || couponApplied || !couponCode.trim()"
+                    @click="couponApplied ? null : applyCoupon()"
+                  >
+                    {{ couponLoading ? '…' : (couponApplied ? '✓' : $t('common.apply')) }}
+                  </button>
+                  <button
+                    v-if="couponApplied"
+                    type="button"
+                    class="qo-coupon__clear"
+                    :aria-label="$t('common.delete')"
+                    @click="clearCoupon"
+                  >×</button>
+                </div>
+                <p v-if="couponError" class="qo-required">{{ couponError }}</p>
+                <p v-if="couponApplied && couponTargets.length" class="qo-coupon__scope">
+                  {{ $t('checkout.couponOnlyOn', { products: couponTargets.join(', ') }) }}
+                </p>
+              </div>
+
               <div class="qo-field">
                 <label class="label">{{ $t('quickOrder.note') }} <span class="qo-optional">({{ $t('quickOrder.noteOptional') }})</span></label>
                 <input v-model="form.note" type="text" class="input" :placeholder="$t('quickOrder.notePlaceholder')" />
@@ -533,6 +574,10 @@
               <span>{{ $t('quickOrder.itemsLine') }}</span>
               <span>{{ fmtPrice(cartTotal) }}</span>
             </div>
+            <div v-if="couponAmount > 0" class="qo-total__ligne qo-total__ligne--remise">
+              <span>{{ $t('common.discount') }}</span>
+              <span>−{{ fmtPrice(couponAmount) }}</span>
+            </div>
             <div class="qo-total__ligne">
               <span>{{ $t('common.shipping') }}</span>
               <span :class="{ 'qo-total__attente': shippingPending }">{{ shippingLabel }}</span>
@@ -547,7 +592,7 @@
           <div class="qo-footer__action">
             <div class="qo-total qo-total--final">
               <span>Total</span>
-              <strong>{{ fmtPrice(cartTotal + shippingCost) }}</strong>
+              <strong>{{ fmtPrice(Math.max(0, cartTotal - couponAmount) + shippingCost) }}</strong>
             </div>
             <button
               type="submit"
@@ -950,6 +995,58 @@ onMounted(() => {
   if (u.email && !u.is_generated_email) { form.value.email = u.email; prefilled.value.email = true }
 })
 
+/* ── Code promo ───────────────────────────────────────────────────────────
+   Le montant vient du serveur, jamais d'un calcul local : un code ciblé ne
+   remise que certains articles, et un article déjà en promotion en est exclu.
+   Le total affiché doit être celui qui sera facturé. */
+const couponCode     = ref('')
+const couponApplied  = ref(false)
+const couponAmount   = ref(0)
+const couponProducts = ref([])
+const couponError    = ref('')
+const couponLoading  = ref(false)
+
+const couponTargets = computed(() => couponProducts.value.map(p => p.name))
+
+async function applyCoupon() {
+  const code = couponCode.value.trim()
+  if (!code) return
+
+  couponLoading.value = true
+  couponError.value   = ''
+  try {
+    const { data } = await api.post('/coupons/validate', {
+      code,
+      items: cartItems.value.map(i => ({
+        product_id: i.product_id,
+        variant_id: i.variant_id ?? null,
+        quantity:   i.quantity,
+      })),
+    })
+    couponApplied.value  = true
+    couponAmount.value   = Number(data.discount_amount ?? 0)
+    couponProducts.value = data.products ?? []
+  } catch (e) {
+    couponError.value = e.response?.data?.message ?? t('checkout.couponInvalid')
+  } finally {
+    couponLoading.value = false
+  }
+}
+
+function clearCoupon() {
+  couponCode.value     = ''
+  couponApplied.value  = false
+  couponAmount.value   = 0
+  couponProducts.value = []
+  couponError.value    = ''
+}
+
+/* Le panier change → l'assiette du code aussi. Le remettre à zéro vaut mieux
+   que d'afficher une remise calculée sur un panier qui n'existe plus. */
+watch(cartItems, () => {
+  if (couponApplied.value) clearCoupon()
+}, { deep: true })
+
 const submitting     = ref(false)
 const error          = ref('')
 const confirmed      = ref(false)
@@ -1179,6 +1276,9 @@ async function submit() {
       // le fixe après avoir arrêté les frais et la douane avec la cliente.
       payment_method: estInternational.value ? null : form.value.payment,
       note:           form.value.note || null,
+      // Le code part, pas le montant : le serveur le rechiffre sur les lignes
+      // réelles. Un code devenu inapplicable est ignoré, sans perdre la vente.
+      coupon_code:    couponApplied.value ? couponCode.value.trim() : null,
       items,
     })
 
@@ -1842,6 +1942,30 @@ function fmtPrice(val) {
   justify-content: space-between;
   gap: var(--space-3);
 }
+.qo-total__ligne--remise > span { color: var(--rose-600); }
+
+/* ── Code promo ── */
+.qo-coupon { display: flex; align-items: center; gap: var(--space-2); }
+.qo-coupon__input { flex: 1; min-width: 0; text-transform: uppercase; }
+.qo-coupon__input:disabled { background: var(--cream-50); color: var(--gray-500); }
+.qo-coupon__btn { flex: 0 0 auto; }
+.qo-coupon__clear {
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  color: var(--gray-400);
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+.qo-coupon__clear:hover { color: var(--rose-600); }
+.qo-coupon__scope {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
 .qo-total__ligne > span:last-child {
   font-weight: 600;
   color: var(--gray-700);
