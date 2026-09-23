@@ -158,6 +158,7 @@ const NAV_GROUPS = [
       { to: '/admin/tournees',        label: 'Tournées',          icon: ClipboardDocumentCheckIcon, permission: 'rounds.view' },
       { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon,  permission: 'deliveries.view'     },
       { to: '/admin/delivery-zones',  label: 'Zones de livraison', icon: MapPinIcon, permission: 'delivery_zones.view' },
+      { to: '/admin/localites',       label: 'Villes et communes', icon: MapPinIcon, permission: 'localities.view' },
     ],
   },
   {
@@ -231,6 +232,7 @@ const TITLES = {
   'admin.rounds':              'Tournées',
   'admin.deliveries':          'Livraisons',
   'admin.delivery-zones':      'Zones de livraison',
+  'admin.localities':          'Villes et communes',
   'admin.weekly-stock':        'Stock de la semaine',
   'admin.stock-movements':     'Mouvements de stock',
   'admin.purchase-orders':     "Bons d'achat",

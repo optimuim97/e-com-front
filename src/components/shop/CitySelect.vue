@@ -182,7 +182,7 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
-import { citiesCI } from '@/data/cities-ci.js'
+import { localities, chargerLocalites } from '@/data/localities.js'
 import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc } from '@/data/abidjan-communes.js'
 
 /*
@@ -194,7 +194,14 @@ import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc } from '@/data/ab
  */
 onMounted(chargerCommunesAbidjan)
 
-const villes = computed(() => citiesCI.map(v =>
+/*
+ * Les villes et communes viennent de l'administration (table localities) :
+ * une localité ajoutée là devient choisissable sans redéploiement. Le
+ * découpage administratif figé dans le bundle sert de repli.
+ */
+onMounted(chargerLocalites)
+
+const villes = computed(() => localities.value.map(v =>
   v.name === 'Abidjan' ? { ...v, communes: communesAbidjan.value } : v
 ))
 
@@ -229,9 +236,9 @@ const manualCity    = ref('')
 const manualCommune = ref('')
 
 // Suggestions de villes pour le datalist (toutes les villes CI, triées)
-const citySuggestions = citiesCI
+const citySuggestions = computed(() => villes.value
   .map(c => c.name)
-  .sort((a, b) => a.localeCompare(b, 'fr'))
+  .sort((a, b) => a.localeCompare(b, 'fr')))
 
 function enableManual() {
   manualMode.value    = true

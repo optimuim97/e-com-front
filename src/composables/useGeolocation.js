@@ -2,7 +2,7 @@
  * Géolocalisation inverse → matching zones de livraison CI
  * Utilise Nominatim (OpenStreetMap) — gratuit, sans clé API.
  */
-import { citiesCI } from '@/data/cities-ci.js'
+import { localities } from '@/data/localities.js'
 
 /** Supprime accents, tirets et espaces + minuscules — pour comparaison floue */
 function norm(s) {
@@ -27,7 +27,7 @@ function fuzzyFind(list, key, candidate) {
  * Géocode inverse via Nominatim.
  * @returns {Promise<{
  *   inCI: boolean,
- *   city: object|null,       // entrée citiesCI complète
+ *   city: object|null,       // entrée localities complète
  *   commune: string|null,    // nom de commune matched
  *   road: string,            // adresse rue (peut être vide)
  *   cityName?: string,       // si hors CI
@@ -75,7 +75,7 @@ export async function reverseGeocodeCI(lat, lng) {
 
   // 1. Match ville directement
   for (const cand of cityCandidates) {
-    foundCity = fuzzyFind(citiesCI, c => c.name, cand)
+    foundCity = fuzzyFind(localities.value, c => c.name, cand)
     if (foundCity) break
   }
 
@@ -93,7 +93,7 @@ export async function reverseGeocodeCI(lat, lng) {
   if (!foundCity || (!foundCommune && communeCandidates.length)) {
     for (const cand of communeCandidates) {
       const n = norm(cand)
-      for (const city of citiesCI) {
+      for (const city of localities.value) {
         const match = city.communes.find(c => norm(c) === n)
           ?? city.communes.find(c => norm(c).includes(n) || n.includes(norm(c)))
         if (match) {

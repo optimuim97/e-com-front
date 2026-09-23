@@ -13,7 +13,7 @@
  * n'ajoute pas une seconde entrée du même nom.
  */
 import { computed } from 'vue'
-import { citiesCI } from '@/data/cities-ci.js'
+import { localities } from '@/data/localities.js'
 import { zonesLivraison, normalizeLoc } from '@/data/abidjan-communes.js'
 
 /** Zones ivoiriennes hors district d'Abidjan — celui-ci a son propre sélecteur. */
@@ -40,7 +40,7 @@ function tarifFerme(zone) {
 export const destinationsInterieur = computed(() => {
   const villes = new Map()
 
-  for (const ville of citiesCI) {
+  for (const ville of localities.value) {
     if (normalizeLoc(ville.name) === 'abidjan') continue
     villes.set(normalizeLoc(ville.name), {
       city:     ville.name,

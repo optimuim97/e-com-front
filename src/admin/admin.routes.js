@@ -38,6 +38,7 @@ export default {
     { path: 'tournees',                    name: 'admin.rounds',                 meta: { permission: 'rounds.view' },          component: () => import('./rounds/DeliveryRoundsView.vue') },
     { path: 'deliveries',                  name: 'admin.deliveries',             meta: { permission: 'deliveries.view' },      component: () => import('./deliveries/DeliveriesView.vue') },
     { path: 'delivery-zones',              name: 'admin.delivery-zones',         meta: { permission: 'delivery_zones.view' },  component: () => import('./delivery-zones/DeliveryZonesView.vue') },
+    { path: 'localites',                   name: 'admin.localities',             meta: { permission: 'localities.view' },      component: () => import('./localities/LocalitiesView.vue') },
     { path: 'mouvements-stock',            name: 'admin.stock-movements',        meta: { permission: 'stock.view' },           component: () => import('./stock/StockMovementsView.vue') },
     { path: 'stock-semaine',               name: 'admin.weekly-stock',           meta: { permission: 'stock.view' },           component: () => import('./stock/WeeklyStockView.vue') },
     { path: 'achats',                      name: 'admin.purchase-orders',        meta: { permission: 'purchases.view' },       component: () => import('./purchases/PurchaseOrdersView.vue') },
