@@ -307,6 +307,17 @@
     "onlineLimit": "Only {count} left for online sale this week.",
     "unavailable": "This item is not available online at the moment."
   },
+  "duplicate": {
+    "title": "You already have a similar order",
+    "lead": "An order with almost the same items is still on its way. If this really is a new order, confirm — otherwise cancel and follow that one.",
+    "placedOn": "Placed on {date}",
+    "confirm": "This is a new order",
+    "cancel": "Cancel"
+  },
+  "phone": {
+    "invalidCI": "Incomplete number: 10 digits expected, for example 07 00 00 00 00.",
+    "invalidAbroad": "This number looks incomplete for {country}. Please check it — it is how we will reach you."
+  },
   "checkout": {
     "eyebrow": "Complete my order",
     "title": "Just one more step",

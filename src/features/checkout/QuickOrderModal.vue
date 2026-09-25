@@ -224,6 +224,7 @@
                   :required="true"
                   :has-error="!!fieldErrors.phone"
                   :class="{ 'input--prefilled': prefilled.phone }"
+                  @validity="phoneValidity = $event"
                 />
                 <p v-if="fieldErrors.phone" class="qo-required">{{ $t('quickOrder.required') }}</p>
               </div>
@@ -608,6 +609,15 @@
 
       </div>
     </div>
+
+    <!-- Commande semblable déjà en cours : on demande avant de doubler -->
+    <DuplicateOrderDialog
+      v-if="duplicate"
+      :order="duplicate"
+      :busy="submitting"
+      @confirm="submit(true)"
+      @cancel="duplicate = null"
+    />
   </Teleport>
 </template>
 
@@ -618,6 +628,7 @@ import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
+import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan } from '@/data/cities-ci'
 import { filtrerDestinations } from '@/data/destinations-ci'
@@ -1049,6 +1060,16 @@ watch(cartItems, () => {
 
 const submitting     = ref(false)
 const error          = ref('')
+// Commande semblable déjà en cours, montrée avant d'en créer une seconde.
+const duplicate      = ref(null)
+
+/*
+ * Validité du téléphone rapportée par le champ. Bloquante en Côte d'Ivoire,
+ * où la règle est certaine et où le livreur appelle à la porte ; ailleurs la
+ * cliente est avertie sous le champ, sans être empêchée de commander.
+ */
+const phoneValidity  = ref({ valid: true, strict: true })
+const phoneBlocked   = computed(() => !phoneValidity.value.valid && phoneValidity.value.strict)
 const confirmed      = ref(false)
 const confirmedOrder = ref(null)
 
@@ -1236,7 +1257,7 @@ const wavePayUrl = computed(() => {
   return `${base}${sep}amount=${amount}`
 })
 
-async function submit() {
+async function submit(confirmDuplicate = false) {
   // Un `return` nu ici laissait la cliente devant un bouton sans effet.
   const premierManquant = validateRequired()
   if (premierManquant) {
@@ -1246,8 +1267,16 @@ async function submit() {
     return
   }
 
+  if (phoneBlocked.value) {
+    error.value = t('phone.invalidCI')
+    await nextTick()
+    focusField('phone')
+    return
+  }
+
   submitting.value = true
   error.value = ''
+  duplicate.value = null
 
   const items = cartItems.value.map(i => ({
     product_id: i.product_id,
@@ -1279,6 +1308,10 @@ async function submit() {
       // Le code part, pas le montant : le serveur le rechiffre sur les lignes
       // réelles. Un code devenu inapplicable est ignoré, sans perdre la vente.
       coupon_code:    couponApplied.value ? couponCode.value.trim() : null,
+      // Réponse à l'avertissement « vous avez déjà une commande semblable ».
+      // Elle voyage avec la demande : le serveur ne retient rien entre les
+      // deux appels, donc un rechargement ne peut pas doubler en silence.
+      confirm_duplicate: confirmDuplicate,
       items,
     })
 
@@ -1304,6 +1337,13 @@ async function submit() {
     }
 
   } catch (e) {
+    // 409 : une commande semblable est encore en cours. Rien n'a été écrit —
+    // on la montre, et la cliente décide.
+    if (e.response?.status === 409 && e.response.data?.duplicate_order) {
+      duplicate.value = e.response.data.duplicate_order
+      return
+    }
+
     error.value = e.response?.data?.message ?? t('quickOrder.errorOccurred')
   } finally {
     submitting.value = false

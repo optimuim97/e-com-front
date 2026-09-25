@@ -1,13 +1,19 @@
 <template>
-  <div
-    class="phone-wrap"
-    :class="{
-      'phone-wrap--focused': focused,
-      'phone-wrap--open':    open,
-      'phone-wrap--error':   hasError,
-    }"
-    ref="wrapRef"
-  >
+  <!--
+    Racine unique, et les attributs du parent (dont `class`) sont réacheminés
+    vers le champ lui-même : c'est lui qu'une classe comme `input--prefilled`
+    vient habiller. Avec deux racines, Vue ne les transmettrait plus du tout.
+  -->
+  <div class="phone-block" ref="wrapRef">
+    <div
+      class="phone-wrap"
+      v-bind="$attrs"
+      :class="{
+        'phone-wrap--focused': focused,
+        'phone-wrap--open':    open,
+        'phone-wrap--error':   hasError,
+      }"
+    >
     <!-- ── Trigger : drapeau + indicatif ── -->
     <button
       type="button"
@@ -84,12 +90,27 @@
           <li v-if="filtered.length === 0" class="phone-dropdown__empty">Aucun résultat</li>
         </ul>
       </div>
-    </Transition>
+      </Transition>
+    </div>
+
+    <!--
+      Dit ce qui cloche, une fois le champ quitté. En Côte d'Ivoire c'est une
+      erreur — la commande ne partira pas ; ailleurs un simple avertissement,
+      parce que nos règles y sont approximatives et ne doivent bloquer personne.
+    -->
+    <p v-if="showError" class="phone-msg" :class="{ 'phone-msg--hard': strict }">
+      {{ strict ? $t('phone.invalidCI') : $t('phone.invalidAbroad', { country: selected.name }) }}
+    </p>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+
+// Les attributs du parent vont au champ, pas au bloc qui le contient.
+defineOptions({ inheritAttrs: false })
+
+import { COUNTRIES, isStrictCountry, isValidNumber } from '@/data/phone-countries.js'
 
 // ── Props / Emits ─────────────────────────────────────────────────────────────
 const props = defineProps({
@@ -101,36 +122,11 @@ const props = defineProps({
   autocomplete: { type: String, default: 'tel' },
   defaultCountry: { type: String, default: 'CI' },
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'validity'])
 
 // ── Données pays ──────────────────────────────────────────────────────────────
-// `len` = nombre de chiffres nationaux attendus (sert de masque/limite).
-const COUNTRIES = [
-  { code: 'CI', name: "Côte d'Ivoire", flag: '🇨🇮', dial: '+225', len: 10 },
-  { code: 'SN', name: 'Sénégal',       flag: '🇸🇳', dial: '+221', len: 9  },
-  { code: 'ML', name: 'Mali',          flag: '🇲🇱', dial: '+223', len: 8  },
-  { code: 'BF', name: 'Burkina Faso',  flag: '🇧🇫', dial: '+226', len: 8  },
-  { code: 'GN', name: 'Guinée',        flag: '🇬🇳', dial: '+224', len: 9  },
-  { code: 'TG', name: 'Togo',          flag: '🇹🇬', dial: '+228', len: 8  },
-  { code: 'BJ', name: 'Bénin',         flag: '🇧🇯', dial: '+229', len: 10 },
-  { code: 'GH', name: 'Ghana',         flag: '🇬🇭', dial: '+233', len: 9  },
-  { code: 'NG', name: 'Nigeria',       flag: '🇳🇬', dial: '+234', len: 10 },
-  { code: 'CM', name: 'Cameroun',      flag: '🇨🇲', dial: '+237', len: 9  },
-  { code: 'MA', name: 'Maroc',         flag: '🇲🇦', dial: '+212', len: 9  },
-  { code: 'DZ', name: 'Algérie',       flag: '🇩🇿', dial: '+213', len: 9  },
-  { code: 'TN', name: 'Tunisie',       flag: '🇹🇳', dial: '+216', len: 8  },
-  { code: 'FR', name: 'France',        flag: '🇫🇷', dial: '+33',  len: 9  },
-  { code: 'BE', name: 'Belgique',      flag: '🇧🇪', dial: '+32',  len: 9  },
-  { code: 'CH', name: 'Suisse',        flag: '🇨🇭', dial: '+41',  len: 9  },
-  { code: 'DE', name: 'Allemagne',     flag: '🇩🇪', dial: '+49',  len: 11 },
-  { code: 'GB', name: 'Royaume-Uni',   flag: '🇬🇧', dial: '+44',  len: 10 },
-  { code: 'ES', name: 'Espagne',       flag: '🇪🇸', dial: '+34',  len: 9  },
-  { code: 'IT', name: 'Italie',        flag: '🇮🇹', dial: '+39',  len: 10 },
-  { code: 'PT', name: 'Portugal',      flag: '🇵🇹', dial: '+351', len: 9  },
-  { code: 'CA', name: 'Canada',        flag: '🇨🇦', dial: '+1',   len: 10 },
-  { code: 'US', name: 'États-Unis',    flag: '🇺🇸', dial: '+1',   len: 10 },
-]
-
+// La table vit dans phone-countries.js : le serveur applique la même (voir
+// PhoneNumber.php), et l'écran ne doit pas accepter ce que l'API refusera.
 // ── État interne ──────────────────────────────────────────────────────────────
 const wrapRef   = ref(null)
 const inputRef  = ref(null)
@@ -155,9 +151,33 @@ function formatDisplay(d) {
 
 /** Placeholder dynamique reflétant la longueur attendue du pays. */
 const dynamicPlaceholder = computed(() => {
-  const len = selected.value.len ?? 0
+  const len = selected.value.min ?? 0
   return len ? formatDisplay('0'.repeat(len)) : props.placeholder
 })
+
+/*
+ * Validité du numéro saisi.
+ *
+ * Le champ se contentait de tronquer à la longueur attendue : un numéro trop
+ * court passait pour bon, et la commande partait avec un téléphone injoignable
+ * — un colis qu'on ne peut pas remettre revient à la boutique.
+ */
+const valid = computed(() => isValidNumber(digits(), selected.value))
+
+/** En Côte d'Ivoire la règle est certaine, donc bloquante. Ailleurs on alerte. */
+const strict = computed(() => isStrictCountry(selected.value.code))
+
+/** Le message n'apparaît qu'une fois le champ quitté : pas de reproche en cours de frappe. */
+const touched = ref(false)
+const showError = computed(() => touched.value && digits() !== '' && !valid.value)
+
+function emitValidity() {
+  emit('validity', {
+    valid:   valid.value || digits() === '',
+    strict:  strict.value,
+    country: selected.value.code,
+  })
+}
 
 /** Valeur émise : "indicatif chiffres" (sans espaces). */
 function currentEmit() {
@@ -174,7 +194,7 @@ function parseValue(val) {
   for (const c of sorted) {
     if (val.startsWith(c.dial)) {
       selected.value    = c
-      localNumber.value = formatDisplay(val.slice(c.dial.length).replace(/\D/g, '').slice(0, c.len ?? 15))
+      localNumber.value = formatDisplay(val.slice(c.dial.length).replace(/\D/g, '').slice(0, c.max ?? 15))
       return
     }
   }
@@ -182,10 +202,16 @@ function parseValue(val) {
   localNumber.value = formatDisplay(val.replace(/\D/g, ''))
 }
 
-onMounted(() => parseValue(props.modelValue))
+onMounted(() => {
+  parseValue(props.modelValue)
+  emitValidity()
+})
 
 watch(() => props.modelValue, (v) => {
-  if (v !== currentEmit()) parseValue(v)
+  if (v !== currentEmit()) {
+    parseValue(v)
+    emitValidity()
+  }
 })
 
 // ── Filtre pays ───────────────────────────────────────────────────────────────
@@ -207,10 +233,11 @@ function onKeypress(e) {
 
 /** Sanitize + limite à la longueur du pays + reformate. */
 function onInput(e) {
-  const max = selected.value.len ?? 15
+  const max = selected.value.max ?? 15
   const d   = e.target.value.replace(/\D/g, '').slice(0, max)
   localNumber.value = formatDisplay(d)
   emit('update:modelValue', currentEmit())
+  emitValidity()
 }
 
 async function toggleDropdown() {
@@ -225,16 +252,17 @@ async function toggleDropdown() {
 async function selectCountry(c) {
   selected.value = c
   // Re-limiter le numéro à la longueur du nouveau pays
-  localNumber.value = formatDisplay(digits().slice(0, c.len ?? 15))
+  localNumber.value = formatDisplay(digits().slice(0, c.max ?? 15))
   open.value     = false
   search.value   = ''
   emit('update:modelValue', currentEmit())
+  emitValidity()
   await nextTick()
   inputRef.value?.focus()
 }
 
 function onFocus()  { focused.value = true  }
-function onBlur()   { focused.value = false }
+function onBlur()   { focused.value = false; touched.value = true }
 
 // Fermer au clic extérieur
 function onOutsideClick(e) {
@@ -247,6 +275,9 @@ onUnmounted(() => document.removeEventListener('click', onOutsideClick))
 </script>
 
 <style scoped>
+/* Bloc = champ + message éventuel. La largeur reste celle du champ. */
+.phone-block { width: 100%; }
+
 /* ── Wrapper — reproduit exactement .input ── */
 .phone-wrap {
   position: relative;
@@ -446,6 +477,15 @@ onUnmounted(() => document.removeEventListener('click', onOutsideClick))
   font-weight: 500;
   flex-shrink: 0;
 }
+
+/* Message de validité, sous le champ */
+.phone-msg {
+  margin: 4px 0 0;
+  padding-left: 14px;
+  font-size: 0.75rem;
+  color: #b45309;
+}
+.phone-msg--hard { color: #b91c1c; }
 
 .phone-dropdown__empty {
   padding: 12px 14px;

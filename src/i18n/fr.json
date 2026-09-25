@@ -307,6 +307,17 @@
     "onlineLimit": "Il n'en reste que {count} à la vente en ligne cette semaine.",
     "unavailable": "Cet article n'est plus disponible en ligne pour le moment."
   },
+  "duplicate": {
+    "title": "Vous avez déjà une commande similaire",
+    "lead": "Une commande contenant presque les mêmes articles est encore en cours. Si c'est bien une nouvelle commande, confirmez — sinon, annulez et suivez celle-ci.",
+    "placedOn": "Passée le {date}",
+    "confirm": "C'est une nouvelle commande",
+    "cancel": "Annuler"
+  },
+  "phone": {
+    "invalidCI": "Numéro incomplet : 10 chiffres attendus, par exemple 07 00 00 00 00.",
+    "invalidAbroad": "Ce numéro semble incomplet pour {country}. Vérifiez-le : c'est ainsi que nous vous joindrons."
+  },
   "checkout": {
     "eyebrow": "Finaliser ma commande",
     "title": "Plus qu'une étape",

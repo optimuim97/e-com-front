@@ -224,7 +224,12 @@
                 </CheckoutField>
               </div>
               <CheckoutField :def="FIELDS.phone" :error="fe('phone')">
-                <PhoneInput v-model="form.phone" placeholder="07 00 00 00" :required="true" />
+                <PhoneInput
+                  v-model="form.phone"
+                  placeholder="07 00 00 00"
+                  :required="true"
+                  @validity="phoneValidity = $event"
+                />
               </CheckoutField>
               <CheckoutField :def="FIELDS.email" :error="fe('email')">
                 <input v-model="form.email" type="email" class="input" :placeholder="$t('checkout.emailPlaceholder')" />
@@ -603,6 +608,15 @@
       v-if="showQuickOrder"
       @close="showQuickOrder = false"
     />
+
+    <!-- Commande semblable déjà en cours : on demande avant de doubler -->
+    <DuplicateOrderDialog
+      v-if="duplicate"
+      :order="duplicate"
+      :busy="submitting"
+      @confirm="confirmDuplicate"
+      @cancel="duplicate = null"
+    />
   </main>
 </template>
 
@@ -611,6 +625,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
 import { useCartStore }     from '@/features/cart/cart.store'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -875,6 +890,19 @@ const couponApplied  = ref(false)
 const couponDiscount = ref(0)
 const couponError    = ref('')
 const couponLoading  = ref(false)
+
+// Commande semblable déjà en cours, et la demande qui l'a déclenchée.
+const duplicate        = ref(null)
+const duplicatePayload = ref(null)
+
+/*
+ * Validité du téléphone, telle que le champ la rapporte. Bloquante seulement
+ * là où la règle est certaine — la Côte d'Ivoire. Ailleurs, la cliente est
+ * avertie sous le champ et la commande passe : nos règles y sont des
+ * approximations, et le serveur applique exactement la même distinction.
+ */
+const phoneValidity = ref({ valid: true, strict: true })
+const phoneBlocked  = computed(() => !phoneValidity.value.valid && phoneValidity.value.strict)
 // Montant chiffré par le serveur, et articles visés quand le code est ciblé.
 const couponAmount   = ref(0)
 const couponProducts = ref([])
@@ -1069,12 +1097,31 @@ function buildPayload() {
 }
 
 async function submitOrder() {
+  if (phoneBlocked.value) {
+    submitError.value = t('phone.invalidCI')
+    currentStep.value = 1
+    return
+  }
+
   await placeOrder(buildPayload())
+}
+
+/**
+ * Places the same order again, this time saying it is a new one.
+ *
+ * The server holds nothing between the two calls: the answer travels with the
+ * payload, so a reload cannot turn into a silent double.
+ */
+async function confirmDuplicate() {
+  const payload = duplicatePayload.value
+  duplicate.value = null
+  if (payload) await placeOrder({ ...payload, confirm_duplicate: true })
 }
 
 async function placeOrder(payload) {
   submitting.value  = true
   submitError.value = ''
+  duplicate.value   = null
   try {
     const { data } = await checkoutApi.placeOrder(payload)
     cartStore.clear?.()
@@ -1110,6 +1157,14 @@ async function placeOrder(payload) {
     // Autres méthodes → page commande
     router.push({ name: 'order', params: { number: data.number } })
   } catch (e) {
+    // 409 : une commande semblable est encore en cours. Rien n'a été écrit —
+    // on montre celle-ci, et la cliente décide.
+    if (e.response?.status === 409 && e.response.data?.duplicate_order) {
+      duplicate.value        = e.response.data.duplicate_order
+      duplicatePayload.value = payload
+      return
+    }
+
     if (!e._serverError) {
       submitError.value = e.response?.data?.message || t('checkout.submitError')
       fieldErrors.value = mapErrors(e.response?.data?.errors ?? {})
