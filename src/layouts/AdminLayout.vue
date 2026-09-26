@@ -93,6 +93,7 @@ import {
   EnvelopeIcon,
   TruckIcon,
   PaperAirplaneIcon,
+  BellAlertIcon,
   CalculatorIcon,
   ShieldCheckIcon,
   KeyIcon,
@@ -154,6 +155,7 @@ const NAV_GROUPS = [
       // Les commandes à expédier vivent sous « Livraison » et non sous
       // « Opérations » : ce n'est pas une seconde liste de commandes, c'est
       // le poste de travail de qui prépare les envois hors Abidjan.
+      { to: '/admin/a-traiter',       label: 'À traiter',         icon: BellAlertIcon, permission: 'orders.view' },
       { to: '/admin/expeditions',     label: 'Expéditions',       icon: PaperAirplaneIcon, permission: 'orders.view' },
       { to: '/admin/tournees',        label: 'Tournées',          icon: ClipboardDocumentCheckIcon, permission: 'rounds.view' },
       { to: '/admin/deliveries',      label: 'Livraisons',        icon: TruckIcon,  permission: 'deliveries.view'     },
@@ -231,6 +233,7 @@ const TITLES = {
   'admin.expeditions':         'Expéditions',
   'admin.rounds':              'Tournées',
   'admin.deliveries':          'Livraisons',
+  'admin.attention':           'À traiter',
   'admin.delivery-zones':      'Zones de livraison',
   'admin.localities':          'Villes et communes',
   'admin.weekly-stock':        'Stock de la semaine',

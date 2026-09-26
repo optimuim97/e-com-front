@@ -224,6 +224,20 @@
         >Déjà extraites</button>
       </div>
 
+      <!--
+        L'archive est une étagère, pas un filtre de plus : on y va, ou on n'y
+        est pas. D'où un interrupteur unique plutôt qu'une paire de puces.
+      -->
+      <div class="orders__quick-group">
+        <span class="orders__quick-label">Archive</span>
+        <button
+          type="button"
+          class="orders__chip"
+          :class="{ 'orders__chip--on': filters.archived === '1' }"
+          @click="basculerValeur('archived', '1')"
+        >Commandes archivées</button>
+      </div>
+
       <button v-if="filtresRapidesActifs" type="button" class="orders__quick-reset" @click="effacerFiltresRapides">
         Effacer les filtres
       </button>
@@ -441,7 +455,8 @@
         <button type="button" class="orders__bulk-link" @click="viderSelection">Tout décocher</button>
         <span class="orders__bulk-spacer"></span>
 
-        <div v-if="canEdit" class="orders__bulk-group">
+        <!-- Rien à marquer sur l'étagère d'archive : ce qui y est est réglé. -->
+        <div v-if="canEdit && filters.archived !== '1'" class="orders__bulk-group">
           <span class="orders__bulk-label">Marquer comme :</span>
           <button
             v-for="a in ACTIONS_VISIBLES"
@@ -458,6 +473,7 @@
         </div>
 
         <button
+          v-if="filters.archived !== '1'"
           type="button"
           class="btn btn-sm btn-outline"
           :disabled="!!enCours"
@@ -483,6 +499,24 @@
             </button>
             <button type="button" role="menuitem" @click="mettreSelectionDeCote">
               Mettre de côté
+            </button>
+            <button
+              v-if="canEdit && filters.archived !== '1'"
+              type="button"
+              role="menuitem"
+              :title="ACTIONS_LOT.archive.title"
+              @click="lancerLot('archive')"
+            >
+              Archiver les commandes…
+            </button>
+            <button
+              v-if="canEdit && filters.archived === '1'"
+              type="button"
+              role="menuitem"
+              :title="ACTIONS_LOT.unarchive.title"
+              @click="lancerLot('unarchive')"
+            >
+              Remettre dans la liste
             </button>
             <button
               v-if="canEdit"
@@ -611,6 +645,8 @@ const filters = usePersistedFilters('orders', {
   destination:    [],
   paid:           '',
   exported:       '',
+  // Vide = la liste de travail. « 1 » = l'archive, et elle seule.
+  archived:       '',
 })
 
 const STATUTS_RAPIDES = [
@@ -655,7 +691,8 @@ function basculerMoyen(moyen) {
 
 const filtresRapidesActifs = computed(() =>
   filters.status.length || filters.payment_method.length || filters.destination.length
-  || filters.paid !== '' || filters.exported !== '' || filters.search !== ''
+  || filters.paid !== '' || filters.exported !== '' || filters.archived !== ''
+  || filters.search !== ''
 )
 
 function effacerFiltresRapides() {
@@ -804,6 +841,7 @@ const filtresGrille = computed(() => ({
   destination:    filters.destination,
   paid:           filters.paid,
   exported:       filters.exported,
+  archived:       filters.archived,
   search:         rechercheAppliquee.value,
   // Écartées côté serveur, pour que le total et les pages ne comptent pas
   // des lignes qu'on ne voit pas.
@@ -856,6 +894,21 @@ const ACTIONS_LOT = {
     title: "Enregistre le règlement des commandes cochées (relevé Wave, caisse du livreur…). Une expédition en attente passe confirmée, comme à l'unité.",
     fail:  'Le marquage « payée » a échoué.',
     force: 'Marquer payées quand même',
+  },
+  archive: {
+    url:     '/admin/orders/bulk-archive',
+    label:   'Archiver',
+    busy:    'Archivage…',
+    title:   "Range les commandes réglées : elles quittent la liste sans quitter la base, et se retrouvent par « Commandes archivées »",
+    fail:    "L'archivage a échoué.",
+    confirm: (n) => `Archiver ${n} commande(s) ? Elles quittent la liste de travail ; rien n'est supprimé.`,
+  },
+  unarchive: {
+    url:   '/admin/orders/bulk-unarchive',
+    label: 'Désarchiver',
+    busy:  'Remise en liste…',
+    title: 'Remet les commandes cochées dans la liste de travail',
+    fail:  'La remise en liste a échoué.',
   },
   cancel: {
     url:     '/admin/orders/bulk-cancel',

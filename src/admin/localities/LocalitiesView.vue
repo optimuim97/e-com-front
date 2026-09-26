@@ -104,51 +104,71 @@
       </article>
     </div>
 
-    <!-- Create / edit -->
-    <div v-if="form" class="modal-backdrop" @click.self="form = null">
-      <div class="modal loc-modal">
-        <h2 class="modal__title">{{ modalTitle }}</h2>
+    <!--
+      Créer ou modifier. Téléportée dans `body` et bâtie sur les classes
+      globales (.modal-overlay / .modal) comme les autres modales de l'admin :
+      elle utilisait une classe inexistante, donc s'affichait sans voile ni
+      centrage, en simple bloc au bas de la page.
+    -->
+    <Teleport to="body">
+      <div v-if="form" class="modal-overlay" @click.self="closeForm">
+        <div class="modal modal--sm" role="dialog" aria-modal="true" :aria-label="modalTitle">
+          <header class="modal__header">
+            <h2>{{ modalTitle }}</h2>
+            <button type="button" class="modal__close" aria-label="Fermer" @click="closeForm">✕</button>
+          </header>
 
-        <div class="field">
-          <label class="label">Nom</label>
-          <input
-            v-model="form.name"
-            type="text"
-            class="input"
-            :placeholder="form.parent_id ? 'Cocody' : 'Korhogo'"
-            @keydown.enter.prevent="submit"
-          />
-        </div>
+          <div class="modal__body">
+            <p v-if="form.parentName" class="loc-modal__parent">
+              Commune de <strong>{{ form.parentName }}</strong>
+            </p>
 
-        <div v-if="!form.parent_id" class="field">
-          <label class="label">Région <span class="loc-optional">(facultatif)</span></label>
-          <input v-model="form.region" type="text" class="input" placeholder="Poro" />
-        </div>
+            <div class="field">
+              <label class="label">Nom</label>
+              <input
+                ref="nameInput"
+                v-model="form.name"
+                type="text"
+                class="input"
+                :placeholder="form.parent_id ? 'Cocody' : 'Korhogo'"
+                @keydown.enter.prevent="submit"
+              />
+            </div>
 
-        <p v-if="form.parentName" class="loc-modal__parent">
-          Commune de <strong>{{ form.parentName }}</strong>
-        </p>
+            <div v-if="!form.parent_id" class="field">
+              <label class="label">Région <span class="loc-optional">(facultatif)</span></label>
+              <input
+                v-model="form.region"
+                type="text"
+                class="input"
+                placeholder="Poro"
+                @keydown.enter.prevent="submit"
+              />
+            </div>
 
-        <label class="loc-filter loc-modal__active">
-          <input v-model="form.active" type="checkbox" />
-          Proposée aux clientes
-        </label>
+            <label class="loc-filter">
+              <input v-model="form.active" type="checkbox" />
+              Proposée aux clientes
+            </label>
 
-        <p v-if="formError" class="loc-error">{{ formError }}</p>
+            <p v-if="formError" class="loc-error loc-modal__error">{{ formError }}</p>
+          </div>
 
-        <div class="modal__actions">
-          <button class="btn btn-outline" @click="form = null">Annuler</button>
-          <button class="btn btn-primary" :disabled="saving || !form.name.trim()" @click="submit">
-            {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
-          </button>
+          <footer class="modal__footer">
+            <button class="btn btn-outline" @click="closeForm">Annuler</button>
+            <button class="btn btn-primary" :disabled="saving || !form.name.trim()" @click="submit">
+              {{ saving ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+          </footer>
         </div>
       </div>
-    </div>
+    </Teleport>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import api from '@/api'
 import { useAuthStore } from '@/features/auth/auth.store'
 
@@ -166,6 +186,7 @@ const openCities    = ref(new Set())
 const form      = ref(null)
 const saving    = ref(false)
 const formError = ref('')
+const nameInput = ref(null)
 
 const modalTitle = computed(() => {
   if (!form.value) return ''
@@ -227,6 +248,16 @@ async function load() {
   }
 }
 
+async function focusName() {
+  await nextTick()
+  nameInput.value?.focus()
+}
+
+function closeForm() {
+  form.value      = null
+  formError.value = ''
+}
+
 function openCreate(city) {
   formError.value = ''
   form.value = {
@@ -237,6 +268,7 @@ function openCreate(city) {
     parent_id: city?.id ?? null,
     parentName: city?.name ?? '',
   }
+  focusName()
 }
 
 function openEdit(locality) {
@@ -251,6 +283,7 @@ function openEdit(locality) {
       ? cities.value.find((c) => c.id === locality.parent_id)?.name ?? ''
       : '',
   }
+  focusName()
 }
 
 async function submit() {
@@ -271,7 +304,7 @@ async function submit() {
       : await api.post('/admin/localities', payload)
 
     if (form.value.parent_id) openCities.value = new Set(openCities.value).add(form.value.parent_id)
-    form.value = null
+    closeForm()
     await load()
   } catch (e) {
     formError.value = e.response?.data?.message ?? "Enregistrement impossible."
@@ -309,7 +342,17 @@ async function destroy(locality) {
   }
 }
 
-onMounted(load)
+// Échap ferme la modale : c'est le réflexe, et sans lui il faut viser le voile.
+function onKeydown(event) {
+  if (event.key === 'Escape' && form.value) closeForm()
+}
+
+onMounted(() => {
+  load()
+  window.addEventListener('keydown', onKeydown)
+})
+
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <style scoped>
@@ -424,8 +467,7 @@ onMounted(load)
   border-top: 1px solid var(--cream-200);
 }
 
-.loc-modal { max-width: 420px; }
-.loc-modal__parent { font-size: 0.8125rem; color: var(--gray-500); margin: 0 0 var(--space-3); }
-.loc-modal__active { margin-bottom: var(--space-3); }
+.loc-modal__parent { font-size: 0.8125rem; color: var(--gray-500); margin: 0; }
+.loc-modal__error { margin: 0; }
 .loc-optional { font-weight: 400; color: var(--gray-400); font-size: 0.75rem; }
 </style>
