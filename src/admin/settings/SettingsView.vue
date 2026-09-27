@@ -428,6 +428,26 @@
             </div>
 
             <!--
+              Destinataires des feuilles du soir. Le réglage existait déjà mais
+              n'avait aucun champ : il ne se modifiait qu'en base, et personne à
+              la boutique ne pouvait s'ajouter à la liste.
+            -->
+            <div class="field">
+              <label class="label">Destinataires des extractions</label>
+              <input
+                v-model="form.shipment_sheet_recipients"
+                type="text"
+                class="input"
+                :placeholder="form.shop_email || 'boutique@exemple.com, agent@exemple.com'"
+              />
+              <p class="hint">
+                Adresses séparées par des virgules. Elles reçoivent chaque soir la
+                feuille de livraison et la liste des commandes en attente.
+                Vide = l'adresse de la boutique uniquement.
+              </p>
+            </div>
+
+            <!--
               Transit times behind the delivery date shown to customers. Abidjan
               is not listed: it is delivered the day after its extraction.
             -->
@@ -1335,6 +1355,8 @@ const form = ref({
   shipping_free_threshold: "",
   shipping_delay: "",
   shipping_delay_en: "",
+  // Destinataires des feuilles d'extraction du soir (séparés par des virgules).
+  shipment_sheet_recipients: "",
   // Transit times (days) behind the customer delivery date. Empty = the
   // server default shown as placeholder.
   delivery_transit_interior_min: "",
