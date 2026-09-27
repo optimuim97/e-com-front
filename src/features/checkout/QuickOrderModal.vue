@@ -190,7 +190,13 @@
               masqué, qu'il ne pouvait ni signaler ni focaliser — le clic sur
               « Commander » ne produisait alors strictement rien.
             -->
-            <form id="qo-form" ref="formEl" novalidate @submit.prevent="submit" class="qo-form">
+            <!--
+              `submit()` et non `submit` : sans les parenthèses, Vue passe
+              l'événement du formulaire en premier argument, donc dans
+              `confirmDuplicate` — l'API refusait la commande, et un événement
+              étant « vrai », elle aurait sinon confirmé les doublons seule.
+            -->
+            <form id="qo-form" ref="formEl" novalidate @submit.prevent="submit()" class="qo-form">
               <div class="qo-field" data-field="name">
                 <div class="qo-field-head">
                   <label class="label">{{ $t('quickOrder.name') }} *</label>
@@ -616,7 +622,7 @@
       :order="duplicate"
       :busy="submitting"
       @confirm="submit(true)"
-      @cancel="duplicate = null"
+      @cancel="cancelDuplicate"
     />
   </Teleport>
 </template>
@@ -1063,6 +1069,20 @@ const error          = ref('')
 // Commande semblable déjà en cours, montrée avant d'en créer une seconde.
 const duplicate      = ref(null)
 
+/**
+ * La cliente renonce : le formulaire garde le message sous les yeux.
+ *
+ * Sans lui, refermer la fenêtre laissait un écran muet — exactement ce qui
+ * s'était produit quand la fenêtre passait derrière la modale.
+ */
+function cancelDuplicate() {
+  const numero = duplicate.value?.number
+  duplicate.value = null
+  error.value = numero
+    ? t('duplicate.pending', { number: numero })
+    : t('duplicate.title')
+}
+
 /*
  * Validité du téléphone rapportée par le champ. Bloquante en Côte d'Ivoire,
  * où la règle est certaine et où le livreur appelle à la porte ; ailleurs la
@@ -1311,7 +1331,9 @@ async function submit(confirmDuplicate = false) {
       // Réponse à l'avertissement « vous avez déjà une commande semblable ».
       // Elle voyage avec la demande : le serveur ne retient rien entre les
       // deux appels, donc un rechargement ne peut pas doubler en silence.
-      confirm_duplicate: confirmDuplicate,
+      // Comparaison stricte : seul un vrai booléen confirme, jamais un objet
+      // qu'un gestionnaire d'événement aurait glissé là.
+      confirm_duplicate: confirmDuplicate === true,
       items,
     })
 
@@ -2225,6 +2247,19 @@ function fmtPrice(val) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/*
+ * Champs sur toute la largeur, comme le bouton juste dessous.
+ *
+ * `.input--sm` est la variante des barres de filtres au-dessus d'un tableau :
+ * elle plafonne à 220 px. Ici, dans une carte étroite, les champs restaient
+ * donc plus courts que le bouton, et le bloc paraissait de travers.
+ */
+.qo-nudge__form .input--sm {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
 }
 .input--sm {
   padding: 8px 12px;

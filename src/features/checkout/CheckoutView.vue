@@ -615,7 +615,7 @@
       :order="duplicate"
       :busy="submitting"
       @confirm="confirmDuplicate"
-      @cancel="duplicate = null"
+      @cancel="cancelDuplicate"
     />
   </main>
 </template>
@@ -1112,6 +1112,15 @@ async function submitOrder() {
  * The server holds nothing between the two calls: the answer travels with the
  * payload, so a reload cannot turn into a silent double.
  */
+/** La cliente renonce : le tunnel garde le message sous les yeux. */
+function cancelDuplicate() {
+  const numero = duplicate.value?.number
+  duplicate.value = null
+  submitError.value = numero
+    ? t('duplicate.pending', { number: numero })
+    : t('duplicate.title')
+}
+
 async function confirmDuplicate() {
   const payload = duplicatePayload.value
   duplicate.value = null

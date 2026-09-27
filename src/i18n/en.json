@@ -308,11 +308,13 @@
     "unavailable": "This item is not available online at the moment."
   },
   "duplicate": {
-    "title": "You already have a similar order",
-    "lead": "An order with almost the same items is still on its way. If this really is a new order, confirm — otherwise cancel and follow that one.",
+    "pending": "Order {number} is already on its way with the same items. Check it before placing a new one.",
+    "title": "Ordered this already?",
+    "lead": "This order is already on its way.",
     "placedOn": "Placed on {date}",
-    "confirm": "This is a new order",
-    "cancel": "Cancel"
+    "confirm": "Order anyway",
+    "cancel": "Cancel",
+    "see": "View my order"
   },
   "phone": {
     "invalidCI": "Incomplete number: 10 digits expected, for example 07 00 00 00 00.",

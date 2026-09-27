@@ -308,11 +308,13 @@
     "unavailable": "Cet article n'est plus disponible en ligne pour le moment."
   },
   "duplicate": {
-    "title": "Vous avez déjà une commande similaire",
-    "lead": "Une commande contenant presque les mêmes articles est encore en cours. Si c'est bien une nouvelle commande, confirmez — sinon, annulez et suivez celle-ci.",
+    "pending": "Commande {number} déjà en cours avec les mêmes articles. Vérifiez-la avant d'en passer une nouvelle.",
+    "title": "Déjà commandé ça ?",
+    "lead": "Cette commande est déjà en route.",
     "placedOn": "Passée le {date}",
-    "confirm": "C'est une nouvelle commande",
-    "cancel": "Annuler"
+    "confirm": "Commander quand même",
+    "cancel": "Annuler",
+    "see": "Voir ma commande"
   },
   "phone": {
     "invalidCI": "Numéro incomplet : 10 chiffres attendus, par exemple 07 00 00 00 00.",
