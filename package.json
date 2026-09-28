@@ -26,6 +26,7 @@
     "ag-grid-community": "^36.1.0",
     "ag-grid-vue3": "^36.1.0",
     "axios": "^1.11.0",
+    "intl-tel-input": "^29.5.3",
     "laravel-echo": "^2.3.4",
     "leaflet": "^1.9.4",
     "pinia": "^3.0.0",

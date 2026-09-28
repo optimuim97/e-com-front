@@ -7,6 +7,8 @@
         <div class="qo-body">
 
           <!-- ── Confirmation post-commande ────────────────────────────── -->
+          <ConfettiBurst v-if="confirmed" />
+
           <div v-if="confirmed" class="qo-confirmed">
             <div class="qo-confirmed__checkmark">
               <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
@@ -634,6 +636,7 @@ import { useI18n } from 'vue-i18n'
 import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
+import ConfettiBurst from '@/components/ui/ConfettiBurst.vue'
 import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan } from '@/data/cities-ci'

@@ -16,6 +16,51 @@
 
     <p v-if="error" class="att-error">{{ error }}</p>
 
+    <!--
+      Les doublons d'abord : c'est le seul motif où il reste quelque chose à
+      éviter. Passée l'extraction du soir, deux colis sont sur la route.
+    -->
+    <section v-if="duplicates.length" class="dup-block">
+      <header class="dup-block__head">
+        <h2 class="dup-block__title">Doublons probables</h2>
+        <p class="dup-block__sub">
+          Même cliente, même panier. Gardez-en une, annulez l'autre depuis la
+          commande — l'annulation remet les articles en stock.
+        </p>
+      </header>
+
+      <article v-for="(groupe, i) in duplicates" :key="i" class="card dup-group">
+        <div class="dup-group__client">
+          <strong>{{ groupe.customer.name }}</strong>
+          <span v-if="groupe.customer.phone">{{ groupe.customer.phone }}</span>
+        </div>
+
+        <div class="dup-group__orders">
+          <RouterLink
+            v-for="(commande, rang) in groupe.orders"
+            :key="commande.id"
+            :to="{ name: 'admin.orders', query: { commande: commande.id } }"
+            class="dup-order"
+            :class="{ 'dup-order--extra': rang > 0 }"
+          >
+            <div class="dup-order__head">
+              <strong>{{ commande.number }}</strong>
+              <span class="dup-order__tag">{{ rang === 0 ? 'La plus ancienne' : 'Doublon ?' }}</span>
+            </div>
+            <p class="dup-order__meta">
+              {{ quand(commande.created_at) }} · {{ commande.status_label }}
+            </p>
+            <ul class="dup-order__items">
+              <li v-for="(article, j) in commande.items" :key="j">
+                {{ article.quantity }} × {{ article.name }}
+              </li>
+            </ul>
+            <p class="dup-order__total">{{ prix(commande.total) }}</p>
+          </RouterLink>
+        </div>
+      </article>
+    </section>
+
     <!-- Un compteur par motif : on choisit par quoi commencer. -->
     <div v-if="!loading && total" class="att-tabs">
       <button
@@ -40,8 +85,8 @@
 
     <div v-if="loading" class="loader-wrap"><div class="loader"></div></div>
 
-    <!-- Le bon état de cet écran est d'être vide. -->
-    <div v-else-if="!lignes.length" class="att-empty">
+    <!-- Le bon état de cet écran est d'être vide — doublons compris. -->
+    <div v-else-if="!lignes.length && !duplicates.length" class="att-empty">
       <strong>Rien à traiter.</strong>
       <p>Aucune commande ne dépasse son délai. C'est l'état normal de cet écran.</p>
     </div>
@@ -105,7 +150,8 @@ const MOTIFS = {
   late_delivery:     'Livraison en retard',
 }
 
-const data    = ref([])
+const data       = ref([])
+const duplicates = ref([])
 const counts  = ref({})
 const total   = ref(0)
 const loading = ref(true)
@@ -120,10 +166,16 @@ async function load() {
   loading.value = true
   error.value   = ''
   try {
-    const { data: reponse } = await api.get('/admin/orders/attention')
-    data.value   = reponse.data ?? []
-    counts.value = reponse.counts ?? {}
-    total.value  = reponse.total ?? 0
+    // Les deux listes ensemble : l'écran n'a de sens qu'entier.
+    const [file, doublons] = await Promise.all([
+      api.get('/admin/orders/attention'),
+      api.get('/admin/orders/duplicates'),
+    ])
+
+    data.value       = file.data.data ?? []
+    counts.value     = file.data.counts ?? {}
+    total.value      = file.data.total ?? 0
+    duplicates.value = doublons.data.data ?? []
   } catch (e) {
     error.value = e.response?.data?.message ?? 'Chargement impossible.'
   } finally {
@@ -142,6 +194,14 @@ function anciennete(since) {
   const heures = Math.max(0, Math.round((Date.now() - new Date(since)) / 3600000))
   if (heures < 24) return `depuis ${heures} h`
   return `depuis ${Math.round(heures / 24)} j`
+}
+
+/** Date courte d'une commande : le jour et l'heure suffisent à trancher. */
+function quand(valeur) {
+  if (!valeur) return ''
+  return new Date(valeur).toLocaleString('fr-FR', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
 }
 
 function prix(v) {
@@ -195,6 +255,79 @@ onMounted(load)
 }
 .att-empty strong { display: block; color: var(--gray-700); margin-bottom: 4px; }
 .att-empty p { margin: 0; font-size: 0.875rem; }
+
+/* ── Doublons ── */
+.dup-block { margin-bottom: var(--space-5); }
+.dup-block__head { margin-bottom: var(--space-3); }
+.dup-block__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+.dup-block__sub { margin: 2px 0 0; font-size: 0.75rem; color: var(--gray-500); line-height: 1.5; }
+
+.dup-group {
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-2);
+  border-left: 3px solid #dc2626;
+}
+.dup-group__client {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: 0.8125rem;
+}
+.dup-group__client span { color: var(--gray-500); }
+
+.dup-group__orders {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-2);
+}
+
+.dup-order {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--cream-200);
+  border-radius: var(--radius-md, 8px);
+  background: #fff;
+  text-decoration: none;
+  color: inherit;
+}
+.dup-order:hover { border-color: var(--rose-300, #f0a6bd); }
+.dup-order--extra { background: #fff7f7; border-color: #fecaca; }
+
+.dup-order__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.dup-order__head strong { font-size: 0.8125rem; color: var(--gray-800); }
+.dup-order__tag {
+  font-size: 0.625rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--cream-100, #f5f0eb);
+  color: var(--gray-600);
+  white-space: nowrap;
+}
+.dup-order--extra .dup-order__tag { background: #fee2e2; color: #b91c1c; }
+
+.dup-order__meta { margin: 2px 0 6px; font-size: 0.6875rem; color: var(--gray-400); }
+
+.dup-order__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--gray-600);
+}
+
+.dup-order__total { margin: 6px 0 0; font-size: 0.8125rem; font-weight: 600; color: var(--gray-700); }
 
 .att-list { display: flex; flex-direction: column; gap: var(--space-2); }
 
