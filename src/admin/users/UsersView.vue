@@ -380,8 +380,14 @@ async function doDelete() {
 
 /* ── Helpers ── */
 function initials(name) {
-  if (!name) return '?'
-  return name.split(' ').slice(0, 2).map(n => n[0].toUpperCase()).join('')
+  if (typeof name !== 'string' || !name.trim()) return '?'
+  return name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)     // extra guard, harmless
+    .slice(0, 2)
+    .map(n => n[0].toUpperCase())
+    .join('')
 }
 
 function roleLabel(role) {
