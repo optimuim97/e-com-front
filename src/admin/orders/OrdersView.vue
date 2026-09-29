@@ -349,7 +349,8 @@
             </span>
             <span class="zone-group__meta">
               <span class="badge badge-gray">{{ g.orders.length }} cmd</span>
-              <span class="zone-group__total">{{ formatPrice(g.total) }}</span>
+              <!-- Cumul de zone : l'agente prépare les colis, pas la caisse. -->
+              <span v-if="canSeeTotals" class="zone-group__total">{{ formatPrice(g.total) }}</span>
               <button
                 type="button"
                 class="commune-group__export"
@@ -857,6 +858,13 @@ const enCours  = ref(null)   // null | clé de ACTIONS_LOT | 'extract'
 const bilanLot = ref(null)   // { action, message, rejected, forceable, toCollect }
 
 const canEdit = computed(() => auth.can('orders.edit'))
+
+/*
+ * Les cumuls sont réservés à qui suit les recettes. Le prix de chaque commande
+ * reste lisible — c'est l'outil de travail — mais pas la somme d'une zone ni
+ * celle d'une sélection.
+ */
+const canSeeTotals = computed(() => auth.can('finance.view'))
 
 /**
  * Actions de masse sur la sélection. Chaque action serveur applique les

@@ -57,7 +57,7 @@
               <th>Départ</th>
               <th>Livraisons</th>
               <th title="Nombre d'articles que le livreur emporte">Articles</th>
-              <th>À encaisser</th>
+              <th v-if="canSeeTotals">À encaisser</th>
               <th></th>
             </tr>
           </thead>
@@ -78,7 +78,7 @@
                 <td>{{ r.status === 'draft' ? 'pas encore partie' : formatDate(r.dispatched_at) }}</td>
                 <td>{{ r.orders_count }}</td>
                 <td>{{ r.items_count }}</td>
-                <td class="admin-table__total">{{ formatPrice(r.expected_total) }}</td>
+                <td v-if="canSeeTotals" class="admin-table__total">{{ formatPrice(r.expected_total) }}</td>
                 <td>
                   <div class="tr__actions">
                     <button
@@ -277,11 +277,11 @@
                         0 » sur un brouillon ferait lire un écart de caisse là
                         où il n'y a pas encore de caisse.
                       -->
-                      <div v-if="detail.status === 'draft'" class="pointage__caisse">
+                      <div v-if="canSeeTotals && detail.status === 'draft'" class="pointage__caisse">
                         <span>À encaisser <strong>{{ formatPrice(detail.expected_total) }}</strong></span>
                       </div>
 
-                      <div v-else class="pointage__caisse">
+                      <div v-else-if="canSeeTotals" class="pointage__caisse">
                         <span>Encaissé <strong>{{ formatPrice(detail.summary.collected) }}</strong></span>
                         <span class="pointage__sur">sur {{ formatPrice(detail.summary.expected_on_pointed) }}</span>
                         <span
@@ -344,6 +344,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { usePersistedRef } from '@/admin/utils/persistedFilters'
 import { RouterLink } from 'vue-router'
 import api from '@/api'
+import { useAuthStore } from '@/features/auth/auth.store'
 import DispatchRoundModal from './DispatchRoundModal.vue'
 
 const ONGLETS = [
@@ -599,6 +600,17 @@ function formatDate(iso) {
     day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
   })
 }
+
+/*
+ * Les cumuls d'argent d'une tournée sont réservés à l'administration : un agent
+ * prépare les sorties et pointe les livraisons sans connaître ce que pèse la
+ * journée. Le prix de chaque livraison, lui, reste affiché — c'est ce qu'il
+ * faut encaisser à la porte. Le serveur applique la même règle ; l'écran ne
+ * fait que cesser d'afficher une colonne de tirets.
+ */
+const auth = useAuthStore()
+
+const canSeeTotals = computed(() => auth.can('finance.view'))
 
 function formatPrice(v) {
   if (v === null || v === undefined || v === '') return '—'

@@ -16,7 +16,7 @@
             {{ round.orders_count }} commande{{ round.orders_count > 1 ? 's' : '' }}
             préparée{{ round.orders_count > 1 ? 's' : '' }},
             <strong>{{ round.items_count }} article{{ round.items_count > 1 ? 's' : '' }} à emporter</strong>,
-            {{ formatPrice(round.expected_total) }} à encaisser. Les colis passent en « expédiée »
+            <template v-if="round.expected_total !== null">{{ formatPrice(round.expected_total) }} à encaisser. </template>Les colis passent en « expédiée »
             au moment où vous confirmez.
           </p>
 

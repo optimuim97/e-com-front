@@ -179,7 +179,7 @@
         <div class="zep__summary">
           <strong>{{ selectedOrders.length }}</strong> commande(s) sélectionnée(s)
           <span v-if="showItemCounts && selectedItems">{{ selectedItems }} article(s)</span>
-          <span class="zep__summary-total">{{ formatPrice(selectedTotal) }}</span>
+          <span v-if="canSeeTotals" class="zep__summary-total">{{ formatPrice(selectedTotal) }}</span>
           <span v-if="unpaidCount" class="zep__warn">{{ unpaidCount }} non payée(s)</span>
         </div>
         <div class="zep__actions">
@@ -243,6 +243,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { exportStamp } from '@/admin/utils/exportStamp'
 import api from '@/api'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 const props = defineProps({
   label:  { type: String, required: true },
@@ -333,6 +334,10 @@ const visibleOrders = computed(() =>
 // L'export ne prend que les commandes à la fois visibles ET cochées
 const selectedOrders = computed(() => visibleOrders.value.filter(o => selected.value.has(o.id)))
 const selectedTotal  = computed(() => selectedOrders.value.reduce((s, o) => s + (Number(o.total) || 0), 0))
+
+// Cumul réservé : l'agente voit le prix de chaque commande, pas leur somme.
+const auth = useAuthStore()
+const canSeeTotals = computed(() => auth.can('finance.view'))
 const unpaidCount    = computed(() => selectedOrders.value.filter(o => !o.is_paid).length)
 const selectedItems  = computed(() =>
   selectedOrders.value.reduce(

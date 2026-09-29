@@ -80,7 +80,7 @@
             <th>En attente</th>
             <th>Commandes du jour</th>
             <th>dont caisse</th>
-            <th>Chiffre</th>
+            <th v-if="chiffreVisible">Chiffre</th>
           </tr>
         </thead>
         <tbody>
@@ -95,7 +95,7 @@
             </td>
             <td>{{ j.commandes_total || '—' }}</td>
             <td class="text-muted">{{ j.commandes_caisse || '—' }}</td>
-            <td class="font-semibold text-rose">{{ formatPrice(j.chiffre) }}</td>
+            <td v-if="chiffreVisible" class="font-semibold text-rose">{{ formatPrice(j.chiffre) }}</td>
           </tr>
         </tbody>
       </table>
@@ -215,6 +215,10 @@ import { useAuthStore } from '@/features/auth/auth.store'
 import api from '@/api'
 
 const auth   = useAuthStore()
+
+// Cumul réservé : le serveur ne renvoie le chiffre du jour qu'avec
+// `finance.view`, et la colonne disparaît avec lui.
+const chiffreVisible = computed(() => auth.can('finance.view'))
 const router = useRouter()
 
 const messages = ref([])
