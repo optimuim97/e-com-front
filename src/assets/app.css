@@ -582,6 +582,25 @@
   }
 
 /* ═══════════════════════════════════════════════════════════
+   Sélecteur de pays du champ téléphone (intl-tel-input)
+   ═══════════════════════════════════════════════════════════
+
+   La liste des pays est détachée dans le `body` par la bibliothèque, avec un
+   z-index de 1060. Nos fenêtres montent plus haut — la commande rapide est à
+   1100 — si bien que sur mobile, où la liste s'ouvre en plein écran, elle
+   s'affichait derrière la modale : toucher le drapeau ne semblait rien faire.
+
+   Règle globale et non scopée : l'élément vit hors du composant.
+
+   L'étage des fenêtres, pour mémoire :
+     1100  modale de commande rapide
+     1200  confettis de confirmation
+     1300  « Déjà commandé ça ? »
+     1400  cette liste — elle s'ouvre toujours par-dessus celle qui l'appelle.
+   ═══════════════════════════════════════════════════════════ */
+.iti--detached-country-selector { z-index: 1400; }
+
+/* ═══════════════════════════════════════════════════════════
    Modales admin — styles globaux (Teleport to="body")
    ═══════════════════════════════════════════════════════════ */
 .modal-overlay {
