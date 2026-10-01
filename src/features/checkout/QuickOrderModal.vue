@@ -637,6 +637,7 @@ import { useCurrencyStore } from '@/stores/currency'
 import { useRouter } from 'vue-router'
 import api from '@/api'
 import ConfettiBurst from '@/components/ui/ConfettiBurst.vue'
+import { countryOptions } from '@/data/countries.js'
 import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan } from '@/data/cities-ci'
@@ -650,7 +651,7 @@ import PhoneInput from '@/components/ui/PhoneInput.vue'
 const emit   = defineEmits(['close'])
 const router = useRouter()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const cartStore     = useCartStore()
 const authStore     = useAuthStore()
@@ -862,9 +863,13 @@ const DESTINATIONS = computed(() => [
 ])
 
 /** Pays desservis hors Côte d'Ivoire, repris de la liste du champ téléphone. */
-const INTERNATIONAL_CODES = ['SN', 'ML', 'BF', 'GN', 'TG', 'BJ', 'GH', 'NG', 'CM', 'MA', 'FR', 'BE', 'CH', 'CA', 'US']
+/*
+ * Tous les pays sauf la Côte d'Ivoire, qui a son propre parcours. Quinze pays
+ * étaient proposés : une cliente d'ailleurs ne trouvait pas le sien et
+ * s'arrêtait là.
+ */
 const PAYS_INTERNATIONAUX = computed(() =>
-  INTERNATIONAL_CODES.map(code => ({ code, nom: t(`countryNames.${code}`) }))
+  countryOptions(locale.value, { exclude: ['CI'] }).map(({ code, name }) => ({ code, nom: name }))
 )
 
 /*

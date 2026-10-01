@@ -626,6 +626,7 @@ import { useCurrencyStore } from '@/stores/currency'
 import { useRouter, RouterLink } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
+import { countryOptions } from '@/data/countries.js'
 import { useCartStore }     from '@/features/cart/cart.store'
 import { useAuthStore }     from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -643,7 +644,7 @@ import { makeForm, mapErrors, FIELDS }  from './checkout.fields'
 import CheckoutField                    from '@/shared/components/ui/FormField.vue'
 import FlowerMark                       from '@/components/ui/FlowerMark.vue'
 
-const { t }        = useI18n()
+const { t, locale } = useI18n()
 const router       = useRouter()
 
 const cartStore    = useCartStore()
@@ -792,9 +793,14 @@ const step2Valid = computed(() =>
 )
 
 // ── Options pays ─────────────────────────────────────────────────────────────
-const shippingCountryKeys = ['CI','SN','ML','BF','GN','TG','BJ','GH','NG','FR','BE','CH','DE','GB','CA','US','OTHER']
+/*
+ * Tous les pays, nos marchés en tête. La liste s'arrêtait à seize entrées et
+ * se terminait par « Autre » : une cliente d'ailleurs enregistrait « OTHER »
+ * comme pays, et plus rien ne se calculait — zone, frais, tarif DHL. Elle
+ * n'arrivait pas à commander.
+ */
 const shippingCountryOptions = computed(() =>
-  shippingCountryKeys.map(code => ({ value: code, label: t(`checkout.countries.${code}`) }))
+  countryOptions(locale.value).map(({ code, name }) => ({ value: code, label: name }))
 )
 
 function onShippingCountryChange() {
