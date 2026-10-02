@@ -9,7 +9,7 @@
           ni annulé automatiquement : la décision reste ici.
         </p>
       </div>
-      <button class="btn btn-outline btn-sm" :disabled="loading" @click="load">
+      <button class="btn btn-outline btn-sm" :disabled="loading" @click="load()">
         {{ loading ? 'Chargement…' : 'Rafraîchir' }}
       </button>
     </header>
@@ -24,8 +24,8 @@
       <header class="dup-block__head">
         <h2 class="dup-block__title">Doublons probables</h2>
         <p class="dup-block__sub">
-          Même cliente, même panier. Gardez-en une, annulez l'autre depuis la
-          commande — l'annulation remet les articles en stock.
+          Même cliente, même panier. Gardez-en une, annulez celle qui est en
+          trop : ouvrez-la d'un clic — l'annulation remet les articles en stock.
         </p>
       </header>
 
@@ -36,12 +36,16 @@
         </div>
 
         <div class="dup-group__orders">
-          <RouterLink
+          <button
             v-for="(commande, rang) in groupe.orders"
             :key="commande.id"
-            :to="{ name: 'admin.orders', query: { commande: commande.id } }"
+            type="button"
             class="dup-order"
-            :class="{ 'dup-order--extra': rang > 0 }"
+            :class="{
+              'dup-order--extra': rang > 0,
+              'dup-order--busy': ouverture === commande.id,
+            }"
+            @click="ouvrir(commande.id)"
           >
             <div class="dup-order__head">
               <strong>{{ commande.number }}</strong>
@@ -56,7 +60,7 @@
               </li>
             </ul>
             <p class="dup-order__total">{{ prix(commande.total) }}</p>
-          </RouterLink>
+          </button>
         </div>
       </article>
     </section>
@@ -100,9 +104,9 @@
       >
         <div class="att-row__main">
           <div class="att-row__head">
-            <RouterLink :to="{ name: 'admin.orders', query: { commande: ligne.order.id } }" class="att-row__number">
+            <button type="button" class="att-row__number" @click="ouvrir(ligne.order.id)">
               {{ ligne.order.number }}
-            </RouterLink>
+            </button>
             <span class="att-row__client">{{ nomClient(ligne.order) }}</span>
             <span class="att-row__status">{{ ligne.order.status_label }}</span>
             <span class="att-row__age">{{ anciennete(ligne.since) }}</span>
@@ -125,20 +129,43 @@
             rel="noopener"
             class="btn btn-sm btn-outline"
           >WhatsApp</a>
-          <RouterLink
-            :to="{ name: 'admin.orders', query: { commande: ligne.order.id } }"
+          <button
+            type="button"
             class="btn btn-sm btn-primary"
-          >Ouvrir</RouterLink>
+            :disabled="ouverture !== null"
+            @click="ouvrir(ligne.order.id)"
+          >{{ ouverture === ligne.order.id ? 'Ouverture…' : 'Traiter' }}</button>
         </div>
       </article>
     </div>
+
+    <!--
+      Le traitement se fait ici, par-dessus la file.
+
+      L'écran renvoyait vers la liste des commandes, où la ligne n'était que
+      surlignée : il fallait la retrouver, l'ouvrir, agir, puis revenir — et
+      revenir ramenait la file au début. Les motifs se règlent presque tous
+      d'un seul geste (fixer des frais, encaisser, annuler, prévenir la
+      cliente) : ils se font sans quitter la file, qui se recompte derrière.
+
+      Téléportée hors de la page : la fenêtre ne doit pas hériter du contexte
+      d'empilement des cartes.
+    -->
+    <Teleport to="body">
+      <OrderQuickActionModal
+        v-if="aTraiter"
+        :order="aTraiter"
+        @close="aTraiter = null"
+        @updated="majCommande"
+      />
+    </Teleport>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { RouterLink } from 'vue-router'
 import api from '@/api'
+import OrderQuickActionModal from './OrderQuickActionModal.vue'
 
 /** Libellés courts des motifs, pour les onglets. */
 const MOTIFS = {
@@ -158,13 +185,24 @@ const loading = ref(true)
 const error   = ref('')
 const filtre  = ref('')
 
+/** La commande ouverte dans la fenêtre de traitement, et celle qui se charge. */
+const aTraiter  = ref(null)
+const ouverture = ref(null)
+
 const lignes = computed(() => filtre.value
   ? data.value.filter(l => l.attention.some(r => r.code === filtre.value))
   : data.value)
 
-async function load() {
-  loading.value = true
-  error.value   = ''
+/**
+ * Recharge la file.
+ *
+ * En mode silencieux, le chargement ne remplace pas l'écran par une roue :
+ * c'est ce qui se passe après un traitement, la fenêtre est encore ouverte
+ * par-dessus et l'agente n'a pas à voir la page clignoter derrière.
+ */
+async function load({ silencieux = false } = {}) {
+  if (! silencieux) loading.value = true
+  error.value = ''
   try {
     // Les deux listes ensemble : l'écran n'a de sens qu'entier.
     const [file, doublons] = await Promise.all([
@@ -181,6 +219,46 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * Ouvre le traitement d'une commande.
+ *
+ * La commande est rechargée au clic plutôt que reprise de la liste : la file
+ * n'en porte qu'un instantané, et un doublon n'en porte qu'un résumé (numéro,
+ * articles, total). La fenêtre a besoin du reste — règlement, sous-total,
+ * frais à fixer — pour savoir ce qu'elle peut proposer.
+ */
+async function ouvrir(id) {
+  if (ouverture.value) return
+
+  ouverture.value = id
+  error.value     = ''
+
+  try {
+    // Pas `data` : ce nom est déjà celui de la file, plus haut dans ce fichier.
+    const reponse  = await api.get(`/admin/orders/${id}`)
+    aTraiter.value = reponse.data.data ?? reponse.data
+  } catch (e) {
+    error.value = e.response?.data?.message ?? "Cette commande n'a pas pu être ouverte."
+  } finally {
+    ouverture.value = null
+  }
+}
+
+/**
+ * Une commande vient de changer.
+ *
+ * La fenêtre reste ouverte sur ce qui a été enregistré — fixer des frais puis
+ * prévenir la cliente est un même geste en deux temps. La file se recompte
+ * derrière : un motif réglé doit quitter la liste.
+ */
+function majCommande(maj) {
+  if (aTraiter.value?.id === maj.id) {
+    aTraiter.value = { ...aTraiter.value, ...maj }
+  }
+
+  load({ silencieux: true })
 }
 
 function nomClient(order) {
@@ -289,15 +367,20 @@ onMounted(load)
 
 .dup-order {
   display: block;
+  width: 100%;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--cream-200);
   border-radius: var(--radius-md, 8px);
   background: #fff;
-  text-decoration: none;
+  font: inherit;
+  text-align: left;
   color: inherit;
+  cursor: pointer;
 }
 .dup-order:hover { border-color: var(--rose-300, #f0a6bd); }
 .dup-order--extra { background: #fff7f7; border-color: #fecaca; }
+/* Pendant le chargement de la commande, pour que le clic ait une réponse. */
+.dup-order--busy { border-color: var(--rose-400); }
 
 .dup-order__head {
   display: flex;
@@ -351,7 +434,15 @@ onMounted(load)
   gap: var(--space-2);
   margin-bottom: 6px;
 }
-.att-row__number { font-weight: 600; color: var(--gray-800); text-decoration: none; }
+.att-row__number {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--gray-800);
+  cursor: pointer;
+}
 .att-row__number:hover { color: var(--rose-600); }
 .att-row__client { font-size: 0.8125rem; color: var(--gray-600); }
 .att-row__status {
