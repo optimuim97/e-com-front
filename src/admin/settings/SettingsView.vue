@@ -433,7 +433,7 @@
               la boutique ne pouvait s'ajouter à la liste.
             -->
             <div class="field">
-              <label class="label">Destinataires des extractions</label>
+              <label class="label">Destinataires de la feuille de livraison</label>
               <input
                 v-model="form.shipment_sheet_recipients"
                 type="text"
@@ -443,7 +443,30 @@
               <p class="hint">
                 Adresses séparées par des virgules. Elles reçoivent chaque soir la
                 feuille de livraison et la liste des commandes en attente.
-                Vide = l'adresse de la boutique uniquement.
+                <strong>Cette feuille ne porte aucun total</strong> : elle part
+                avec les colis. Vide = l'adresse de la boutique uniquement.
+              </p>
+            </div>
+
+            <!--
+              La seconde liste. Deux champs plutôt qu'un seul : les cumuls sont
+              précisément ce que `finance.view` écarte de l'équipe, et une boîte
+              aux lettres n'a pas de permissions. Tout envoyer à tout le monde
+              défairait le contrôle fait côté écrans.
+            -->
+            <div class="field">
+              <label class="label">Destinataires des extractions chiffrées</label>
+              <input
+                v-model="form.shipment_totals_recipients"
+                type="text"
+                class="input"
+                placeholder="gerante@exemple.com, suivi@exemple.com"
+              />
+              <p class="hint">
+                La même extraction, avec les montants : total par zone, articles à
+                sortir du stock, total général. Réservée à qui suit les recettes —
+                ne mettez ici que des adresses qui ont le droit de voir les
+                chiffres.
               </p>
             </div>
 
@@ -1357,6 +1380,7 @@ const form = ref({
   shipping_delay_en: "",
   // Destinataires des feuilles d'extraction du soir (séparés par des virgules).
   shipment_sheet_recipients: "",
+  shipment_totals_recipients: "",
   // Transit times (days) behind the customer delivery date. Empty = the
   // server default shown as placeholder.
   delivery_transit_interior_min: "",

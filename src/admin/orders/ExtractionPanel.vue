@@ -46,6 +46,13 @@
         Commandes prêtes et non encore extraites. Le fichier (.txt) les marque
         « extraites » et ouvre la tournée en brouillon, comme l'envoi de 21 h —
         qui reprendra ensuite à partir de là.
+        <template v-if="canFinance">
+          <br />
+          La feuille de livraison ne porte aucun total : elle part avec les colis.
+          La version chiffrée — total par zone, articles, total général — est
+          envoyée par courriel aux destinataires réglés dans les Paramètres, et
+          « Totaux » ci-dessous l'affiche sans rien extraire.
+        </template>
       </p>
 
       <div v-if="loading" class="extr__loading">Chargement…</div>
@@ -82,15 +89,34 @@
             exceptionally. It only changes look, and the server asks for an
             explicit confirmation before marking anything.
           -->
-          <button
-            type="button"
-            class="btn btn-sm extr__btn"
-            :class="c.scheduled_today ? 'btn-primary' : 'btn-outline extr__btn--off'"
-            :disabled="!c.pending_count || busy === c.type"
-            @click="extract(c)"
-          >
-            {{ busy === c.type ? 'Extraction…' : 'Extraire (.txt)' }}
-          </button>
+          <div class="extr__actions">
+            <button
+              type="button"
+              class="btn btn-sm extr__btn"
+              :class="c.scheduled_today ? 'btn-primary' : 'btn-outline extr__btn--off'"
+              :disabled="!c.pending_count || busy === c.type"
+              @click="extract(c)"
+            >
+              {{ busy === c.type ? 'Extraction…' : 'Extraire (.txt)' }}
+            </button>
+
+            <!--
+              Les chiffres, réservés à qui suit les recettes. Le bouton n'est pas
+              seulement masqué : le serveur refuse la route sans `finance.view`.
+              Un aperçu, qui ne marque rien et ne déplace pas la fenêtre — sinon
+              personne ne regarde ce que vaut une soirée.
+            -->
+            <button
+              v-if="canFinance"
+              type="button"
+              class="btn btn-sm btn-outline extr__btn extr__btn--totals"
+              :disabled="!c.pending_count || busy === `${c.type}:totals`"
+              title="Total par zone, articles à sortir, total général. Ne marque aucune commande."
+              @click="showTotals(c)"
+            >
+              {{ busy === `${c.type}:totals` ? 'Calcul…' : 'Totaux' }}
+            </button>
+          </div>
         </article>
       </div>
     </div>
@@ -100,10 +126,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '@/api'
+import { useAuthStore } from '@/features/auth/auth.store'
 
 const emit = defineEmits(['extracted'])
+
+// Les cumuls sont réservés à qui suit les recettes : l'agent prépare les
+// sorties sans savoir ce que pèse la soirée.
+const auth       = useAuthStore()
+const canFinance = computed(() => auth.can('finance.view'))
 
 const STORAGE_KEY = 'admin.orders.extractions.open'
 
@@ -188,6 +220,39 @@ async function extract(carrier, confirmOffDay = false) {
 
     isError.value = true
     message.value = data?.message ?? "L'extraction a échoué."
+  } finally {
+    busy.value = null
+  }
+}
+
+/**
+ * Downloads the figures version of what is due.
+ *
+ * A preview: it marks nothing, opens no round and does not move the window. The
+ * same recap is emailed at every extraction — this button is there for the
+ * question « combien ça fait, là, maintenant ».
+ */
+async function showTotals(carrier) {
+  busy.value    = `${carrier.type}:totals`
+  message.value = ''
+  isError.value = false
+
+  try {
+    const res = await api.get(
+      `/admin/orders/extractions/${carrier.type}/totals`,
+      { responseType: 'blob' },
+    )
+
+    download(res)
+
+    const count = Number(res.headers['x-extracted-count'] ?? 0)
+    message.value = `${carrier.label} : totaux de ${count} commande${count > 1 ? 's' : ''}`
+      + ' — aucune commande marquée.'
+  } catch (e) {
+    const data = await readJson(e.response?.data)
+
+    isError.value = true
+    message.value = data?.message ?? "Les totaux n'ont pas pu être calculés."
   } finally {
     busy.value = null
   }
@@ -339,8 +404,16 @@ defineExpose({ refresh })
 .extr__count strong { font-size: 1rem; color: var(--rose-600); }
 .extr__late { color: #b91c1c; font-weight: 600; }
 
-.extr__btn { margin-top: auto; width: 100%; justify-content: center; }
+.extr__actions {
+  display: flex;
+  gap: 6px;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.extr__btn { flex: 1; justify-content: center; }
 .extr__btn--off { border-color: #f59e0b; color: #b45309; }
+/* Les chiffres restent au second plan : l'extraction est le geste du soir. */
+.extr__btn--totals { flex: 0 0 auto; }
 
 .extr__msg { margin: 0; padding: 0 var(--space-4) var(--space-3); font-size: 0.8125rem; color: #15803d; }
 .extr__msg--error { color: #b91c1c; }
