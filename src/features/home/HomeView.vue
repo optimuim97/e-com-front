@@ -14,7 +14,13 @@
       @add-to-cart="addToCart"
     />
 
-    <!-- 1b. Opération en cours — juste sous l'accroche, le créneau standard
+    <!-- 1b. Octobre Rose — devant l'opération commerciale, et seulement en
+         octobre. Ce mois-là c'est le premier mot de la marque ; une bannière
+         de remises posée au-dessus d'un message de dépistage se lirait comme
+         une promotion sur la maladie. -->
+    <PinkOctoberSection v-if="isPinkOctober" />
+
+    <!-- 1c. Opération en cours — juste sous l'accroche, le créneau standard
          d'une campagne : visible sans repousser la marque. Rien ne s'affiche
          hors période de promotion. -->
     <PromoBannerSection
@@ -92,6 +98,7 @@ import BestSellersSection   from '@/features/home/sections/BestSellersSection.vu
 import NewCollectionSection from '@/features/home/sections/NewCollectionSection.vue'
 import FlashSaleSection     from '@/features/home/sections/FlashSaleSection.vue'
 import PromoBannerSection   from '@/features/home/sections/PromoBannerSection.vue'
+import PinkOctoberSection   from '@/features/home/sections/PinkOctoberSection.vue'
 import AboutSection         from '@/features/home/sections/AboutSection.vue'
 import ExploreSection       from '@/features/home/sections/ExploreSection.vue'
 import TestimonialsSection  from '@/features/home/sections/TestimonialsSection.vue'
@@ -160,6 +167,18 @@ function addToCart(product) {
 }
 
 /* ── Bénéfices ───────────────────────────────────────────────────────────── */
+/**
+ * Octobre Rose.
+ *
+ * Piloté par la date, sans réglage : la campagne a lieu tout le mois d'octobre,
+ * partout, chaque année. Une case à cocher en administration serait une case
+ * qu'on oublie d'activer le 1er, et surtout de décocher le 1er novembre — et
+ * un ruban de sensibilisation qui traîne en décembre dessert la cause.
+ *
+ * `getMonth()` compte à partir de zéro : 9 est bien octobre.
+ */
+const isPinkOctober = computed(() => new Date().getMonth() === 9)
+
 const benefits = computed(() => [
   {
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
