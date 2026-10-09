@@ -361,6 +361,7 @@
                     <PhoneInput
                       v-model="form.receiver_phone"
                       placeholder="07 00 00 00"
+                      @validity="receiverPhoneValidity = $event"
                     />
                   </CheckoutField>
                 </Transition>
@@ -785,11 +786,27 @@ const submitError    = ref('')
 const couponFromCart = ref(false)
 
 // ── Validations par étape ────────────────────────────────────────────────────
+/*
+ * Le numéro est vérifié ICI, à l'étape où il est saisi.
+ *
+ * Le champ ne testait que « non vide » : « 07 » passait, la cliente remplissait
+ * l'adresse puis le paiement, et c'est seulement au clic sur « Commander »
+ * qu'elle était renvoyée à l'étape 1. Trois écrans pour apprendre qu'il manque
+ * six chiffres.
+ *
+ * `phoneBlocked` ne bloque que les numéros ivoiriens : à l'étranger, la
+ * bibliothèque signale sans interdire — une cliente hors de nos plans de
+ * numérotation ne doit jamais rester coincée. Voir PhoneInput.
+ */
 const step1Valid = computed(() =>
-  form.value.first_name?.trim() && form.value.phone?.trim()
+  form.value.first_name?.trim() && form.value.phone?.trim() && ! phoneBlocked.value
 )
 const step2Valid = computed(() =>
-  form.value.shipping_country && form.value.shipping_city?.trim()
+  form.value.shipping_country
+  && form.value.shipping_city?.trim()
+  // Le numéro du destinataire n'était contrôlé nulle part, ni ici ni au
+  // serveur. C'est pourtant celui que le livreur appelle à la porte.
+  && ! receiverPhoneBlocked.value
 )
 
 // ── Options pays ─────────────────────────────────────────────────────────────
@@ -909,6 +926,19 @@ const duplicatePayload = ref(null)
  */
 const phoneValidity = ref({ valid: true, strict: true })
 const phoneBlocked  = computed(() => !phoneValidity.value.valid && phoneValidity.value.strict)
+
+/*
+ * Numéro du destinataire, quand la cliente se fait livrer chez quelqu'un
+ * d'autre. Même règle, et il ne bloque que s'il est renseigné : le champ est
+ * facultatif, le vider doit toujours libérer l'étape.
+ */
+const receiverPhoneValidity = ref({ valid: true, strict: true })
+const receiverPhoneBlocked  = computed(() =>
+  Boolean(form.value.receiver_different)
+  && Boolean(form.value.receiver_phone?.trim())
+  && ! receiverPhoneValidity.value.valid
+  && receiverPhoneValidity.value.strict
+)
 // Montant chiffré par le serveur, et articles visés quand le code est ciblé.
 const couponAmount   = ref(0)
 const couponProducts = ref([])
