@@ -34,6 +34,20 @@
         <label class="span-2">Alias / synonymes (séparés par virgule)
           <input v-model="aliasesText" type="text" placeholder="cocody, cocody centre, cocody 2 plateaux" />
         </label>
+        <!--
+          Les quartiers que cette zone ne couvre pas, parce qu'ils ont leur
+          propre tarif. La boutique les affiche sous le nom de la zone pour que
+          la cliente aille chercher le sien, au lieu de découvrir l'écart
+          devant sa porte.
+        -->
+        <label class="span-2">Quartiers exclus (séparés par virgule)
+          <input v-model="exclusionsText" type="text" placeholder="N'Dotré, Anador" />
+          <small class="field-hint">
+            Affiché à la cliente : « Abobo (hors N'Dotré, Anador) ». N'exclure
+            qu'un quartier livré par une autre zone, sinon elle n'a nulle part
+            où aller.
+          </small>
+        </label>
         <label class="span-2 checkbox">
           <input v-model="form.active" type="checkbox" />
           <span>Zone active</span>
@@ -78,14 +92,17 @@ function emptyForm() {
   return {
     id: null, group: '', name: '', country: 'CI',
     price: 0, price_unit: 'flat', free_threshold: null,
-    sort_order: 0, active: true, cities: [],
+    sort_order: 0, active: true, cities: [], excluded_areas: [],
   };
 }
 
 const form        = ref({ ...emptyForm(), ...(props.zone ?? {}) });
-const aliasesText = ref((props.zone?.cities ?? []).join(', '));
-const saving      = ref(false);
-const error       = ref('');
+const aliasesText     = ref((props.zone?.cities ?? []).join(', '));
+const exclusionsText  = ref((props.zone?.excluded_areas ?? []).join(', '));
+const saving          = ref(false);
+const error           = ref('');
+/** « a, b ,, c » -> ['a','b','c'] : la saisie est libre, le tableau ne l'est pas. */
+const enListe = (texte) => texte.split(',').map(s => s.trim()).filter(Boolean);
 
 async function save() {
   saving.value = true;
@@ -93,14 +110,17 @@ async function save() {
   try {
     const payload = {
       ...form.value,
-      cities: aliasesText.value.split(',').map(s => s.trim()).filter(Boolean),
+      cities:         enListe(aliasesText.value),
+      excluded_areas: enListe(exclusionsText.value),
     };
 
     const { data } = form.value.id
       ? await api.patch(`/admin/delivery-zones/${form.value.id}`, payload)
       : await api.post('/admin/delivery-zones', payload);
 
-    emit('saved', data?.data ?? null);
+    // Les avertissements remontent au parent : la modale se ferme dès
+    // l'enregistrement, personne ne les y lirait.
+    emit('saved', data?.data ?? null, data?.warnings ?? []);
   } catch (e) {
     // Le serveur refuse les doublons avec le nom de la zone qui couvre déjà la
     // destination : son message est plus utile qu'un « erreur » générique.
@@ -175,6 +195,14 @@ async function save() {
   justify-content: flex-end;
   gap: var(--space-2);
   margin-top: var(--space-5);
+}
+
+.field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--gray-500);
 }
 
 .form-error {

@@ -315,7 +315,15 @@
                         class="qo-combobox__option"
                         :class="{ 'qo-combobox__option--active': form.commune === c }"
                         @click="selectCommune(c)"
-                      >{{ c }}</li>
+                      >
+                        <span>{{ c }}</span>
+                        <!-- Les quartiers que cette commune ne couvre pas :
+                             ils ont leur propre tarif, et c'est avant de
+                             choisir qu'il faut le savoir. -->
+                        <small v-if="exclusionsDe(c).length" class="qo-combobox__excl">
+                          {{ $t('delivery.excluding', { areas: exclusionsDe(c).join(', ') }) }}
+                        </small>
+                      </li>
                       <li class="qo-combobox__option qo-combobox__option--other" @click="selectCommune('__autre__')">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         {{ $t('quickOrder.enterManually') }}
@@ -642,7 +650,7 @@ import DuplicateOrderDialog from '@/features/checkout/DuplicateOrderDialog.vue'
 import { useCartStore } from '@/features/cart/cart.store'
 import { isAbidjan } from '@/data/cities-ci'
 import { filtrerDestinations } from '@/data/destinations-ci'
-import { communesAbidjan, chargerCommunesAbidjan } from '@/data/abidjan-communes.js'
+import { communesAbidjan, chargerCommunesAbidjan, exclusionsDe } from '@/data/abidjan-communes.js'
 import { useAgentRedirect } from '@/composables/useAgentRedirect'
 import { useAuthStore } from '@/features/auth/auth.store'
 import { useSettingsStore } from '@/stores/settings'
@@ -1808,6 +1816,17 @@ function fmtPrice(val) {
   max-height: 200px;
   overflow-y: auto;
   padding: var(--space-1) 0;
+}
+
+/* La mention des quartiers exclus : lisible, jamais dominante. Elle pousse à
+   droite pour que la colonne des noms reste scannable. */
+.qo-combobox__excl {
+  margin-left: auto;
+  padding-left: var(--space-2);
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  text-align: right;
+  color: #b45309;
 }
 
 .qo-combobox__option {

@@ -9,6 +9,13 @@
       <button class="btn btn-primary" @click="openCreate">+ Nouvelle zone</button>
     </header>
 
+    <!-- Quartiers exclus que personne ne livre. La zone est enregistrée ; cet
+         avis dit qu'il reste une zone à créer, sans quoi la boutique affiche
+         une exclusion vers nulle part. -->
+    <p v-for="(avis, i) in avertissements" :key="i" class="zones-warning">
+      {{ avis }}
+    </p>
+
     <!-- Tabs par groupe -->
     <div class="zones-tabs">
       <button
@@ -39,6 +46,7 @@
               <span class="sort-arrow" :class="{ 'sort-arrow--active': sort.key === 'name' }">{{ sort.key === 'name' ? (sort.dir === 'asc' ? '↑' : '↓') : '↕' }}</span>
             </th>
             <th>Alias</th>
+            <th>Exclut</th>
             <th>Pays</th>
             <th class="th-sortable" @click="sortBy('price')">
               Tarif
@@ -56,6 +64,9 @@
               <div class="cell-group">{{ z.group }}</div>
             </td>
             <td class="cell-aliases">{{ (z.cities || []).join(', ') || '—' }}</td>
+            <td class="cell-aliases cell-excluded">
+              {{ (z.excluded_areas || []).join(', ') || '—' }}
+            </td>
             <td>{{ z.country }}</td>
             <td>
               {{ fmt(z.price) }}
@@ -112,6 +123,8 @@ import DeliveryZoneFormModal from './DeliveryZoneFormModal.vue';
 const zones      = ref([]);
 const loading    = ref(true);
 const modal      = ref(null);
+/** Avertissements du serveur après enregistrement — voir apresEnregistrement. */
+const avertissements = ref([]);
 /* Zone confiée à la modale : null pour une création vierge. */
 const modalZone  = ref(null);
 
@@ -198,8 +211,12 @@ function openEdit(z) {
   modal.value = 'edit';
 }
 
-async function apresEnregistrement() {
+async function apresEnregistrement(_zone, warnings = []) {
   modal.value = null;
+  // Les quartiers exclus que personne ne livre : la zone est bien
+  // enregistrée, mais la boutique afficherait « hors X » sans que la cliente
+  // puisse choisir X.
+  avertissements.value = warnings;
   await load();
 }
 
@@ -305,6 +322,20 @@ onMounted(load);
   color: var(--gray-400);
   margin-top: 2px;
 }
+.zones-warning {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+/* Les exclusions se lisent comme une mise en garde, pas comme un alias. */
+.cell-excluded { color: #b45309; }
+
 .cell-aliases {
   color: var(--gray-500);
   font-size: 0.75rem;

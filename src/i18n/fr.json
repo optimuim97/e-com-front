@@ -493,6 +493,10 @@
     "CA": "Canada",
     "US": "États-Unis"
   },
+  "delivery": {
+    "excluding": "hors {areas}",
+    "excludingHint": "choisissez-le dans la liste, son tarif diffère"
+  },
   "drawer": {
     "prevStep": "Étape précédente",
     "stepCart": "Panier",

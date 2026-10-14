@@ -122,7 +122,14 @@
                 @mousedown.prevent="selectCommune(commune)"
                 @mousemove="communeHighlight = i"
               >
-                {{ commune }}
+                <span>{{ commune }}</span>
+                <!--
+                  Les quartiers que cette commune ne couvre pas : ils ont leur
+                  propre tarif, et c'est AVANT de choisir qu'il faut le savoir.
+                -->
+                <small v-if="exclusionsDe(commune).length" class="cs-option__excl">
+                  {{ $t('delivery.excluding', { areas: exclusionsDe(commune).join(', ') }) }}
+                </small>
               </li>
             </ul>
             <div v-else-if="communeOpen && communeQuery && !filteredCommunes.length" class="cs-empty">
@@ -130,6 +137,11 @@
             </div>
           </Transition>
         </div>
+
+        <p v-if="exclusionsChoisies.length" class="cs-excl-note">
+          {{ $t('delivery.excluding', { areas: exclusionsChoisies.join(', ') }) }} —
+          {{ $t('delivery.excludingHint') }}
+        </p>
       </div>
     </Transition>
 
@@ -183,7 +195,7 @@
 <script setup>
 import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import { localities, chargerLocalites } from '@/data/localities.js'
-import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc } from '@/data/abidjan-communes.js'
+import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc, exclusionsDe } from '@/data/abidjan-communes.js'
 
 /*
  * Les communes d'Abidjan viennent de l'administration, pas du fichier de
@@ -192,6 +204,9 @@ import { communesAbidjan, chargerCommunesAbidjan, normalizeLoc } from '@/data/ab
  * étaient absents du sélecteur alors qu'ils sont tarifés, et une cliente
  * d'Abatta se retrouvait en saisie manuelle, donc classée hors Abidjan.
  */
+/** Quartiers exclus de la commune retenue, pour le rappel sous le champ. */
+const exclusionsChoisies = computed(() => exclusionsDe(selectedCommune.value))
+
 onMounted(chargerCommunesAbidjan)
 
 /*
@@ -598,6 +613,23 @@ watch(() => props.commune, (val) => {
 .cs-dropdown::-webkit-scrollbar-thumb { background: var(--cream-300, #e5e7eb); border-radius: 4px; }
 
 /* ── Option ── */
+/* La mention des quartiers exclus : présente, jamais dominante. */
+.cs-option__excl {
+  flex: 0 1 auto;
+  margin-left: 0.75rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  text-align: right;
+  color: #b45309;
+}
+
+.cs-excl-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #b45309;
+}
+
 .cs-option {
   display: flex;
   align-items: center;

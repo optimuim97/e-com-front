@@ -493,6 +493,10 @@
     "CA": "Canada",
     "US": "United States"
   },
+  "delivery": {
+    "excluding": "excluding {areas}",
+    "excludingHint": "pick it from the list, its rate differs"
+  },
   "drawer": {
     "prevStep": "Previous step",
     "stepCart": "Cart",

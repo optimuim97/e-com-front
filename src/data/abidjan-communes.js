@@ -81,6 +81,29 @@ export function chargerCommunesAbidjan() {
 }
 
 /**
+ * Les quartiers qu'une zone ne couvre pas.
+ *
+ * Abobo est une zone à son tarif ; N'Dotré est dans Abobo mais forme une zone
+ * à part, plus chère. Une cliente de N'Dotré qui choisit « Abobo » de bonne foi
+ * paie le mauvais tarif, et l'écart se découvre devant sa porte, avec un
+ * livreur qui réclame un complément.
+ *
+ * L'administration saisit ces exclusions zone par zone ; ici on ne fait que les
+ * retrouver pour les afficher. Rien n'en dépend côté prix : c'est le résolveur
+ * du serveur qui tarife, et il fait déjà gagner la commune la plus précise.
+ *
+ * @returns {string[]} vide tant que les zones ne sont pas chargées.
+ */
+export function exclusionsDe(nom) {
+  const cible = normalizeLoc(nom)
+  if (!cible) return []
+
+  const zone = zonesLivraison.value.find(z => normalizeLoc(z.name) === cible)
+
+  return zone?.excluded_areas ?? []
+}
+
+/**
  * L'adresse est-elle dans Abidjan ?
  *
  * Synchrone à dessein : appelée depuis des propriétés calculées. Tant que la
