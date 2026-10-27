@@ -68,7 +68,21 @@ const props = defineProps({
   lastPage:    { type: Number, default: null },
   total:       { type: Number, default: null },
   perPage:     { type: Number, default: 20 },
-  perPageOptions: { type: Array, default: () => [10, 20, 50, 100] },
+  /*
+   * Les paliers proposés dans le sélecteur.
+   *
+   * Les grandes valeurs servent aux écrans qu'on parcourt d'un bloc — mouvements
+   * de stock, journal d'activité — où paginer par cinquante oblige à vingt clics.
+   * Les petits paliers restent : sur un téléphone, cent lignes font déjà un long
+   * défilement.
+   *
+   * Trois contrôleurs plafonnaient `per_page` à 100 et répondaient 422 au-delà ;
+   * leurs règles ont été relevées en même temps que cette liste.
+   */
+  perPageOptions: {
+    type: Array,
+    default: () => [10, 20, 50, 100, 200, 400, 500, 600, 700, 800, 1000],
+  },
   showPerPage: { type: Boolean, default: true },
   /** Libellé singulier/pluriel (par défaut "commande/commandes") */
   itemSingular: { type: String, default: 'élément' },
